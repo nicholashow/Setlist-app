@@ -48,7 +48,6 @@
             color: white;
         }
 
-        /* Ensure selected venues stay highlighted on hover */
         .venue-item.selected:hover,
         .dark .venue-item.selected:hover,
         .genre-item.selected:hover,
@@ -56,7 +55,6 @@
             background-color: #3b82f6;
         }
 
-        /* Ensure text within a selected item turns white */
         .venue-item.selected .venue-name,
         .genre-item.selected .genre-name {
             color: white;
@@ -151,8 +149,8 @@
             width: 100%;
             height: 100%;
             z-index: 99;
-            overflow: auto; /* FIXED: Ensure scrollbars can appear for multi-page content */
-            -webkit-overflow-scrolling: touch; /* FIXED: Enable momentum scrolling */
+            overflow: auto; /* Ensure scrollbars can appear for multi-page content */
+            -webkit-overflow-scrolling: touch; /* Enable momentum scrolling */
         }
 
         #doc-iframe {
@@ -236,7 +234,7 @@
         .setlist-container {
             display: flex;
             gap: 4px;
-            height: calc(100% - 180px); /* Adjusted height for details toggle */
+            height: calc(100% - 180px);
         }
 
         .setlist-songs-container {
@@ -284,7 +282,6 @@
             background-color: #374151;
         }
 
-
         /* Drag feedback */
         .drag-highlight {
             background-color: #dbeafe;
@@ -302,7 +299,7 @@
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
             color: white;
             padding: 1rem;
-            border-radius: 0.75rem; /* Softer corners */
+            border-radius: 0.75rem;
             margin-bottom: 1rem;
         }
 
@@ -313,7 +310,7 @@
         /* Stats section */
         .stats-container {
             background-color: #f3f4f6;
-            border-radius: 0.75rem; /* Softer corners */
+            border-radius: 0.75rem;
             padding: 1rem;
             margin-top: 1rem;
             color: #1f2937;
@@ -369,7 +366,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 6px 8px;
-            border-radius: 0.5rem; /* Softer corners */
+            border-radius: 0.5rem;
             margin-bottom: 4px;
             background: #f8fafc;
             cursor: pointer;
@@ -520,7 +517,7 @@
             flex: 1;
             min-width: 0;
             padding: 4px 8px;
-            border-radius: 0.5rem; /* Softer corners */
+            border-radius: 0.5rem;
             background: #374151;
             border: 1px solid #4b5563;
             color: white;
@@ -633,7 +630,7 @@
 
         #song-details-modal-content {
             max-height: 80vh;
-            border-radius: 0.75rem; /* Softer corners */
+            border-radius: 0.75rem;
         }
 
         /* Setlist viewed song style */
@@ -683,7 +680,7 @@
         #genre-filter-dropdown,
         #setlist-adder-genre-filter-dropdown,
         #song-details-modal-content {
-            -webkit-overflow-scrolling: touch; /* Enables momentum scrolling on iOS */
+            -webkit-overflow-scrolling: touch;
         }
 
         /* Increase touch target size for easier tapping on touch devices */
@@ -695,7 +692,7 @@
         /* Responsive styles */
         @media (max-width: 1024px) {
             .left-col {
-                width: 256px; /* A bit wider for tablets */
+                width: 256px;
             }
 
             .setlist-container {
@@ -905,7 +902,7 @@
                         <span>Setlist Details</span>
                         <span class="toggle-arrow">▾</span>
                     </div>
-                    <div id="setlist-details-content" class="hidden">
+                    <div id="setlist-details-content" style="display: none;">
                         <div>
                             <label for="setlist-date" class="font-medium text-xs">Date</label>
                             <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44">
@@ -1080,8 +1077,8 @@
             `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="67%" style="stop-color:transparent" /><stop offset="67%" style="stop-color:#FFD700" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
             // Level 2 (2/3 Filled)
             `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="33%" style="stop-color:transparent" /><stop offset="33%" style="stop-color:#FFD700" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
-            // Level 3 (Fiery Gradient)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-3" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#F59E0B; stop-opacity:1" /><stop offset="50%" style="stop-color:#EF4444; stop-opacity:1" /><stop offset="100%" style="stop-color:#D97706; stop-opacity:1" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-3)" stroke="#9A3412" stroke-width="1.5"></path></svg>`
+            // Level 3 (Glow Effect) - FIXED for better differentiation
+            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="#FBBF24" stroke="#F59E0B" stroke-width="2" opacity="0.5" transform="scale(1.1)" transform-origin="center"></path><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="#F59E0B" stroke="#B45309" stroke-width="1.5"></path></g></svg>`
         ];
         let venues = [];
         let recordings = [];
@@ -1313,6 +1310,7 @@
         // ================== Initialization ==================
         $(function() {
             function deselectAllNav() {
+                // FIXED: This function is now more specific to avoid conflicts.
                 $('#nav-master, #nav-favorites, #nav-plays, #nav-recordings, #nav-energy').removeClass('selected');
                 $('#setlists-container .setlist-item').removeClass('selected');
                 $('#venue-list .venue-item').removeClass('selected');
@@ -1437,7 +1435,7 @@
                 deselectAllNav();
                 $(this).addClass('selected');
 
-                // Auto-collapse sidebar on setlist selection
+                // FIXED: Auto-collapse sidebar on setlist selection
                 const $sidebar = $('.left-col');
                 if (!$sidebar.hasClass('collapsed')) {
                    $sidebar.addClass('collapsed');
@@ -1478,6 +1476,7 @@
             });
             $('#toggle-setlists').click(() => $('#setlists-container').slideToggle(150));
             
+            // FIXED: Event handler for the details dropdown
             $(document).on('click', '#setlist-details-toggle', function() {
                 $(this).toggleClass('open');
                 $('#setlist-details-content').slideToggle(200);
@@ -2006,7 +2005,6 @@
             $('#master-list').off('mousedown touchstart', 'li')
                 .on('mousedown touchstart', 'li', function(e) {
                     const $target = $(e.target);
-                    // Prevent long press on interactive elements
                     if ($target.is('input, button, a, .genre-dot, .details-btn, .energy-icon, .energy-icon *, .favorite-star-container, .favorite-star-container *')) {
                         return;
                     }
@@ -2016,7 +2014,7 @@
                     pressTimer = window.setTimeout(() => {
                         isLongPress = true;
                         showSongDetailsModal(songId);
-                    }, 500); // 500ms for a long press
+                    }, 500); 
                 }).off('mouseup touchend mouseleave', 'li')
                 .on('mouseup touchend mouseleave', 'li', function() {
                     clearTimeout(pressTimer);
@@ -2332,11 +2330,17 @@
                 stop: function(e, ui) {
                     ui.item.removeClass('dragging-source');
                 },
-                update: function() {
+                // FIXED: Drag and drop logic. Only update data model and re-number items. DO NOT re-render the whole list.
+                update: function(event, ui) {
                     $('#setlist-sort-filter-dropdown').val('custom');
                     const ids = $(this).sortable('toArray');
-                    setlist.songs = ids;
-                    renderSetlist();
+                    setlists[currentSetlist].songs = ids;
+                    
+                    // Re-number the items in the list without a full re-render
+                    $('#setlist-list .index-number').each(function(index) {
+                        $(this).text(index + 1);
+                    });
+                    
                     save();
                     recordHistory();
                 }
@@ -2563,8 +2567,10 @@
                     recordHistory();
                 });
                 el.find('.genre-content').click(() => {
-                    deselectAllNav();
-                    el.addClass('selected');
+                    // FIXED: Logic to correctly highlight the selected genre
+                    deselectAllNav(); // Deselect everything else first
+                    $('#genre-list .genre-item').removeClass('selected'); // Deselect other genres
+                    el.addClass('selected'); // Select the current one
                     
                     $('#sort-filter-dropdown').val('name').change();
                     masterSelectedGenres = [g.name];
@@ -2872,7 +2878,7 @@
         function setupScrollHandlers() {
             scrollPosition = 0;
             resetScrollHandlers();
-            // Show controls on mousemove or if the window loses focus to the iframe
+            // FIXED: Show controls on mousemove or if the window loses focus to the iframe (meaning it was clicked/tapped)
             $('#doc-view').on('mousemove', showNavButtons);
             $(window).on('blur.docview', function(){
                 if(document.activeElement == $('#doc-iframe')[0]) {
