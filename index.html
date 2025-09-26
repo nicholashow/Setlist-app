@@ -151,6 +151,8 @@
             width: 100%;
             height: 100%;
             z-index: 99;
+            overflow: auto; /* FIXED: Ensure scrollbars can appear for multi-page content */
+            -webkit-overflow-scrolling: touch; /* FIXED: Enable momentum scrolling */
         }
 
         #doc-iframe {
@@ -248,7 +250,7 @@
             height: 100%;
         }
         
-        /* NEW: Setlist Details Collapsible Section */
+        /* Setlist Details Collapsible Section */
         #setlist-details-toggle {
             padding: 0.5rem 0.75rem;
             background-color: #e5e7eb;
@@ -673,7 +675,7 @@
             display: inline-block;
         }
         
-        /* NEW: iPad & Touch Device Enhancements */
+        /* iPad & Touch Device Enhancements */
         .left-col,
         main.overflow-auto,
         .song-selector-container,
@@ -684,7 +686,7 @@
             -webkit-overflow-scrolling: touch; /* Enables momentum scrolling on iOS */
         }
 
-        /* NEW: Increase touch target size for easier tapping on touch devices */
+        /* Increase touch target size for easier tapping on touch devices */
         #master-list > li, #setlist-list > li, #favorites-list > li, #plays-list > li {
             padding-top: 1rem;
             padding-bottom: 1rem;
@@ -1078,8 +1080,8 @@
             `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="67%" style="stop-color:transparent" /><stop offset="67%" style="stop-color:#FFD700" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
             // Level 2 (2/3 Filled)
             `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="33%" style="stop-color:transparent" /><stop offset="33%" style="stop-color:#FFD700" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
-            // Level 3 (Fully Filled, new color)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FF9800" stroke="#B71C1C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`
+            // Level 3 (Fiery Gradient)
+            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-3" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#F59E0B; stop-opacity:1" /><stop offset="50%" style="stop-color:#EF4444; stop-opacity:1" /><stop offset="100%" style="stop-color:#D97706; stop-opacity:1" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-3)" stroke="#9A3412" stroke-width="1.5"></path></svg>`
         ];
         let venues = [];
         let recordings = [];
@@ -1434,6 +1436,13 @@
 
                 deselectAllNav();
                 $(this).addClass('selected');
+
+                // Auto-collapse sidebar on setlist selection
+                const $sidebar = $('.left-col');
+                if (!$sidebar.hasClass('collapsed')) {
+                   $sidebar.addClass('collapsed');
+                   $('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />');
+                }
 
                 cameFromVenue = null;
                 currentSetlist = name;
@@ -1997,6 +2006,7 @@
             $('#master-list').off('mousedown touchstart', 'li')
                 .on('mousedown touchstart', 'li', function(e) {
                     const $target = $(e.target);
+                    // Prevent long press on interactive elements
                     if ($target.is('input, button, a, .genre-dot, .details-btn, .energy-icon, .energy-icon *, .favorite-star-container, .favorite-star-container *')) {
                         return;
                     }
@@ -2006,7 +2016,7 @@
                     pressTimer = window.setTimeout(() => {
                         isLongPress = true;
                         showSongDetailsModal(songId);
-                    }, 500); 
+                    }, 500); // 500ms for a long press
                 }).off('mouseup touchend mouseleave', 'li')
                 .on('mouseup touchend mouseleave', 'li', function() {
                     clearTimeout(pressTimer);
@@ -2862,14 +2872,19 @@
         function setupScrollHandlers() {
             scrollPosition = 0;
             resetScrollHandlers();
-            $('#doc-iframe-container').on('scroll', handleDocScroll);
-            $('#doc-view').on('mousemove click', showNavButtons);
+            // Show controls on mousemove or if the window loses focus to the iframe
+            $('#doc-view').on('mousemove', showNavButtons);
+            $(window).on('blur.docview', function(){
+                if(document.activeElement == $('#doc-iframe')[0]) {
+                    showNavButtons();
+                }
+            });
             startInactivityTimer();
         }
 
         function resetScrollHandlers() {
-            $('#doc-iframe-container').off('scroll', handleDocScroll);
-            $('#doc-view').off('mousemove click', showNavButtons);
+            $('#doc-view').off('mousemove', showNavButtons);
+            $(window).off('blur.docview');
             clearTimeout(inactivityTimer);
         }
 
