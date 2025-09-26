@@ -3,7 +3,6 @@
 
 <head>
     <meta charset="utf-8" />
-    <!-- MODIFIED: Optimized viewport for a native app-like experience on iPad -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>Setlist Manager - Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -14,7 +13,6 @@
     </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-    <!-- jQuery UI Touch Punch for enabling touch support on draggable/sortable elements -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
     <style>
         html,
@@ -757,7 +755,7 @@
                 <div class="mt-2">
                     <div class="item-creation">
                         <input class="item-name-input" id="venue-name" placeholder="New venue" />
-                        <div class="w-6 h-6 flex-shrink-0"></div> <button class="p-1 px-2 text-sm rounded bg-blue-600 whitespace-nowrap hover:bg-blue-700" id="add-venue">Add</button>
+                        <button class="p-1 px-2 text-sm rounded bg-blue-600 whitespace-nowrap hover:bg-blue-700" id="add-venue">Add</button>
                     </div>
                 </div>
             </div>
@@ -1025,10 +1023,14 @@
             color: '#10b981'
         }];
         const energyIcons = [
-            '<div style="width:24px; height:24px;"></div>', // Level 0 (Blank)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#FFD700" stroke="#b45309" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 8-12h-9l1-8z"/></svg>`, // Level 1
-            `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#FFD700" stroke="#b45309" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 8-12h-9l1-8z"/></svg>`, // Level 2
-            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FF9800" stroke="#B71C1C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2L1 12h6l-4 10 14-12h-6l4-10z"></path></svg>` // Level 3
+            // Level 0 (Outline)
+            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 dark:text-gray-500"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`,
+            // Level 1 (1/3 Filled)
+            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="67%" style="stop-color:transparent" /><stop offset="67%" style="stop-color:#FFD700" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
+            // Level 2 (2/3 Filled)
+            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="33%" style="stop-color:transparent" /><stop offset="33%" style="stop-color:#FFD700" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
+            // Level 3 (Fully Filled)
+            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFD700" stroke="#b45309" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`
         ];
         let venues = [];
         let recordings = [];
@@ -2252,9 +2254,12 @@
                 scrollSpeed: 40,
                 forcePlaceholderSize: true,
                 helper: 'clone',
-                opacity: 0.6,
                 start: function(e, ui) {
                     ui.placeholder.height(ui.item.height());
+                    ui.item.addClass('dragging-source');
+                },
+                stop: function(e, ui) {
+                    ui.item.removeClass('dragging-source');
                 },
                 update: function() {
                     $('#setlist-sort-filter-dropdown').val('custom');
