@@ -34,26 +34,31 @@
 
         /* Unified selected style for sidebar items */
         .selected,
-        .venue-item.selected {
+        .venue-item.selected,
+        .genre-item.selected {
             background-color: #3b82f6;
             color: white;
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
         }
 
         .dark .selected,
-        .dark .venue-item.selected {
+        .dark .venue-item.selected,
+        .dark .genre-item.selected {
             background-color: #3b82f6;
             color: white;
         }
 
         /* Ensure selected venues stay highlighted on hover */
         .venue-item.selected:hover,
-        .dark .venue-item.selected:hover {
+        .dark .venue-item.selected:hover,
+        .genre-item.selected:hover,
+        .dark .genre-item.selected:hover {
             background-color: #3b82f6;
         }
 
-        /* Ensure text within a selected venue item turns white */
-        .venue-item.selected .venue-name {
+        /* Ensure text within a selected item turns white */
+        .venue-item.selected .venue-name,
+        .genre-item.selected .genre-name {
             color: white;
         }
 
@@ -229,7 +234,7 @@
         .setlist-container {
             display: flex;
             gap: 4px;
-            height: calc(100% - 125px);
+            height: calc(100% - 180px); /* Adjusted height for details toggle */
         }
 
         .setlist-songs-container {
@@ -242,6 +247,41 @@
             width: 25%;
             height: 100%;
         }
+        
+        /* NEW: Setlist Details Collapsible Section */
+        #setlist-details-toggle {
+            padding: 0.5rem 0.75rem;
+            background-color: #e5e7eb;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+        .dark #setlist-details-toggle {
+            background-color: #374151;
+        }
+        #setlist-details-toggle .toggle-arrow {
+            transition: transform 0.2s ease-in-out;
+        }
+        #setlist-details-toggle.open .toggle-arrow {
+            transform: rotate(180deg);
+        }
+        #setlist-details-content {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background-color: #f3f4f6;
+            border-radius: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .dark #setlist-details-content {
+            background-color: #374151;
+        }
+
 
         /* Drag feedback */
         .drag-highlight {
@@ -260,7 +300,7 @@
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
             color: white;
             padding: 1rem;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem; /* Softer corners */
             margin-bottom: 1rem;
         }
 
@@ -271,7 +311,7 @@
         /* Stats section */
         .stats-container {
             background-color: #f3f4f6;
-            border-radius: 0.5rem;
+            border-radius: 0.75rem; /* Softer corners */
             padding: 1rem;
             margin-top: 1rem;
             color: #1f2937;
@@ -327,7 +367,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 6px 8px;
-            border-radius: 4px;
+            border-radius: 0.5rem; /* Softer corners */
             margin-bottom: 4px;
             background: #f8fafc;
             cursor: pointer;
@@ -478,7 +518,7 @@
             flex: 1;
             min-width: 0;
             padding: 4px 8px;
-            border-radius: 4px;
+            border-radius: 0.5rem; /* Softer corners */
             background: #374151;
             border: 1px solid #4b5563;
             color: white;
@@ -591,6 +631,7 @@
 
         #song-details-modal-content {
             max-height: 80vh;
+            border-radius: 0.75rem; /* Softer corners */
         }
 
         /* Setlist viewed song style */
@@ -720,22 +761,22 @@
                 <p class="text-sm whitespace-nowrap">Organize music performances</p>
             </div>
 
-            <div class="mb-2 p-2 rounded bg-gray-700 cursor-pointer selected uppercase" id="nav-master">ALL SONGS</div>
-            <div class="mb-2 p-2 rounded bg-gray-700" id="nav-setlists">
+            <div class="mb-2 p-2 rounded-lg bg-gray-700 cursor-pointer selected uppercase" id="nav-master">ALL SONGS</div>
+            <div class="mb-2 p-2 rounded-lg bg-gray-700" id="nav-setlists">
                 <div class="flex items-center justify-between">
                     <span class="font-medium uppercase">Setlists</span>
-                    <button class="text-sm px-2 py-1 rounded bg-gray-600" id="toggle-setlists">▾</button>
+                    <button class="text-sm px-2 py-1 rounded-md bg-gray-600" id="toggle-setlists">▾</button>
                 </div>
                 <div class="mt-2" id="setlists-container"></div>
                 <div class="mt-2">
-                    <input class="w-full p-1 text-sm rounded bg-gray-700" id="new-setlist-name" placeholder="New setlist name" />
-                    <button class="w-full mt-1 p-1 text-sm rounded bg-blue-600 hover:bg-blue-700" id="add-setlist-btn">Add Setlist</button>
+                    <input class="w-full p-1 text-sm rounded-md bg-gray-700" id="new-setlist-name" placeholder="New setlist name" />
+                    <button class="w-full mt-1 p-1 text-sm rounded-md bg-blue-600 hover:bg-blue-700" id="add-setlist-btn">Add Setlist</button>
                 </div>
             </div>
-            <div class="mb-2 p-2 rounded bg-gray-700 cursor-pointer uppercase" id="nav-favorites">Favorites</div>
-            <div class="mb-2 p-2 rounded bg-gray-700 cursor-pointer uppercase" id="nav-plays">Plays</div>
-            <div class="mb-2 p-2 rounded bg-gray-700 cursor-pointer uppercase" id="nav-recordings">Recordings</div>
-            <div class="mb-2 p-2 rounded bg-gray-700 cursor-pointer uppercase" id="nav-energy">Energy Levels</div>
+            <div class="mb-2 p-2 rounded-lg bg-gray-700 cursor-pointer uppercase" id="nav-favorites">Favorites</div>
+            <div class="mb-2 p-2 rounded-lg bg-gray-700 cursor-pointer uppercase" id="nav-plays">Plays</div>
+            <div class="mb-2 p-2 rounded-lg bg-gray-700 cursor-pointer uppercase" id="nav-recordings">Recordings</div>
+            <div class="mb-2 p-2 rounded-lg bg-gray-700 cursor-pointer uppercase" id="nav-energy">Energy Levels</div>
 
             <div class="mt-4">
                 <h3 class="text-sm font-semibold uppercase">Genres</h3>
@@ -744,7 +785,7 @@
                     <div class="item-creation">
                         <input class="item-name-input" id="genre-name" placeholder="New genre" />
                         <input type="color" id="genre-color" value="#3b82f6" class="h-8 w-8 cursor-pointer" title="Select color">
-                        <button class="p-1 px-2 text-sm rounded bg-blue-600 whitespace-nowrap hover:bg-blue-700" id="add-genre">Add</button>
+                        <button class="p-1 px-2 text-sm rounded-md bg-blue-600 whitespace-nowrap hover:bg-blue-700" id="add-genre">Add</button>
                     </div>
                 </div>
             </div>
@@ -755,7 +796,7 @@
                 <div class="mt-2">
                     <div class="item-creation">
                         <input class="item-name-input" id="venue-name" placeholder="New venue" />
-                        <button class="p-1 px-2 text-sm rounded bg-blue-600 whitespace-nowrap hover:bg-blue-700" id="add-venue">Add</button>
+                        <button class="p-1 px-2 text-sm rounded-md bg-blue-600 whitespace-nowrap hover:bg-blue-700" id="add-venue">Add</button>
                     </div>
                 </div>
             </div>
@@ -777,16 +818,16 @@
         <main class="flex-1 p-4 overflow-auto">
             <div class="flex items-start justify-between mb-3" id="master-upload-container">
                 <div class="w-1/3">
-                    <input class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..." />
+                    <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..." />
                     <datalist id="search-results"></datalist>
                 </div>
 
                 <div class="flex items-center gap-2">
                     <input accept=".pdf" class="hidden" id="master-upload" multiple="" type="file" />
-                    <button class="p-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition" id="upload-master-btn">Add files</button>
-                    <button class="p-2 bg-red-600 text-white rounded hover:bg-red-700 transition" id="delete-all-btn">Delete All</button>
-                    <button class="p-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition" disabled="" id="undo-btn">Undo</button>
-                    <button class="p-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition" disabled="" id="redo-btn">Redo</button>
+                    <button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow" id="upload-master-btn">Add files</button>
+                    <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow" id="delete-all-btn">Delete All</button>
+                    <button class="p-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow" disabled="" id="undo-btn">Undo</button>
+                    <button class="p-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition shadow" disabled="" id="redo-btn">Redo</button>
 
                     <label for="dark-mode-toggle" class="flex items-center cursor-pointer">
                         <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark Mode</span>
@@ -802,7 +843,7 @@
             <section id="master-view">
                 <div class="flex items-center gap-2 mb-2 flex-wrap controls-container">
                     <div class="relative">
-                        <select id="sort-dropdown" class="p-2 rounded bg-white border border-gray-300 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
+                        <select id="sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
                             <option value="name">Sort by Name</option>
                             <option value="artist">Sort by Artist</option>
                             <option value="lastPlayed">Sort by Last Played</option>
@@ -814,16 +855,16 @@
                         </div>
                     </div>
                     <div id="genre-filter-container" class="relative">
-                        <button id="genre-filter-button" class="p-2 rounded bg-white border border-gray-300 text-sm w-48 text-left dark:bg-gray-700 dark:border-gray-600">Select Genres</button>
-                        <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-md shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
+                        <button id="genre-filter-button" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm w-48 text-left dark:bg-gray-700 dark:border-gray-600">Select Genres</button>
+                        <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
                     </div>
-                    <button id="clear-filters-btn" class="p-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition text-sm dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">Clear Filters</button>
+                    <button id="clear-filters-btn" class="p-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition text-sm dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 shadow-sm">Clear Filters</button>
                 </div>
-                <div class="bg-white rounded-lg shadow overflow-hidden dark:bg-gray-800">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul class="sortable divide-y divide-gray-200 dark:divide-gray-700" id="master-list"></ul>
                 </div>
                 <div id="master-drop-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-8 pointer-events-none">
-                    <div class="text-center bg-white dark:bg-gray-800 p-12 rounded-lg border-4 border-dashed border-blue-500">
+                    <div class="text-center bg-white dark:bg-gray-800 p-12 rounded-2xl border-4 border-dashed border-blue-500">
                         <h2 class="text-2xl font-bold">Drop Files Here</h2>
                         <p>Add PDF song sheets to ALL SONGS</p>
                     </div>
@@ -833,7 +874,7 @@
 
             <section class="hidden" id="setlist-view">
                 <div class="flex items-center gap-2 mb-2">
-                    <button id="back-to-venue-btn" class="hidden p-2 bg-gray-200 rounded hover:bg-gray-300 transition dark:bg-gray-700 dark:hover:bg-gray-600">← Back</button>
+                    <button id="back-to-venue-btn" class="hidden p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition dark:bg-gray-700 dark:hover:bg-gray-600">← Back</button>
                     <h2 class="text-xl font-bold" id="setlist-title">Setlist</h2>
                     <p id="setlist-total-duration" class="text-sm text-gray-500 dark:text-white ml-2"></p>
                     <p id="setlist-song-count" class="text-sm text-gray-500 dark:text-white ml-2"></p>
@@ -841,12 +882,12 @@
 
                 <div class="flex items-end justify-between flex-wrap gap-4 mb-2">
                     <div class="flex items-center gap-2">
-                        <button id="record-show" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition">Record Show</button>
-                        <button id="stop-record" class="p-2 bg-red-600 text-white rounded hidden">Stop Recording</button>
-                        <button id="print-setlist" class="p-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Print Setlist</button>
+                        <button id="record-show" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Record Show</button>
+                        <button id="stop-record" class="p-2 bg-red-600 text-white rounded-lg hidden shadow">Stop Recording</button>
+                        <button id="print-setlist" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">Print Setlist</button>
                         <div class="relative inline-block">
-                            <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition">Share Setlist</button>
-                            <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
+                            <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Share Setlist</button>
+                            <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
                                 <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
                                 <a href="#" id="share-email" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Email (text only)</a>
                                 <a href="#" id="share-gmail" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Gmail (text only)</a>
@@ -855,18 +896,25 @@
                             <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
+                </div>
+
+                <div id="setlist-details-container" class="mb-2">
+                    <div id="setlist-details-toggle">
+                        <span>Setlist Details</span>
+                        <span class="toggle-arrow">▾</span>
+                    </div>
+                    <div id="setlist-details-content" class="hidden">
                         <div>
                             <label for="setlist-date" class="font-medium text-xs">Date</label>
-                            <input type="date" id="setlist-date" class="block p-1 rounded dark:bg-gray-700 dark:border-gray-600 w-44">
+                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44">
                         </div>
                         <div>
                             <label for="setlist-venue" class="font-medium text-xs">Venue</label>
-                            <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded dark:bg-gray-700 dark:border-gray-600 w-44">
+                            <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44">
                         </div>
                         <div class="relative">
                             <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
-                            <select id="setlist-sort-filter-dropdown" class="block p-1 rounded bg-white border border-gray-300 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 w-44">
+                            <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 w-44">
                                 <option value="custom">Custom Order</option>
                                 <option value="name">Sort by Name</option>
                                 <option value="artist">Sort by Artist</option>
@@ -881,24 +929,25 @@
                     </div>
                 </div>
 
+
                 <div id="setlist-recordings" class="mb-2"></div>
 
 
                 <div class="setlist-container">
-                    <div class="setlist-songs-container bg-white rounded-lg shadow overflow-auto dark:bg-gray-800">
+                    <div class="setlist-songs-container bg-white rounded-xl shadow-lg overflow-auto dark:bg-gray-800">
                         <ul class="sortable divide-y divide-gray-200 dark:divide-gray-700" id="setlist-list"></ul>
                     </div>
                     <div class="setlist-selector-container">
-                        <div class="bg-white rounded-lg shadow p-2 mb-2 dark:bg-gray-800 h-full flex flex-col">
+                        <div class="bg-white rounded-xl shadow-lg p-2 mb-2 dark:bg-gray-800 h-full flex flex-col">
                             <h3 class="font-semibold mb-2">Add Songs</h3>
 
                             <div class="setlist-selector-search">
-                                <input class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600" id="setlist-search" placeholder="Search songs..." />
+                                <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="setlist-search" placeholder="Search songs..." />
                             </div>
 
                             <div class="flex items-center gap-2 my-2">
                                 <div class="flex-1">
-                                    <select id="right-selector-sort" class="w-full p-2 rounded border dark:bg-gray-700 dark:border-gray-600 text-sm">
+                                    <select id="right-selector-sort" class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600 text-sm">
                                         <option value="default">Default Order</option>
                                         <option value="name">Sort by Name</option>
                                         <option value="artist">Sort by Artist</option>
@@ -907,8 +956,8 @@
                                     </select>
                                 </div>
                                 <div id="setlist-adder-genre-filter-container" class="relative">
-                                    <button id="setlist-adder-genre-filter-button" class="p-2 rounded bg-white border border-gray-300 text-sm w-full dark:bg-gray-700 dark:border-gray-600">Genre</button>
-                                    <div id="setlist-adder-genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-md shadow-lg max-h-60 overflow-y-auto right-0 dark:bg-gray-800 dark:border dark:border-gray-700"></div>
+                                    <button id="setlist-adder-genre-filter-button" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm w-full dark:bg-gray-700 dark:border-gray-600">Genre</button>
+                                    <div id="setlist-adder-genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto right-0 dark:bg-gray-800 dark:border dark:border-gray-700"></div>
                                 </div>
                             </div>
                             <ul class="song-selector-container flex-1" id="right-selector"></ul>
@@ -919,7 +968,7 @@
 
             <section class="hidden" id="favorites-view">
                 <h2 class="text-xl font-bold mb-2">Favorite Songs</h2>
-                <div class="bg-white rounded-lg shadow overflow-hidden dark:bg-gray-800">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul class="divide-y divide-gray-200 dark:divide-gray-700" id="favorites-list"></ul>
                 </div>
             </section>
@@ -927,9 +976,9 @@
             <section class="hidden" id="plays-view">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="text-xl font-bold">Plays</h2>
-                    <button class="p-2 bg-red-600 text-white rounded hover:bg-red-700 transition" id="reset-plays">Reset All Plays</button>
+                    <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow" id="reset-plays">Reset All Plays</button>
                 </div>
-                <div class="bg-white rounded-lg shadow overflow-hidden dark:bg-gray-800">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul class="divide-y divide-gray-200 dark:divide-gray-700" id="plays-list"></ul>
                 </div>
             </section>
@@ -938,7 +987,7 @@
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="text-xl font-bold">Recordings</h2>
                 </div>
-                <div class="bg-white rounded-lg shadow overflow-hidden dark:bg-gray-800">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul class="divide-y divide-gray-200 dark:divide-gray-700" id="recordings-list"></ul>
                 </div>
             </section>
@@ -950,7 +999,7 @@
 
             <section class="hidden" id="venue-setlists-view">
                 <h2 class="text-xl font-bold mb-2" id="venue-setlists-title"></h2>
-                <div class="bg-white rounded-lg shadow overflow-hidden dark:bg-gray-800">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul class="divide-y divide-gray-200 dark:divide-gray-700" id="venue-setlists-list"></ul>
                 </div>
             </section>
@@ -983,7 +1032,7 @@
         </section>
 
         <div id="song-details-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
-            <div id="song-details-modal-content" class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl overflow-y-auto">
+            <div id="song-details-modal-content" class="bg-white dark:bg-gray-800 shadow-xl p-6 w-full max-w-2xl overflow-y-auto">
                 <div class="flex justify-between items-center mb-4">
                     <h2 id="modal-song-title" class="text-2xl font-bold">Song Details</h2>
                     <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 text-3xl leading-none">&times;</button>
@@ -1029,14 +1078,13 @@
             `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="67%" style="stop-color:transparent" /><stop offset="67%" style="stop-color:#FFD700" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
             // Level 2 (2/3 Filled)
             `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="33%" style="stop-color:transparent" /><stop offset="33%" style="stop-color:#FFD700" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
-            // Level 3 (Fully Filled)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FFD700" stroke="#b45309" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`
+            // Level 3 (Fully Filled, new color)
+            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FF9800" stroke="#B71C1C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`
         ];
         let venues = [];
         let recordings = [];
         let masterSelectedGenres = [];
         let setlistSelectedGenres = [];
-        // NEW: State for the setlist song adder genre filter
         let setlistAdderSelectedGenres = [];
         let viewedSongsInSetlist = new Set();
         let currentViewerContext = null;
@@ -1160,7 +1208,7 @@
                     masterSongs = obj.masterSongs || [];
                     masterSongs.forEach(s => {
                         if (!s.lastPlayed) s.lastPlayed = null;
-                        s.favorite = s.favorite || false; // NEW: Ensure favorite property exists
+                        s.favorite = s.favorite || false; 
                     });
                     setlists = obj.setlists || {};
                     Object.keys(setlists).forEach(k => {
@@ -1178,7 +1226,6 @@
                     recordings = obj.recordings || [];
                 } catch (e) {
                     console.error("Error parsing localStorage data: ", e);
-                    // If parsing fails, start with a clean slate
                     masterSongs = [];
                     setlists = {};
                     playCounts = {};
@@ -1263,16 +1310,16 @@
 
         // ================== Initialization ==================
         $(function() {
-            // MOVED: This function is now in a shared scope for all event handlers
             function deselectAllNav() {
                 $('#nav-master, #nav-favorites, #nav-plays, #nav-recordings, #nav-energy').removeClass('selected');
                 $('#setlists-container .setlist-item').removeClass('selected');
                 $('#venue-list .venue-item').removeClass('selected');
+                $('#genre-list .genre-item').removeClass('selected');
             }
 
             load();
             renderLeftSetlists();
-            renderGenres();
+            renderGenres(deselectAllNav);
             renderVenues(deselectAllNav);
             bindNav(deselectAllNav);
             renderMaster();
@@ -1318,7 +1365,7 @@
                     color
                 });
                 $('#genre-name').val('');
-                renderGenres();
+                renderGenres(deselectAllNav);
                 save();
                 recordHistory();
             });
@@ -1330,7 +1377,7 @@
                     name
                 });
                 $('#venue-name').val('');
-                renderVenues(deselectAllNav); // Pass deselect function
+                renderVenues(deselectAllNav);
                 save();
                 recordHistory();
             });
@@ -1353,7 +1400,6 @@
         // ================== Event Handlers ==================
         function bindNav(deselectAllNav) {
 
-            // MODIFIED: Home button click handler
             $('#home-btn').click(() => {
                 $('#nav-master').click();
             });
@@ -1362,7 +1408,6 @@
                 $('#nav-master').addClass('selected');
                 show('master');
             });
-            // NEW: Favorites nav handler
             $('#nav-favorites').click(() => {
                 deselectAllNav();
                 $('#nav-favorites').addClass('selected');
@@ -1370,12 +1415,12 @@
             });
             $('#nav-plays').click(() => {
                 deselectAllNav();
-                $('#nav-plays').addClass('selected'); // NEW: Add selected class
+                $('#nav-plays').addClass('selected');
                 show('plays');
             });
             $('#nav-recordings').click(() => {
                 deselectAllNav();
-                $('#nav-recordings').addClass('selected'); // NEW: Add selected class
+                $('#nav-recordings').addClass('selected');
                 show('recordings');
             });
             $('#nav-energy').click(() => {
@@ -1423,6 +1468,11 @@
                 }
             });
             $('#toggle-setlists').click(() => $('#setlists-container').slideToggle(150));
+            
+            $(document).on('click', '#setlist-details-toggle', function() {
+                $(this).toggleClass('open');
+                $('#setlist-details-content').slideToggle(200);
+            });
 
             $('#add-setlist-btn').click(() => {
                 const name = $('#new-setlist-name').val().trim();
@@ -1447,9 +1497,8 @@
                 renderMaster();
                 updateSearchDatalist();
             });
-            // MODIFIED: Search input for setlist song adder now re-renders the list
+            
             $('#setlist-search').on('input', renderRightSelector);
-            // NEW: Handlers for new search-by checkboxes
             $('#search-by-name, #search-by-artist').on('change', renderRightSelector);
             $('#sort-dropdown').on('change', renderMaster);
 
@@ -1469,13 +1518,12 @@
                 updateGenreFilterButtonText('#genre-filter-button', masterSelectedGenres);
                 renderMaster();
             });
-            // MODIFIED: Simplified handler for new sorting options
+            
             $('#setlist-sort-filter-dropdown').on('change', function() {
-                $('#setlist-genre-filter-container').hide(); // Hide old filter UI
-                setlistSelectedGenres = []; // Clear any residual filters
+                setlistSelectedGenres = []; 
                 renderSetlist();
             });
-            // NEW: Event handlers for the setlist song adder filter
+           
             $('#setlist-adder-genre-filter-button').on('click', () => $('#setlist-adder-genre-filter-dropdown').toggleClass('hidden'));
             $('#setlist-adder-clear-filters-btn').on('click', () => {
                 setlistAdderSelectedGenres = [];
@@ -1495,7 +1543,6 @@
                 if (!$(e.target).closest('#genre-filter-container').length) {
                     $('#genre-filter-dropdown').addClass('hidden');
                 }
-                // NEW: Hide setlist adder genre dropdown on outside click
                 if (!$(e.target).closest('#setlist-adder-genre-filter-container').length) {
                     $('#setlist-adder-genre-filter-dropdown').addClass('hidden');
                 }
@@ -1646,7 +1693,7 @@
                         iframe.onload = resolve;
                         iframe.onerror = () => {
                             console.error("Failed to load iframe for printing:", iframe.src);
-                            resolve(); // Resolve anyway to not block printing
+                            resolve(); 
                         };
                     });
                 });
@@ -1688,9 +1735,9 @@
                     $(this).addClass('hidden').removeClass('flex');
                 }
             });
-            // MODIFIED: Event listener for the new sort dropdown in the right selector
+
             $('#right-selector-sort').on('change', renderRightSelector);
-            // NEW: Global drag and drop for master list
+
             $(document).on('dragenter dragover', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1700,7 +1747,6 @@
             }).on('dragleave', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                // Check if the leave event is to an element outside the overlay
                 if (e.relatedTarget === null || $(e.relatedTarget).closest('#master-drop-overlay').length === 0) {
                     $('#master-drop-overlay').addClass('hidden');
                 }
@@ -1720,7 +1766,7 @@
                     }
                 }
             });
-            // NEW: Delegate click handler for toggling favorites
+            
             $(document).on('click', '.favorite-star-container', function() {
                 const songId = $(this).closest('li').attr('id');
                 const song = masterSongs.find(s => s.id === songId);
@@ -1728,7 +1774,6 @@
                     song.favorite = !song.favorite;
                     save();
                     recordHistory();
-                    // Re-render any visible lists that might contain the song
                     if ($('#master-view').is(':visible')) renderMaster();
                     if ($('#favorites-view').is(':visible')) renderFavorites();
                     if ($('#setlist-view').is(':visible') && currentSetlist) renderSetlist();
@@ -1823,7 +1868,7 @@
                         notes: '',
                         duration: '',
                         energy: 0,
-                        favorite: false, // NEW: Favorite property
+                        favorite: false,
                         fileInfo,
                         lastPlayed: null,
                         originalIndex: masterSongs.length
@@ -1852,7 +1897,6 @@
         }
 
         function createSongItem(song, idx, context) {
-            // NEW: Favorite star logic
             const favClass = song.favorite ? 'favorited' : '';
             const star = `<div class="w-8 flex justify-center items-center favorite-star-container ${favClass}" title="Toggle Favorite">
                         <svg class="star-outline inline-block w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.539 1.118l-3.975-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.539-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
@@ -1863,24 +1907,21 @@
             const energyIcon = `<span class="energy-icon flex items-center justify-center w-6 h-6" title="Energy: ${energyLevel}">${energyIcons[energyLevel]}</span>`;
             const isMaster = context === 'master';
             const detailsBtn = isMaster ?
-                `<button class="p-1 px-2 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition details-btn">Details</button>` : '';
-            const lastPlayedInfo = isMaster ?
-                '' : '';
+                `<button class="p-1 px-2 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition details-btn">Details</button>` : '';
             const isViewed = context === 'setlist' && viewedSongsInSetlist.has(song.id);
             const viewedClass = isViewed ? 'viewed-index' : '';
-            return $(`<li id="${song.id}" class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 draggable">
+            return $(`<li id="${song.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable">
                 ${star}
                 <div class="w-8 flex justify-center items-center font-medium text-gray-500 index-number ${viewedClass}">${idx+1}</div>
                 <div class="w-8 flex justify-center items-center">${dot}</div>
                 <div class="w-8 flex justify-center items-center">${energyIcon}</div>
                 <div class="flex items-center flex-wrap gap-2 w-full ml-2">
                     <div class="flex-1 min-w-[120px] cursor-pointer font-medium song-name">${escapeHtml(song.name)}</div>
-                    ${lastPlayedInfo}
-                    <input class="w-28 p-1 text-sm rounded border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(song.artist||'')}">
-                    <input class="w-28 p-1 text-sm rounded border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(song.notes||'')}">
-                    <input class="w-20 p-1 text-sm rounded border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(song.duration||'')}">
+                    <input class="w-28 p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(song.artist||'')}">
+                    <input class="w-28 p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(song.notes||'')}">
+                    <input class="w-20 p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(song.duration||'')}">
                     ${detailsBtn}
-                    <button class="p-1 px-2 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition delete-btn">${isMaster ? 'Delete' : 'Remove'}</button>
+                    <button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${isMaster ? 'Delete' : 'Remove'}</button>
                 </div>
             </li>`);
         }
@@ -1920,7 +1961,7 @@
                     const dateB = b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0;
                     return dateB - dateA;
                 });
-            } else if (sortMode === 'energy') { // NEW: Handle energy sorting
+            } else if (sortMode === 'energy') { 
                 list.sort((a, b) => (b.energy || 0) - (a.energy || 0));
             } else {
                 list.sort((a, b) => a.name.localeCompare(b.name));
@@ -1928,7 +1969,7 @@
 
             window.currentMasterViewSongs = list;
             const $ul = $('#master-list').empty();
-            // MODIFIED: Empty state placeholder
+
             if (list.length === 0) {
                 const placeholder = $(`<li class="p-8 text-center text-gray-500 italic"></li>`);
                 if (q || masterSelectedGenres.length > 0) {
@@ -1943,27 +1984,51 @@
                 });
             }
 
-            $('#master-list').on('click', '.details-btn', function() {
+            $('#master-list').on('click', '.details-btn', function(e) {
+                e.stopPropagation();
                 const songId = $(this).closest('li').attr('id');
                 showSongDetailsModal(songId);
             });
-            // MODIFIED: Consolidated click logic to handle selection vs. opening file
+
+            // Long press and click handlers for master list items
+            let pressTimer;
+            let isLongPress = false;
+
+            $('#master-list').off('mousedown touchstart', 'li')
+                .on('mousedown touchstart', 'li', function(e) {
+                    const $target = $(e.target);
+                    if ($target.is('input, button, a, .genre-dot, .details-btn, .energy-icon, .energy-icon *, .favorite-star-container, .favorite-star-container *')) {
+                        return;
+                    }
+                    const songId = $(this).attr('id');
+                    isLongPress = false;
+
+                    pressTimer = window.setTimeout(() => {
+                        isLongPress = true;
+                        showSongDetailsModal(songId);
+                    }, 500); 
+                }).off('mouseup touchend mouseleave', 'li')
+                .on('mouseup touchend mouseleave', 'li', function() {
+                    clearTimeout(pressTimer);
+                });
+
             $('#master-list').off('click', 'li').on('click', 'li', function(e) {
-                // Ignore clicks on inputs, buttons, etc.
+                if (isLongPress) {
+                    e.preventDefault();
+                    return;
+                }
                 if ($(e.target).is('input, button, a, .genre-dot, .details-btn, .energy-icon, .energy-icon *, .favorite-star-container, .favorite-star-container *')) {
                     return;
                 }
-
-                // If clicking song name WITHOUT shift/ctrl/meta, open the file viewer.
                 if ($(e.target).closest('.song-name').length > 0 && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
                     const songId = $(this).attr('id');
                     openSongInContext(songId, 'master');
-                    return; // Stop here, don't run selection logic.
+                    return;
                 }
-
-                // Otherwise (e.g., clicking the bar or shift+clicking the name), handle selection.
                 handleSelection(e, '#master-list');
             });
+
+
             const handleInputChange = function(e) {
                 const songId = $(this).closest('li').attr('id');
                 const song = masterSongs.find(s => s.id === songId);
@@ -2002,7 +2067,7 @@
                     recordHistory();
                 }
             });
-            // MODIFIED: Added cursorAt option to position the drag helper
+
             $('#master-list .draggable').draggable({
                 helper: function() {
                     const selected = $('#master-list .item-selected');
@@ -2011,7 +2076,7 @@
                         $(this).addClass('item-selected');
                     }
                     const count = $('#master-list .item-selected').length;
-                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
+                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
                 },
                 appendTo: 'body',
                 revert: 'invalid',
@@ -2031,7 +2096,7 @@
         function renderLeftSetlists() {
             const $c = $('#setlists-container').empty();
             Object.keys(setlists).forEach(name => {
-                const el = $(`<div class="p-2 mb-1 bg-gray-700 rounded cursor-pointer setlist-item" data-name="${escapeHtml(name)}">
+                const el = $(`<div class="p-2 mb-1 bg-gray-700 rounded-lg cursor-pointer setlist-item" data-name="${escapeHtml(name)}">
                     <div class="flex items-center">
                         <button class="del-setlist" title="Delete setlist">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
@@ -2056,7 +2121,7 @@
                     }
                 });
                 el.on('dblclick', function() {
-                    const input = $('<input class="edit-input w-full bg-gray-600 p-1 rounded" value="' + escapeHtml(name) + '">');
+                    const input = $('<input class="edit-input w-full bg-gray-600 p-1 rounded-md" value="' + escapeHtml(name) + '">');
                     $(this).find('.setlist-name').replaceWith(input);
                     input.focus();
                     input.on('blur keypress', function(ev) {
@@ -2081,7 +2146,6 @@
                 $c.append(el);
             });
 
-            // MODIFIED: Make sidebar setlists droppable for master, energy, and plays songs
             $('.setlist-item').droppable({
                 accept: '#master-list .draggable, #favorites-list .draggable, #energy-level-container .draggable, #plays-list .draggable',
                 hoverClass: 'drag-highlight',
@@ -2104,12 +2168,11 @@
                         sourceContainer = '#plays-list';
                     }
 
-                    // Check if dragging a selected item, if so, drag all selected
                     if (ui.draggable.hasClass('item-selected') && sourceContainer) {
                         $(`${sourceContainer} .item-selected`).each(function() {
                             songIdsToAdd.push($(this).attr('id'));
                         });
-                    } else { // Otherwise, just drag the single item
+                    } else { 
                         songIdsToAdd.push(ui.draggable.attr('id'));
                     }
 
@@ -2183,14 +2246,14 @@
             $('#setlist-recordings').empty();
             const setlistRecs = recordings.filter(r => r.setlist === currentSetlist);
             if (setlistRecs.length > 0) {
-                const $recsContainer = $('<div class="p-2 bg-gray-100 rounded dark:bg-gray-700"></div>');
+                const $recsContainer = $('<div class="p-2 bg-gray-100 rounded-lg dark:bg-gray-700"></div>');
                 $recsContainer.append('<h4 class="font-semibold text-sm mb-2">Recordings for this Setlist:</h4>');
                 setlistRecs.forEach(r => {
                     const $recEl = $(`
-                        <div class="flex items-center justify-between p-2 mb-1 bg-white rounded shadow-sm dark:bg-gray-600">
+                        <div class="flex items-center justify-between p-2 mb-1 bg-white rounded-lg shadow-sm dark:bg-gray-600">
                             <span class="flex-1">${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</span>
                             <audio controls src="${r.audioData}" style="height: 30px;"></audio>
-                            <button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition delete-setlist-rec" data-id="${r.id}">Delete</button>
+                            <button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-setlist-rec" data-id="${r.id}">Delete</button>
                         </div>`);
                     $recsContainer.append($recEl);
                 });
@@ -2200,7 +2263,6 @@
             let songObjects = (setlist.songs || []).map(id => masterSongs.find(s => s.id === id)).filter(Boolean);
             const sortFilterMode = $('#setlist-sort-filter-dropdown').val();
 
-            // MODIFIED: Updated sorting logic
             if (sortFilterMode !== 'custom') {
                 if (sortFilterMode === 'artist') {
                     songObjects.sort((a, b) => (a.artist || '').localeCompare(b.artist || ''));
@@ -2213,7 +2275,6 @@
                 }
             }
 
-            // MODIFIED: Directly sum the numeric value in the duration field.
             let totalRuntime = 0;
             songObjects.forEach(s => {
                 if (s && s.duration) {
@@ -2273,7 +2334,6 @@
             renderRightSelector();
         }
 
-        // MODIFIED: This function now handles sorting and filtering for the song selector.
         function renderRightSelector() {
             if (!currentSetlist) return;
             const setlist = setlists[currentSetlist];
@@ -2281,13 +2341,13 @@
             const usedIds = new Set(setlist.songs || []);
 
             let songsToDisplay = [...masterSongs];
-            // Filter by genre first
+
             if (setlistAdderSelectedGenres.length > 0) {
                 songsToDisplay = songsToDisplay.filter(s => setlistAdderSelectedGenres.includes(s.genre));
             }
 
             const searchTerm = $('#setlist-search').val().toLowerCase();
-            // Then apply text search filter
+
             if (searchTerm) {
                 songsToDisplay = songsToDisplay.filter(s => {
                     return s.name.toLowerCase().includes(searchTerm) || (s.artist || '').toLowerCase().includes(searchTerm);
@@ -2304,7 +2364,6 @@
             } else if (sortMode === 'energy') {
                 songsToDisplay.sort((a, b) => (b.energy || 0) - (a.energy || 0));
             }
-            // 'default' case does not require sorting, it uses the original order
 
             songsToDisplay.forEach(s => {
                 const li = $(`<li class="song-selector-item"><input type="checkbox" ${usedIds.has(s.id)?'checked':''} class="mr-2"><span>${escapeHtml(s.name)}</span></li>`);
@@ -2324,7 +2383,7 @@
 
         function renderPlays() {
             const $ul = $('#plays-list').empty();
-            // MODIFIED: Empty state placeholder
+
             if (masterSongs.length === 0) {
                 $ul.append('<li class="p-8 text-center text-gray-500 italic">Your master list is empty. Add some songs to start tracking plays.</li>');
                 return;
@@ -2339,8 +2398,7 @@
             }
 
             sortedSongs.forEach(s => {
-                const li = $(`<li id="${s.id}" class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700 draggable"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition">Reset</button></li>`);
-                // MODIFIED: Changed to dblclick to open, to allow single click for selection.
+                const li = $(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);
                 li.find('.flex-1').on('dblclick', () => openSongInContext(s.id, 'plays'));
                 li.find('button').click(() => {
                     playCounts[s.id] =
@@ -2352,7 +2410,7 @@
                 });
                 $ul.append(li);
             });
-            // MODIFIED: Click anywhere on the bar (except reset button) to select.
+
             $('#plays-list li.draggable').on('click', function(e) {
                 if ($(e.target).is('button') || $(e.target).closest('button').length > 0) {
                     return;
@@ -2366,27 +2424,27 @@
                         $(this).addClass('item-selected');
                     }
                     const count = $('#plays-list .item-selected').length;
-                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
+                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
                 },
                 appendTo: 'body',
                 revert: 'invalid',
                 cursorAt: {
                     left: 10,
                     top: 10
-                } // MODIFIED: Added cursorAt
+                }
             });
         }
 
         function renderRecordings() {
             const $ul = $('#recordings-list').empty();
-            // MODIFIED: Empty state placeholder
+
             if (recordings.length === 0) {
                 $ul.append('<li class="p-8 text-center text-gray-500 italic">No recordings have been saved. <br> Use the "Record Show" button in a setlist to create one.</li>');
                 return;
             }
 
             recordings.forEach(r => {
-                const li = $(`<li class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"><div class="flex-1">${escapeHtml(r.setlist)} - ${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</div><audio controls src="${r.audioData}"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition delete-rec" data-id="${r.id}">Delete</button></li>`);
+                const li = $(`<li class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"><div class="flex-1">${escapeHtml(r.setlist)} - ${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</div><audio controls src="${r.audioData}"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-rec" data-id="${r.id}">Delete</button></li>`);
                 li.find('.delete-rec').click(() => {
                     recordings = recordings.filter(rec => rec.id !== r.id);
                     renderRecordings();
@@ -2397,7 +2455,6 @@
             });
         }
 
-        // NEW: Function to render the favorites view
         function renderFavorites() {
             const $ul = $('#favorites-list').empty();
             const favorites = masterSongs.filter(s => s.favorite);
@@ -2408,9 +2465,8 @@
             }
 
             favorites.sort((a, b) => a.name.localeCompare(b.name)).forEach((s, idx) => {
-                $ul.append(createSongItem(s, idx, 'master')); // Re-use createSongItem
+                $ul.append(createSongItem(s, idx, 'master'));
             });
-            // Make favorites draggable
             $('#favorites-list .draggable').draggable({
                 helper: function() {
                     const selected = $('#favorites-list .item-selected');
@@ -2419,7 +2475,7 @@
                         $(this).addClass('item-selected');
                     }
                     const count = $('#favorites-list .item-selected').length;
-                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
+                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
                 },
                 appendTo: 'body',
                 revert: 'invalid',
@@ -2444,7 +2500,7 @@
                 songs: masterSongs.filter(s => s.energy === 1)
             }];
             levels.forEach(level => {
-                const section = $(`<div class="p-2 bg-white dark:bg-gray-800 rounded shadow">
+                const section = $(`<div class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
                 <div class="flex justify-center mb-2">${energyIcons[level.energyValue]}</div>
                 <ul class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto"></ul>
             </div>`);
@@ -2469,18 +2525,18 @@
                         $(this).addClass('item-selected');
                     }
                     const count = $('#energy-level-container .item-selected').length;
-                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
+                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
                 },
                 appendTo: 'body',
                 revert: 'invalid',
                 cursorAt: {
                     left: 10,
                     top: 10
-                } // MODIFIED: Added cursorAt
+                }
             });
         }
 
-        function renderGenres() {
+        function renderGenres(deselectAllNav) {
             $('#genre-list').empty();
             genres.forEach(g => {
                 const el = $(`<div class="genre-item"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);
@@ -2490,18 +2546,27 @@
                         if (song.genre ===
                             g.name) song.genre = '';
                     });
-                    renderGenres();
+                    renderGenres(deselectAllNav);
                     renderMaster();
                     if (currentSetlist) renderSetlist();
                     save();
                     recordHistory();
                 });
                 el.find('.genre-content').click(() => {
+                    deselectAllNav();
+                    el.addClass('selected');
+                    
                     $('#sort-filter-dropdown').val('name').change();
                     masterSelectedGenres = [g.name];
                     updateGenreFilters('#genre-filter-dropdown', masterSelectedGenres);
                     updateGenreFilterButtonText('#genre-filter-button', masterSelectedGenres);
                     renderMaster();
+                    
+                    const $sidebar = $('.left-col');
+                    if (!$sidebar.hasClass('collapsed')) {
+                       $sidebar.addClass('collapsed');
+                       $('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />');
+                    }
                 });
                 el.find('.genre-name').on('dblclick', function(e) {
                     e.stopPropagation();
@@ -2514,7 +2579,7 @@
                         const newName =
                             input.val().trim();
                         if (!newName || newName === oldName) {
-                            renderGenres();
+                            renderGenres(deselectAllNav);
                             return;
                         }
                         const genre = genres.find(genre => genre.name === oldName);
@@ -2522,7 +2587,7 @@
                         masterSongs.forEach(song => {
                             if (song.genre === oldName) song.genre = newName;
                         });
-                        renderGenres();
+                        renderGenres(deselectAllNav);
                         renderMaster();
                         if (currentSetlist) renderSetlist();
                         save();
@@ -2533,7 +2598,6 @@
             });
             updateGenreFilters('#genre-filter-dropdown', masterSelectedGenres);
             updateGenreFilters('#setlist-genre-filter-dropdown', setlistSelectedGenres);
-            // NEW: Update the setlist adder genre filter dropdown as well
             updateGenreFilters('#setlist-adder-genre-filter-dropdown', setlistAdderSelectedGenres);
             $('#genre-list').sortable({
                 axis: 'y',
@@ -2653,7 +2717,7 @@
             }
             genres.forEach(g => {
                 const isChecked = selectedArray.includes(g.name);
-                $dropdown.append(`<label class="flex items-center p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"><input type="checkbox" value="${escapeHtml(g.name)}" class="form-checkbox h-4 w-4 text-blue-600 rounded mr-2" ${isChecked ? 'checked' : ''}>${escapeHtml(g.name)}</label>`);
+                $dropdown.append(`<label class="flex items-center p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"><input type="checkbox" value="${escapeHtml(g.name)}" class="form-checkbox h-4 w-4 text-blue-600 rounded-md mr-2" ${isChecked ? 'checked' : ''}>${escapeHtml(g.name)}</label>`);
             });
         }
 
@@ -2749,14 +2813,10 @@
                 alert('File not available');
                 return;
             }
-            let finalUrl = url;
-            if (song.fileInfo.type === 'application/pdf' || song.fileInfo.name.toLowerCase().endsWith('.pdf')) {
-                finalUrl += '#toolbar=0&navpanes=0';
-            }
-
+            
             try {
                 const $iframeContainer = $('#doc-iframe-container');
-                $iframeContainer.empty().append(`<iframe class="file-iframe" id="doc-iframe" src="${finalUrl}"></iframe>`);
+                $iframeContainer.empty().append(`<iframe class="file-iframe" id="doc-iframe" src="${url}"></iframe>`);
 
                 $('#doc-view').addClass('doc-view-fullscreen').show();
                 $('#doc-nav-buttons').removeClass('hidden');
@@ -2803,13 +2863,13 @@
             scrollPosition = 0;
             resetScrollHandlers();
             $('#doc-iframe-container').on('scroll', handleDocScroll);
-            $('#doc-view').on('mousemove', showNavButtons);
+            $('#doc-view').on('mousemove click', showNavButtons);
             startInactivityTimer();
         }
 
         function resetScrollHandlers() {
             $('#doc-iframe-container').off('scroll', handleDocScroll);
-            $('#doc-view').off('mousemove', showNavButtons);
+            $('#doc-view').off('mousemove click', showNavButtons);
             clearTimeout(inactivityTimer);
         }
 
@@ -2879,7 +2939,7 @@
                     });
                 }
             });
-            return history.sort((a, b) => (b.date || '').localeCompare(a.date || '')); // Sort by most recent date
+            return history.sort((a, b) => (b.date || '').localeCompare(a.date || '')); 
         }
 
         function showSongDetailsModal(songId) {
