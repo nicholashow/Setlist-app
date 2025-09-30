@@ -70,6 +70,7 @@
             color: white;
             border: none;
             transition: background-color 0.2s;
+            flex-shrink: 0; /* Prevent button from shrinking */
         }
         .btn-add:hover {
             background-color: #2563eb;
@@ -378,31 +379,19 @@
         }
 
 
-        /* Genre list styling */
-        .genre-item,
-        .venue-item {
+        /* Sidebar List Item Styling (Unified) */
+        .sidebar-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 6px 8px;
+            padding: 8px;
             border-radius: 0.5rem;
             margin-bottom: 4px;
             background: #374151; /* Unified gray color */
             cursor: pointer;
+            color: #e5e7eb;
         }
-
-        .dark .genre-item,
-        .dark .venue-item {
-            background: #374151;
-        }
-
-        .genre-item:hover,
-        .venue-item:hover {
-            background: #4b5563;
-        }
-
-        .dark .genre-item:hover,
-        .dark .venue-item:hover {
+        .sidebar-item:hover {
             background: #4b5563;
         }
 
@@ -410,7 +399,6 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            cursor: pointer;
         }
 
         .delete-genre,
@@ -419,6 +407,7 @@
             cursor: pointer;
             padding: 2px 6px;
             border-radius: 4px;
+            flex-shrink: 0;
         }
 
         .delete-genre:hover,
@@ -433,18 +422,12 @@
 
         .genre-name,
         .venue-name {
-            color: #e5e7eb;
             font-weight: 600;
-        }
-
-        .dark .genre-name,
-        .dark .venue-name {
-            color: #e5e7eb;
         }
 
         /* Sortable placeholder */
         .sortable-placeholder {
-            height: 50px; /* Match item padding */
+            height: 66px; /* Match item padding */
             background-color: #dbeafe;
             border: 2px dashed #3b82f6;
             visibility: visible !important;
@@ -522,32 +505,31 @@
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
-            width: 36px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             padding: 0;
-            border: none;
-            border-radius: 0.5rem;
+            border: 1px solid #9ca3af;
+            border-radius: 4px;
             cursor: pointer;
             flex-shrink: 0;
+            background-color: transparent;
         }
         .item-creation input[type="color"]::-webkit-color-swatch {
-            border-radius: 0.5rem;
-            border: 2px solid #6b7280;
-        }
-        .dark .item-creation input[type="color"]::-webkit-color-swatch {
-            border-color: #9ca3af;
+            border-radius: 3px;
+            border: none;
         }
 
         .item-name-input {
-            flex-grow: 1;
             padding: 4px 8px;
             border-radius: 0.5rem;
             background: #1f2937;
             border: 1px solid #4b5563;
             color: white;
             height: 32px;
+            min-width: 0; /* Important for flex-shrink to work */
+            flex: 1 1 auto; /* Allow shrinking and growing */
         }
-
+        
         .genre-edit-input {
             width: 100%;
             padding: 2px 4px;
@@ -701,7 +683,7 @@
         }
 
         /* Increase touch target size for easier tapping on touch devices */
-        #master-list > li, #setlist-list > li, #favorites-list > li, #plays-list > li {
+        #master-list > li, #setlist-list > li, #favorites-list > li, #plays-list > li, #genre-song-list > li {
             padding-top: 1rem;
             padding-bottom: 1rem;
         }
@@ -771,7 +753,7 @@
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
     <div class="flex h-screen font-sans" id="app">
-        <aside class="left-col w-64 bg-gray-800 text-white p-4 overflow-auto flex-shrink-0 dark:bg-black">
+        <aside class="left-col w-64 bg-gray-800 text-white p-4 flex-shrink-0 dark:bg-black">
             <div class="app-header app-header-selected" id="home-btn">
                 <h1 class="text-2xl font-bold mb-2 underline">ALL SONGS</h1>
                 <p class="text-sm whitespace-nowrap">Organize music performances</p>
@@ -788,10 +770,10 @@
                     <button class="w-full mt-1 p-1 text-sm rounded-md btn-add" id="add-setlist-btn">Add Setlist</button>
                 </div>
             </div>
-            <div class="mb-2 p-2 rounded-lg bg-gray-700 cursor-pointer uppercase" id="nav-favorites">Favorites</div>
-            <div class="mb-2 p-2 rounded-lg bg-gray-700 cursor-pointer uppercase" id="nav-plays">Plays</div>
-            <div class="mb-2 p-2 rounded-lg bg-gray-700 cursor-pointer uppercase" id="nav-recordings">Recordings</div>
-            <div class="mb-2 p-2 rounded-lg bg-gray-700 cursor-pointer uppercase" id="nav-energy">Energy Levels</div>
+            <div class="sidebar-item" id="nav-favorites">Favorites</div>
+            <div class="sidebar-item" id="nav-plays">Plays</div>
+            <div class="sidebar-item" id="nav-recordings">Recordings</div>
+            <div class="sidebar-item" id="nav-energy">Energy Levels</div>
 
             <div class="mt-4">
                 <h3 class="text-sm font-semibold uppercase">Genres</h3>
@@ -1002,6 +984,27 @@
                 </div>
             </section>
 
+            <section class="hidden" id="genre-view">
+                 <div class="flex items-center justify-between mb-2">
+                     <h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
+                    <div class="relative">
+                        <select id="genre-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
+                            <option value="name">Sort by Name</option>
+                            <option value="artist">Sort by Artist</option>
+                            <option value="lastPlayed">Sort by Last Played</option>
+                            <option value="energy">Sort by Energy</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul class="divide-y divide-gray-200 dark:divide-gray-700" id="genre-song-list"></ul>
+                </div>
+            </section>
+
             <section class="hidden" id="plays-view">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="text-xl font-bold">Plays</h2>
@@ -1104,9 +1107,9 @@
             // Level 0 (Outline)
             `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 dark:text-gray-500"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`,
             // Level 1 (Smallest, 1/3 Filled)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="67%" style="stop-color:transparent" /><stop offset="67%" style="stop-color:#FFD700" /></linearGradient></defs><path transform="scale(0.85)" transform-origin="center" d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
-            // Level 2 (Medium, 50% Filled)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="50%" style="stop-color:transparent" /><stop offset="50%" style="stop-color:#FFD700" /></linearGradient></defs><path transform="scale(0.95)" transform-origin="center" d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
+            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="67%" style="stop-color:transparent" /><stop offset="67%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M12.5 5.5L6.5 14h5l-1 5 6-7h-5l1-4.5z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
+            // Level 2 (Medium, 2/3 Filled)
+            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="33%" style="stop-color:transparent" /><stop offset="33%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M13 3L5 14h7l-1 7 8-9h-7l1-6z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
             // Level 3 (Largest, Fiery with Sparks)
             `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-4 -4 32 32" class="energy-svg-3">
                 <defs>
@@ -1122,14 +1125,13 @@
                     <path d="M6,17 L6.5,21 L9,21.5 L6.5,22 L6,26 L5.5,22 L3,21.5 L5.5,21 Z" fill="#FCD34D"/>
                     <path d="M18,17 L18.5,21 L21,21.5 L18.5,22 L18,26 L17.5,22 L15,21.5 L17.5,21 Z" fill="#FCD34D"/>
                 </g>
-                <path transform="scale(1.1)" transform-origin="center" d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-3)" stroke="#B45309" stroke-width="1.5"/>
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-3)" stroke="#B45309" stroke-width="1.5"/>
             </svg>`
         ];
         let venues = [];
         let recordings = [];
         let masterSelectedGenres = [];
-        let setlistSelectedGenres = [];
-        let setlistAdderSelectedGenres = [];
+        let currentGenre = null;
         let viewedSongsInSetlist = new Set();
         let currentViewerContext = null;
         let currentViewerList = [];
@@ -1381,7 +1383,8 @@
             updateTopLeast();
             recordHistory();
 
-            $(document).on('click', '#master-list .genre-dot, #setlist-list .genre-dot, #favorites-list .genre-dot', function() {
+            $(document).on('click', '.genre-dot', function(e) {
+                e.stopPropagation();
                 const li = $(this).closest('li');
                 const songId = li.attr('id');
                 const song = masterSongs.find(s => s.id === songId);
@@ -1391,26 +1394,24 @@
                 idx = (idx + 1) % genreNames.length;
                 song.genre = genreNames[idx];
                 
-                // Targeted update for genre dot
-                 const newDot = `<span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span>`;
-                 $(`li[id="${songId}"]`).find('.genre-dot').replaceWith(newDot);
+                const newDot = `<span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span>`;
+                $(`li[id="${songId}"]`).find('.genre-dot').replaceWith(newDot);
 
                 save();
                 recordHistory();
             });
-            $(document).on('click', '.energy-icon', function() {
+            $(document).on('click', '.energy-icon', function(e) {
+                e.stopPropagation(); // Prevent other click handlers on the list item
                 const songId = $(this).closest('li').attr('id');
                 const song = masterSongs.find(s => s.id === songId);
                 if (song) {
                     song.energy = (song.energy || 0) + 1;
                     if (song.energy > 3) song.energy = 0;
 
-                    // Targeted DOM update to preserve animation
                     const newIconHtml = energyIcons[song.energy || 0];
                     const $listItems = $(`li[id="${songId}"]`);
                     $listItems.find('.energy-icon').html(newIconHtml);
 
-                    // If new level is 3, trigger the animation
                     if (song.energy === 3) {
                         $listItems.find('.energy-svg-3').each(function() {
                             const $svg = $(this);
@@ -1480,6 +1481,8 @@
                 show('favorites');
             });
             $('#favorites-sort-dropdown').on('change', renderFavorites);
+            $('#genre-sort-dropdown').on('change', () => renderGenreView(currentGenre));
+
 
             $('#nav-plays').click(() => {
                 deselectAllNav();
@@ -1568,7 +1571,6 @@
             });
             
             $('#setlist-search').on('input', renderRightSelector);
-            $('#search-by-name, #search-by-artist').on('change', renderRightSelector);
             $('#sort-dropdown').on('change', renderMaster);
 
             $('#genre-filter-button').on('click', () => $('#genre-filter-dropdown').toggleClass('hidden'));
@@ -1589,25 +1591,9 @@
             });
             
             $('#setlist-sort-filter-dropdown').on('change', function() {
-                setlistSelectedGenres = []; 
                 renderSetlist();
             });
            
-            $('#setlist-adder-genre-filter-button').on('click', () => $('#setlist-adder-genre-filter-dropdown').toggleClass('hidden'));
-            $('#setlist-adder-clear-filters-btn').on('click', () => {
-                setlistAdderSelectedGenres = [];
-                updateGenreFilters('#setlist-adder-genre-filter-dropdown', setlistAdderSelectedGenres);
-                updateGenreFilterButtonText('#setlist-adder-genre-filter-button', setlistAdderSelectedGenres, 'Filter Genres');
-                renderRightSelector();
-            });
-            $(document).on('change', '#setlist-adder-genre-filter-dropdown input[type="checkbox"]', function() {
-                setlistAdderSelectedGenres = [];
-                $('#setlist-adder-genre-filter-dropdown input:checked').each(function() {
-                    setlistAdderSelectedGenres.push($(this).val());
-                });
-                updateGenreFilterButtonText('#setlist-adder-genre-filter-button', setlistAdderSelectedGenres, 'Genre');
-                renderRightSelector();
-            });
             $(document).on('click', function(e) {
                 if (!$(e.target).closest('#genre-filter-container').length) {
                     $('#genre-filter-dropdown').addClass('hidden');
@@ -1837,7 +1823,8 @@
                 }
             });
             
-            $(document).on('click', '.favorite-star-container', function() {
+            $(document).on('click', '.favorite-star-container', function(e) {
+                e.stopPropagation();
                 const songId = $(this).closest('li').attr('id');
                 const song = masterSongs.find(s => s.id === songId);
                 if (song) {
@@ -1845,7 +1832,6 @@
                     save();
                     recordHistory();
                     
-                    // Targeted update for star
                     const $starContainer = $(`li[id="${songId}"]`).find('.favorite-star-container');
                     if (song.favorite) {
                         $starContainer.addClass('favorited');
@@ -1853,7 +1839,6 @@
                         $starContainer.removeClass('favorited');
                     }
 
-                    // If favorites view is open, a full re-render is necessary to add/remove item
                     if ($('#favorites-view').is(':visible')) {
                         renderFavorites();
                     }
@@ -2091,7 +2076,7 @@
                     clearTimeout(pressTimer);
                 });
 
-            $('#master-list').off('click', 'li').on('click', 'li', function(e) {
+            $('#master-list, #favorites-list, #genre-song-list').off('click', 'li').on('click', 'li', function(e) {
                 if (isLongPress) {
                     e.preventDefault();
                     return;
@@ -2104,7 +2089,7 @@
                     openSongInContext(songId, 'master');
                     return;
                 }
-                handleSelection(e, '#master-list');
+                handleSelection(e, `#${$(this).parent().attr('id')}`);
             });
 
 
@@ -2119,10 +2104,10 @@
                     recordHistory();
                 }
             };
-            $('#master-list, #setlist-list, #favorites-list').off('change').on('change', '.artist-input, .notes-input, .duration-input', handleInputChange);
+            $('main').off('change').on('change', '.artist-input, .notes-input, .duration-input', handleInputChange);
 
 
-            $('#master-list, #favorites-list').on('click', '.delete-btn', function() {
+            $('#master-list, #favorites-list, #genre-song-list').on('click', '.delete-btn', function() {
                 const li = $(this).closest('li');
                 const songId = li.attr('id');
                 if (confirm(`Are you sure you want to permanently delete "${masterSongs.find(s=>s.id === songId).name}"?`)) {
@@ -2136,11 +2121,10 @@
                     removeFromAllSetlists([songId]);
                     masterSongs = masterSongs.filter(x => x.id !== songId);
                     
-                    if ($('#favorites-view').is(':visible')) {
-                        renderFavorites();
-                    } else {
-                        renderMaster();
-                    }
+                    const visibleView = $('main > section:visible').attr('id');
+                    if (visibleView === 'favorites-view') renderFavorites();
+                    else if (visibleView === 'genre-view') renderGenreView(currentGenre);
+                    else renderMaster();
                     
                     if (currentSetlist) renderSetlist();
                     updateTopLeast();
@@ -2177,7 +2161,7 @@
         function renderLeftSetlists() {
             const $c = $('#setlists-container').empty();
             Object.keys(setlists).forEach(name => {
-                const el = $(`<div class="p-2 mb-1 rounded-lg cursor-pointer setlist-item bg-gray-700" data-name="${escapeHtml(name)}">
+                const el = $(`<div class="p-2 mb-1 rounded-lg cursor-pointer setlist-item bg-gray-700">
                     <div class="flex items-center">
                         <button class="del-setlist" title="Delete setlist">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
@@ -2228,7 +2212,7 @@
             });
 
             $('.setlist-item').droppable({
-                accept: '#master-list .draggable, #favorites-list .draggable, #energy-level-container .draggable, #plays-list .draggable',
+                accept: '#master-list .draggable, #favorites-list .draggable, #genre-song-list .draggable, #plays-list .draggable',
                 hoverClass: 'drag-highlight',
                 drop: function(e, ui) {
                     const setlistName = $(this).data('name');
@@ -2237,20 +2221,11 @@
                     let songIdsToAdd = [];
 
 
-                    let sourceContainer =
-                        null;
-                    if (ui.draggable.closest('#master-list').length) {
-                        sourceContainer = '#master-list';
-                    } else if (ui.draggable.closest('#favorites-list').length) {
-                        sourceContainer = '#favorites-list';
-                    } else if (ui.draggable.closest('#energy-level-container').length) {
-                        sourceContainer = '#energy-level-container';
-                    } else if (ui.draggable.closest('#plays-list').length) {
-                        sourceContainer = '#plays-list';
-                    }
+                    let sourceContainerId = ui.draggable.closest('ul').attr('id');
+                    let sourceSelector = `#${sourceContainerId}`;
 
-                    if (ui.draggable.hasClass('item-selected') && sourceContainer) {
-                        $(`${sourceContainer} .item-selected`).each(function() {
+                    if (ui.draggable.hasClass('item-selected')) {
+                        $(`${sourceSelector} .item-selected`).each(function() {
                             songIdsToAdd.push($(this).attr('id'));
                         });
                     } else { 
@@ -2272,8 +2247,8 @@
                             renderSetlist();
                         }
                     }
-                    if (sourceContainer) {
-                        $(`${sourceContainer} .item-selected`).removeClass('item-selected');
+                    if (sourceSelector) {
+                        $(`${sourceSelector} .item-selected`).removeClass('item-selected');
                     }
                 }
             });
@@ -2401,14 +2376,11 @@
                     ui.item.removeClass('dragging-source');
                 },
                 update: function(event, ui) {
-                    // Set dropdown to custom since user has manually sorted
                     $('#setlist-sort-filter-dropdown').val('custom');
                     
-                    // Get the new order of song IDs from the DOM
                     const ids = $(this).sortable('toArray');
                     setlists[currentSetlist].songs = ids;
                     
-                    // Re-number the items in the list without a full re-render for a smooth experience
                     $('#setlist-list .index-number').each(function(index) {
                         $(this).text(index + 1);
                     });
@@ -2427,10 +2399,6 @@
             const usedIds = new Set(setlist.songs || []);
 
             let songsToDisplay = [...masterSongs];
-
-            if (setlistAdderSelectedGenres.length > 0) {
-                songsToDisplay = songsToDisplay.filter(s => setlistAdderSelectedGenres.includes(s.genre));
-            }
 
             const searchTerm = $('#setlist-search').val().toLowerCase();
 
@@ -2545,11 +2513,6 @@
             const $ul = $('#favorites-list').empty();
             let favorites = masterSongs.filter(s => s.favorite);
 
-            if (favorites.length === 0) {
-                $ul.append('<li class="p-8 text-center text-gray-500 italic">You haven\'t favorited any songs yet. <br> Click the star next to a song\'s number to add it.</li>');
-                return;
-            }
-
             const sortMode = $('#favorites-sort-dropdown').val();
             if (sortMode === 'artist') {
                 favorites.sort((a, b) => (a.artist || '').localeCompare(b.artist || ''));
@@ -2577,6 +2540,51 @@
                         $(this).addClass('item-selected');
                     }
                     const count = $('#favorites-list .item-selected').length;
+                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
+                },
+                appendTo: 'body',
+                revert: 'invalid',
+                cursorAt: {
+                    left: 10,
+                    top: 10
+                }
+            });
+        }
+
+        function renderGenreView(genreName) {
+            currentGenre = genreName;
+            $('#genre-view-title').text(`Genre: ${genreName}`);
+            const $ul = $('#genre-song-list').empty();
+            
+            let songsInGenre = masterSongs.filter(s => s.genre === genreName);
+
+            const sortMode = $('#genre-sort-dropdown').val();
+            if (sortMode === 'artist') {
+                songsInGenre.sort((a, b) => (a.artist || '').localeCompare(b.artist || ''));
+            } else if (sortMode === 'lastPlayed') {
+                songsInGenre.sort((a, b) => {
+                    const dateA = a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0;
+                    const dateB = b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0;
+                    return dateB - dateA;
+                });
+            } else if (sortMode === 'energy') { 
+                songsInGenre.sort((a, b) => (b.energy || 0) - (a.energy || 0));
+            } else { // Default to name
+                songsInGenre.sort((a, b) => a.name.localeCompare(b.name));
+            }
+
+            songsInGenre.forEach((s, idx) => {
+                $ul.append(createSongItem(s, idx, 'master'));
+            });
+            
+             $('#genre-song-list .draggable').draggable({
+                helper: function() {
+                    const selected = $('#genre-song-list .item-selected');
+                    if (selected.length === 0 || !$(this).hasClass('item-selected')) {
+                        $('#genre-song-list .item-selected').removeClass('item-selected');
+                        $(this).addClass('item-selected');
+                    }
+                    const count = $('#genre-song-list .item-selected').length;
                     return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
                 },
                 appendTo: 'body',
@@ -2641,8 +2649,9 @@
         function renderGenres(deselectAllNav) {
             $('#genre-list').empty();
             genres.forEach(g => {
-                const el = $(`<div class="genre-item"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);
-                el.find('.delete-genre').click(() => {
+                const el = $(`<div class="sidebar-item genre-item"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);
+                el.find('.delete-genre').click((e) => {
+                    e.stopPropagation();
                     genres = genres.filter(genre => genre.name !== g.name);
                     masterSongs.forEach(song => {
                         if (song.genre ===
@@ -2657,13 +2666,8 @@
                 el.find('.genre-content').click(() => {
                     deselectAllNav();
                     el.addClass('selected');
-                    
-                    show('master');
-                    $('#sort-filter-dropdown').val('name').change();
-                    masterSelectedGenres = [g.name];
-                    updateGenreFilters('#genre-filter-dropdown', masterSelectedGenres);
-                    updateGenreFilterButtonText('#genre-filter-button', masterSelectedGenres);
-                    renderMaster();
+                    renderGenreView(g.name);
+                    show('genre-view');
                 });
                 el.find('.genre-name').on('dblclick', function(e) {
                     e.stopPropagation();
@@ -2694,8 +2698,6 @@
                 $('#genre-list').append(el);
             });
             updateGenreFilters('#genre-filter-dropdown', masterSelectedGenres);
-            updateGenreFilters('#setlist-genre-filter-dropdown', setlistSelectedGenres);
-            updateGenreFilters('#setlist-adder-genre-filter-dropdown', setlistAdderSelectedGenres);
             $('#genre-list').sortable({
                 axis: 'y',
                 cursor: 'move',
@@ -2717,7 +2719,7 @@
         function renderVenues(deselectAllNav) {
             $('#venue-list').empty();
             venues.forEach(v => {
-                const el = $(`<div class="venue-item"><div class="venue-name text-sm">${escapeHtml(v.name)}</div><span class="delete-venue" title="Delete venue">✕</span></div>`);
+                const el = $(`<div class="sidebar-item venue-item"><div class="venue-name text-sm">${escapeHtml(v.name)}</div><span class="delete-venue" title="Delete venue">✕</span></div>`);
                 el.on('click', function(e) {
                     if ($(e.target).closest('.delete-venue, .genre-edit-input').length) return;
                     if (deselectAllNav) deselectAllNav();
@@ -2869,6 +2871,7 @@
             renderRecordings();
             renderFavorites();
             renderEnergyLevels();
+            if (currentGenre) renderGenreView(currentGenre);
             updateTopLeast();
         }
 
@@ -2975,30 +2978,11 @@
             clearTimeout(inactivityTimer);
         }
 
-        function handleDocScroll() {
-            const scrollTop = $('#doc-iframe-container').scrollTop();
-            scrollPosition = scrollTop;
-            if (scrollTop <= 10) {
-                showNavButtons();
-            }
-            clearTimeout(inactivityTimer);
-            inactivityTimer = setTimeout(() => {
-                $('#doc-nav-buttons').addClass('hidden');
-                $('#doc-top-bar').removeClass('visible');
-            }, 2000);
-        }
-
         function showNavButtons() {
             $('#doc-nav-buttons').removeClass('hidden');
-            if (scrollPosition <= 10) {
-                $('#doc-top-bar').addClass('visible');
-            } else {
-                $('#doc-top-bar').removeClass('visible');
-            }
             clearTimeout(inactivityTimer);
             inactivityTimer = setTimeout(() => {
                 $('#doc-nav-buttons').addClass('hidden');
-                $('#doc-top-bar').removeClass('visible');
             }, 3000);
         }
 
@@ -3006,7 +2990,6 @@
             clearTimeout(inactivityTimer);
             inactivityTimer = setTimeout(() => {
                 $('#doc-nav-buttons').addClass('hidden');
-                $('#doc-top-bar').removeClass('visible');
             }, 3000);
         }
 
@@ -3014,7 +2997,9 @@
             $('main > section').hide();
             $(`#${view}-view`).show();
 
-            if (view === 'master' || view === 'favorites') {
+            currentGenre = (view === 'genre-view') ? currentGenre : null;
+
+            if (['master-view', 'favorites-view', 'genre-view'].includes(view)) {
                 $('#master-upload-container').show();
             } else {
                 $('#master-upload-container').hide();
