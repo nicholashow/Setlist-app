@@ -22,6 +22,10 @@
             overflow: hidden;
         }
 
+        body.doc-viewer-active {
+            overflow: hidden;
+        }
+
         .sortable {
             list-style: none;
             padding: 0;
@@ -58,6 +62,17 @@
         .venue-item.selected .venue-name,
         .genre-item.selected .genre-name {
             color: white;
+        }
+
+        /* Consistent Add Button Style */
+        .btn-add {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            transition: background-color 0.2s;
+        }
+        .btn-add:hover {
+            background-color: #2563eb;
         }
 
         .genre-dot {
@@ -149,7 +164,7 @@
             width: 100%;
             height: 100%;
             z-index: 99;
-            overflow: auto; /* Ensure scrollbars can appear for multi-page content */
+            overflow-y: scroll; /* Force scrolling for multi-page PDFs */
             -webkit-overflow-scrolling: touch; /* Enable momentum scrolling */
         }
 
@@ -296,15 +311,21 @@
 
         /* Header styling */
         .app-header {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
             color: white;
             padding: 1rem;
             border-radius: 0.75rem;
             margin-bottom: 1rem;
-        }
-
-        #home-btn {
+            transition: background 0.3s ease;
             cursor: pointer;
+        }
+        .app-header-selected {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        }
+        .app-header-unselected {
+            background: #4b5563; /* Same gray as other unselected items */
+        }
+        .app-header-unselected:hover {
+            background: #6b7280;
         }
 
         /* Stats section */
@@ -499,29 +520,33 @@
             width: 100%;
         }
 
-        .color-preview {
-            width: 24px;
-            height: 24px;
-            border-radius: 4px;
-            border: 1px dotted #000;
+        .item-creation input[type="color"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 36px;
+            height: 32px;
+            padding: 0;
+            border: none;
+            border-radius: 0.5rem;
             cursor: pointer;
-            flex-shrink: 0;
-            background-color: transparent;
         }
-
-        .dark .color-preview {
-            border-color: #fff;
+        .item-creation input[type="color"]::-webkit-color-swatch {
+            border-radius: 0.5rem;
+            border: 2px solid #6b7280;
+        }
+        .dark .item-creation input[type="color"]::-webkit-color-swatch {
+            border-color: #9ca3af;
         }
 
         .item-name-input {
-            flex: 1;
-            min-width: 0;
+            flex-grow: 1;
             padding: 4px 8px;
             border-radius: 0.5rem;
             background: #374151;
             border: 1px solid #4b5563;
             color: white;
-            width: 100px;
+            height: 32px;
         }
 
         .dark .item-name-input {
@@ -544,42 +569,18 @@
             color: #fff;
         }
 
-        /* Color picker styling */
-        #genre-color {
-            background: transparent;
-            border: none;
-            padding: 0;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-        }
-
-        #genre-color::-webkit-color-swatch-wrapper {
-            padding: 0;
-            background: transparent;
-        }
-
-        #genre-color::-webkit-color-swatch {
-            border: none;
-            border-radius: 4px;
-        }
-
-        #genre-color::-moz-color-swatch {
-            border: none;
-            border-radius: 4px;
-        }
-
-        /* Left sidebar scroll fix */
+        /* Sidebar Transition */
         .left-col {
             overflow-x: hidden;
             overflow-y: auto;
-            transition: width 0.3s ease, padding 0.3s ease;
+            transition: all 0.3s ease-in-out;
             position: relative;
         }
 
         .left-col.collapsed {
             width: 0;
             padding: 0;
+            overflow: hidden;
         }
 
         #sidebar-toggle {
@@ -594,7 +595,7 @@
             height: 60px;
             border-radius: 0 8px 8px 0;
             flex-shrink: 0;
-            transition: background-color 0.2s;
+            transition: all 0.3s ease-in-out;
         }
 
         #sidebar-toggle:hover {
@@ -673,15 +674,18 @@
         }
 
         /* Energy Level 3 Animation */
+        .energy-svg-3 {
+            overflow: visible !important;
+        }
         .energy-svg-3 .sparks path {
             opacity: 0;
             transform-origin: center;
         }
-        .spark-burst .sparks path {
+        .energy-svg-3.spark-burst .sparks path {
             animation: spark-burst-indiv 0.4s ease-out forwards;
         }
-        .spark-burst .sparks path:nth-child(2) { animation-delay: 0.05s; }
-        .spark-burst .sparks path:nth-child(3) { animation-delay: 0.1s; }
+        .energy-svg-3.spark-burst .sparks path:nth-child(2) { animation-delay: 0.05s; }
+        .energy-svg-3.spark-burst .sparks path:nth-child(3) { animation-delay: 0.1s; }
 
         @keyframes spark-burst-indiv {
             0% { transform: scale(0.5); opacity: 0.5; }
@@ -772,12 +776,11 @@
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
     <div class="flex h-screen font-sans" id="app">
         <aside class="left-col w-64 bg-gray-800 text-white p-4 overflow-auto flex-shrink-0 dark:bg-black">
-            <div class="app-header" id="home-btn">
+            <div class="app-header app-header-selected" id="home-btn">
                 <h1 class="text-2xl font-bold mb-2 underline">ALL SONGS</h1>
                 <p class="text-sm whitespace-nowrap">Organize music performances</p>
             </div>
 
-            <div class="mb-2 p-2 rounded-lg bg-gray-700 cursor-pointer selected uppercase" id="nav-master">ALL SONGS</div>
             <div class="mb-2 p-2 rounded-lg bg-gray-700" id="nav-setlists">
                 <div class="flex items-center justify-between">
                     <span class="font-medium uppercase">Setlists</span>
@@ -786,7 +789,7 @@
                 <div class="mt-2" id="setlists-container"></div>
                 <div class="mt-2">
                     <input class="w-full p-1 text-sm rounded-md bg-gray-700" id="new-setlist-name" placeholder="New setlist name" />
-                    <button class="w-full mt-1 p-1 text-sm rounded-md bg-blue-600 hover:bg-blue-700" id="add-setlist-btn">Add Setlist</button>
+                    <button class="w-full mt-1 p-1 text-sm rounded-md btn-add" id="add-setlist-btn">Add Setlist</button>
                 </div>
             </div>
             <div class="mb-2 p-2 rounded-lg bg-gray-700 cursor-pointer uppercase" id="nav-favorites">Favorites</div>
@@ -799,9 +802,9 @@
                 <div class="mt-2 space-y-1" id="genre-list"></div>
                 <div class="mt-2">
                     <div class="item-creation">
+                        <input type="color" id="genre-color" value="#3b82f6" title="Select color">
                         <input class="item-name-input" id="genre-name" placeholder="New genre" />
-                        <input type="color" id="genre-color" value="#3b82f6" class="h-8 w-8 cursor-pointer" title="Select color">
-                        <button class="p-1 px-2 text-sm rounded-md bg-blue-600 whitespace-nowrap hover:bg-blue-700" id="add-genre">Add</button>
+                        <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-genre">Add</button>
                     </div>
                 </div>
             </div>
@@ -812,7 +815,7 @@
                 <div class="mt-2">
                     <div class="item-creation">
                         <input class="item-name-input" id="venue-name" placeholder="New venue" />
-                        <button class="p-1 px-2 text-sm rounded-md bg-blue-600 whitespace-nowrap hover:bg-blue-700" id="add-venue">Add</button>
+                        <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-venue">Add</button>
                     </div>
                 </div>
             </div>
@@ -1092,8 +1095,8 @@
             `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 dark:text-gray-500"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`,
             // Level 1 (1/3 Filled)
             `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="67%" style="stop-color:transparent" /><stop offset="67%" style="stop-color:#FFD700" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
-            // Level 2 (2/3 Filled)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="33%" style="stop-color:transparent" /><stop offset="33%" style="stop-color:#FFD700" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
+            // Level 2 (50% Filled)
+            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="50%" style="stop-color:transparent" /><stop offset="50%" style="stop-color:#FFD700" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
             // Level 3 (Fiery with Sparks)
             `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-4 -4 32 32" class="energy-svg-3">
                 <defs>
@@ -1349,7 +1352,8 @@
         // ================== Initialization ==================
         $(function() {
             function deselectAllNav() {
-                $('#nav-master, #nav-favorites, #nav-plays, #nav-recordings, #nav-energy').removeClass('selected');
+                $('#home-btn').removeClass('app-header-selected').addClass('app-header-unselected');
+                $('#nav-favorites, #nav-plays, #nav-recordings, #nav-energy').removeClass('selected');
                 $('#setlists-container .setlist-item').removeClass('selected');
                 $('#venue-list .venue-item').removeClass('selected');
                 $('#genre-list .genre-item').removeClass('selected');
@@ -1435,10 +1439,6 @@
                 save();
                 recordHistory();
             });
-            $('#genre-color').change(function() {
-                const color = $(this).val();
-                $('#color-preview').css('background-color', color);
-            });
             $('#sidebar-toggle').click(function() {
                 const $sidebar = $('.left-col');
                 $sidebar.toggleClass('collapsed');
@@ -1455,11 +1455,8 @@
         function bindNav(deselectAllNav) {
 
             $('#home-btn').click(() => {
-                $('#nav-master').click();
-            });
-            $('#nav-master').click(() => {
                 deselectAllNav();
-                $('#nav-master').addClass('selected');
+                $('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');
                 show('master');
                 autoCollapseSidebar();
             });
@@ -1637,6 +1634,7 @@
             });
             $('#close-doc').click(function(e) {
                 e.stopPropagation();
+                $('body').removeClass('doc-viewer-active');
                 $('#doc-view').removeClass('doc-view-fullscreen').hide();
                 $('#doc-nav-buttons').removeClass('hidden');
                 $('#doc-top-bar').removeClass('hidden-controls');
@@ -2092,14 +2090,11 @@
                     if ($(this).hasClass('artist-input')) song.artist = e.target.value;
                     else if ($(this).hasClass('notes-input')) song.notes = e.target.value;
                     else if ($(this).hasClass('duration-input')) song.duration = e.target.value;
-                    renderMaster();
-                    if (currentSetlist) renderSetlist();
-                    if ($('#favorites-view').is(':visible')) renderFavorites();
                     save();
                     recordHistory();
                 }
             };
-            $('#master-list, #setlist-list, #favorites-list').on('change', '.artist-input, .notes-input, .duration-input', handleInputChange);
+            $('#master-list, #setlist-list, #favorites-list').off('change').on('change', '.artist-input, .notes-input, .duration-input', handleInputChange);
 
 
             $('#master-list, #favorites-list').on('click', '.delete-btn', function() {
@@ -2169,7 +2164,7 @@
                         recordings = recordings.filter(r => r.setlist !== name);
                         if (currentSetlist === name) {
                             currentSetlist = null;
-                            $('#nav-master').trigger('click');
+                            $('#home-btn').trigger('click');
                         }
                         renderLeftSetlists();
                         save();
@@ -2362,13 +2357,10 @@
             }
             $('#setlist-list').sortable({
                 axis: 'y',
-                containment: 'parent',
                 cursor: 'move',
                 placeholder: "sortable-placeholder",
-                tolerance: 'pointer',
+                tolerance: 'pointer', // Better for detecting movement
                 scroll: true,
-                scrollSensitivity: 40,
-                scrollSpeed: 40,
                 forcePlaceholderSize: true,
                 helper: 'clone',
                 start: function(e, ui) {
@@ -2620,6 +2612,7 @@
                     deselectAllNav();
                     el.addClass('selected');
                     
+                    show('master');
                     $('#sort-filter-dropdown').val('name').change();
                     masterSelectedGenres = [g.name];
                     updateGenreFilters('#genre-filter-dropdown', masterSelectedGenres);
@@ -2701,7 +2694,7 @@
                     if (currentSetlist) renderSetlist();
                     save();
                     recordHistory();
-                    if ($('#venue-setlists-view').is(':visible')) $('#nav-master').trigger('click');
+                    if ($('#venue-setlists-view').is(':visible')) $('#home-btn').trigger('click');
                 });
                 el.find('.venue-name').on('dblclick', function(e) {
                     e.stopPropagation();
@@ -2844,8 +2837,8 @@
             song.lastPlayed = new Date().toISOString().split('T')[0];
             updateTopLeast();
             save();
-            recordHistory();
-            renderMaster();
+            // No recordHistory() here, as viewing a song isn't a state change we want to undo
+            renderMaster(); // Re-render to show updated last played date
 
             if (context === 'master') {
                 currentViewerList = window.currentMasterViewSongs;
@@ -2874,6 +2867,7 @@
             }
             
             try {
+                $('body').addClass('doc-viewer-active');
                 const $iframeContainer = $('#doc-iframe-container');
                 $iframeContainer.empty().append(`<iframe class="file-iframe" id="doc-iframe" src="${url}"></iframe>`);
 
