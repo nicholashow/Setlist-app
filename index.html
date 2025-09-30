@@ -687,6 +687,10 @@
             padding-top: 1rem;
             padding-bottom: 1rem;
         }
+        #plays-list > li {
+            padding-left: 1rem;
+        }
+
 
         /* Responsive styles */
         @media (max-width: 1024px) {
@@ -777,7 +781,6 @@
 
             <div class="mt-4">
                 <h3 class="text-sm font-semibold uppercase">Genres</h3>
-                <div class="mt-2 space-y-1" id="genre-list"></div>
                 <div class="mt-2">
                     <div class="item-creation">
                         <input type="color" id="genre-color" value="#3b82f6" title="Select color">
@@ -785,6 +788,7 @@
                         <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-genre">Add</button>
                     </div>
                 </div>
+                <div class="mt-2 space-y-1" id="genre-list"></div>
             </div>
 
             <div class="mt-4">
@@ -1119,11 +1123,11 @@
                     </radialGradient>
                 </defs>
                 <g class="sparks">
-                    <path d="M12,0 L12.5,4 L15,4.5 L12.5,5 L12,9 L11.5,5 L9,4.5 L11.5,4 Z" fill="#FCD34D"/>
-                    <path d="M21,8 L21.5,12 L24,12.5 L21.5,13 L21,17 L20.5,13 L18,12.5 L20.5,12 Z" fill="#FCD34D"/>
-                    <path d="M3,8 L3.5,12 L6,12.5 L3.5,13 L3,17 L2.5,13 L0,12.5 L2.5,12 Z" fill="#FCD34D"/>
-                    <path d="M6,17 L6.5,21 L9,21.5 L6.5,22 L6,26 L5.5,22 L3,21.5 L5.5,21 Z" fill="#FCD34D"/>
-                    <path d="M18,17 L18.5,21 L21,21.5 L18.5,22 L18,26 L17.5,22 L15,21.5 L17.5,21 Z" fill="#FCD34D"/>
+                    <path d="M12,0 L12.5,4 L15,4.5 L12.5,5 L12,9 L11.5,5 L9,4.5 L11.5,4 Z" fill="#FCD34D" opacity="1"/>
+                    <path d="M21,8 L21.5,12 L24,12.5 L21.5,13 L21,17 L20.5,13 L18,12.5 L20.5,12 Z" fill="#FCD34D" opacity="1"/>
+                    <path d="M3,8 L3.5,12 L6,12.5 L3.5,13 L3,17 L2.5,13 L0,12.5 L2.5,12 Z" fill="#FCD34D" opacity="1"/>
+                    <path d="M6,17 L6.5,21 L9,21.5 L6.5,22 L6,26 L5.5,22 L3,21.5 L5.5,21 Z" fill="#FCD34D" opacity="1"/>
+                    <path d="M18,17 L18.5,21 L21,21.5 L18.5,22 L18,26 L17.5,22 L15,21.5 L17.5,21 Z" fill="#FCD34D" opacity="1"/>
                 </g>
                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-3)" stroke="#B45309" stroke-width="1.5"/>
             </svg>`
@@ -1415,6 +1419,7 @@
                     if (song.energy === 3) {
                         $listItems.find('.energy-svg-3').each(function() {
                             const $svg = $(this);
+                            $svg.find('.sparks path').css('opacity', 0); // Reset for animation
                             $svg.addClass('spark-burst');
                             setTimeout(() => $svg.removeClass('spark-burst'), 600);
                         });
@@ -1512,7 +1517,6 @@
                 viewedSongsInSetlist.clear();
                 $('#setlist-title').text(name);
                 show('setlist');
-                renderSetlist();
             });
             $('#venue-setlists-list').on('click', 'li', function() {
                 const setlistName = $(this).data('setlist-name');
@@ -1521,7 +1525,6 @@
                     currentSetlist = setlistName;
                     viewedSongsInSetlist.clear();
                     show('setlist');
-                    renderSetlist();
                 }
             });
             $('#back-to-venue-btn').click(function() {
@@ -2452,7 +2455,7 @@
             }
 
             sortedSongs.forEach(s => {
-                const li = $(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);
+                const li = $(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable pl-4"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);
                 li.find('.flex-1').on('dblclick', () => openSongInContext(s.id, 'plays'));
                 li.find('button').click(() => {
                     playCounts[s.id] =
@@ -2600,14 +2603,14 @@
         function renderEnergyLevels() {
             const container = $('#energy-level-container').empty();
             const levels = [{
-                energyValue: 3,
-                songs: masterSongs.filter(s => s.energy === 3)
+                energyValue: 1,
+                songs: masterSongs.filter(s => s.energy === 1)
             }, {
                 energyValue: 2,
                 songs: masterSongs.filter(s => s.energy === 2)
             }, {
-                energyValue: 1,
-                songs: masterSongs.filter(s => s.energy === 1)
+                energyValue: 3,
+                songs: masterSongs.filter(s => s.energy === 3)
             }];
             levels.forEach(level => {
                 const section = $(`<div class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg">
@@ -2887,14 +2890,20 @@
             song.lastPlayed = new Date().toISOString().split('T')[0];
             updateTopLeast();
             save();
-            renderMaster(); 
+            // Do not re-render the whole list, to avoid jarring UI shifts. The data is saved.
 
-            if (context === 'master') {
-                currentViewerList = window.currentMasterViewSongs;
-            } else if (context === 'setlist' && currentSetlist) {
+            // Determine the current list for next/prev navigation
+            const visibleView = $('main > section:visible').attr('id');
+            if (visibleView === 'master-view') {
+                 currentViewerList = window.currentMasterViewSongs;
+            } else if (visibleView === 'setlist-view') {
                 currentViewerList = window.currentSetlistViewSongs;
-            } else if (context === 'plays') {
-                currentViewerList = window.currentPlaysViewSongs;
+            } else if (visibleView === 'plays-view') {
+                 currentViewerList = window.currentPlaysViewSongs;
+            } else if (visibleView === 'favorites-view') {
+                currentViewerList = masterSongs.filter(s => s.favorite); // Re-filter to be safe
+            } else if (visibleView === 'genre-view' && currentGenre) {
+                currentViewerList = masterSongs.filter(s => s.genre === currentGenre);
             } else {
                 currentViewerList = masterSongs;
             }
@@ -3002,19 +3011,22 @@
             currentGenre = (view === 'genre-view') ? currentGenre : null;
 
             if (['master-view'].includes(view)) {
-                $('#master-upload-container').show();
+                 $('#master-upload-container').show();
             } else {
-                $('#master-upload-container').hide();
+                 $('#master-upload-container').hide();
             }
 
             if (view !== 'setlist' && view !== 'venue-setlists') {
                 cameFromVenue = null;
             }
 
-            if (view === 'plays') renderPlays();
-            if (view === 'recordings') renderRecordings();
-            if (view === 'energy') renderEnergyLevels();
-            if (view === 'favorites') renderFavorites();
+            // Call the correct render function for the view
+            if (view === 'master') renderMaster();
+            else if (view === 'plays') renderPlays();
+            else if (view === 'recordings') renderRecordings();
+            else if (view === 'energy') renderEnergyLevels();
+            else if (view === 'favorites') renderFavorites();
+            else if (view === 'setlist') renderSetlist();
         }
 
         function getSetlistHistoryForSong(songId) {
