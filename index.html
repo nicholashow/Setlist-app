@@ -168,95 +168,7 @@
             height: 100%;
             border: 0;
         }
-
-        .del-setlist {
-            background: #ef4444;
-            border-radius: 4px;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 8px;
-        }
-
-        .del-setlist svg {
-            width: 14px;
-            height: 14px;
-            fill: white;
-        }
-
-        .del-setlist:hover {
-            background: #dc2626;
-        }
-
-        .setlist-item {
-            display: flex;
-            align-items: center;
-            transition: all 0.2s ease-out;
-        }
-
-        .setlist-name {
-            flex: 1;
-        }
         
-        #setlist-view {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .setlist-container {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            flex-grow: 1;
-            min-height: 0; 
-        }
-
-        .setlist-songs-container {
-             background-color: #fff;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
-            overflow: hidden;
-        }
-        .dark .setlist-songs-container {
-            background-color: #1f2937;
-        }
-        
-        #setlist-details-toggle {
-            padding: 0.5rem 0.75rem;
-            background-color: #e5e7eb;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 600;
-        }
-        .dark #setlist-details-toggle {
-            background-color: #374151;
-        }
-        #setlist-details-toggle .toggle-arrow {
-            transition: transform 0.2s ease-in-out;
-        }
-        #setlist-details-toggle.open .toggle-arrow {
-            transform: rotate(180deg);
-        }
-        #setlist-details-content {
-            display: flex;
-            align-items: flex-end;
-            gap: 0.75rem;
-            padding: 0.75rem;
-            background-color: #f3f4f6;
-            border-radius: 0.5rem;
-            flex-wrap: wrap;
-        }
-        .dark #setlist-details-content {
-            background-color: #374151;
-        }
-
         .drag-highlight {
             background-color: #dbeafe;
             border: 2px dashed #3b82f6;
@@ -301,17 +213,8 @@
             background-color: #374151;
             color: #d1d5db;
         }
-
-        .stats-title {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #1e40af;
-        }
-
-        .dark .stats-title {
-            color: #60a5fa;
-        }
         
+        /* Left sidebar scroll fix */
         .left-col {
             display: flex;
             flex-direction: column;
@@ -324,6 +227,7 @@
         
         .left-col-main-content {
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             flex-grow: 1;
             padding-right: 4px;
             margin-bottom: 0.5rem; /* Gap between venues and stats */
@@ -353,119 +257,105 @@
             background-color: #374151;
         }
 
-        .sidebar-item {
+        /* === RESTORED: Original Sidebar Input Styling === */
+        .item-creation {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px;
-            border-radius: 0.5rem;
-            margin-bottom: 4px;
-            background: #374151;
-            cursor: pointer;
-            color: #e5e7eb;
-            transition: background-color 0.2s;
-        }
-        .sidebar-item:hover {
-            background: #4b5563;
-        }
-
-        .genre-content {
-            display: flex;
-            align-items: center;
             gap: 8px;
-            flex-grow: 1;
+            align-items: center;
+        }
+        .item-name-input {
+            flex: 1;
+            min-width: 0;
+            padding: 4px 8px;
+            border-radius: 0.5rem;
+            background: #1f2937;
+            border: 1px solid #4b5563;
+            color: white;
+            height: 32px;
+        }
+        .item-creation input[type="color"] {
+            -webkit-appearance: none; -moz-appearance: none; appearance: none;
+            width: 32px; height: 32px; padding: 0; border: none;
+            border-radius: 4px; cursor: pointer;
+        }
+        .item-creation input[type="color"]::-webkit-color-swatch {
+            border-radius: 4px; border: 1px solid #6b7280;
         }
 
-        .delete-genre,
-        .delete-venue {
-            color: #ef4444;
-            cursor: pointer;
-            padding: 2px 6px;
-            border-radius: 4px;
-            flex-shrink: 0;
-        }
-
-        .delete-genre:hover,
-        .delete-venue:hover {
-            background-color: #fee2e2;
-        }
-
-        .dark .delete-genre:hover,
-        .dark .delete-venue:hover {
-            background-color: #991b1b;
-        }
-        
-        .dark-mode-toggle+div {
-            transition: all 0.3s ease;
-        }
-
-        .dark-mode-toggle:checked+div {
-            background-color: #22c55e;
-        }
-
-        .dark-mode-toggle:checked+div .dot {
-            transform: translateX(20px);
-        }
-
-        .dark-mode-toggle+div .dot {
-            transition: all 0.3s ease;
-        }
-
+        /* === FIX: Blue color for viewed song number === */
         .index-number.viewed-index {
             background-color: white;
-            color: #3b82f6;
+            color: #3b82f6 !important;
             border: 1px solid #3b82f6;
             font-weight: bold;
         }
         
         /* === Redesigned Responsive Controls for Master View === */
         #master-view-controls {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-areas: "search" "controls";
+            grid-template-columns: 1fr;
             gap: 0.5rem;
             margin-bottom: 0.5rem;
         }
-        #controls-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            align-items: center;
-        }
+        #search-wrapper { grid-area: search; position: relative; }
+        #controls-row { grid-area: controls; display: flex; align-items: center; gap: 0.5rem; }
+        
         #filters-group {
             display: flex;
+            align-items: center;
             gap: 0.5rem;
             padding: 0.25rem;
             background-color: white;
             border-radius: 0.5rem;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
-        .dark #filters-group {
-            background-color: #1f2937;
-        }
-        #controls-row > #master-view-buttons {
-            margin-left: auto; /* Pushes buttons to the right */
-        }
-        #master-view-buttons .btn-master {
-            width: 100px; /* Equal sized buttons */
-        }
+        .dark #filters-group { background-color: #1f2937; }
         .filter-select, #genre-filter-button {
-            border: none;
-            background: none;
-            appearance: none;
-            padding: 0.25rem 0.5rem;
-        }
-        #genre-filter-button {
-            width: auto;
-            min-width: 120px;
+            border: none; background: none; appearance: none; padding: 0.25rem 0.5rem;
         }
         #sort-dropdown {
-             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
             background-position: right 0.5rem center;
             background-repeat: no-repeat;
             background-size: 1.5em 1.5em;
             padding-right: 2.5rem;
         }
 
+        #dark-mode-label {
+            position: absolute;
+            top: 0; right: 0.5rem;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        #master-view-buttons { display: flex; gap: 0.5rem; }
+        #master-view-buttons .btn-master { width: 100px; text-align: center;}
+        
+        /* Layout when sidebar is OPEN */
+        .left-col:not(.collapsed) ~ main #controls-row {
+            display: grid;
+            grid-template-areas: "filters" "buttons";
+            grid-template-columns: auto;
+            gap: 0.5rem;
+        }
+        .left-col:not(.collapsed) ~ main #filters-group { grid-area: filters; }
+        .left-col:not(.collapsed) ~ main #master-view-buttons { grid-area: buttons; }
+        
+        /* Layout when sidebar is CLOSED */
+        .left-col.collapsed ~ main #controls-row {
+            display: flex;
+            justify-content: space-between;
+        }
+        .left-col.collapsed ~ main #filters-group { flex-grow: 1; } /* Expands to fill gap */
+
+        /* === FIX: Center text in song item inputs === */
+        .artist-input, .notes-input, .duration-input {
+            text-align: center;
+        }
+        
         /* === Redesigned Grid Layout for Song Item Details === */
         .song-details-container {
             display: flex;
@@ -474,12 +364,8 @@
             gap: 0.5rem;
             margin-left: auto;
         }
-        .song-details-container input, .song-details-container .delete-btn {
-            width: 112px;
-        }
-        .song-details-container .delete-btn {
-            width: 80px;
-        }
+        .song-details-container input, .song-details-container .delete-btn { width: 112px; }
+        .song-details-container .delete-btn { width: 80px; }
         
         .left-col:not(.collapsed) ~ main .song-details-container {
             display: grid;
@@ -490,36 +376,119 @@
         }
         .left-col:not(.collapsed) ~ main .song-details-container input,
         .left-col:not(.collapsed) ~ main .song-details-container button {
-            width: 100%; /* Make items fill the grid cell */
-            height: 100%;
+            width: 100%; height: 100%;
+            box-sizing: border-box; /* Ensure padding is included */
+        }
+
+        /* RESTORED: Sortable placeholder */
+        .sortable-placeholder {
+            height: 66px;
+            background-color: #dbeafe !important;
+            border: 2px dashed #3b82f6 !important;
+            visibility: visible !important;
+        }
+        .dark .sortable-placeholder {
+            background-color: #1e3a8a !important;
         }
 
         /* Consistent border on all song list items */
-        #master-list > li, #setlist-list > li, #favorites-list > li, #genre-song-list > li, #plays-list > li {
-            border-bottom-width: 1px;
+        #master-list > li, #setlist-list > li, #favorites-list > li, #genre-song-list > li, #plays-list > li, #setlist-adder-list > li {
+            border-bottom: 1px solid #e5e7eb;
         }
-        #master-list, #setlist-list, #favorites-list, #genre-song-list, #plays-list {
-            border-color: #e5e7eb;
-        }
-        .dark #master-list, .dark #setlist-list, .dark #favorites-list, .dark #genre-song-list, .dark #plays-list {
+        .dark #master-list > li, .dark #setlist-list > li, .dark #favorites-list > li, .dark #genre-song-list > li, .dark #plays-list > li, .dark #setlist-adder-list > li {
             border-color: #374151;
         }
+        #master-list > li:last-child, #setlist-list > li:last-child, #favorites-list > li:last-child, #genre-song-list > li:last-child, #plays-list > li:last-child, #setlist-adder-list > li:last-child {
+            border-bottom: 0;
+        }
         
-        /* Touch Device Enhancements */
-        main.overflow-auto,
-        .setlist-songs-container,
-        #genre-filter-dropdown {
+        /* === NEW: Setlist View Two-Panel Layout === */
+        #setlist-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            height: 100%;
+        }
+        #setlist-main-content {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .setlist-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .setlist-songs-container {
+            overflow: hidden;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            border-radius: 0.75rem;
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
+        }
+        .dark .setlist-songs-container { background-color: #1f2937; }
+        #setlist-list {
+            overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
 
-        #master-list > li, #setlist-list > li, #favorites-list > li, #plays-list > li, #genre-song-list > li {
-            padding-top: 1rem;
-            padding-bottom: 1rem;
-            padding-left: 0.5rem;
-            padding-right: 0.5rem;
+        #setlist-adder-panel {
+            display: flex;
+            flex-direction: column;
+            background-color: #f9fafb;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            height: 100%;
+            box-sizing: border-box;
         }
-        #plays-list > li {
-            padding-left: 1rem;
+        .dark #setlist-adder-panel {
+             background-color: #111827;
+        }
+        #setlist-adder-list-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            background-color: white;
+            border-radius: 0.75rem;
+            margin-top: 0.5rem;
+        }
+        .dark #setlist-adder-list-container {
+             background-color: #1f2937;
+        }
+        #setlist-adder-list .song-name:hover {
+            color: #3b82f6;
+            cursor: pointer;
+        }
+
+        /* === FIX: Setlist Details Polish === */
+        #setlist-details-content {
+            display: none; /* Start hidden */
+            background-color: white; /* Match main bg */
+        }
+        .dark #setlist-details-content { background-color: #1f2937; }
+        #setlist-details-content > div { display: flex; flex-direction: column; }
+        .dark #setlist-details-content, .dark #setlist-details-content label,
+        .dark #setlist-details-content input { color: white !important; }
+        .dark #setlist-details-content input::placeholder { color: #d1d5db; opacity: 1; }
+
+        input[type="date"] { position: relative; }
+        input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; right: 5px; cursor: pointer; }
+        input[type="date"]:not(:valid):before {
+            content: attr(placeholder);
+            position: absolute;
+            color: #9ca3af;
+            padding-top: 0.2rem;
+            padding-left: 0.2rem;
+            pointer-events: none;
+        }
+        .dark input[type="date"]:not(:valid):before { color: #d1d5db; }
+        
+        main.overflow-auto,
+        #genre-filter-dropdown {
+            -webkit-overflow-scrolling: touch;
         }
 
     </style>
@@ -591,9 +560,16 @@
         <main class="flex-1 p-4 overflow-auto">
             <section id="master-view">
                  <div id="master-view-controls">
-                    <div id="search-container">
-                        <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..." />
-                        <datalist id="search-results"></datalist>
+                    <div id="search-wrapper">
+                        <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600 pr-24" id="search" placeholder="Search all songs..." />
+                        <label for="dark-mode-toggle" id="dark-mode-label">
+                            <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark</span>
+                            <div class="relative">
+                                <input type="checkbox" id="dark-mode-toggle" class="sr-only">
+                                <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                            </div>
+                        </label>
                     </div>
                     <div id="controls-row">
                         <div id="filters-group">
@@ -608,15 +584,7 @@
                                 <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
                             </div>
                         </div>
-                         <label for="dark-mode-toggle" class="flex items-center cursor-pointer ml-4">
-                            <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark Mode</span>
-                            <div class="relative">
-                                <input type="checkbox" id="dark-mode-toggle" class="dark-mode-toggle sr-only">
-                                <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
-                                <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
-                            </div>
-                        </label>
-                        <div id="master-view-buttons" class="flex gap-2">
+                        <div id="master-view-buttons">
                             <input accept=".pdf" class="hidden" id="master-upload" multiple="" type="file" />
                             <button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow btn-master" id="upload-master-btn">Add files</button>
                             <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow btn-master" id="delete-all-btn">Delete All</button>
@@ -637,113 +605,92 @@
 
 
             <section class="hidden" id="setlist-view">
-                 <div class="flex items-center gap-2 mb-2">
-                    <button id="back-to-venue-btn" class="hidden p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition dark:bg-gray-700 dark:hover:bg-gray-600">← Back</button>
-                    <h2 class="text-xl font-bold" id="setlist-title">Setlist</h2>
-                    <p id="setlist-total-duration" class="text-sm text-gray-500 dark:text-white ml-2"></p>
-                    <p id="setlist-song-count" class="text-sm text-gray-500 dark:text-white ml-2"></p>
-                </div>
+                <div id="setlist-main-content">
+                    <div class="flex items-center gap-2 mb-2">
+                        <button id="back-to-venue-btn" class="hidden p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition dark:bg-gray-700 dark:hover:bg-gray-600">← Back</button>
+                        <h2 class="text-xl font-bold" id="setlist-title">Setlist</h2>
+                        <p id="setlist-total-duration" class="text-sm text-gray-500 dark:text-white ml-auto"></p>
+                        <p id="setlist-song-count" class="text-sm text-gray-500 dark:text-white ml-2"></p>
+                    </div>
 
-                <div class="flex items-end justify-between flex-wrap gap-4 mb-2">
-                    <div class="flex items-center gap-2">
-                        <button id="record-show" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Record Show</button>
-                        <button id="stop-record" class="p-2 bg-red-600 text-white rounded-lg hidden shadow">Stop Recording</button>
-                        <button id="print-setlist" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">Print Setlist</button>
-                        <div class="relative inline-block">
-                            <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Share Setlist</button>
-                            <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
-                                <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
-                                <a href="#" id="share-email" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Email (text only)</a>
-                                <a href="#" id="share-gmail" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Gmail (text only)</a>
-                                <a href="#" id="share-copy" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Copy to Clipboard (text only)</a>
-                            </div>
-                            <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="setlist-details-container" class="mb-2">
-                    <div id="setlist-details-toggle">
-                        <span>Setlist Details</span>
-                        <span class="toggle-arrow">▾</span>
-                    </div>
-                    <div id="setlist-details-content" style="display: none;">
-                        <div>
-                            <label for="setlist-date" class="font-medium text-xs">Date</label>
-                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44">
-                        </div>
-                        <div>
-                            <label for="setlist-venue" class="font-medium text-xs">Venue</label>
-                            <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44">
-                        </div>
-                        <div class="relative">
-                            <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
-                            <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 w-44">
-                                <option value="custom">Custom Order</option>
-                                <option value="name">Sort by Name</option>
-                                <option value="artist">Sort by Artist</option>
-                                <option value="genre">Sort by Genre</option>
-                                <option value="energy">Sort by Energy</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 bottom-0 right-0 flex items-center px-2 text-gray-700 mb-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                    <div class="flex items-end justify-between flex-wrap gap-4 mb-2">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <button id="record-show" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Record Show</button>
+                            <button id="stop-record" class="p-2 bg-red-600 text-white rounded-lg hidden shadow">Stop Recording</button>
+                            <button id="print-setlist" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">Print Setlist</button>
+                            <div class="relative inline-block">
+                                <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Share</button>
+                                <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
+                                    <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device</a>
+                                    <a href="#" id="share-email" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Email</a>
+                                    <a href="#" id="share-copy" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Copy to Clipboard</a>
+                                </div>
+                                <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
                             </div>
                         </div>
                     </div>
+                    
+                    <div id="setlist-details-container" class="mb-2">
+                        <div id="setlist-details-toggle">
+                            <span>Setlist Details</span>
+                            <span class="toggle-arrow">▾</span>
+                        </div>
+                        <div id="setlist-details-content" class="gap-4 p-4 rounded-b-lg">
+                            <div>
+                                <label for="setlist-date" class="font-medium text-xs">Date</label>
+                                <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-full" placeholder="Enter date" required>
+                            </div>
+                            <div>
+                                <label for="setlist-venue" class="font-medium text-xs">Venue</label>
+                                <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-full">
+                            </div>
+                            <div>
+                                <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
+                                <div class="relative">
+                                    <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 w-full">
+                                        <option value="custom">Custom Order</option>
+                                        <option value="name">Sort by Name</option>
+                                        <option value="artist">Sort by Artist</option>
+                                        <option value="genre">Sort by Genre</option>
+                                        <option value="energy">Sort by Energy</option>
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="setlist-recordings" class="mb-2"></div>
+
+                    <div class="setlist-container">
+                        <div class="setlist-songs-container">
+                            <ul id="setlist-list"></ul>
+                        </div>
+                    </div>
                 </div>
-
-                <div id="setlist-recordings" class="mb-2"></div>
-
-                <div class="setlist-container">
-                    <div class="setlist-songs-container">
-                        <ul id="setlist-list"></ul>
+                <div id="setlist-adder-panel">
+                    <h3 class="text-lg font-bold">Add Songs</h3>
+                    <input id="setlist-adder-search" class="w-full p-2 mt-1 rounded-lg border dark:bg-gray-700 dark:border-gray-600" placeholder="Search all songs...">
+                    <div id="setlist-adder-list-container">
+                        <ul id="setlist-adder-list"></ul>
                     </div>
                 </div>
             </section>
 
             <section class="hidden" id="favorites-view">
-                <div class="flex items-center justify-between mb-2">
-                     <h2 class="text-xl font-bold">Favorite Songs</h2>
-                    <div class="relative">
-                        <select id="favorites-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
-                            <option value="name">Sort by Name</option>
-                            <option value="artist">Sort by Artist</option>
-                            <option value="lastPlayed">Sort by Last Played</option>
-                            <option value="energy">Sort by Energy</option>
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                        </div>
-                    </div>
-                </div>
+                 <h2 class="text-xl font-bold mb-2">Favorite Songs</h2>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul id="favorites-list"></ul>
                 </div>
             </section>
-
             <section class="hidden" id="genre-view">
-                 <div class="flex items-center justify-between mb-2">
-                     <h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
-                    <div class="relative">
-                        <select id="genre-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
-                            <option value="name">Sort by Name</option>
-                            <option value="artist">Sort by Artist</option>
-                            <option value="lastPlayed">Sort by Last Played</option>
-                            <option value="energy">Sort by Energy</option>
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                        </div>
-                    </div>
-                </div>
+                <h2 class="text-xl font-bold mb-2" id="genre-view-title">Genre</h2>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul id="genre-song-list"></ul>
                 </div>
             </section>
-
             <section class="hidden" id="plays-view">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="text-xl font-bold">Plays</h2>
@@ -753,21 +700,16 @@
                     <ul id="plays-list"></ul>
                 </div>
             </section>
-
             <section class="hidden" id="recordings-view">
-                <div class="flex items-center justify-between mb-2">
-                    <h2 class="text-xl font-bold">Recordings</h2>
-                </div>
+                 <h2 class="text-xl font-bold mb-2">Recordings</h2>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul id="recordings-list"></ul>
                 </div>
             </section>
-
             <section class="hidden" id="energy-view">
                 <h2 class="text-xl font-bold mb-2">Energy Levels</h2>
                 <div id="energy-level-container" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
             </section>
-
             <section class="hidden" id="venue-setlists-view">
                 <h2 class="text-xl font-bold mb-2" id="venue-setlists-title"></h2>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
@@ -780,21 +722,15 @@
             <div class="doc-top-bar" id="doc-top-bar"></div>
             <div class="doc-nav-buttons" id="doc-nav-buttons">
                 <button class="doc-nav-button no-select" id="prev-doc">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
                     Previous
                 </button>
                 <button class="doc-nav-button no-select" id="next-doc">
                     Next
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
                 </button>
                 <button class="doc-nav-button doc-nav-close no-select" id="close-doc">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     Close
                 </button>
             </div>
@@ -803,88 +739,26 @@
         </section>
     </div>
     <script>
-        // ================== Memory Management ==================
+        // ================== Memory Management & Data ==================
         let objectURLs = new Set();
-        window.addEventListener('unload', () => {
-            objectURLs.forEach(url => URL.revokeObjectURL(url));
-            objectURLs.clear();
-        });
-        // ================== Data Structures ==================
-        let masterSongs = [];
-        let setlists = {};
-        let currentSetlist = null;
-        let playCounts = {};
-        let genres = [{
-            name: 'Rock',
-            color: '#ef4444'
-        }, {
-            name: 'Pop',
-            color: '#3b82f6'
-        }, {
-            name: 'Jazz',
-            color: '#10b981'
-        }];
+        window.addEventListener('unload', () => { objectURLs.forEach(url => URL.revokeObjectURL(url)); });
+        let masterSongs = [], setlists = {}, playCounts = {}, genres = [], venues = [], recordings = [];
+        let currentSetlist = null, currentGenre = null, currentViewerContext = null, cameFromVenue = null;
+        let viewedSongsInSetlist = new Set(), masterSelectedGenres = [], currentViewerList = [], currentViewerIndex = -1;
+        let inactivityTimer = null, recorder = null, audioChunks = [];
         const energyIcons = [
-            // Level 0 (Outline)
             `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 dark:text-gray-500"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`,
-            // Level 1 (Smallest, 1/3 Filled)
             `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="67%" style="stop-color:transparent" /><stop offset="67%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M12.5 5.5L6.5 14h5l-1 5 6-7h-5l1-4.5z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
-            // Level 2 (Medium, ~1/2 Filled - ADJUSTED) - SMALLER
-            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="55%" style="stop-color:transparent" /><stop offset="55%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M13 4L6 14h6.5l-1 6 7-8h-6.5l1-5z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
-            // Level 3 (Largest, Fiery with Sparks - ADJUSTED SIZE)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-4 -4 32 32" class="energy-svg-3">
-                <defs>
-                    <radialGradient id="energy-grad-3" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                        <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
-                    </radialGradient>
-                </defs>
-                <g class="sparks">
-                    <path d="M12,0 L12.5,4 L15,4.5 L12.5,5 L12,9 L11.5,5 L9,4.5 L11.5,4 Z" fill="#FCD34D" opacity="1"/>
-                    <path d="M21,8 L21.5,12 L24,12.5 L21.5,13 L21,17 L20.5,13 L18,12.5 L20.5,12 Z" fill="#FCD34D" opacity="1"/>
-                    <path d="M3,8 L3.5,12 L6,12.5 L3.5,13 L3,17 L2.5,13 L0,12.5 L2.5,12 Z" fill="#FCD34D" opacity="1"/>
-                    <path d="M6,17 L6.5,21 L9,21.5 L6.5,22 L6,26 L5.5,22 L3,21.5 L5.5,21 Z" fill="#FCD34D" opacity="1"/>
-                    <path d="M18,17 L18.5,21 L21,21.5 L18.5,22 L18,26 L17.5,22 L15,21.5 L17.5,21 Z" fill="#FCD34D" opacity="1"/>
-                </g>
-                <g transform="scale(1.25) translate(-3, -3)">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-3)" stroke="#B45309" stroke-width="1.5"/>
-                </g>
-            </svg>`
+            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="55%" style="stop-color:transparent" /><stop offset="55%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M13 3L5 14h7l-1 7 8-9h-7l1-6z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
+            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-4 -4 32 32" class="energy-svg-3"><defs><radialGradient id="energy-grad-3" cx="50%" cy="50%" r="50%" fx="50%" fy="50%"><stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" /><stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" /></radialGradient></defs><g class="sparks"><path d="M12,0 L12.5,4 L15,4.5 L12.5,5 L12,9 L11.5,5 L9,4.5 L11.5,4 Z" fill="#FCD34D" opacity="1"/><path d="M21,8 L21.5,12 L24,12.5 L21.5,13 L21,17 L20.5,13 L18,12.5 L20.5,12 Z" fill="#FCD34D" opacity="1"/><path d="M3,8 L3.5,12 L6,12.5 L3.5,13 L3,17 L2.5,13 L0,12.5 L2.5,12 Z" fill="#FCD34D" opacity="1"/><path d="M6,17 L6.5,21 L9,21.5 L6.5,22 L6,26 L5.5,22 L3,21.5 L5.5,21 Z" fill="#FCD34D" opacity="1"/><path d="M18,17 L18.5,21 L21,21.5 L18.5,22 L18,26 L17.5,22 L15,21.5 L17.5,21 Z" fill="#FCD34D" opacity="1"/></g><g transform="scale(1.25) translate(-3, -3)"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-3)" stroke="#B45309" stroke-width="1.5"/></g></svg>`
         ];
-        let venues = [];
-        let recordings = [];
-        let masterSelectedGenres = [];
-        let currentGenre = null;
-        let viewedSongsInSetlist = new Set();
-        let currentViewerContext = null;
-        let currentViewerList = [];
-        let currentViewerIndex = -1;
-        let inactivityTimer = null;
 
-
-        let recorder = null;
-        let audioChunks = [];
-        let cameFromVenue = null;
-        
         // ================== Persistent Storage ==================
         function save() {
             localStorage.setItem('setlistData', JSON.stringify({
-                masterSongs: masterSongs.map(song => ({ ...song,
-                    file: undefined,
-                    fileInfo: song.fileInfo ? {
-                        name: song.fileInfo.name,
-                        type: song.fileInfo.type,
-                        size: song.fileInfo.size,
-                        data: song.fileInfo.data
-                    } : undefined
-                })),
-                setlists,
-                playCounts,
-                genres,
-                venues,
-                recordings: recordings.map(rec => ({ ...rec,
-                    audioData: rec.audioData
-                }))
+                masterSongs: masterSongs.map(song => ({ ...song, file: undefined, fileInfo: song.fileInfo ? { name: song.fileInfo.name, type: song.fileInfo.type, size: song.fileInfo.size, data: song.fileInfo.data } : undefined })),
+                setlists, playCounts, genres, venues,
+                recordings: recordings.map(rec => ({ ...rec, audioData: rec.audioData }))
             }));
             localStorage.setItem('darkMode', $('html').hasClass('dark') ? 'enabled' : 'disabled');
         }
@@ -895,31 +769,16 @@
                 try {
                     const obj = JSON.parse(raw);
                     masterSongs = obj.masterSongs || [];
-                    masterSongs.forEach(s => {
-                        if (!s.lastPlayed) s.lastPlayed = null;
-                        s.favorite = s.favorite || false; 
-                    });
+                    masterSongs.forEach(s => { s.lastPlayed = s.lastPlayed || null; s.favorite = s.favorite || false; });
                     setlists = obj.setlists || {};
-                    Object.keys(setlists).forEach(k => {
-                        if (Array.isArray(setlists[k])) { // Legacy check
-                            setlists[k] = {
-                                songs: setlists[k].map(s => s.id),
-                                date: '',
-                                venue: ''
-                            };
-                        }
-                    });
+                    Object.keys(setlists).forEach(k => { if (Array.isArray(setlists[k])) { setlists[k] = { songs: setlists[k].map(s => s.id), date: '', venue: '' }; }});
                     playCounts = obj.playCounts || {};
-                    genres = obj.genres || genres;
+                    genres = obj.genres || [];
                     venues = obj.venues || [];
                     recordings = obj.recordings || [];
                 } catch (e) {
                     console.error("Error parsing localStorage data: ", e);
-                    masterSongs = [];
-                    setlists = {};
-                    playCounts = {};
-                    venues = [];
-                    recordings = [];
+                    masterSongs = []; setlists = {}; playCounts = {}; venues = []; recordings = [];
                 }
             }
             const darkModePref = localStorage.getItem('darkMode');
@@ -932,72 +791,40 @@
             }
         }
 
-        // ================== File Handling ==================
+        // ================== File Handling & UI Helpers ==================
         function storeFile(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    resolve({
-                        name: file.name,
-                        type: file.type,
-                        size: file.size,
-                        data: e.target.result
-                    });
-                };
-                reader.onerror = function() {
-                    reject(new Error('Failed to read file'));
-                };
+                reader.onload = e => resolve({ name: file.name, type: file.type, size: file.size, data: e.target.result });
+                reader.onerror = () => reject(new Error('Failed to read file'));
                 reader.readAsDataURL(file);
             });
         }
 
         function getFileURL(song) {
-            if (!song || !song.fileInfo || !song.fileInfo.data) {
-                console.error(`Invalid song or fileInfo for song: ${song?.name || 'unknown'}`);
-                return null;
-            }
-
+            if (!song || !song.fileInfo || !song.fileInfo.data) { console.error(`Invalid song or fileInfo for song: ${song?.name || 'unknown'}`); return null; }
             if (!song.file || !objectURLs.has(song.file)) {
                 try {
                     const blob = dataURItoBlob(song.fileInfo.data);
                     const url = URL.createObjectURL(blob);
-                    if (song.file) {
-                        URL.revokeObjectURL(song.file);
-                        objectURLs.delete(song.file);
-                    }
+                    if (song.file) { URL.revokeObjectURL(song.file); objectURLs.delete(song.file); }
                     song.file = url;
                     objectURLs.add(url);
-                } catch (e) {
-                    console.error(`Error creating object URL for ${song.name}:`, e);
-                    return null;
-                }
+                } catch (e) { console.error(`Error creating object URL for ${song.name}:`, e); return null; }
             }
             return song.file;
         }
 
         function dataURItoBlob(dataURI) {
-            try {
-                const split = dataURI.split(',');
-                if (split.length < 2) {
-                    throw new Error('Invalid data URI');
-                }
-                const byteString = atob(split[1]);
-                const mimeString = split[0].split(':')[1].split(';')[0];
-                const ab = new ArrayBuffer(byteString.length);
-                const ia = new Uint8Array(ab);
-                for (let i = 0; i < byteString.length; i++) {
-                    ia[i] = byteString.charCodeAt(i);
-                }
-                return new Blob([ab], {
-                    type: mimeString
-                });
-            } catch (e) {
-                console.error('Error converting data URI to Blob:', e);
-                throw e;
-            }
+            const split = dataURI.split(',');
+            const byteString = atob(split[1]);
+            const mimeString = split[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) { ia[i] = byteString.charCodeAt(i); }
+            return new Blob([ab], { type: mimeString });
         }
-
-        // ================== UI Helpers ==================
+        
         function autoCollapseSidebar() {
             const $sidebar = $('.left-col');
             if (!$sidebar.hasClass('collapsed')) {
@@ -1005,18 +832,16 @@
                 $('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />');
             }
         }
-
+        
         // ================== Initialization ==================
         $(function() {
             function deselectAllNav() {
                 $('#home-btn').removeClass('app-header-selected').addClass('app-header-unselected');
-                $('#nav-favorites, #nav-plays, #nav-recordings, #nav-energy').removeClass('selected');
-                $('#setlists-container .setlist-item').removeClass('selected');
-                $('#venue-list .venue-item').removeClass('selected');
-                $('#genre-list .genre-item').removeClass('selected');
+                $('.sidebar-item').removeClass('selected');
             }
 
             load();
+            if (!genres.length) genres = [{ name: 'Rock', color: '#ef4444' }, { name: 'Pop', color: '#3b82f6' }];
             deselectAllNav(); 
             $('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected'); 
             
@@ -1029,81 +854,61 @@
             
             $(document).on('click', '.genre-dot', function(e) {
                 e.stopPropagation();
-                const li = $(this).closest('li');
-                const songId = li.attr('id');
+                const songId = $(this).closest('li').attr('id');
                 const song = masterSongs.find(s => s.id === songId);
                 if (!song) return;
                 const genreNames = [''].concat(genres.map(g => g.name));
-                let idx = genreNames.indexOf(song.genre || '');
-                idx = (idx + 1) % genreNames.length;
-                song.genre = genreNames[idx];
-                
-                const newDot = `<span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span>`;
-                 $(`li[id="${songId}"]`).find('.genre-dot').parent().html(newDot);
-
+                song.genre = genreNames[(genreNames.indexOf(song.genre || '') + 1) % genreNames.length];
+                $(this).parent().html(`<span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span>`);
                 save();
             });
+
             $(document).on('click', '.energy-icon', function(e) {
                 e.stopPropagation();
                 const songId = $(this).closest('li').attr('id');
                 const song = masterSongs.find(s => s.id === songId);
                 if (song) {
-                    song.energy = (song.energy || 0) + 1;
-                    if (song.energy > 3) song.energy = 0;
-                    const newIconHtml = energyIcons[song.energy || 0];
+                    song.energy = ((song.energy || 0) + 1) % 4;
                     const $listItems = $(`li[id="${songId}"]`);
-                    $listItems.find('.energy-icon').html(newIconHtml);
-
+                    $listItems.find('.energy-icon').html(energyIcons[song.energy]);
                     if (song.energy === 3) {
-                        $listItems.find('.energy-svg-3').each(function() {
-                            const $svg = $(this);
-                            $svg.addClass('animate-sparks');
-                            setTimeout(() => $svg.removeClass('animate-sparks'), 600);
-                        });
+                        $listItems.find('.energy-svg-3').addClass('animate-sparks').delay(600).queue(function(next){ $(this).removeClass('animate-sparks'); next(); });
                     }
-                    if ($('#energy-view').is(':visible')) {
-                        renderEnergyLevels();
-                    }
+                    if ($('#energy-view').is(':visible')) renderEnergyLevels();
                     save();
                 }
             });
+
             $('#add-genre').click(function() {
                 const name = $('#genre-name').val().trim();
-                const color = $('#genre-color').val();
-                if (!name) return alert('Enter a genre name');
-                if (genres.some(g => g.name.toLowerCase() === name.toLowerCase())) return alert('Genre already exists');
-                genres.push({ name, color });
+                if (!name || genres.some(g => g.name.toLowerCase() === name.toLowerCase())) return;
+                genres.push({ name, color: $('#genre-color').val() });
                 $('#genre-name').val('');
                 renderGenres(deselectAllNav);
                 save();
             });
+
             $('#add-venue').click(function() {
                 const name = $('#venue-name').val().trim();
-                if (!name) return alert('Enter a venue name');
-                if (venues.some(v => v.name.toLowerCase() === name.toLowerCase())) return alert('Venue already exists');
+                if (!name || venues.some(v => v.name.toLowerCase() === name.toLowerCase())) return;
                 venues.push({ name });
                 $('#venue-name').val('');
                 renderVenues(deselectAllNav);
                 save();
             });
+
             $('#sidebar-toggle').click(function() {
                 const $sidebar = $('.left-col');
                 $sidebar.toggleClass('collapsed');
-                const $icon = $(this).find('svg');
-                if ($sidebar.hasClass('collapsed')) {
-                    $icon.html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />');
-                } else {
-                    $icon.html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />');
-                }
+                $(this).find('svg').html($sidebar.hasClass('collapsed') ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />' : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />');
             });
 
             $('main').on('click', 'li.draggable', function(e) {
-                const listId = `#${$(this).parent().attr('id')}`;
                 if ($(e.target).is('input, button, a, .genre-dot, .energy-icon, .energy-icon *, .favorite-star-container, .favorite-star-container *') || $(e.target).closest('button').length > 0) {
                     return;
                 }
                 if (e.shiftKey || e.ctrlKey || e.metaKey) {
-                    handleSelection(e, listId);
+                    handleSelection(e);
                     return;
                 }
                 const songId = $(this).attr('id');
@@ -1112,47 +917,23 @@
             });
         });
 
-        // ================== Event Handlers ==================
+        // ================== Event Handlers (bindNav and others) ==================
         function bindNav(deselectAllNav) {
-
-            $('#home-btn').click(() => {
-                deselectAllNav();
-                $('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');
-                show('master');
-                autoCollapseSidebar();
-            });
-            $('#nav-favorites').click(() => {
-                deselectAllNav();
-                $('#nav-favorites').addClass('selected');
-                show('favorites');
-            });
-            $('#nav-plays').click(() => {
-                deselectAllNav();
-                $('#nav-plays').addClass('selected');
-                show('plays');
-            });
-            $('#nav-recordings').click(() => {
-                deselectAllNav();
-                $('#nav-recordings').addClass('selected');
-                show('recordings');
-            });
-            $('#nav-energy').click(() => {
-                deselectAllNav();
-                $('#nav-energy').addClass('selected');
-                show('energy');
-            });
+            $('#home-btn').click(() => { deselectAllNav(); $('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected'); show('master'); autoCollapseSidebar(); });
+            $('#nav-favorites').click(() => { deselectAllNav(); $('#nav-favorites').addClass('selected'); show('favorites'); });
+            $('#nav-plays').click(() => { deselectAllNav(); $('#nav-plays').addClass('selected'); show('plays'); });
+            $('#nav-recordings').click(() => { deselectAllNav(); $('#nav-recordings').addClass('selected'); show('recordings'); });
+            $('#nav-energy').click(() => { deselectAllNav(); $('#nav-energy').addClass('selected'); show('energy'); });
+            
             $('#setlists-container').on('click', '.setlist-item', function(e) {
                 if ($(e.target).closest('.del-setlist, .edit-input').length) return;
-                const name = $(this).data('name');
-                deselectAllNav();
-                $(this).addClass('selected');
-                cameFromVenue = null;
-                currentSetlist = name;
-                viewedSongsInSetlist.clear();
-                $('#setlist-title').text(name);
-                show('setlist');
-                autoCollapseSidebar();
+                deselectAllNav(); $(this).addClass('selected');
+                currentSetlist = $(this).data('name');
+                cameFromVenue = null; viewedSongsInSetlist.clear();
+                $('#setlist-title').text(currentSetlist);
+                show('setlist'); autoCollapseSidebar();
             });
+
             $('#venue-setlists-list').on('click', 'li', function() {
                 const setlistName = $(this).data('setlist-name');
                 if (setlists[setlistName]) {
@@ -1162,233 +943,122 @@
                     show('setlist');
                 }
             });
-            $('#back-to-venue-btn').click(function() {
-                if (cameFromVenue) {
-                    renderVenueSetlists(cameFromVenue);
-                    show('venue-setlists');
-                }
-            });
-            $('#toggle-setlists').click(() => $('#setlists-container').slideToggle(150));
-            $(document).on('click', '#setlist-details-toggle', function() {
-                $(this).toggleClass('open');
-                $('#setlist-details-content').slideToggle(200);
-            });
 
-            $('#add-setlist-btn').click(() => {
-                const name = $('#new-setlist-name').val().trim();
-                if (!name) return alert('Enter a name');
-                if (setlists[name]) return alert('Name exists');
-                setlists[name] = { songs: [], date: '', venue: '' };
-                $('#new-setlist-name').val('');
-                renderLeftSetlists();
-                save();
-            });
+            $('#back-to-venue-btn').click(() => { if (cameFromVenue) { renderVenueSetlists(cameFromVenue); show('venue-setlists'); }});
+            $('#toggle-setlists').click(() => $('#setlists-container').slideToggle(150));
+            $(document).on('click', '#setlist-details-toggle', function() { $(this).toggleClass('open'); $('#setlist-details-content').slideToggle(200); });
             $('#upload-master-btn').click(() => $('#master-upload').click());
             $('#master-upload').on('change', handleMasterUpload);
             $('#search').on('input', renderMaster);
+            
             $('#sort-dropdown, #favorites-sort-dropdown, #genre-sort-dropdown').on('change', function() {
                 const view = $('main > section:visible').attr('id');
                 if (view === 'master-view') renderMaster();
                 else if (view === 'favorites-view') renderFavorites();
                 else if (view === 'genre-view' && currentGenre) renderGenreView(currentGenre);
             });
+
             $('#genre-filter-button').on('click', () => $('#genre-filter-dropdown').toggleClass('hidden'));
             $(document).on('change', '#genre-filter-dropdown input[type="checkbox"]', function() {
-                masterSelectedGenres = [];
-                $('#genre-filter-dropdown input:checked').each(function() {
-                    masterSelectedGenres.push($(this).val());
-                });
+                masterSelectedGenres = $('#genre-filter-dropdown input:checked').map((_, el) => $(el).val()).get();
                 updateGenreFilterButtonText('#genre-filter-button', masterSelectedGenres);
                 renderMaster();
             });
             $('#setlist-sort-filter-dropdown').on('change', renderSetlist);
             $(document).on('click', function(e) {
-                if (!$(e.target).closest('#genre-filter-container').length) {
-                    $('#genre-filter-dropdown').addClass('hidden');
-                }
-                if (!$(e.target).closest('.relative').has('#share-setlist-btn').length) {
-                    $('#share-options').addClass('hidden');
-                }
+                if (!$(e.target).closest('#genre-filter-container').length) $('#genre-filter-dropdown').addClass('hidden');
+                if (!$(e.target).closest('.relative').has('#share-setlist-btn').length) $('#share-options').addClass('hidden');
             });
             $('#reset-plays').click(() => {
                 if (confirm('Reset all plays?')) {
                     playCounts = {};
                     masterSongs.forEach(s => s.lastPlayed = null);
-                    renderPlays();
-                    updateTopLeast();
-                    save();
+                    renderPlays(); updateTopLeast(); save();
                 }
             });
-            $('#doc-top-bar, #close-doc, #prev-doc, #next-doc').off('click');
-            $('#doc-top-bar').on('click', function(e) {
-                if ($(e.target).is('button')) return;
-                $('#doc-nav-buttons').toggleClass('hidden');
-            });
-            $('#prev-doc').on('click', function(e) {
-                e.stopPropagation();
-                if (currentViewerIndex > 0) {
-                    const prevSongId = currentViewerList[currentViewerIndex - 1].id;
-                    openSongInContext(prevSongId, currentViewerContext, currentViewerIndex - 1);
-                }
-            });
-            $('#next-doc').on('click', function(e) {
-                e.stopPropagation();
-                if (currentViewerIndex < currentViewerList.length - 1) {
-                    const nextSongId = currentViewerList[currentViewerIndex + 1].id;
-                    openSongInContext(nextSongId, currentViewerContext, currentViewerIndex + 1);
-                }
-            });
-            $('#close-doc').on('click', function(e) {
-                e.stopPropagation();
-                $('body').removeClass('doc-viewer-active');
-                $('#doc-view').removeClass('doc-view-fullscreen').hide();
-                resetScrollHandlers();
-                $('#doc-iframe-container').empty();
-            });
+            $('#doc-top-bar').on('click', function(e) { if (!$(e.target).is('button')) $('#doc-nav-buttons').toggleClass('hidden'); });
+            $('#prev-doc').on('click', e => { e.stopPropagation(); if (currentViewerIndex > 0) openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1); });
+            $('#next-doc').on('click', e => { e.stopPropagation(); if (currentViewerIndex < currentViewerList.length - 1) openSongInContext(currentViewerList[currentViewerIndex + 1].id, currentViewerContext, currentViewerIndex + 1); });
+            $('#close-doc').on('click', e => { e.stopPropagation(); $('body').removeClass('doc-viewer-active'); $('#doc-view').removeClass('doc-view-fullscreen').hide(); resetScrollHandlers(); $('#doc-iframe-container').empty(); });
             $('#delete-all-btn').click(() => {
                 if (confirm('Are you sure you want to delete ALL songs?')) {
-                    masterSongs.forEach(song => {
-                        if (song.file) {
-                            URL.revokeObjectURL(song.file);
-                            objectURLs.delete(song.file);
-                        }
-                    });
-                    masterSongs = [];
-                    setlists = {};
-                    playCounts = {};
-                    renderAll();
-                    updateTopLeast();
-                    save();
+                    masterSongs.forEach(song => { if (song.file) URL.revokeObjectURL(song.file); });
+                    masterSongs = []; setlists = {}; playCounts = {};
+                    renderAll(); updateTopLeast(); save();
                 }
             });
-            $('#record-show, #stop-record').off('click');
             $('#record-show').on('click', () => {
                 if (!currentSetlist) return alert('Select a setlist first');
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    navigator.mediaDevices.getUserMedia({ audio: true })
-                        .then(stream => {
-                            recorder = new MediaRecorder(stream);
-                            recorder.ondataavailable = e => audioChunks.push(e.data);
-                            recorder.onstop = () => {
-                                const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                                audioChunks = [];
-                                saveRecording(blob);
-                            };
-                            recorder.start();
-                            $('#record-show').addClass('hidden');
-                            $('#stop-record').removeClass('hidden');
-                        }).catch(err => {
-                            console.error('Error accessing microphone:', err);
-                            alert('Could not access microphone');
-                        });
-                } else {
-                    alert('Microphone access not supported');
-                }
+                    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                        recorder = new MediaRecorder(stream);
+                        recorder.ondataavailable = e => audioChunks.push(e.data);
+                        recorder.onstop = () => { saveRecording(new Blob(audioChunks, { type: 'audio/webm' })); audioChunks = []; };
+                        recorder.start();
+                        $('#record-show').addClass('hidden'); $('#stop-record').removeClass('hidden');
+                    }).catch(err => { console.error('Mic error:', err); alert('Could not access mic'); });
+                } else { alert('Mic not supported'); }
             });
-            $('#stop-record').on('click', () => {
-                if (recorder) {
-                    recorder.stop();
-                    $('#stop-record').addClass('hidden');
-                    $('#record-show').removeClass('hidden');
-                }
-            });
-            $('#print-setlist').click(() => {
-                if (!currentSetlist) return;
-                const setlist = setlists[currentSetlist];
-                const songObjects = setlist.songs.map(id => masterSongs.find(s => s.id === id)).filter(Boolean);
-                const printWin = window.open('', '_blank');
-                if (!printWin) {
-                    alert('Please allow popups for this feature to work.');
-                    return;
-                }
-                let html = `<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style></head><body>`;
-                html += `<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(setlist.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(setlist.venue)||"Not set"}</div><ol>${songObjects.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;
-                printWin.document.write(html);
-                const songsWithFiles = songObjects.filter(s => s.fileInfo && s.fileInfo.data);
-                if (songsWithFiles.length === 0) {
-                    printWin.document.close(); printWin.focus(); printWin.print(); return;
-                }
-                songsWithFiles.forEach(s => {
-                    const fileUrl = getFileURL(s);
-                    if (fileUrl) printWin.document.body.insertAdjacentHTML('beforeend', `<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${fileUrl}"></iframe>`);
-                });
-                const iframes = printWin.document.querySelectorAll('iframe');
-                const loadingPromises = Array.from(iframes).map(iframe => new Promise(resolve => { iframe.onload = resolve; iframe.onerror = resolve; }));
-                Promise.all(loadingPromises).then(() => { printWin.document.close(); printWin.focus(); printWin.print(); });
-            });
-            $('#share-setlist-btn, #share-native, #share-email, #share-gmail, #share-copy').off('click');
+            $('#stop-record').on('click', () => { if (recorder) { recorder.stop(); $('#stop-record').addClass('hidden'); $('#record-show').removeClass('hidden'); } });
             $('#share-setlist-btn').on('click', () => $('#share-options').toggleClass('hidden'));
             $('#share-native').on('click', e => { e.preventDefault(); shareSetlist('native'); });
             $('#share-email').on('click', e => { e.preventDefault(); shareSetlist('email'); });
-            $('#share-gmail').on('click', e => { e.preventDefault(); shareSetlist('gmail'); });
             $('#share-copy').on('click', e => { e.preventDefault(); shareSetlist('copy'); });
-            $('#dark-mode-toggle').change(function() {
-                $('html').toggleClass('dark', this.checked);
-                save();
-            });
-            $(document).on('dragenter dragover', function(e) {
-                e.preventDefault(); e.stopPropagation();
-                if ($('#master-view').is(':visible')) $('#master-drop-overlay').removeClass('hidden');
-            }).on('dragleave drop', function(e) {
+            $('#dark-mode-toggle').change(function() { $('html').toggleClass('dark', this.checked); save(); });
+            $(document).on('dragenter dragover', function(e) { e.preventDefault(); e.stopPropagation(); if ($('#master-view').is(':visible')) $('#master-drop-overlay').removeClass('hidden'); });
+            $(document).on('dragleave drop', function(e) {
                 e.preventDefault(); e.stopPropagation();
                 $('#master-drop-overlay').addClass('hidden');
-                if (e.type === 'drop' && $('#master-view').is(':visible')) {
-                    const dropEvent = e.originalEvent;
-                    if (dropEvent.dataTransfer && dropEvent.dataTransfer.files.length > 0) {
-                        handleMasterUpload({ target: { files: dropEvent.dataTransfer.files } });
-                    }
+                if (e.type === 'drop' && $('#master-view').is(':visible') && e.originalEvent.dataTransfer.files.length > 0) {
+                    handleMasterUpload({ target: { files: e.originalEvent.dataTransfer.files } });
                 }
             });
             $(document).on('click', '.favorite-star-container', function(e) {
                 e.stopPropagation();
-                const songId = $(this).closest('li').attr('id');
-                const song = masterSongs.find(s => s.id === songId);
+                const song = masterSongs.find(s => s.id === $(this).closest('li').attr('id'));
                 if (song) {
                     song.favorite = !song.favorite;
                     save();
-                    $(`li[id="${songId}"]`).find('.favorite-star-container').toggleClass('favorited', song.favorite);
+                    $(this).toggleClass('favorited', song.favorite);
                     if ($('#favorites-view').is(':visible')) renderFavorites();
                 }
             });
-            const handleInputChange = function(e) {
-                const songId = $(this).closest('li').attr('id');
-                const song = masterSongs.find(s => s.id === songId);
+            $('main').on('change', '.artist-input, .notes-input, .duration-input', function(e) {
+                const song = masterSongs.find(s => s.id === $(this).closest('li').attr('id'));
                 if (song) {
                     const key = $(this).attr('class').match(/(\w+)-input/)[1];
                     song[key] = e.target.value;
                     save();
                 }
-            };
-            $('main').on('change', '.artist-input, .notes-input, .duration-input', handleInputChange);
+            });
             $('main').on('click', '.delete-btn', function(e) {
                 e.stopPropagation();
-                const li = $(this).closest('li');
-                const songId = li.attr('id');
-                const song = masterSongs.find(s => s.id === songId);
+                const song = masterSongs.find(s => s.id === $(this).closest('li').attr('id'));
                 if (!song) return;
-                const context = $(this).text().toLowerCase();
-                if (context === 'delete') {
+                if ($(this).text().toLowerCase() === 'delete') {
                     if (confirm(`Permanently delete "${song.name}"?`)) {
                         if (song.file) URL.revokeObjectURL(song.file);
-                        removeFromAllSetlists([songId]);
-                        masterSongs = masterSongs.filter(x => x.id !== songId);
-                        const visibleView = $('main > section:visible').attr('id');
-                        if (visibleView === 'favorites-view') renderFavorites();
-                        else if (visibleView === 'genre-view') renderGenreView(currentGenre);
-                        else renderMaster();
-                        if (currentSetlist) renderSetlist();
-                        updateTopLeast();
+                        removeFromAllSetlists([song.id]);
+                        masterSongs = masterSongs.filter(x => x.id !== song.id);
+                        renderAll();
                         save();
                     }
                 } else {
-                    const setlist = setlists[currentSetlist];
-                    setlist.songs = setlist.songs.filter(id => id !== songId);
+                    setlists[currentSetlist].songs = setlists[currentSetlist].songs.filter(id => id !== song.id);
+                    renderSetlist(); save();
+                }
+            });
+            $('#setlist-adder-search').on('input', renderSetlistAdder);
+            $('#setlist-adder-list').on('click', '.song-name', function() {
+                const songId = $(this).closest('li').attr('id');
+                if (currentSetlist && !setlists[currentSetlist].songs.includes(songId)) {
+                    setlists[currentSetlist].songs.push(songId);
                     renderSetlist();
                     save();
                 }
             });
         }
-
+        
         async function shareSetlist(method) {
             if (!currentSetlist) return;
             const setlist = setlists[currentSetlist];
@@ -1413,9 +1083,7 @@
                 }
             } else if (method === 'email') {
                 window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
-            } else if (method === 'gmail') {
-                window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`, '_blank');
-            } else {
+            } else if (method === 'copy') {
                 fallbackCopy(text);
             }
             $('#share-options').addClass('hidden');
@@ -1454,7 +1122,26 @@
             $('#master-upload').val('');
         }
 
+        function handleSelection(event) { $(event.currentTarget).toggleClass('item-selected'); }
+        
         function stripExt(name) { return name.replace(/\.[^/.]+$/, ''); }
+        
+        function getGenreColor(name) { const g = genres.find(x => x.name === name); return g ? g.color : '#cbd5e1'; }
+        
+        function escapeHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+        function renderAll() {
+            const currentView = $('main > section:visible').attr('id')?.replace('-view', '');
+            renderLeftSetlists(); renderGenres(() => {}); renderVenues(() => {});
+            if (currentView === 'master') renderMaster();
+            if (currentView === 'setlist') { renderSetlist(); renderSetlistAdder(); }
+            if (currentView === 'plays') renderPlays();
+            if (currentView === 'recordings') renderRecordings();
+            if (currentView === 'favorites') renderFavorites();
+            if (currentView === 'energy') renderEnergyLevels();
+            if (currentView === 'genre' && currentGenre) renderGenreView(currentGenre);
+            updateTopLeast();
+        }
 
         function createSongItem(song, idx, context) {
             const favClass = song.favorite ? 'favorited' : '';
@@ -1466,39 +1153,38 @@
             const viewedClass = context === 'setlist' && viewedSongsInSetlist.has(song.id) ? 'viewed-index' : '';
             return $(`<li id="${song.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable">${star}<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${viewedClass}">${idx+1}</span></div>${dot}${energyIcon}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium">${escapeHtml(song.name)}</div>${inputsHTML}</li>`);
         }
-
-        function handleSelection(event, containerSelector) { $(event.currentTarget).toggleClass('item-selected'); }
-
-        function renderMaster() {
-            const q = $('#search').val().toLowerCase();
-            let list = masterSongs.filter(s => (q ? (s.name.toLowerCase().includes(q) || (s.artist || '').toLowerCase().includes(q)) : true) && (masterSelectedGenres.length > 0 ? masterSelectedGenres.includes(s.genre) : true));
-            const sortMode = $('#sort-dropdown').val();
-            list.sort((a, b) => {
+        
+        function getSortFn(sortMode) {
+            return (a, b) => {
                 if (sortMode === 'artist') return (a.artist || '').localeCompare(b.artist || '');
                 if (sortMode === 'lastPlayed') return (b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0) - (a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0);
                 if (sortMode === 'energy') return (b.energy || 0) - (a.energy || 0);
+                if (sortMode === 'genre') return (a.genre || '').localeCompare(b.genre || '');
                 return a.name.localeCompare(b.name);
-            });
+            };
+        }
+        
+        function renderMaster() {
+            const q = $('#search').val().toLowerCase();
+            let list = masterSongs.filter(s => (q ? (s.name.toLowerCase().includes(q) || (s.artist || '').toLowerCase().includes(q)) : true) && (masterSelectedGenres.length > 0 ? masterSelectedGenres.includes(s.genre) : true));
+            list.sort(getSortFn($('#sort-dropdown').val()));
             window.currentMasterViewSongs = list;
             const $ul = $('#master-list').empty();
             if (list.length === 0) {
-                $ul.append(`<li class="p-8 text-center text-gray-500 italic">${(q || masterSelectedGenres.length > 0) ? 'No songs match your current filters.' : 'No songs yet. <br> Drag & drop PDF files onto the page or use the "Add files" button!'}</li>`);
+                $ul.append(`<li class="p-8 text-center text-gray-500 italic">${(q || masterSelectedGenres.length > 0) ? 'No songs match filters.' : 'No songs yet. Drag & drop PDF files here.'}</li>`);
             } else {
                 list.forEach((s, idx) => $ul.append(createSongItem(s, idx, 'master')));
             }
             $('#master-list .draggable').draggable({
                 helper: function() {
                     const selector = '#master-list .item-selected';
-                    if ($(selector).length === 0 || !$(this).hasClass('item-selected')) {
-                        $('#master-list .item-selected').removeClass('item-selected');
-                        $(this).addClass('item-selected');
-                    }
-                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${$(selector).length} song(s)</div>`);
+                    if (!$(this).hasClass('item-selected')) { $(selector).removeClass('item-selected'); $(this).addClass('item-selected'); }
+                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${$(selector).length || 1} song(s)</div>`);
                 },
                 appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
             });
         }
-
+        
         function removeFromAllSetlists(songIds) { Object.keys(setlists).forEach(k => { setlists[k].songs = setlists[k].songs.filter(id => !songIds.includes(id)); }); }
 
         function renderLeftSetlists() {
@@ -1547,7 +1233,7 @@
                     const setlist = setlists[setlistName];
                     let added = false;
                     const sourceList = ui.draggable.parent();
-                    const selector = `#${sourceList.attr('id')} .item-selected`;
+                    const selector = `#${sourceList.attr('id')} .item-selected, .${sourceList.attr('class')} .item-selected`; // Broader selector for energy view
                     const itemsToDrop = $(selector).length > 0 && ui.draggable.hasClass('item-selected') ? $(selector) : ui.draggable;
                     
                     itemsToDrop.each(function() {
@@ -1563,7 +1249,7 @@
                         save();
                         if (currentSetlist === setlistName) renderSetlist();
                     }
-                    $(selector).removeClass('item-selected');
+                    itemsToDrop.removeClass('item-selected');
                 }
             });
             $('#setlists-container').sortable({
@@ -1589,7 +1275,7 @@
                 setlist.venue = newVenue;
                 if (newVenue && !venues.some(v => v.name.toLowerCase() === newVenue.toLowerCase())) {
                     venues.push({ name: newVenue });
-                    renderVenues();
+                    renderVenues(() => {});
                 }
                 save();
             });
@@ -1611,13 +1297,7 @@
             let songObjects = (setlist.songs || []).map(id => masterSongs.find(s => s.id === id)).filter(Boolean);
             const sortFilterMode = $('#setlist-sort-filter-dropdown').val();
             if (sortFilterMode !== 'custom') {
-                songObjects.sort((a, b) => {
-                    if (sortFilterMode === 'artist') return (a.artist || '').localeCompare(b.artist || '');
-                    if (sortFilterMode === 'name') return a.name.localeCompare(b.name);
-                    if (sortFilterMode === 'energy') return (b.energy || 0) - (a.energy || 0);
-                    if (sortFilterMode === 'genre') return (a.genre || '').localeCompare(b.genre || '');
-                    return 0;
-                });
+                songObjects.sort(getSortFn(sortFilterMode));
             }
             $('#setlist-total-duration').text(`Runtime: ${songObjects.reduce((acc, s) => acc + (parseInt(s.duration, 10) || 0), 0)} min`);
             $('#setlist-song-count').text(`${songObjects.length} songs`);
@@ -1638,6 +1318,21 @@
             }).disableSelection();
         }
         
+        function renderSetlistAdder() {
+            const q = $('#setlist-adder-search').val().toLowerCase();
+            let list = masterSongs.filter(s => q ? s.name.toLowerCase().includes(q) : true);
+            list.sort((a, b) => a.name.localeCompare(b.name));
+            const $ul = $('#setlist-adder-list').empty();
+            if (list.length === 0) {
+                $ul.append(`<li class="p-4 text-center text-gray-500 italic">No songs match search.</li>`);
+            } else {
+                list.forEach(s => {
+                    const item = $(`<li id="${s.id}" class="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-600"><span class="song-name flex-1">${escapeHtml(s.name)}</span></li>`);
+                    $ul.append(item);
+                });
+            }
+        }
+        
         function renderPlays() {
             const $ul = $('#plays-list').empty();
             if (masterSongs.length === 0) { $ul.append('<li class="p-8 text-center text-gray-500 italic">Add songs to start tracking plays.</li>'); return; }
@@ -1645,18 +1340,15 @@
             window.currentPlaysViewSongs = sortedSongs;
             if (Object.values(playCounts).every(c => c === 0)) { $ul.append('<li class="p-8 text-center text-gray-500 italic">No songs played yet. Click a song to log a play.</li>'); return; }
             sortedSongs.forEach(s => {
-                const li = $(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable pl-4"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);
+                const li = $(`<li id="${s.id}" class="flex items-center p-4 hover:bg-gray-50 dark:hover:bg-gray-700 draggable"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);
                 li.find('button').click(() => { playCounts[s.id] = 0; renderPlays(); updateTopLeast(); save(); });
                 $ul.append(li);
             });
             $('#plays-list .draggable').draggable({
                 helper: function() {
                     const selector = '#plays-list .item-selected';
-                    if ($(selector).length === 0 || !$(this).hasClass('item-selected')) {
-                        $('#plays-list .item-selected').removeClass('item-selected');
-                        $(this).addClass('item-selected');
-                    }
-                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${$(selector).length} song(s)</div>`);
+                    if (!$(this).hasClass('item-selected')) { $(selector).removeClass('item-selected'); $(this).addClass('item-selected'); }
+                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${$(selector).length || 1} song(s)</div>`);
                 },
                 appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
             });
@@ -1675,23 +1367,14 @@
         function renderFavorites() {
             const $ul = $('#favorites-list').empty();
             let favorites = masterSongs.filter(s => s.favorite);
+            favorites.sort(getSortFn($('#favorites-sort-dropdown').val()));
             window.currentFavoritesViewSongs = favorites;
-            const sortMode = $('#favorites-sort-dropdown').val();
-            favorites.sort((a, b) => {
-                if (sortMode === 'artist') return (a.artist || '').localeCompare(b.artist || '');
-                if (sortMode === 'lastPlayed') return (b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0) - (a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0);
-                if (sortMode === 'energy') return (b.energy || 0) - (a.energy || 0);
-                return a.name.localeCompare(b.name);
-            });
             favorites.forEach((s, idx) => { $ul.append(createSongItem(s, idx, 'favorites')); });
             $('#favorites-list .draggable').draggable({
                 helper: function() {
                     const selector = '#favorites-list .item-selected';
-                    if ($(selector).length === 0 || !$(this).hasClass('item-selected')) {
-                        $('#favorites-list .item-selected').removeClass('item-selected');
-                        $(this).addClass('item-selected');
-                    }
-                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${$(selector).length} song(s)</div>`);
+                    if (!$(this).hasClass('item-selected')) { $(selector).removeClass('item-selected'); $(this).addClass('item-selected'); }
+                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${$(selector).length || 1} song(s)</div>`);
                 },
                 appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
             });
@@ -1702,23 +1385,14 @@
             $('#genre-view-title').text(`Genre: ${genreName}`);
             const $ul = $('#genre-song-list').empty();
             let songsInGenre = masterSongs.filter(s => s.genre === genreName);
-            const sortMode = $('#genre-sort-dropdown').val();
-            songsInGenre.sort((a, b) => {
-                if (sortMode === 'artist') return (a.artist || '').localeCompare(b.artist || '');
-                if (sortMode === 'lastPlayed') return (b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0) - (a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0);
-                if (sortMode === 'energy') return (b.energy || 0) - (a.energy || 0);
-                return a.name.localeCompare(b.name);
-            });
+            songsInGenre.sort(getSortFn($('#genre-sort-dropdown').val()));
             window.currentGenreViewSongs = songsInGenre;
             songsInGenre.forEach((s, idx) => { $ul.append(createSongItem(s, idx, 'genre')); });
             $('#genre-song-list .draggable').draggable({
                 helper: function() {
                     const selector = '#genre-song-list .item-selected';
-                    if ($(selector).length === 0 || !$(this).hasClass('item-selected')) {
-                        $('#genre-song-list .item-selected').removeClass('item-selected');
-                        $(this).addClass('item-selected');
-                    }
-                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${$(selector).length} song(s)</div>`);
+                    if (!$(this).hasClass('item-selected')) { $(selector).removeClass('item-selected'); $(this).addClass('item-selected'); }
+                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${$(selector).length || 1} song(s)</div>`);
                 },
                 appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
             });
@@ -1728,7 +1402,7 @@
             const container = $('#energy-level-container').empty();
             [1, 2, 3].forEach(levelValue => {
                 const songs = masterSongs.filter(s => s.energy === levelValue).sort((a, b) => a.name.localeCompare(b.name));
-                const section = $(`<div class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg"><div class="flex justify-center mb-2">${energyIcons[levelValue]}</div><ul class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto"></ul></div>`);
+                const section = $(`<div class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg"><div class="flex justify-center mb-2">${energyIcons[levelValue]}</div><ul class="energy-song-list divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto"></ul></div>`);
                 const ul = section.find('ul');
                 if (songs.length > 0) {
                     songs.forEach(song => {
@@ -1742,11 +1416,8 @@
             $('#energy-level-container .draggable').draggable({
                 helper: function() {
                     const selector = '#energy-level-container .item-selected';
-                    if ($(selector).length === 0 || !$(this).hasClass('item-selected')) {
-                        $('#energy-level-container .item-selected').removeClass('item-selected');
-                        $(this).addClass('item-selected');
-                    }
-                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${$(selector).length} song(s)</div>`);
+                    if (!$(this).hasClass('item-selected')) { $(selector).removeClass('item-selected'); $(this).addClass('item-selected'); }
+                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${$(selector).length || 1} song(s)</div>`);
                 },
                 appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
             });
@@ -1757,7 +1428,7 @@
             genres.forEach(g => {
                 const el = $(`<div class="sidebar-item genre-item"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);
                 el.on('click', function(e) {
-                    if($(e.target).closest('.delete-genre, .genre-edit-input').length > 0) return;
+                    if($(e.target).closest('.delete-genre, .edit-input').length > 0) return;
                     deselectAllNav();
                     $(this).addClass('selected');
                     currentGenre = g.name;
@@ -1837,7 +1508,7 @@
                 $ul.append(`<li class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" data-setlist-name="${escapeHtml(name)}"><div class="font-medium">${escapeHtml(name)}</div><div class="text-sm text-gray-500">${escapeHtml(data.date) || 'No date'}</div></li>`);
             });
         }
-
+        
         function updateGenreFilters(dropdownSelector, selectedArray) {
             const $dropdown = $(dropdownSelector).empty();
             if (genres.length === 0) { $dropdown.append('<div class="p-2 text-sm text-gray-500">No genres created.</div>'); return; }
@@ -1852,14 +1523,7 @@
             else if (selectedArray.length === 1) button.text(escapeHtml(selectedArray[0]));
             else button.text(`${selectedArray.length} genres`);
         }
-
-        function getGenreColor(name) {
-            const g = genres.find(x => x.name === name);
-            return g ? g.color : '#cbd5e1';
-        }
-
-        function escapeHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
+        
         function updateTopLeast() {
             const pairs = Object.entries(playCounts).filter(([id]) => masterSongs.find(s => s.id === id)).sort((a, b) => b[1] - a[1]);
             const validPairs = pairs.filter(([id, count]) => count > 0);
@@ -1886,21 +1550,7 @@
             $('#search-results').empty();
             masterSongs.forEach(s => { $('#search-results').append(`<option value="${escapeHtml(s.name)}">`); });
         }
-
-        function renderAll() {
-            renderLeftSetlists();
-            renderGenres();
-            renderVenues();
-            renderMaster();
-            if (currentSetlist) renderSetlist();
-            renderPlays();
-            renderRecordings();
-            renderFavorites();
-            renderEnergyLevels();
-            if (currentGenre) renderGenreView(currentGenre);
-            updateTopLeast();
-        }
-
+        
         function openSongInContext(songId, context, index = -1) {
             const song = masterSongs.find(s => s.id === songId);
             if (!song) { console.error('Song not found for ID:', songId); return; }
@@ -1980,10 +1630,9 @@
             else if (view === 'recordings') renderRecordings();
             else if (view === 'energy') renderEnergyLevels();
             else if (view === 'favorites') renderFavorites();
-            else if (view === 'setlist') renderSetlist();
+            else if (view === 'setlist') { renderSetlist(); renderSetlistAdder(); }
             else if (view === 'genre-view' && currentGenre) renderGenreView(currentGenre);
         }
     </script>
 </body>
-
 </html>
