@@ -243,26 +243,32 @@
         #setlist-details-toggle.open .toggle-arrow {
             transform: rotate(180deg);
         }
-        /* HORIZONTAL Setlist Details Layout */
+        /* FINAL CORRECTED HORIZONTAL Setlist Details Layout */
         #setlist-details-content {
-            display: none;
-            align-items: flex-end;
+            display: none; /* Initial state */
+            flex-direction: row; /* Force horizontal layout */
+            align-items: flex-end; /* Align items at the bottom */
             gap: 1rem;
             padding: 1rem;
             background-color: #f3f4f6;
             border-radius: 0.5rem;
             flex-wrap: wrap;
         }
+        #setlist-details-content > div {
+            display: flex;
+            flex-direction: column; /* Stack label/input vertically within their group */
+            gap: 0.25rem;
+        }
         .dark #setlist-details-content {
             background-color: #374151;
         }
         .dark #setlist-details-content label, .dark #setlist-details-content .placeholder-text {
-            color: #f9fafb; /* White */
+            color: #f9fafb !important; /* Force white color */
         }
         .placeholder-text {
             font-size: 0.75rem;
-            color: #6b7280;
-            padding-left: 0.25rem;
+            color: #9ca3af;
+            padding-left: 0.125rem;
         }
        
         .drag-highlight {
@@ -450,26 +456,26 @@
             background-color: #991b1b;
         }
         
-        /* Dark Mode Toggle Visual Fix */
+        /* CORRECTED Dark Mode Toggle Visual */
         .dark-mode-toggle+div {
             transition: all 0.3s ease;
         }
         .dark-mode-toggle+div .dot {
             transition: all 0.3s ease;
         }
-        /* Dark mode on */
+        /* Dark mode on (checked) */
         .dark-mode-toggle:checked+div {
             background-color: #22c55e;
         }
         .dark-mode-toggle:checked+div .dot {
-            transform: translateX(1px); /* Left */
+            transform: translateX(1px); /* Ball is on the LEFT */
         }
-        /* Light mode on */
+        /* Light mode on (not checked) */
         .dark-mode-toggle:not(:checked)+div {
             background-color: #1f2937; /* Black */
         }
         .dark-mode-toggle:not(:checked)+div .dot {
-            transform: translateX(20px); /* Right */
+            transform: translateX(20px); /* Ball is on the RIGHT */
         }
 
         /* Highly specific selector for viewed number color */
@@ -825,18 +831,19 @@
                             <label for="setlist-venue" class="font-medium text-xs">Venue</label>
                             <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44">
                         </div>
-                        <div class="relative">
+                        <div>
                             <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
-                            <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 w-44">
-                                <option value="custom">Custom Order</option>
-                                <option value="name">Sort by Name</option>
-                                <option value="artist">Sort by Artist</option>
-                                <option value="genre">Sort by Genre</option>
-                                <option value="energy">Sort by Energy</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 bottom-0 right-0 flex items-center px-2 text-gray-700 mb-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                            <div class="relative">
+                                <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 w-44">
+                                    <option value="custom">Custom Order</option>
+                                    <option value="name">Sort by Name</option>
+                                    <option value="artist">Sort by Artist</option>
+                                    <option value="genre">Sort by Genre</option>
+                                    <option value="energy">Sort by Energy</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1563,7 +1570,7 @@
                     save();
                 }
             });
-             $('#setlist-date').on('input', function() {
+            $('#setlist-date').on('input', function() {
                 $('#date-placeholder').toggle(!$(this).val());
             });
         }
@@ -1793,12 +1800,17 @@
         function renderSetlist() {
             if (!currentSetlist) { $('#setlist-view').hide(); return; }
             $('#back-to-venue-btn').toggle(!!cameFromVenue);
-            renderAddSongsPanel(); // Render the "add songs" panel
             
             const setlist = setlists[currentSetlist];
             $('#setlist-title').text(currentSetlist);
-            $('#setlist-date').val(setlist.date || '').trigger('input');
+
+            // Correctly handle setlist details
+            $('#setlist-date').val(setlist.date || '');
+            $('#date-placeholder').toggle(!$('#setlist-date').val());
             $('#setlist-venue').val(setlist.venue || '');
+
+            renderAddSongsPanel(); 
+            
             $('#setlist-recordings').empty();
             const setlistRecs = recordings.filter(r => r.setlist === currentSetlist);
             if (setlistRecs.length > 0) {
