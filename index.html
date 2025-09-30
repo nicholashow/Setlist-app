@@ -824,17 +824,17 @@
                     <div id="setlist-details-content">
                         <div>
                             <label for="setlist-date" class="font-medium text-xs">Date</label>
-                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44">
+                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200">
                             <p id="date-placeholder" class="placeholder-text">Enter date</p>
                         </div>
                         <div>
                             <label for="setlist-venue" class="font-medium text-xs">Venue</label>
-                            <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44">
+                            <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200">
                         </div>
                         <div>
                             <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
                             <div class="relative">
-                                <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 w-44">
+                                <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200">
                                     <option value="custom">Custom Order</option>
                                     <option value="name">Sort by Name</option>
                                     <option value="artist">Sort by Artist</option>
@@ -1353,7 +1353,12 @@
             $('#toggle-setlists').click(() => $('#setlists-container').slideToggle(150));
             $(document).on('click', '#setlist-details-toggle', function() {
                 $(this).toggleClass('open');
-                $('#setlist-details-content').slideToggle(200);
+                // FIX: Use a callback to set display to flex after animation
+                $('#setlist-details-content').slideToggle(200, function() {
+                    if ($(this).is(':visible')) {
+                        $(this).css('display', 'flex');
+                    }
+                });
             });
 
             $('#add-setlist-btn').click(() => {
@@ -1655,6 +1660,43 @@
 
         function handleSelection(event, containerSelector) { $(event.currentTarget).toggleClass('item-selected'); }
 
+        const draggableOptions = {
+            appendTo: 'body',
+            revert: 'invalid',
+            cursorAt: { left: 10, top: 10 },
+            helper: 'clone',
+            start: function(e, ui) {
+                const $sourceItem = $(this);
+                const $sourceList = $sourceItem.parent();
+                const $selectedItems = $sourceList.children('.item-selected');
+
+                if ($selectedItems.length <= 1 || !$sourceItem.hasClass('item-selected')) {
+                    $sourceList.children('.item-selected').removeClass('item-selected');
+                    $sourceItem.addClass('item-selected');
+                }
+                
+                const count = $sourceList.children('.item-selected').length;
+
+                ui.helper.css({
+                    'background-color': '#3b82f6',
+                    'color': 'white',
+                    'width': $sourceItem.outerWidth(),
+                    'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
+                    'z-index': 9999
+                }).addClass('selected');
+                ui.helper.find('*').css('color', 'white');
+                
+                if (count > 1) {
+                    ui.helper.empty()
+                        .css({'height': '60px', 'padding': '1rem'})
+                        .addClass('flex items-center justify-center font-semibold rounded-lg')
+                        .html(`Dragging ${count} items`);
+                } else {
+                     ui.helper.css('height', $sourceItem.outerHeight());
+                }
+            }
+        };
+
         function renderMaster() {
             const q = $('#search').val().toLowerCase();
             let list = masterSongs.filter(s => (q ? (s.name.toLowerCase().includes(q) || (s.artist || '').toLowerCase().includes(q)) : true) && (masterSelectedGenres.length > 0 ? masterSelectedGenres.includes(s.genre) : true));
@@ -1672,18 +1714,7 @@
             } else {
                 list.forEach((s, idx) => $ul.append(createSongItem(s, idx, 'master')));
             }
-            $('#master-list .draggable').draggable({
-                helper: function() {
-                    const selector = '#master-list .item-selected';
-                    if ($(selector).length === 0 || !$(this).hasClass('item-selected')) {
-                        $('#master-list .item-selected').removeClass('item-selected');
-                        $(this).addClass('item-selected');
-                    }
-                    const count = $('#master-list .item-selected').length;
-                    return $(`<div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 6px; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Dragging ${count} song(s)</div>`);
-                },
-                appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
-            });
+            $('#master-list .draggable').draggable(draggableOptions);
         }
         
         function renderAddSongsPanel() {
@@ -1868,18 +1899,7 @@
                 li.find('button').click(() => { playCounts[s.id] = 0; renderPlays(); updateTopLeast(); save(); });
                 $ul.append(li);
             });
-            $('#plays-list .draggable').draggable({
-                helper: function() {
-                    const selector = '#plays-list .item-selected';
-                    if ($(selector).length === 0 || !$(this).hasClass('item-selected')) {
-                        $('#plays-list .item-selected').removeClass('item-selected');
-                        $(this).addClass('item-selected');
-                    }
-                    const count = $('#plays-list .item-selected').length;
-                    return $(`<div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 6px; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Dragging ${count} song(s)</div>`);
-                },
-                appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
-            });
+            $('#plays-list .draggable').draggable(draggableOptions);
         }
 
         function renderRecordings() {
@@ -1904,25 +1924,15 @@
                 return a.name.localeCompare(b.name);
             });
             favorites.forEach((s, idx) => { $ul.append(createSongItem(s, idx, 'favorites')); });
-            $('#favorites-list .draggable').draggable({
-                helper: function() {
-                    const selector = '#favorites-list .item-selected';
-                    if ($(selector).length === 0 || !$(this).hasClass('item-selected')) {
-                        $('#favorites-list .item-selected').removeClass('item-selected');
-                        $(this).addClass('item-selected');
-                    }
-                    const count = $('#favorites-list .item-selected').length;
-                    return $(`<div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 6px; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Dragging ${count} song(s)</div>`);
-                },
-                appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
-            });
+            $('#favorites-list .draggable').draggable(draggableOptions);
         }
 
         function renderGenreView(genreName) {
             currentGenre = genreName;
             $('#genre-view-title').text(`Genre: ${genreName}`);
             const $ul = $('#genre-song-list').empty();
-            let songsInGenre = masterSongs.filter(s => s.genre === genreName);
+            // FIX: Use case-insensitive comparison for genre filtering
+            let songsInGenre = masterSongs.filter(s => s.genre && s.genre.toLowerCase() === genreName.toLowerCase());
             const sortMode = $('#genre-sort-dropdown').val();
             songsInGenre.sort((a, b) => {
                 if (sortMode === 'artist') return (a.artist || '').localeCompare(b.artist || '');
@@ -1932,18 +1942,7 @@
             });
             window.currentGenreViewSongs = songsInGenre;
             songsInGenre.forEach((s, idx) => { $ul.append(createSongItem(s, idx, 'genre')); });
-            $('#genre-song-list .draggable').draggable({
-                helper: function() {
-                    const selector = '#genre-song-list .item-selected';
-                    if ($(selector).length === 0 || !$(this).hasClass('item-selected')) {
-                        $('#genre-song-list .item-selected').removeClass('item-selected');
-                        $(this).addClass('item-selected');
-                    }
-                     const count = $('#genre-song-list .item-selected').length;
-                    return $(`<div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 6px; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Dragging ${count} song(s)</div>`);
-                },
-                appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
-            });
+            $('#genre-song-list .draggable').draggable(draggableOptions);
         }
 
         function renderEnergyLevels() {
@@ -1961,18 +1960,7 @@
                 }
                 container.append(section);
             });
-            $('#energy-level-container .draggable').draggable({
-                helper: function() {
-                    const selector = '#energy-level-container .item-selected';
-                    if ($(selector).length === 0 || !$(this).hasClass('item-selected')) {
-                        $('#energy-level-container .item-selected').removeClass('item-selected');
-                        $(this).addClass('item-selected');
-                    }
-                    const count = $('#energy-level-container .item-selected').length;
-                    return $(`<div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 6px; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Dragging ${count} song(s)</div>`);
-                },
-                appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
-            });
+            $('#energy-level-container .draggable').draggable(draggableOptions);
         }
 
         function renderGenres(deselectAllNav) {
