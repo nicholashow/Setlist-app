@@ -61,12 +61,14 @@
              color: white !important;
         }
         
-        /* Multiple selection highlight */
+        /* Multiple selection highlight - MORE PROMINENT */
         .item-selected {
-            background-color: #dbeafe !important;
+            background-color: #93c5fd !important;
+            border-left: 4px solid #2563eb;
         }
         .dark .item-selected {
-            background-color: #1e3a8a !important;
+            background-color: #1e40af !important;
+            border-left: 4px solid #60a5fa;
         }
 
 
@@ -215,6 +217,10 @@
 
         .setlist-name {
             flex: 1;
+            min-width: 0; /* Prevent overflow */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
         #setlist-details-toggle {
@@ -237,8 +243,10 @@
         #setlist-details-toggle.open .toggle-arrow {
             transform: rotate(180deg);
         }
+        /* HORIZONTAL Setlist Details Layout */
         #setlist-details-content {
             display: none;
+            align-items: flex-end;
             gap: 1rem;
             padding: 1rem;
             background-color: #f3f4f6;
@@ -251,12 +259,7 @@
         .dark #setlist-details-content label {
             color: #f9fafb; /* White */
         }
-        .detail-item {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
+       
         .drag-highlight {
             background-color: #dbeafe;
             border: 2px dashed #3b82f6;
@@ -316,14 +319,13 @@
             display: flex;
             flex-direction: column;
             height: 100%;
-            overflow-y: hidden;
-            overflow-x: hidden;
             transition: width 0.4s ease-in-out, padding 0.4s ease-in-out;
             position: relative;
         }
-        
+        /* Sidebar scrolling fix */
         .left-col-main-content {
             overflow-y: auto;
+            overflow-x: hidden; /* PREVENT HORIZONTAL SCROLL */
             flex-grow: 1;
             padding-right: 4px;
             margin-bottom: 0.5rem; /* Gap between venues and stats */
@@ -364,6 +366,7 @@
             cursor: pointer;
             color: #e5e7eb;
             transition: background-color 0.2s;
+            overflow: hidden; /* Fix width issues */
         }
         .sidebar-item:hover {
             background: #4b5563;
@@ -387,13 +390,24 @@
              border-radius: 4px;
              color: white;
         }
+        /* Fix for Genre Color Picker */
         #genre-color {
-            border: none;
-            padding: 0;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-color: transparent;
             width: 28px;
             height: 28px;
-            border-radius: 4px;
+            border: none;
             cursor: pointer;
+        }
+        #genre-color::-webkit-color-swatch {
+            border-radius: 4px;
+            border: 1px solid #4b5563;
+        }
+        #genre-color::-moz-color-swatch {
+            border-radius: 4px;
+            border: 1px solid #4b5563;
         }
 
 
@@ -402,6 +416,13 @@
             align-items: center;
             gap: 8px;
             flex-grow: 1;
+            min-width: 0; /* Prevent overflow */
+        }
+        .genre-name, .venue-name {
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .delete-genre,
@@ -423,17 +444,29 @@
             background-color: #991b1b;
         }
         
+        /* Dark Mode Toggle Visual Fix */
         .dark-mode-toggle+div {
             transition: all 0.3s ease;
         }
-
+        /* Dark mode ON (checked) */
         .dark-mode-toggle:checked+div {
             background-color: #22c55e;
         }
-
         .dark-mode-toggle:checked+div .dot {
             transform: translateX(20px);
         }
+        /* Light mode ON (unchecked) */
+        .dark-mode-toggle:not(:checked)+div {
+            background-color: #1f2937; /* Black */
+        }
+        .dark-mode-toggle:not(:checked)+div .dot {
+            transform: translateX(20px); /* Move ball to the right */
+        }
+        /* Light mode OFF (needs JS to set checked=false) */
+         html:not(.dark) .dark-mode-toggle+div .dot {
+            transform: translateX(1px); /* Move ball to the left */
+        }
+
 
         .dark-mode-toggle+div .dot {
             transition: all 0.3s ease;
@@ -465,27 +498,30 @@
             top: 50%;
             transform: translateY(-50%);
         }
+        /* Sort dropdown width fix */
         #controls-row {
             display: flex;
-            flex-wrap: wrap;
             gap: 0.75rem;
             align-items: center;
         }
-        .left-col:not(.collapsed) ~ main #controls-row {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
         #filters-group {
             display: flex;
+            flex-grow: 1; /* Allows this to expand */
             gap: 0.5rem;
             padding: 0.25rem;
             background-color: white;
             border-radius: 0.5rem;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
+        #sort-dropdown {
+            flex-grow: 1; /* The dropdown itself expands */
+        }
         .dark #filters-group {
             background-color: #1f2937;
+        }
+
+        #master-view-buttons {
+            flex-shrink: 0; /* Prevent buttons from shrinking */
         }
 
         #master-view-buttons .btn-master {
@@ -495,23 +531,13 @@
             border: none;
             background: none;
             appearance: none;
-            padding: 0.25rem 0.5rem;
+            padding: 0.5rem;
         }
         #genre-filter-button {
             width: auto;
             min-width: 120px;
         }
-        #sort-dropdown {
-             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 0.5rem center;
-            background-repeat: no-repeat;
-            background-size: 1.5em 1.5em;
-            padding-right: 2.5rem;
-        }
-        .left-col.collapsed ~ main #sort-dropdown {
-            width: 180px; /* Increased width when sidebar is closed */
-        }
-
+        
         /* === Redesigned Grid Layout for Song Item Details === */
         .song-details-container {
             display: flex;
@@ -541,10 +567,10 @@
             height: 100%;
         }
         
-        /* === Setlist View 2-Panel Layout === */
+        /* === Setlist View 1-Column Layout === */
         .setlist-view-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            display: flex;
+            flex-direction: column; /* Stack panels vertically */
             gap: 1rem;
             height: calc(100% - 150px); /* Adjust based on controls height */
             min-height: 0;
@@ -557,6 +583,7 @@
             border-radius: 0.75rem;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
             overflow: hidden;
+            flex: 1; /* Allow panels to share space */
         }
         .dark .setlist-panel {
             background-color: #1f2937;
@@ -566,6 +593,7 @@
             font-weight: 600;
             background-color: #f3f4f6;
             border-bottom: 1px solid #e5e7eb;
+            flex-shrink: 0;
         }
         .dark .setlist-panel > .panel-header {
             background-color: #374151;
@@ -575,15 +603,27 @@
             overflow-y: auto;
             flex-grow: 1;
         }
-        .setlist-panel .add-song-item {
+        /* Add Songs panel with checkboxes */
+        .add-song-item {
             display: flex;
             align-items: center;
-            padding: 0.5rem;
+            padding: 0.75rem 0.5rem;
             border-bottom: 1px solid #e5e7eb;
         }
-        .dark .setlist-panel .add-song-item {
+        .dark .add-song-item {
             border-bottom-color: #374151;
         }
+        .add-song-item label {
+            flex-grow: 1;
+            cursor: pointer;
+            padding-left: 0.5rem;
+        }
+        .add-song-item input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+            cursor: pointer;
+        }
+
 
         /* Consistent border on all song list items */
         #master-list > li, #setlist-list > li, #favorites-list > li, #genre-song-list > li, #plays-list > li, .add-song-item {
@@ -612,6 +652,21 @@
         #plays-list > li {
             padding-left: 1rem;
         }
+
+        /* Single Favorite Star Fix */
+        .favorite-star-container svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: #9ca3af; /* Gray outline */
+            stroke-width: 1.5;
+            transition: all 0.2s;
+        }
+        .favorite-star-container.favorited svg {
+            fill: #f59e0b; /* Gold fill */
+            stroke: #f59e0b; /* Gold outline */
+        }
+
 
     </style>
 </head>
@@ -757,15 +812,15 @@
                         <span class="toggle-arrow">▾</span>
                     </div>
                     <div id="setlist-details-content">
-                        <div class="detail-item">
+                        <div>
                             <label for="setlist-date" class="font-medium text-xs">Date</label>
                             <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44">
                         </div>
-                        <div class="detail-item">
+                        <div>
                             <label for="setlist-venue" class="font-medium text-xs">Venue</label>
                             <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44">
                         </div>
-                        <div class="detail-item relative">
+                        <div class="relative">
                             <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
                             <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 w-44">
                                 <option value="custom">Custom Order</option>
@@ -774,7 +829,7 @@
                                 <option value="genre">Sort by Genre</option>
                                 <option value="energy">Sort by Energy</option>
                             </select>
-                            <div class="pointer-events-none absolute inset-y-0 bottom-0 right-0 flex items-center px-2 text-gray-700 mb-1 pt-4">
+                            <div class="pointer-events-none absolute inset-y-0 bottom-0 right-0 flex items-center px-2 text-gray-700 mb-1">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                     <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                             </div>
@@ -790,8 +845,8 @@
                         <ul id="setlist-list"></ul>
                     </div>
                     <div class="setlist-panel">
-                        <div class="panel-header">Add Songs</div>
-                        <input id="setlist-search-add" class="w-full p-2 border-b dark:bg-gray-800 dark:border-gray-600" placeholder="Search all songs...">
+                        <div class="panel-header">Add Songs to Setlist</div>
+                        <input id="setlist-search-add" class="w-full p-2 border-b dark:bg-gray-800 dark:border-gray-600 flex-shrink-0" placeholder="Search all songs...">
                         <ul id="setlist-add-songs-list"></ul>
                     </div>
                 </div>
@@ -922,13 +977,13 @@
         }];
         const energyIcons = [
             // Level 0 (Outline)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 dark:text-gray-500"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`,
-            // Level 1
-            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="67%" style="stop-color:transparent" /><stop offset="67%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
-            // Level 2 (Slightly smaller)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="2 2 20 20"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="55%" style="stop-color:transparent" /><stop offset="55%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M13 4L6 14h6.5l-1 6 7-8h-6.5l1-5z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
-            // Level 3
-            `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="-4 -4 32 32" class="energy-svg-3">
+            `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 dark:text-gray-500"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`,
+            // Level 1 (Large)
+            `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="67%" style="stop-color:transparent" /><stop offset="67%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
+            // Level 2 (Large, slightly smaller appearance)
+            `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="2 2 20 20"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="55%" style="stop-color:transparent" /><stop offset="55%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M13 4L6 14h6.5l-1 6 7-8h-6.5l1-5z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
+            // Level 3 (Largest)
+            `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-4 -4 32 32" class="energy-svg-3">
                 <defs>
                     <radialGradient id="energy-grad-3" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
                         <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
@@ -1421,7 +1476,13 @@
             $('#share-gmail').on('click', e => { e.preventDefault(); shareSetlist('gmail'); });
             $('#share-copy').on('click', e => { e.preventDefault(); shareSetlist('copy'); });
             $('#dark-mode-toggle').change(function() {
-                $('html').toggleClass('dark', this.checked);
+                 $('html').toggleClass('dark', this.checked);
+                 // Special handling for the visual toggle state
+                 if ($('html').hasClass('dark')) {
+                     $(this).prop('checked', true);
+                 } else {
+                     $(this).prop('checked', false);
+                 }
                 save();
             });
             $(document).on('dragenter dragover', function(e) {
@@ -1556,7 +1617,7 @@
 
         function createSongItem(song, idx, context) {
             const favClass = song.favorite ? 'favorited' : '';
-            const star = `<div class="w-8 flex-shrink-0 flex justify-center items-center favorite-star-container ${favClass}" title="Toggle Favorite"><svg class="star-outline w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.539 1.118l-3.975-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.539-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg><svg class="star-filled w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg></div>`;
+            const star = `<div class="w-8 flex-shrink-0 flex justify-center items-center favorite-star-container ${favClass}" title="Toggle Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></div>`;
             const dot = `<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span></div>`;
             const energyIcon = `<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${song.energy||0}">${energyIcons[song.energy||0]}</div>`;
             const buttonText = ['master', 'favorites', 'genre'].includes(context) ? 'Delete' : 'Remove';
@@ -1600,17 +1661,32 @@
         
         function renderAddSongsPanel() {
             const q = $('#setlist-search-add').val().toLowerCase();
-            let list = masterSongs.filter(s => (q ? (s.name.toLowerCase().includes(q) || (s.artist || '').toLowerCase().includes(q)) : true));
+            let list = masterSongs.filter(s => (q ? s.name.toLowerCase().includes(q) : true));
             list.sort((a, b) => a.name.localeCompare(b.name));
+            
             const $ul = $('#setlist-add-songs-list').empty();
+            const currentSongs = setlists[currentSetlist]?.songs || [];
+
             list.forEach(s => {
-                const dot = `<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span></div>`;
-                const energyIcon = `<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${s.energy||0}">${energyIcons[s.energy||0]}</div>`;
-                $ul.append(`<li id="${s.id}" class="add-song-item hover:bg-gray-50 dark:hover:bg-gray-700 draggable">${dot}${energyIcon}<span class="ml-2 flex-1">${escapeHtml(s.name)}</span></li>`);
-            });
-            $('#setlist-add-songs-list .draggable').draggable({
-                helper: 'clone',
-                appendTo: 'body'
+                const isChecked = currentSongs.includes(s.id);
+                const li = $(`
+                    <li class="add-song-item" data-song-id="${s.id}">
+                        <input type="checkbox" id="add-${s.id}" ${isChecked ? 'checked' : ''}>
+                        <label for="add-${s.id}">${escapeHtml(s.name)}</label>
+                    </li>
+                `);
+                li.find('input').on('change', function() {
+                    const songId = $(this).parent().data('song-id');
+                    const setlistSongs = setlists[currentSetlist].songs;
+                    if(this.checked) {
+                        if (!setlistSongs.includes(songId)) setlistSongs.push(songId);
+                    } else {
+                        setlists[currentSetlist].songs = setlistSongs.filter(id => id !== songId);
+                    }
+                    renderSetlist();
+                    save();
+                });
+                $ul.append(li);
             });
         }
 
@@ -1743,7 +1819,6 @@
             const $ul = $('#setlist-list').empty();
             songObjects.forEach((s, idx) => { $ul.append(createSongItem(s, idx, 'setlist')); });
             if ($('#setlist-list').hasClass('ui-sortable')) $('#setlist-list').sortable('destroy');
-            if ($('#setlist-list').hasClass('ui-droppable')) $('#setlist-list').droppable('destroy');
             
             $('#setlist-list').sortable({
                 axis: 'y', cursor: 'move', placeholder: "sortable-placeholder", tolerance: 'pointer', scroll: true, forcePlaceholderSize: true, helper: 'clone',
@@ -1756,19 +1831,6 @@
                     save();
                 }
             }).disableSelection();
-            
-            $('#setlist-list').droppable({
-                accept: '#setlist-add-songs-list .draggable',
-                hoverClass: 'drag-highlight',
-                drop: function(e, ui) {
-                    const songId = ui.draggable.attr('id');
-                    if(songId && !setlists[currentSetlist].songs.includes(songId)) {
-                        setlists[currentSetlist].songs.push(songId);
-                        renderSetlist();
-                        save();
-                    }
-                }
-            });
         }
         
         function renderPlays() {
