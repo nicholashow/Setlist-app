@@ -294,6 +294,7 @@
             color: #1f2937;
             max-height: 200px; /* Adjust as needed */
             overflow-y: auto;
+            margin-top: 1rem; /* Restore margin to create space */
         }
 
         .dark .stats-container {
@@ -322,9 +323,10 @@
         }
         
         .left-col-main-content {
-            overflow-y: auto; /* Allow this part to scroll if needed, e.g. many setlists */
+            overflow-y: auto; /* Allow this part to scroll if needed */
             flex-grow: 1;
             padding-right: 4px; /* Add padding to avoid scrollbar overlap */
+            margin-bottom: 0; /* Remove bottom margin to close gap */
         }
 
 
@@ -637,47 +639,26 @@
         }
 
 
-        /* Responsive styles */
-        @media (max-width: 1024px) {
-            .left-col {
-                width: 256px;
-            }
-
-            .setlist-container {
-                flex-direction: column;
-            }
+        /* Responsive styles for master view controls */
+        #master-view-controls {
+            display: grid;
+            grid-template-areas: "search buttons" "filters buttons";
+            grid-template-columns: 1fr auto;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        #search-container { grid-area: search; }
+        #master-view-filters { grid-area: filters; display: flex; gap: 0.5rem; align-items: center; }
+        #master-view-buttons { grid-area: buttons; display: flex; gap: 0.5rem; align-items: center; }
+        
+        .left-col.collapsed ~ main #master-view-controls {
+            grid-template-areas: "search" "filters" "buttons";
+            grid-template-columns: 1fr;
+        }
+        .left-col.collapsed ~ main #master-view-buttons {
+            justify-content: flex-start;
         }
 
-        @media (max-width: 768px) {
-            #app {
-                flex-direction: column;
-            }
-
-            .left-col {
-                width: 100%;
-                height: auto;
-                max-height: 50vh;
-            }
-
-            .left-col.collapsed {
-                width: 100%;
-                height: 0;
-            }
-
-            main {
-                height: auto;
-            }
-
-            .controls-container {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 0.5rem;
-            }
-
-            #setlist-view .flex.gap-2.mb-2.items-center {
-                flex-wrap: wrap;
-            }
-        }
     </style>
 </head>
 
@@ -745,48 +726,44 @@
         </button>
 
         <main class="flex-1 p-4 overflow-auto">
-            <div class="flex items-start justify-between mb-3" id="master-upload-container">
-                <div class="w-1/3">
-                    <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..." />
-                    <datalist id="search-results"></datalist>
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <input accept=".pdf" class="hidden" id="master-upload" multiple="" type="file" />
-                    <button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow" id="upload-master-btn">Add files</button>
-                    <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow" id="delete-all-btn">Delete All</button>
-
-                    <label for="dark-mode-toggle" class="flex items-center cursor-pointer">
-                        <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark Mode</span>
-                        <div class="relative">
-                            <input type="checkbox" id="dark-mode-toggle" class="sr-only">
-                            <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
-                            <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
             <section id="master-view">
-                <div class="flex items-center gap-2 mb-2 flex-wrap controls-container">
-                    <div class="relative">
-                        <select id="sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
-                            <option value="name">Sort by Name</option>
-                            <option value="artist">Sort by Artist</option>
-                            <option value="lastPlayed">Sort by Last Played</option>
-                            <option value="energy">Sort by Energy</option>
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                 <div id="master-view-controls">
+                    <div id="search-container">
+                        <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..." />
+                        <datalist id="search-results"></datalist>
+                    </div>
+                    <div id="master-view-filters">
+                         <div class="relative">
+                            <select id="sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
+                                <option value="name">Sort by Name</option>
+                                <option value="artist">Sort by Artist</option>
+                                <option value="lastPlayed">Sort by Last Played</option>
+                                <option value="energy">Sort by Energy</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                            </div>
+                        </div>
+                        <div id="genre-filter-container" class="relative">
+                            <button id="genre-filter-button" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm w-48 text-left dark:bg-gray-700 dark:border-gray-600">Select Genres</button>
+                            <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
                         </div>
                     </div>
-                    <div id="genre-filter-container" class="relative">
-                        <button id="genre-filter-button" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm w-48 text-left dark:bg-gray-700 dark:border-gray-600">Select Genres</button>
-                        <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
+                    <div id="master-view-buttons">
+                        <input accept=".pdf" class="hidden" id="master-upload" multiple="" type="file" />
+                        <button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow" id="upload-master-btn">Add files</button>
+                        <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow" id="delete-all-btn">Delete All</button>
+                        <label for="dark-mode-toggle" class="flex items-center cursor-pointer">
+                            <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark Mode</span>
+                            <div class="relative">
+                                <input type="checkbox" id="dark-mode-toggle" class="sr-only">
+                                <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                            </div>
+                        </label>
                     </div>
-                    <button id="clear-filters-btn" class="p-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition text-sm dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500 shadow-sm">Clear Filters</button>
                 </div>
+
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul id="master-list"></ul>
                 </div>
@@ -1186,8 +1163,7 @@
             renderGenres(deselectAllNav);
             renderVenues(deselectAllNav);
             bindNav(deselectAllNav);
-            renderMaster();
-
+            show('master'); // Show master view on load
             updateTopLeast();
             
             $(document).on('click', '.genre-dot', function(e) {
@@ -1202,7 +1178,7 @@
                 song.genre = genreNames[idx];
                 
                 const newDot = `<span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span>`;
-                 $(`li[id="${songId}"]`).find('.genre-dot').replaceWith(newDot);
+                 $(`li[id="${songId}"]`).find('.genre-dot').parent().html(newDot);
 
                 save();
             });
@@ -1276,7 +1252,6 @@
                 deselectAllNav();
                 $('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');
                 show('master');
-                autoCollapseSidebar();
             });
             $('#nav-favorites').click(() => {
                 deselectAllNav();
@@ -1308,8 +1283,7 @@
 
                 deselectAllNav();
                 $(this).addClass('selected');
-                autoCollapseSidebar();
-
+                
                 cameFromVenue = null;
                 currentSetlist = name;
                 viewedSongsInSetlist.clear();
@@ -1371,13 +1345,7 @@
             $('#sort-dropdown').on('change', renderMaster);
 
             $('#genre-filter-button').on('click', () => $('#genre-filter-dropdown').toggleClass('hidden'));
-            $('#clear-filters-btn').on('click', () => {
-                masterSelectedGenres = [];
-                $('#search').val('');
-                updateGenreFilters('#genre-filter-dropdown', masterSelectedGenres);
-                updateGenreFilterButtonText('#genre-filter-button', masterSelectedGenres);
-                renderMaster();
-            });
+            
             $(document).on('change', '#genre-filter-dropdown input[type="checkbox"]', function() {
                 masterSelectedGenres = [];
                 $('#genre-filter-dropdown input:checked').each(function() {
@@ -1772,10 +1740,10 @@
 
             return $(`<li id="${song.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable">
                 ${star}
-                <div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 index-number ${viewedClass}">${idx+1}</span></div>
+                <div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${viewedClass}">${idx+1}</span></div>
                 ${dot}
                 ${energyIcon}
-                <div class="flex-1 min-w-[120px] cursor-pointer font-medium song-name ml-2">${escapeHtml(song.name)}</div>
+                <div class="flex-1 min-w-0 truncate song-name ml-2 cursor-pointer font-medium">${escapeHtml(song.name)}</div>
                 ${inputsHTML}
             </li>`);
         }
@@ -1864,7 +1832,8 @@
             $('main').off('change').on('change', '.artist-input, .notes-input, .duration-input', handleInputChange);
 
 
-            $('#master-list, #favorites-list, #genre-song-list').on('click', '.delete-btn', function() {
+            $('#master-list, #favorites-list, #genre-song-list').on('click', '.delete-btn', function(e) {
+                e.stopPropagation();
                 const li = $(this).closest('li');
                 const songId = li.attr('id');
                 if (confirm(`Are you sure you want to permanently delete "${masterSongs.find(s=>s.id === songId).name}"?`)) {
@@ -2096,7 +2065,8 @@
             songObjects.forEach((s, idx) => {
                 $ul.append(createSongItem(s, idx, 'setlist'));
             });
-            $('#setlist-list').on('click', '.delete-btn', function() {
+            $('#setlist-list').on('click', '.delete-btn', function(e) {
+                e.stopPropagation();
                 const songId = $(this).closest('li').attr('id');
                 setlist.songs = setlist.songs.filter(id => id !== songId);
                 renderSetlist();
@@ -2584,16 +2554,17 @@
             save();
 
             const visibleViewId = $('main > section:visible').attr('id');
+            
             if (visibleViewId === 'master-view') {
-                 currentViewerList = window.currentMasterViewSongs;
+                 currentViewerList = window.currentMasterViewSongs || [];
             } else if (visibleViewId === 'setlist-view') {
-                currentViewerList = window.currentSetlistViewSongs;
+                currentViewerList = window.currentSetlistViewSongs || [];
             } else if (visibleViewId === 'plays-view') {
-                 currentViewerList = window.currentPlaysViewSongs;
+                 currentViewerList = window.currentPlaysViewSongs || [];
             } else if (visibleViewId === 'favorites-view') {
                 currentViewerList = masterSongs.filter(s => s.favorite);
             } else if (visibleViewId === 'genre-view') {
-                currentViewerList = window.currentGenreViewSongs;
+                currentViewerList = window.currentGenreViewSongs || [];
             } else {
                 currentViewerList = masterSongs;
             }
@@ -2603,9 +2574,11 @@
                 index = currentViewerList.findIndex(s => s.id === songId);
             }
             currentViewerIndex = index;
+            
             if (currentViewerContext === 'setlist') {
                 viewedSongsInSetlist.add(songId);
-                renderSetlist();
+                const $listItem = $(`#setlist-list li[id="${songId}"]`);
+                $listItem.find('.index-number').addClass('viewed-index');
             }
 
             const url = getFileURL(song);
@@ -2696,19 +2669,7 @@
         function show(view) {
             $('main > section').hide();
             $(`#${view}-view`).show();
-
-            currentGenre = (view === 'genre-view') ? currentGenre : null;
-
-            if (['master', 'genre', 'favorites'].includes(view)) {
-                 $('#master-upload-container').show();
-            } else {
-                 $('#master-upload-container').hide();
-            }
-
-            if (view !== 'setlist' && view !== 'venue-setlists') {
-                cameFromVenue = null;
-            }
-
+            
             // Call the correct render function for the view
             if (view === 'master') renderMaster();
             else if (view === 'plays') renderPlays();
