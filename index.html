@@ -498,7 +498,7 @@
             display: flex;
             gap: 8px;
             align-items: center;
-            width: 100%;
+            width: 100%; /* Ensure container takes full width */
         }
 
         .item-creation input[type="color"] {
@@ -508,7 +508,7 @@
             width: 28px;
             height: 28px;
             padding: 0;
-            border: 1px solid #9ca3af;
+            border: 1px solid white;
             border-radius: 4px;
             cursor: pointer;
             flex-shrink: 0;
@@ -526,7 +526,7 @@
             border: 1px solid #4b5563;
             color: white;
             height: 32px;
-            min-width: 0; /* Important for flex-shrink to work */
+            min-width: 0; /* Important for flexbox shrinking */
             flex: 1 1 auto; /* Allow shrinking and growing */
         }
         
@@ -1395,7 +1395,7 @@
                 song.genre = genreNames[idx];
                 
                 const newDot = `<span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span>`;
-                $(`li[id="${songId}"]`).find('.genre-dot').replaceWith(newDot);
+                 $(`li[id="${songId}"]`).find('.genre-dot').replaceWith(newDot);
 
                 save();
                 recordHistory();
@@ -1969,8 +1969,8 @@
             const dot = `<span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span>`;
             const energyLevel = song.energy || 0;
             const energyIcon = `<span class="energy-icon flex items-center justify-center w-6 h-6" title="Energy: ${energyLevel}">${energyIcons[energyLevel]}</span>`;
-            const isMaster = context === 'master';
-            const detailsBtn = isMaster ?
+            const isMasterContext = ['master', 'favorites', 'genre'].includes(context);
+            const detailsBtn = isMasterContext ?
                 `<button class="p-1 px-2 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition details-btn">Details</button>` : '';
             const isViewed = context === 'setlist' && viewedSongsInSetlist.has(song.id);
             const viewedClass = isViewed ? 'viewed-index' : '';
@@ -1985,7 +1985,7 @@
                     <input class="w-28 p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(song.notes||'')}">
                     <input class="w-20 p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(song.duration||'')}">
                     ${detailsBtn}
-                    <button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${isMaster ? 'Delete' : 'Remove'}</button>
+                    <button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${isMasterContext ? 'Delete' : 'Remove'}</button>
                 </div>
             </li>`);
         }
@@ -2529,7 +2529,7 @@
             }
 
             favorites.forEach((s, idx) => {
-                $ul.append(createSongItem(s, idx, 'master'));
+                $ul.append(createSongItem(s, idx, 'favorites'));
             });
 
             $('#favorites-list .draggable').draggable({
@@ -2574,7 +2574,7 @@
             }
 
             songsInGenre.forEach((s, idx) => {
-                $ul.append(createSongItem(s, idx, 'master'));
+                $ul.append(createSongItem(s, idx, 'genre'));
             });
             
              $('#genre-song-list .draggable').draggable({
@@ -2658,7 +2658,9 @@
                             g.name) song.genre = '';
                     });
                     renderGenres(deselectAllNav);
-                    renderMaster();
+                    if ($('#master-view').is(':visible')) renderMaster();
+                    if ($('#favorites-view').is(':visible')) renderFavorites();
+                    if (currentGenre) renderGenreView(currentGenre);
                     if (currentSetlist) renderSetlist();
                     save();
                     recordHistory();
@@ -2999,7 +3001,7 @@
 
             currentGenre = (view === 'genre-view') ? currentGenre : null;
 
-            if (['master-view', 'favorites-view', 'genre-view'].includes(view)) {
+            if (['master-view'].includes(view)) {
                 $('#master-upload-container').show();
             } else {
                 $('#master-upload-container').hide();
