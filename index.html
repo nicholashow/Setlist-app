@@ -262,13 +262,8 @@
         .dark #setlist-details-content {
             background-color: #374151;
         }
-        .dark #setlist-details-content label, .dark #setlist-details-content .placeholder-text {
+        .dark #setlist-details-content label {
             color: #f9fafb !important; /* Force white color */
-        }
-        .placeholder-text {
-            font-size: 0.75rem;
-            color: #9ca3af;
-            padding-left: 0.125rem;
         }
        
         .drag-highlight {
@@ -825,11 +820,10 @@
                         <div>
                             <label for="setlist-date" class="font-medium text-xs">Date</label>
                             <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200">
-                            <p id="date-placeholder" class="placeholder-text">Enter date</p>
                         </div>
                         <div>
                             <label for="setlist-venue" class="font-medium text-xs">Venue</label>
-                            <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200">
+                            <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200 dark:placeholder-gray-400">
                         </div>
                         <div>
                             <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
@@ -841,7 +835,7 @@
                                     <option value="genre">Sort by Genre</option>
                                     <option value="energy">Sort by Energy</option>
                                 </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
                                     <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                                 </div>
                             </div>
@@ -1660,6 +1654,7 @@
 
         function handleSelection(event, containerSelector) { $(event.currentTarget).toggleClass('item-selected'); }
 
+        // FIX: Define a reusable helper function for draggable items
         const draggableOptions = {
             appendTo: 'body',
             revert: 'invalid',
@@ -1670,6 +1665,7 @@
                 const $sourceList = $sourceItem.parent();
                 const $selectedItems = $sourceList.children('.item-selected');
 
+                // If not dragging a multi-selection, select the single item being dragged
                 if ($selectedItems.length <= 1 || !$sourceItem.hasClass('item-selected')) {
                     $sourceList.children('.item-selected').removeClass('item-selected');
                     $sourceItem.addClass('item-selected');
@@ -1677,19 +1673,22 @@
                 
                 const count = $sourceList.children('.item-selected').length;
 
+                // Style the helper to be blue and correctly sized
                 ui.helper.css({
                     'background-color': '#3b82f6',
                     'color': 'white',
                     'width': $sourceItem.outerWidth(),
                     'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
-                    'z-index': 9999
-                }).addClass('selected');
-                ui.helper.find('*').css('color', 'white');
+                    'z-index': 9999,
+                    'border-radius': '0.5rem'
+                }).addClass('selected'); // Use selected class for consistency
+                ui.helper.find('*').css('color', 'white'); // Force text color
                 
+                // If dragging multiple items, create a summary badge
                 if (count > 1) {
                     ui.helper.empty()
                         .css({'height': '60px', 'padding': '1rem'})
-                        .addClass('flex items-center justify-center font-semibold rounded-lg')
+                        .addClass('flex items-center justify-center font-semibold')
                         .html(`Dragging ${count} items`);
                 } else {
                      ui.helper.css('height', $sourceItem.outerHeight());
@@ -1817,7 +1816,18 @@
                 }
             });
             $('#setlists-container').sortable({
-                axis: 'y', cursor: 'move',
+                axis: 'y',
+                cursor: 'move',
+                helper: 'clone',
+                start: function(e, ui) {
+                    ui.helper.css({
+                        'background-color': '#3b82f6',
+                        'color': 'white',
+                        'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
+                         'width': ui.item.outerWidth()
+                    }).addClass('selected');
+                    ui.helper.find('*').css('color', 'white');
+                },
                 update: function() {
                     const order = $(this).sortable('toArray', { attribute: 'data-name' });
                     const newObj = {};
@@ -1837,7 +1847,6 @@
 
             // Correctly handle setlist details
             $('#setlist-date').val(setlist.date || '');
-            $('#date-placeholder').toggle(!$('#setlist-date').val());
             $('#setlist-venue').val(setlist.venue || '');
 
             renderAddSongsPanel(); 
@@ -2003,16 +2012,31 @@
                 $('#genre-list').append(el);
             });
             updateGenreFilters('#genre-filter-dropdown', masterSelectedGenres);
-            $('#genre-list').sortable({ axis: 'y', cursor: 'move', placeholder: "sortable-placeholder", update: function() {
-                const newOrder = [];
-                $('#genre-list .genre-item').each(function() {
-                    const name = $(this).data('name');
-                    const genre = genres.find(g => g.name === name);
-                    if (genre) newOrder.push(genre);
-                });
-                genres = newOrder;
-                save();
-            }});
+            $('#genre-list').sortable({ 
+                axis: 'y', 
+                cursor: 'move', 
+                placeholder: "sortable-placeholder",
+                helper: 'clone',
+                start: function(e, ui) {
+                    ui.helper.css({
+                        'background-color': '#3b82f6',
+                        'color': 'white',
+                        'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
+                        'width': ui.item.outerWidth()
+                    }).addClass('selected');
+                    ui.helper.find('*').css('color', 'white');
+                },
+                update: function() {
+                    const newOrder = [];
+                    $('#genre-list .genre-item').each(function() {
+                        const name = $(this).data('name');
+                        const genre = genres.find(g => g.name === name);
+                        if (genre) newOrder.push(genre);
+                    });
+                    genres = newOrder;
+                    save();
+                }
+            });
         }
 
         function renderVenues(deselectAllNav) {
@@ -2038,16 +2062,31 @@
                 });
                 $('#venue-list').append(el);
             });
-            $('#venue-list').sortable({ axis: 'y', cursor: 'move', placeholder: "sortable-placeholder", update: function() {
-                const newOrder = [];
-                 $('#venue-list .venue-item').each(function() {
-                    const name = $(this).data('name');
-                    const venue = venues.find(v => v.name === name);
-                    if (venue) newOrder.push(venue);
-                });
-                venues = newOrder;
-                save();
-            }});
+            $('#venue-list').sortable({ 
+                axis: 'y', 
+                cursor: 'move', 
+                placeholder: "sortable-placeholder",
+                helper: 'clone',
+                start: function(e, ui) {
+                    ui.helper.css({
+                        'background-color': '#3b82f6',
+                        'color': 'white',
+                        'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
+                        'width': ui.item.outerWidth()
+                    }).addClass('selected');
+                    ui.helper.find('*').css('color', 'white');
+                },
+                update: function() {
+                    const newOrder = [];
+                    $('#venue-list .venue-item').each(function() {
+                        const name = $(this).data('name');
+                        const venue = venues.find(v => v.name === name);
+                        if (venue) newOrder.push(venue);
+                    });
+                    venues = newOrder;
+                    save();
+                }
+            });
         }
 
         function renderVenueSetlists(venueName) {
@@ -2209,3 +2248,4 @@
 </body>
 
 </html>
+
