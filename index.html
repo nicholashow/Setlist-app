@@ -16,14 +16,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
     <style>
         html,
-        body,
-        #app {
+        body {
             height: 100%;
             overflow: hidden;
+            position: fixed; /* Prevents panning/scrolling on touch devices */
+            width: 100%;
+        }
+        
+        #app {
+            height: 100%;
         }
 
         body.doc-viewer-active {
             overflow: visible !important;
+            position: relative; /* Allow scrolling only for doc viewer */
         }
 
         .sortable {
@@ -294,7 +300,7 @@
             color: #1f2937;
             max-height: 200px; /* Adjust as needed */
             overflow-y: auto;
-            margin-top: 1rem; /* Restore margin to create space */
+            /* margin-top: 1rem; /* REMOVED to close gap */
         }
 
         .dark .stats-container {
@@ -326,7 +332,7 @@
             overflow-y: auto; /* Allow this part to scroll if needed */
             flex-grow: 1;
             padding-right: 4px; /* Add padding to avoid scrollbar overlap */
-            margin-bottom: 0; /* Remove bottom margin to close gap */
+            margin-bottom: 0.5rem; /* Restore small margin to separate from stats */
         }
 
 
@@ -612,10 +618,7 @@
         .dark #master-list, .dark #setlist-list, .dark #favorites-list, .dark #genre-song-list, .dark #plays-list {
             border-color: #374151;
         }
-        /* Remove border from last item to prevent clipping */
-        #master-list > li:last-child, #setlist-list > li:last-child, #favorites-list > li:last-child, #genre-song-list > li:last-child, #plays-list > li:last-child {
-            border-bottom-width: 0;
-        }
+        /* REMOVED rule that hid the last item's border */
         
         /* iPad & Touch Device Enhancements */
         .left-col,
@@ -1159,6 +1162,8 @@
             }
 
             load();
+            deselectAllNav(); // Ensure clean state
+            $('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected'); // Select home on load
             renderLeftSetlists();
             renderGenres(deselectAllNav);
             renderVenues(deselectAllNav);
@@ -1252,6 +1257,7 @@
                 deselectAllNav();
                 $('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');
                 show('master');
+                autoCollapseSidebar();
             });
             $('#nav-favorites').click(() => {
                 deselectAllNav();
@@ -1289,6 +1295,7 @@
                 viewedSongsInSetlist.clear();
                 $('#setlist-title').text(name);
                 show('setlist');
+                autoCollapseSidebar();
             });
             $('#venue-setlists-list').on('click', 'li', function() {
                 const setlistName = $(this).data('setlist-name');
@@ -1738,12 +1745,13 @@
             const isViewed = context === 'setlist' && viewedSongsInSetlist.has(song.id);
             const viewedClass = isViewed ? 'viewed-index' : '';
 
+            // REMOVED 'truncate' class from the song name div to allow wrapping
             return $(`<li id="${song.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable">
                 ${star}
                 <div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${viewedClass}">${idx+1}</span></div>
                 ${dot}
                 ${energyIcon}
-                <div class="flex-1 min-w-0 truncate song-name ml-2 cursor-pointer font-medium">${escapeHtml(song.name)}</div>
+                <div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium">${escapeHtml(song.name)}</div>
                 ${inputsHTML}
             </li>`);
         }
