@@ -18,9 +18,9 @@
         html,
         body {
             height: 100%;
+            width: 100%;
             overflow: hidden;
             position: fixed; /* Prevents panning/scrolling on touch devices */
-            width: 100%;
         }
         
         #app {
@@ -28,8 +28,8 @@
         }
 
         body.doc-viewer-active {
+            position: relative; /* Revert fixed position to allow scrolling for doc viewer */
             overflow: visible !important;
-            position: relative; /* Allow scrolling only for doc viewer */
         }
 
         .sortable {
@@ -300,7 +300,7 @@
             color: #1f2937;
             max-height: 200px; /* Adjust as needed */
             overflow-y: auto;
-            /* margin-top: 1rem; /* REMOVED to close gap */
+            margin-top: auto; /* Pushes to bottom */
         }
 
         .dark .stats-container {
@@ -332,7 +332,7 @@
             overflow-y: auto; /* Allow this part to scroll if needed */
             flex-grow: 1;
             padding-right: 4px; /* Add padding to avoid scrollbar overlap */
-            margin-bottom: 0.5rem; /* Restore small margin to separate from stats */
+            margin-bottom: 0; /* Remove bottom margin to close gap */
         }
 
 
@@ -376,6 +376,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-grow: 1; /* Allow content to take up space */
         }
 
         .delete-genre,
@@ -623,7 +624,6 @@
         /* iPad & Touch Device Enhancements */
         .left-col,
         main.overflow-auto,
-        .song-selector-container,
         .setlist-songs-container,
         #genre-filter-dropdown,
         #setlist-adder-genre-filter-dropdown {
@@ -641,27 +641,28 @@
             padding-left: 1rem;
         }
 
-
-        /* Responsive styles for master view controls */
+        /* === NEW Responsive styles for master view controls === */
         #master-view-controls {
             display: grid;
             grid-template-areas: "search buttons" "filters buttons";
             grid-template-columns: 1fr auto;
             gap: 0.5rem;
             margin-bottom: 0.5rem;
+            align-items: center;
         }
         #search-container { grid-area: search; }
         #master-view-filters { grid-area: filters; display: flex; gap: 0.5rem; align-items: center; }
         #master-view-buttons { grid-area: buttons; display: flex; gap: 0.5rem; align-items: center; }
         
         .left-col.collapsed ~ main #master-view-controls {
-            grid-template-areas: "search" "filters" "buttons";
-            grid-template-columns: 1fr;
+            grid-template-areas:
+                "search search"
+                "filters buttons";
+            grid-template-columns: 1fr auto;
         }
         .left-col.collapsed ~ main #master-view-buttons {
-            justify-content: flex-start;
+            justify-content: flex-end; /* Align buttons to the right */
         }
-
     </style>
 </head>
 
@@ -714,7 +715,7 @@
                 </div>
             </div>
             
-            <div class="stats-container mt-auto">
+            <div class="stats-container">
                 <h3 class="stats-title">Top Played</h3>
                 <ul class="text-xs mt-1" id="top-played"></ul>
                 <h3 class="stats-title mt-3">Least Played</h3>
@@ -1002,8 +1003,6 @@
         let currentViewerContext = null;
         let currentViewerList = [];
         let currentViewerIndex = -1;
-        let scrollPosition = 0;
-        let scrollTimeout = null;
         let inactivityTimer = null;
 
 
@@ -1162,14 +1161,16 @@
             }
 
             load();
-            deselectAllNav(); // Ensure clean state
-            $('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected'); // Select home on load
+            // === FIX: Ensure correct initial state on load ===
+            deselectAllNav(); 
+            $('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected'); 
+            
             renderLeftSetlists();
             renderGenres(deselectAllNav);
             renderVenues(deselectAllNav);
             bindNav(deselectAllNav);
-            show('master'); // Show master view on load
             updateTopLeast();
+            show('master'); // Show master view on load
             
             $(document).on('click', '.genre-dot', function(e) {
                 e.stopPropagation();
@@ -1248,6 +1249,27 @@
                     $icon.html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />');
                 }
             });
+
+            // === FIX: New, robust click handler for ALL song list items ===
+            $('main').on('click', 'li.draggable', function(e) {
+                const listId = `#${$(this).parent().attr('id')}`;
+                
+                // Ignore clicks on interactive elements within the list item
+                if ($(e.target).is('input, button, a, .genre-dot, .energy-icon, .energy-icon *, .favorite-star-container, .favorite-star-container *') || $(e.target).closest('button').length > 0) {
+                    return;
+                }
+                
+                // Handle multi-selection with modifier keys
+                if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                    handleSelection(e, listId);
+                    return;
+                }
+
+                // Default action: A single click opens the file viewer
+                const songId = $(this).attr('id');
+                const context = $('main > section:visible').attr('id').replace('-view', '');
+                openSongInContext(songId, context);
+            });
         });
 
         // ================== Event Handlers ==================
@@ -1266,7 +1288,6 @@
             });
             $('#favorites-sort-dropdown').on('change', renderFavorites);
             $('#genre-sort-dropdown').on('change', () => renderGenreView(currentGenre));
-
 
             $('#nav-plays').click(() => {
                 deselectAllNav();
@@ -1348,7 +1369,6 @@
                 updateSearchDatalist();
             });
             
-            $('#setlist-search').on('input', renderRightSelector);
             $('#sort-dropdown').on('change', renderMaster);
 
             $('#genre-filter-button').on('click', () => $('#genre-filter-dropdown').toggleClass('hidden'));
@@ -1369,9 +1389,6 @@
             $(document).on('click', function(e) {
                 if (!$(e.target).closest('#genre-filter-container').length) {
                     $('#genre-filter-dropdown').addClass('hidden');
-                }
-                if (!$(e.target).closest('#setlist-adder-genre-filter-container').length) {
-                    $('#setlist-adder-genre-filter-dropdown').addClass('hidden');
                 }
                 if (!$(e.target).closest('.relative').has('#share-setlist-btn').length) {
                     $('#share-options').addClass('hidden');
@@ -1416,7 +1433,6 @@
                 currentViewerList = [];
                 currentViewerIndex = -1;
                 $('#doc-iframe-container').empty();
-                scrollPosition = 0;
             });
             $('#delete-all-btn').click(() => {
                 if (confirm('Are you sure you want to delete ALL songs?')) {
@@ -1555,8 +1571,6 @@
                 save();
             });
 
-            $('#right-selector-sort').on('change', renderRightSelector);
-
             $(document).on('dragenter dragover', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1604,6 +1618,52 @@
                     if ($('#favorites-view').is(':visible')) {
                         renderFavorites();
                     }
+                }
+            });
+
+            const handleInputChange = function(e) {
+                const songId = $(this).closest('li').attr('id');
+                const song = masterSongs.find(s => s.id === songId);
+                if (song) {
+                    if ($(this).hasClass('artist-input')) song.artist = e.target.value;
+                    else if ($(this).hasClass('notes-input')) song.notes = e.target.value;
+                    else if ($(this).hasClass('duration-input')) song.duration = e.target.value;
+                    save();
+                }
+            };
+            $('main').on('change', '.artist-input, .notes-input, .duration-input', handleInputChange);
+
+            $('main').on('click', '.delete-btn', function(e) {
+                e.stopPropagation();
+                const li = $(this).closest('li');
+                const songId = li.attr('id');
+                const song = masterSongs.find(s => s.id === songId);
+                if (!song) return;
+                const context = $(this).text().toLowerCase();
+
+                if (context === 'delete') { // Permanent deletion from master/favs/genre views
+                    if (confirm(`Are you sure you want to permanently delete "${song.name}"?`)) {
+                        if (song.file) {
+                            URL.revokeObjectURL(song.file);
+                            objectURLs.delete(song.file);
+                        }
+                        removeFromAllSetlists([songId]);
+                        masterSongs = masterSongs.filter(x => x.id !== songId);
+                        
+                        const visibleView = $('main > section:visible').attr('id');
+                        if (visibleView === 'favorites-view') renderFavorites();
+                        else if (visibleView === 'genre-view') renderGenreView(currentGenre);
+                        else renderMaster();
+                        
+                        if (currentSetlist) renderSetlist();
+                        updateTopLeast();
+                        save();
+                    }
+                } else { // 'Remove' from setlist
+                    const setlist = setlists[currentSetlist];
+                    setlist.songs = setlist.songs.filter(id => id !== songId);
+                    renderSetlist();
+                    save();
                 }
             });
         }
@@ -1731,14 +1791,15 @@
             const energyLevel = song.energy || 0;
             const energyIcon = `<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${energyLevel}">${energyIcons[energyLevel]}</div>`;
             
-            const isDelete = ['master', 'favorites', 'genre'].includes(context);
+            const isDeleteContext = ['master', 'favorites', 'genre'].includes(context);
+            const buttonText = isDeleteContext ? 'Delete' : 'Remove';
 
             const inputsHTML = `
                 <div class="song-details-container">
                     <input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(song.artist||'')}">
                     <input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(song.notes||'')}">
                     <input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(song.duration||'')}">
-                    <button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${isDelete ? 'Delete' : 'Remove'}</button>
+                    <button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${buttonText}</button>
                 </div>
             `;
 
@@ -1758,18 +1819,8 @@
 
         function handleSelection(event, containerSelector) {
             const currentItem = $(event.currentTarget);
-            if (event.shiftKey || event.ctrlKey || event.metaKey) {
-                currentItem.toggleClass('item-selected');
-            } else {
-                const wasSelected = currentItem.hasClass('item-selected');
-                const hadOthersSelected = $(`${containerSelector} .item-selected`).not(currentItem).length > 0;
-                $(`${containerSelector} .item-selected`).removeClass('item-selected');
-                if (!wasSelected || hadOthersSelected) {
-                    currentItem.addClass('item-selected');
-                }
-            }
+            currentItem.toggleClass('item-selected');
         }
-
 
         function renderMaster() {
             const q = $('#search').val().toLowerCase();
@@ -1813,58 +1864,6 @@
                     $ul.append(createSongItem(s, idx, 'master'));
                 });
             }
-
-            $('#master-list, #favorites-list, #genre-song-list, #setlist-list').off('click', 'li').on('click', 'li', function(e) {
-                 if ($(e.target).is('input, button, a, .genre-dot, .details-btn, .energy-icon, .energy-icon *, .favorite-star-container, .favorite-star-container *')) {
-                    return;
-                }
-                if ($(e.target).closest('.song-name').length > 0 && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-                    const songId = $(this).closest('li').attr('id');
-                    const visibleView = $('main > section:visible').attr('id').replace('-view', '');
-                    openSongInContext(songId, visibleView);
-                    return;
-                }
-                handleSelection(e, `#${$(this).parent().attr('id')}`);
-            });
-
-            const handleInputChange = function(e) {
-                const songId = $(this).closest('li').attr('id');
-                const song = masterSongs.find(s => s.id === songId);
-                if (song) {
-                    if ($(this).hasClass('artist-input')) song.artist = e.target.value;
-                    else if ($(this).hasClass('notes-input')) song.notes = e.target.value;
-                    else if ($(this).hasClass('duration-input')) song.duration = e.target.value;
-                    save();
-                }
-            };
-            $('main').off('change').on('change', '.artist-input, .notes-input, .duration-input', handleInputChange);
-
-
-            $('#master-list, #favorites-list, #genre-song-list').on('click', '.delete-btn', function(e) {
-                e.stopPropagation();
-                const li = $(this).closest('li');
-                const songId = li.attr('id');
-                if (confirm(`Are you sure you want to permanently delete "${masterSongs.find(s=>s.id === songId).name}"?`)) {
-                    const song = masterSongs.find(s => s.id ===
-                        songId);
-                    if (!song) return;
-                    if (song.file) {
-                        URL.revokeObjectURL(song.file);
-                        objectURLs.delete(song.file);
-                    }
-                    removeFromAllSetlists([songId]);
-                    masterSongs = masterSongs.filter(x => x.id !== songId);
-                    
-                    const visibleView = $('main > section:visible').attr('id');
-                    if (visibleView === 'favorites-view') renderFavorites();
-                    else if (visibleView === 'genre-view') renderGenreView(currentGenre);
-                    else renderMaster();
-                    
-                    if (currentSetlist) renderSetlist();
-                    updateTopLeast();
-                    save();
-                }
-            });
 
             $('#master-list .draggable').draggable({
                 helper: function() {
@@ -2073,13 +2072,7 @@
             songObjects.forEach((s, idx) => {
                 $ul.append(createSongItem(s, idx, 'setlist'));
             });
-            $('#setlist-list').on('click', '.delete-btn', function(e) {
-                e.stopPropagation();
-                const songId = $(this).closest('li').attr('id');
-                setlist.songs = setlist.songs.filter(id => id !== songId);
-                renderSetlist();
-                save();
-            });
+
             if ($('#setlist-list').hasClass('ui-sortable')) {
                 $('#setlist-list').sortable('destroy');
             }
@@ -2124,17 +2117,15 @@
             const sortedSongs = masterSongs.slice().sort((a, b) => (playCounts[b.id] || 0) - (playCounts[a.id] || 0));
             window.currentPlaysViewSongs = sortedSongs;
 
-            if (Object.keys(playCounts).length === 0) {
-                $ul.append('<li class="p-8 text-center text-gray-500 italic">No songs have been played yet. View a song\'s file to log a play.</li>');
+            if (Object.keys(playCounts).every(k => playCounts[k] === 0)) {
+                $ul.append('<li class="p-8 text-center text-gray-500 italic">No songs have been played yet. Click a song to view its file and log a play.</li>');
                 return;
             }
 
             sortedSongs.forEach(s => {
                 const li = $(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable pl-4"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);
-                li.find('.flex-1').on('dblclick', () => openSongInContext(s.id, 'plays'));
                 li.find('button').click(() => {
-                    playCounts[s.id] =
-                        0;
+                    playCounts[s.id] = 0;
                     renderPlays();
                     updateTopLeast();
                     save();
@@ -2142,12 +2133,7 @@
                 $ul.append(li);
             });
 
-            $('#plays-list li.draggable').on('click', function(e) {
-                if ($(e.target).is('button') || $(e.target).closest('button').length > 0) {
-                    return;
-                }
-                handleSelection(e, '#plays-list');
-            }).draggable({
+            $('#plays-list li.draggable').draggable({
                 helper: function() {
                     const selected = $('#plays-list .item-selected');
                     if (selected.length === 0 || !$(this).hasClass('item-selected')) {
@@ -2188,6 +2174,7 @@
         function renderFavorites() {
             const $ul = $('#favorites-list').empty();
             let favorites = masterSongs.filter(s => s.favorite);
+            window.currentFavoritesViewSongs = favorites;
 
             const sortMode = $('#favorites-sort-dropdown').val();
             if (sortMode === 'artist') {
@@ -2303,9 +2290,7 @@
                 }
                 container.append(section);
             });
-            $('#energy-level-container li.draggable').on('click', function(e) {
-                handleSelection(e, '#energy-level-container');
-            }).draggable({
+            $('#energy-level-container li.draggable').draggable({
                 helper: function() {
                     const selected = $('#energy-level-container .item-selected');
                     if (selected.length === 0 || !$(this).hasClass('item-selected')) {
@@ -2330,19 +2315,20 @@
                 const el = $(`<div class="sidebar-item genre-item"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);
                 el.find('.delete-genre').click((e) => {
                     e.stopPropagation();
-                    genres = genres.filter(genre => genre.name !== g.name);
-                    masterSongs.forEach(song => {
-                        if (song.genre ===
-                            g.name) song.genre = '';
-                    });
-                    renderGenres(deselectAllNav);
-                    if ($('#master-view').is(':visible')) renderMaster();
-                    if ($('#favorites-view').is(':visible')) renderFavorites();
-                    if (currentGenre) renderGenreView(currentGenre);
-                    if (currentSetlist) renderSetlist();
-                    save();
+                    if (confirm(`Delete the genre "${g.name}"? This will also remove it from any songs.`)) {
+                        genres = genres.filter(genre => genre.name !== g.name);
+                        masterSongs.forEach(song => {
+                            if (song.genre ===
+                                g.name) song.genre = '';
+                        });
+                        renderGenres(deselectAllNav);
+                        renderAll();
+                        save();
+                    }
                 });
-                el.find('.genre-content').click(() => {
+                el.on('click', function(e) {
+                    if($(e.target).closest('.delete-genre, .genre-edit-input').length > 0) return;
+                    e.stopPropagation();
                     deselectAllNav();
                     el.addClass('selected');
                     currentGenre = g.name;
@@ -2357,8 +2343,7 @@
                     input.focus()[0].select();
                     input.on('blur keypress', function(ev) {
                         if (ev.type === 'keypress' && ev.key !== 'Enter') return;
-                        const newName =
-                            input.val().trim();
+                        const newName = input.val().trim();
                         if (!newName || newName === oldName) {
                             renderGenres(deselectAllNav);
                             return;
@@ -2369,8 +2354,7 @@
                             if (song.genre === oldName) song.genre = newName;
                         });
                         renderGenres(deselectAllNav);
-                        renderMaster();
-                        if (currentSetlist) renderSetlist();
+                        renderAll();
                         save();
                     });
                 });
@@ -2553,7 +2537,7 @@
         function openSongInContext(songId, context, index = -1) {
             const song = masterSongs.find(s => s.id === songId);
             if (!song) {
-                alert('File not found');
+                console.error('Song not found for ID:', songId);
                 return;
             }
             playCounts[song.id] = (playCounts[song.id] || 0) + 1;
@@ -2561,20 +2545,14 @@
             updateTopLeast();
             save();
 
-            const visibleViewId = $('main > section:visible').attr('id');
-            
-            if (visibleViewId === 'master-view') {
-                 currentViewerList = window.currentMasterViewSongs || [];
-            } else if (visibleViewId === 'setlist-view') {
-                currentViewerList = window.currentSetlistViewSongs || [];
-            } else if (visibleViewId === 'plays-view') {
-                 currentViewerList = window.currentPlaysViewSongs || [];
-            } else if (visibleViewId === 'favorites-view') {
-                currentViewerList = masterSongs.filter(s => s.favorite);
-            } else if (visibleViewId === 'genre-view') {
-                currentViewerList = window.currentGenreViewSongs || [];
-            } else {
-                currentViewerList = masterSongs;
+            // === FIX: Set the correct song list for navigation based on the context ===
+            switch(context) {
+                case 'master': currentViewerList = window.currentMasterViewSongs || []; break;
+                case 'setlist': currentViewerList = window.currentSetlistViewSongs || []; break;
+                case 'plays': currentViewerList = window.currentPlaysViewSongs || []; break;
+                case 'favorites': currentViewerList = window.currentFavoritesViewSongs || []; break;
+                case 'genre': currentViewerList = window.currentGenreViewSongs || []; break;
+                default: currentViewerList = masterSongs;
             }
 
             currentViewerContext = context;
@@ -2591,14 +2569,14 @@
 
             const url = getFileURL(song);
             if (!url) {
-                alert('File not available');
+                alert('File not available for this song.');
                 return;
             }
             
             try {
                 $('body').addClass('doc-viewer-active');
                 const $container = $('#doc-iframe-container');
-                const objectTag = `<object id="doc-object" data="${url}" type="application/pdf" width="100%" height="100%"><p>Your browser does not support PDFs. Please download the PDF to view it: <a href="${url}" target="_blank">Download PDF</a>.</p></object>`;
+                const objectTag = `<object id="doc-object" data="${url}" type="application/pdf"><p>Your browser does not support PDFs. Please download the PDF to view it: <a href="${url}" target="_blank">Download PDF</a>.</p></object>`;
                 $container.empty().append(objectTag);
 
                 $('#doc-view').addClass('doc-view-fullscreen').show();
@@ -2642,7 +2620,6 @@
         }
 
         function setupScrollHandlers() {
-            scrollPosition = 0;
             resetScrollHandlers();
             $('#doc-view').on('mousemove', showNavButtons);
             $(window).on('blur.docview', function(){
@@ -2676,7 +2653,18 @@
 
         function show(view) {
             $('main > section').hide();
-            $(`#${view}-view`).show();
+            const $view = $(`#${view}-view`);
+            
+            if ($view.length === 0) {
+                // Special case for genre-view which isn't a direct ID
+                if (view === 'genre-view') {
+                    $('#genre-view').show();
+                } else {
+                    $('#master-view').show(); // Fallback to master
+                }
+            } else {
+                $view.show();
+            }
             
             // Call the correct render function for the view
             if (view === 'master') renderMaster();
