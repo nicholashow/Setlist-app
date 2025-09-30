@@ -23,7 +23,7 @@
         }
 
         body.doc-viewer-active {
-            overflow: hidden;
+            overflow: visible !important;
         }
 
         .sortable {
@@ -37,31 +37,14 @@
         }
 
         /* Unified selected style for sidebar items */
-        .selected,
-        .venue-item.selected,
-        .genre-item.selected {
-            background-color: #3b82f6;
-            color: white;
+        .selected {
+            background-color: #3b82f6 !important;
+            color: white !important;
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
         }
 
-        .dark .selected,
-        .dark .venue-item.selected,
-        .dark .genre-item.selected {
-            background-color: #3b82f6;
-            color: white;
-        }
-
-        .venue-item.selected:hover,
-        .dark .venue-item.selected:hover,
-        .genre-item.selected:hover,
-        .dark .genre-item.selected:hover {
-            background-color: #3b82f6;
-        }
-
-        .venue-item.selected .venue-name,
-        .genre-item.selected .genre-name {
-            color: white;
+        .selected .genre-name, .selected .venue-name {
+             color: white !important;
         }
 
         /* Consistent Add Button Style */
@@ -207,59 +190,45 @@
 
         /* Song selector */
         .song-selector-container {
-            height: calc(100% - 150px);
+            flex-grow: 1; /* Allow container to fill space */
             overflow-y: auto;
             padding: 8px;
             background: white;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            min-height: 0; /* Fix flexbox overflow issue */
         }
 
         .dark .song-selector-container {
             background: #1f2937;
         }
-
-        .song-selector-item {
+        
+        #setlist-view {
             display: flex;
-            align-items: center;
-            padding: 6px 8px;
-            border-radius: 4px;
-            margin-bottom: 4px;
-            background: #f8fafc;
+            flex-direction: column;
+            height: 100%;
         }
 
-        .dark .song-selector-item {
-            background: #374151;
-        }
-
-        .song-selector-item:hover {
-            background: #e2e8f0;
-        }
-
-        .dark .song-selector-item:hover {
-            background: #4b5563;
-        }
-
-        .song-selector-item input {
-            margin-right: 8px;
-        }
-
-        /* Setlist container */
+        /* Setlist container: TOP/BOTTOM LAYOUT */
         .setlist-container {
             display: flex;
-            gap: 4px;
-            height: calc(100% - 180px);
+            flex-direction: column;
+            gap: 1rem;
+            flex-grow: 1;
+            min-height: 0; /* Fix flexbox overflow issue */
         }
 
         .setlist-songs-container {
-            width: 75%;
-            height: 100%;
+            flex-basis: 55%;
             overflow-y: auto;
+            min-height: 100px;
         }
 
         .setlist-selector-container {
-            width: 25%;
-            height: 100%;
+            flex-basis: 45%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
         }
         
         /* Setlist Details Collapsible Section */
@@ -370,15 +339,6 @@
             animation: highlight 1s ease-out;
         }
 
-        .item-selected {
-            background-color: #dbeafe !important;
-        }
-
-        .dark .item-selected {
-            background-color: #1e3a8a !important;
-        }
-
-
         /* Sidebar List Item Styling (Unified) */
         .sidebar-item {
             display: flex;
@@ -390,6 +350,7 @@
             background: #374151; /* Unified gray color */
             cursor: pointer;
             color: #e5e7eb;
+            transition: background-color 0.2s;
         }
         .sidebar-item:hover {
             background: #4b5563;
@@ -547,7 +508,8 @@
 
         /* Smoother Sidebar Transition */
         .left-col {
-            overflow: hidden; /* Hide content during transition */
+            overflow-y: auto;
+            overflow-x: hidden;
             transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1), padding 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
         }
@@ -574,11 +536,6 @@
 
         #sidebar-toggle:hover {
             background-color: #374151;
-        }
-
-        /* Setlist selector search */
-        .setlist-selector-search {
-            margin-bottom: 8px;
         }
 
         /* Dark Mode Toggle */
@@ -647,28 +604,32 @@
             display: inline-block;
         }
 
-        /* Energy Level 3 Animation */
+        /* Energy Level Icons & Animation */
+        #energy-level-container svg {
+            width: 96px;
+            height: 96px;
+        }
         .energy-svg-3 {
             overflow: visible !important;
         }
         .energy-svg-3 .sparks path {
-            opacity: 0;
-            transform-origin: center center;
+            opacity: 1; /* Sparks are visible by default on static icon */
         }
-        .energy-svg-3.spark-burst .sparks path {
+        .energy-icon .energy-svg-3.animate-sparks .sparks path {
+            opacity: 0; /* Hide sparks initially only for animation */
             animation: spark-burst-indiv 0.5s ease-out forwards;
         }
-        .energy-svg-3.spark-burst .sparks path:nth-child(1) { animation-delay: 0s; }
-        .energy-svg-3.spark-burst .sparks path:nth-child(2) { animation-delay: 0.1s; }
-        .energy-svg-3.spark-burst .sparks path:nth-child(3) { animation-delay: 0.05s; }
-        .energy-svg-3.spark-burst .sparks path:nth-child(4) { animation-delay: 0.15s; }
-        .energy-svg-3.spark-burst .sparks path:nth-child(5) { animation-delay: 0.12s; }
+        .energy-icon .energy-svg-3.animate-sparks .sparks path:nth-child(1) { animation-delay: 0s; }
+        .energy-icon .energy-svg-3.animate-sparks .sparks path:nth-child(2) { animation-delay: 0.1s; }
+        .energy-icon .energy-svg-3.animate-sparks .sparks path:nth-child(3) { animation-delay: 0.05s; }
+        .energy-icon .energy-svg-3.animate-sparks .sparks path:nth-child(4) { animation-delay: 0.15s; }
+        .energy-icon .energy-svg-3.animate-sparks .sparks path:nth-child(5) { animation-delay: 0.12s; }
 
 
         @keyframes spark-burst-indiv {
             0% { transform: scale(0.3) rotate(0deg); opacity: 0; }
             50% { opacity: 1; }
-            100% { transform: scale(1) rotate(15deg); opacity: 1; } /* Sparks remain visible and static */
+            100% { transform: scale(1) rotate(15deg); opacity: 1; }
         }
         
         /* iPad & Touch Device Enhancements */
@@ -700,25 +661,6 @@
 
             .setlist-container {
                 flex-direction: column;
-            }
-
-            .setlist-songs-container,
-            .setlist-selector-container {
-                width: 100%;
-            }
-
-            .setlist-selector-container {
-                margin-top: 1rem;
-            }
-
-            #master-upload-container {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 0.5rem;
-            }
-
-            #master-upload-container > div:first-child {
-                width: 100%;
             }
         }
 
@@ -880,60 +822,7 @@
                     <p id="setlist-total-duration" class="text-sm text-gray-500 dark:text-white ml-2"></p>
                     <p id="setlist-song-count" class="text-sm text-gray-500 dark:text-white ml-2"></p>
                 </div>
-
-                <div class="flex items-end justify-between flex-wrap gap-4 mb-2">
-                    <div class="flex items-center gap-2">
-                        <button id="record-show" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Record Show</button>
-                        <button id="stop-record" class="p-2 bg-red-600 text-white rounded-lg hidden shadow">Stop Recording</button>
-                        <button id="print-setlist" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">Print Setlist</button>
-                        <div class="relative inline-block">
-                            <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Share Setlist</button>
-                            <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
-                                <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
-                                <a href="#" id="share-email" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Email (text only)</a>
-                                <a href="#" id="share-gmail" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Gmail (text only)</a>
-                                <a href="#" id="share-copy" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Copy to Clipboard (text only)</a>
-                            </div>
-                            <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="setlist-details-container" class="mb-2">
-                    <div id="setlist-details-toggle">
-                        <span>Setlist Details</span>
-                        <span class="toggle-arrow">▾</span>
-                    </div>
-                    <div id="setlist-details-content" style="display: none;">
-                        <div>
-                            <label for="setlist-date" class="font-medium text-xs">Date</label>
-                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44">
-                        </div>
-                        <div>
-                            <label for="setlist-venue" class="font-medium text-xs">Venue</label>
-                            <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44">
-                        </div>
-                        <div class="relative">
-                            <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
-                            <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 w-44">
-                                <option value="custom">Custom Order</option>
-                                <option value="name">Sort by Name</option>
-                                <option value="artist">Sort by Artist</option>
-                                <option value="genre">Sort by Genre</option>
-                                <option value="energy">Sort by Energy</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 bottom-0 right-0 flex items-center px-2 text-gray-700 mb-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-
-                <div id="setlist-recordings" class="mb-2"></div>
-
-
+                
                 <div class="setlist-container">
                     <div class="setlist-songs-container bg-white rounded-xl shadow-lg overflow-auto dark:bg-gray-800">
                         <ul class="sortable divide-y divide-gray-200 dark:divide-gray-700" id="setlist-list"></ul>
@@ -955,10 +844,6 @@
                                         <option value="genre">Sort by Genre</option>
                                         <option value="energy">Sort by Energy</option>
                                     </select>
-                                </div>
-                                <div id="setlist-adder-genre-filter-container" class="relative">
-                                    <button id="setlist-adder-genre-filter-button" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm w-full dark:bg-gray-700 dark:border-gray-600">Genre</button>
-                                    <div id="setlist-adder-genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto right-0 dark:bg-gray-800 dark:border dark:border-gray-700"></div>
                                 </div>
                             </div>
                             <ul class="song-selector-container flex-1" id="right-selector"></ul>
@@ -1419,9 +1304,8 @@
                     if (song.energy === 3) {
                         $listItems.find('.energy-svg-3').each(function() {
                             const $svg = $(this);
-                            $svg.find('.sparks path').css('opacity', 0); // Reset for animation
-                            $svg.addClass('spark-burst');
-                            setTimeout(() => $svg.removeClass('spark-burst'), 600);
+                            $svg.addClass('animate-sparks');
+                            setTimeout(() => $svg.removeClass('animate-sparks'), 600);
                         });
                     }
 
@@ -2890,9 +2774,7 @@
             song.lastPlayed = new Date().toISOString().split('T')[0];
             updateTopLeast();
             save();
-            // Do not re-render the whole list, to avoid jarring UI shifts. The data is saved.
 
-            // Determine the current list for next/prev navigation
             const visibleView = $('main > section:visible').attr('id');
             if (visibleView === 'master-view') {
                  currentViewerList = window.currentMasterViewSongs;
@@ -2901,7 +2783,7 @@
             } else if (visibleView === 'plays-view') {
                  currentViewerList = window.currentPlaysViewSongs;
             } else if (visibleView === 'favorites-view') {
-                currentViewerList = masterSongs.filter(s => s.favorite); // Re-filter to be safe
+                currentViewerList = masterSongs.filter(s => s.favorite);
             } else if (visibleView === 'genre-view' && currentGenre) {
                 currentViewerList = masterSongs.filter(s => s.genre === currentGenre);
             } else {
