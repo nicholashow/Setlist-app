@@ -61,7 +61,7 @@
              color: white !important;
         }
         
-        /* Multiple selection highlight - MORE PROMINENT */
+        /* Multiple selection highlight */
         .item-selected {
             background-color: #93c5fd !important;
             border-left: 4px solid #2563eb;
@@ -254,10 +254,15 @@
             flex-wrap: wrap;
         }
         .dark #setlist-details-content {
-            background-color: #374151; /* Match other inputs */
+            background-color: #374151;
         }
-        .dark #setlist-details-content label {
+        .dark #setlist-details-content label, .dark #setlist-details-content .placeholder-text {
             color: #f9fafb; /* White */
+        }
+        .placeholder-text {
+            font-size: 0.75rem;
+            color: #6b7280;
+            padding-left: 0.25rem;
         }
        
         .drag-highlight {
@@ -333,7 +338,8 @@
 
         .left-col.collapsed {
             width: 0;
-            padding: 0;
+            padding: 0; /* Ensures no leftover space */
+            overflow: hidden; /* Hides content fully */
         }
 
         #sidebar-toggle {
@@ -448,33 +454,28 @@
         .dark-mode-toggle+div {
             transition: all 0.3s ease;
         }
-        /* Dark mode ON (checked) */
+        .dark-mode-toggle+div .dot {
+            transition: all 0.3s ease;
+        }
+        /* Dark mode on */
         .dark-mode-toggle:checked+div {
             background-color: #22c55e;
         }
         .dark-mode-toggle:checked+div .dot {
-            transform: translateX(20px);
+            transform: translateX(1px); /* Left */
         }
-        /* Light mode ON (unchecked) */
+        /* Light mode on */
         .dark-mode-toggle:not(:checked)+div {
             background-color: #1f2937; /* Black */
         }
         .dark-mode-toggle:not(:checked)+div .dot {
-            transform: translateX(20px); /* Move ball to the right */
-        }
-        /* Light mode OFF (needs JS to set checked=false) */
-         html:not(.dark) .dark-mode-toggle+div .dot {
-            transform: translateX(1px); /* Move ball to the left */
+            transform: translateX(20px); /* Right */
         }
 
-
-        .dark-mode-toggle+div .dot {
-            transition: all 0.3s ease;
-        }
-
-        .index-number.viewed-index {
+        /* Highly specific selector for viewed number color */
+        #setlist-list li .index-number.viewed-index {
             background-color: white;
-            color: #3b82f6; /* Blue button color */
+            color: #3b82f6 !important; /* Blue button color */
             border: 1px solid #3b82f6;
             font-weight: bold;
         }
@@ -663,8 +664,11 @@
             transition: all 0.2s;
         }
         .favorite-star-container.favorited svg {
-            fill: #f59e0b; /* Gold fill */
-            stroke: #f59e0b; /* Gold outline */
+            fill: white;
+            stroke: #4b5563; /* Dark outline for visibility on light backgrounds */
+        }
+        .dark .favorite-star-container.favorited svg {
+            stroke: white; /* White outline on dark backgrounds */
         }
 
 
@@ -815,6 +819,7 @@
                         <div>
                             <label for="setlist-date" class="font-medium text-xs">Date</label>
                             <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44">
+                            <p id="date-placeholder" class="placeholder-text">Enter date</p>
                         </div>
                         <div>
                             <label for="setlist-venue" class="font-medium text-xs">Venue</label>
@@ -954,6 +959,20 @@
         </section>
     </div>
     <script>
+        // ================== Disable Zoom on iPad ==================
+        document.addEventListener('touchstart', (event) => {
+          if (event.touches.length > 1) {
+             event.preventDefault();
+          }
+        }, { passive: false });
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (event) => {
+          const now = (new Date()).getTime();
+          if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+          }
+          lastTouchEnd = now;
+        }, false);
         // ================== Memory Management ==================
         let objectURLs = new Set();
         window.addEventListener('unload', () => {
@@ -1192,6 +1211,10 @@
                 const newDot = `<span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span>`;
                  $(`li[id="${songId}"]`).find('.genre-dot').parent().html(newDot);
 
+                // Re-render genre view if it's currently visible to reflect the change
+                if ($('#genre-view').is(':visible')) {
+                    renderGenreView(currentGenre);
+                }
                 save();
             });
             $(document).on('click', '.energy-icon', function(e) {
@@ -1476,13 +1499,7 @@
             $('#share-gmail').on('click', e => { e.preventDefault(); shareSetlist('gmail'); });
             $('#share-copy').on('click', e => { e.preventDefault(); shareSetlist('copy'); });
             $('#dark-mode-toggle').change(function() {
-                 $('html').toggleClass('dark', this.checked);
-                 // Special handling for the visual toggle state
-                 if ($('html').hasClass('dark')) {
-                     $(this).prop('checked', true);
-                 } else {
-                     $(this).prop('checked', false);
-                 }
+                $('html').toggleClass('dark', this.checked);
                 save();
             });
             $(document).on('dragenter dragover', function(e) {
@@ -1545,6 +1562,9 @@
                     renderSetlist();
                     save();
                 }
+            });
+             $('#setlist-date').on('input', function() {
+                $('#date-placeholder').toggle(!$(this).val());
             });
         }
 
@@ -1653,7 +1673,7 @@
                         $(this).addClass('item-selected');
                     }
                     const count = $('#master-list .item-selected').length;
-                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
+                    return $(`<div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 6px; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Dragging ${count} song(s)</div>`);
                 },
                 appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
             });
@@ -1777,16 +1797,8 @@
             
             const setlist = setlists[currentSetlist];
             $('#setlist-title').text(currentSetlist);
-            $('#setlist-date').val(setlist.date || '').off('change').on('change', function() { setlist.date = $(this).val(); save(); });
-            $('#setlist-venue').val(setlist.venue || '').off('change').on('change', function() {
-                const newVenue = $(this).val().trim();
-                setlist.venue = newVenue;
-                if (newVenue && !venues.some(v => v.name.toLowerCase() === newVenue.toLowerCase())) {
-                    venues.push({ name: newVenue });
-                    renderVenues();
-                }
-                save();
-            });
+            $('#setlist-date').val(setlist.date || '').trigger('input');
+            $('#setlist-venue').val(setlist.venue || '');
             $('#setlist-recordings').empty();
             const setlistRecs = recordings.filter(r => r.setlist === currentSetlist);
             if (setlistRecs.length > 0) {
@@ -1852,7 +1864,7 @@
                         $(this).addClass('item-selected');
                     }
                     const count = $('#plays-list .item-selected').length;
-                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
+                    return $(`<div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 6px; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Dragging ${count} song(s)</div>`);
                 },
                 appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
             });
@@ -1888,7 +1900,7 @@
                         $(this).addClass('item-selected');
                     }
                     const count = $('#favorites-list .item-selected').length;
-                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
+                    return $(`<div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 6px; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Dragging ${count} song(s)</div>`);
                 },
                 appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
             });
@@ -1916,7 +1928,7 @@
                         $(this).addClass('item-selected');
                     }
                      const count = $('#genre-song-list .item-selected').length;
-                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
+                    return $(`<div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 6px; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Dragging ${count} song(s)</div>`);
                 },
                 appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
             });
@@ -1945,7 +1957,7 @@
                         $(this).addClass('item-selected');
                     }
                     const count = $('#energy-level-container .item-selected').length;
-                    return $(`<div class="ui-draggable-dragging text-white bg-blue-600 rounded-lg py-1 px-2 shadow-lg">Dragging ${count} song(s)</div>`);
+                    return $(`<div style="background-color: #3b82f6; color: white; padding: 4px 8px; border-radius: 6px; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Dragging ${count} song(s)</div>`);
                 },
                 appendTo: 'body', revert: 'invalid', cursorAt: { left: 10, top: 10 }
             });
@@ -1954,7 +1966,7 @@
         function renderGenres(deselectAllNav) {
             $('#genre-list').empty();
             genres.forEach(g => {
-                const el = $(`<div class="sidebar-item genre-item"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);
+                const el = $(`<div class="sidebar-item genre-item" data-name="${escapeHtml(g.name)}"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);
                 el.on('click', function(e) {
                     if($(e.target).closest('.delete-genre, .genre-edit-input').length > 0) return;
                     deselectAllNav();
@@ -1993,8 +2005,9 @@
             updateGenreFilters('#genre-filter-dropdown', masterSelectedGenres);
             $('#genre-list').sortable({ axis: 'y', cursor: 'move', placeholder: "sortable-placeholder", update: function() {
                 const newOrder = [];
-                $('#genre-list .genre-name').each(function() {
-                    const genre = genres.find(g => g.name === $(this).text());
+                $('#genre-list .genre-item').each(function() {
+                    const name = $(this).data('name');
+                    const genre = genres.find(g => g.name === name);
                     if (genre) newOrder.push(genre);
                 });
                 genres = newOrder;
@@ -2005,7 +2018,7 @@
         function renderVenues(deselectAllNav) {
             $('#venue-list').empty();
             venues.forEach(v => {
-                const el = $(`<div class="sidebar-item venue-item"><div class="venue-name text-sm">${escapeHtml(v.name)}</div><span class="delete-venue" title="Delete venue">✕</span></div>`);
+                const el = $(`<div class="sidebar-item venue-item" data-name="${escapeHtml(v.name)}"><div class="venue-name text-sm">${escapeHtml(v.name)}</div><span class="delete-venue" title="Delete venue">✕</span></div>`);
                 el.on('click', function(e) {
                     if ($(e.target).closest('.delete-venue').length) return;
                     deselectAllNav();
@@ -2025,6 +2038,16 @@
                 });
                 $('#venue-list').append(el);
             });
+            $('#venue-list').sortable({ axis: 'y', cursor: 'move', placeholder: "sortable-placeholder", update: function() {
+                const newOrder = [];
+                 $('#venue-list .venue-item').each(function() {
+                    const name = $(this).data('name');
+                    const venue = venues.find(v => v.name === name);
+                    if (venue) newOrder.push(venue);
+                });
+                venues = newOrder;
+                save();
+            }});
         }
 
         function renderVenueSetlists(venueName) {
