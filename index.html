@@ -301,7 +301,17 @@
         }
         .dark #setlist-details-content input::placeholder {
             color: #f9fafb !important;
-            opacity: 0.7;
+            opacity: 1;
+        }
+        .dark #setlist-date::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+        #setlist-details-content input, #setlist-details-content select {
+            box-sizing: border-box;
+            border: 1px solid #d1d5db;
+        }
+        .dark #setlist-details-content input, .dark #setlist-details-content select {
+            border-color: #4b5563; /* Give a consistent border in dark mode */
         }
        
         .drag-highlight {
@@ -365,7 +375,7 @@
             height: 100%;
             transition: width 0.4s ease-in-out, padding 0.4s ease-in-out;
             position: relative;
-            padding: 1rem; /* Consistent padding for alignment */
+            padding: 1rem;
         }
         /* Sidebar scrolling fix */
         .left-col-main-content {
