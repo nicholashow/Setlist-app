@@ -425,7 +425,7 @@
             overflow-y: auto;
             margin-top: auto; /* Pushes to bottom */
             flex-shrink: 0; /* Prevent shrinking */
-            padding: 0.5rem; /* Match sidebar item padding */
+            padding: 0.5rem;
         }
 
         .dark .stats-container {
@@ -449,13 +449,15 @@
             height: 100%;
             transition: width 0.4s ease-in-out, padding 0.4s ease-in-out;
             position: relative;
-            padding: 1rem; /* Restore original padding */
+            padding: 1rem;
         }
 
         /* --- FIX: Wider, styled scrollbars moved to the edge --- */
         .left-col-main-content, .stats-container {
             margin-right: -1rem; /* Pull scrollbar to the edge */
             padding-right: 1rem; /* Add padding to compensate for margin */
+            /* Add transition for smooth fade out */
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
         }
         .left-col-main-content::-webkit-scrollbar,
         .stats-container::-webkit-scrollbar {
@@ -488,6 +490,13 @@
             width: 0;
             padding: 0; /* Ensures no leftover space */
             overflow: hidden; /* Hides content fully */
+        }
+        
+        /* New rule to hide sidebar content during collapse */
+        .left-col.collapsed .left-col-main-content,
+        .left-col.collapsed .stats-container {
+            opacity: 0;
+            visibility: hidden;
         }
 
         #sidebar-toggle {
