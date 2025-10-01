@@ -1370,134 +1370,84 @@
         function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000); }
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
     
-        // ========== pdf.js integration (non-invasive) ==========
+        
+        // ========== pdf.js integration (safe observer) ==========
         (function() {
-          // Utility to render a PDF into #pdfjs-pages
-          async function renderPdfInto(url) {
-            const wrapper = document.getElementById('doc-iframe-wrapper');
-            if (!wrapper) return;
-            wrapper.innerHTML = ""; // Clear whatever was inserted (iframe/object)
+          function mountPdfJsForEmbed(embedEl, url) {
+            if (!window.pdfjsLib || embedEl.dataset.pdfjsMounted === "1") return;
+            // Hide the native embed and add a container after it as our renderer
+            embedEl.style.display = 'none';
+            embedEl.dataset.pdfjsMounted = "1";
             const container = document.createElement('div');
             container.id = 'pdfjs-container';
             const pages = document.createElement('div');
             pages.id = 'pdfjs-pages';
             container.appendChild(pages);
-            wrapper.appendChild(container);
+            embedEl.parentNode.insertBefore(container, embedEl.nextSibling);
 
-            if (!window.pdfjsLib) {
-              const err = document.createElement('div');
-              err.style.color = 'white';
-              err.style.padding = '1rem';
-              err.textContent = 'PDF viewer failed to load. Please check your internet connection.';
-              pages.appendChild(err);
-              return;
-            }
+            (async () => {
+              try {
+                const loadingTask = pdfjsLib.getDocument(url);
+                const pdf = await loadingTask.promise;
+                const DPR = window.devicePixelRatio || 1;
+                for (let p = 1; p <= pdf.numPages; p++) {
+                  const page = await pdf.getPage(p);
+                  const viewport = page.getViewport({ scale: 1 });
+                  // Fit to container width
+                  const containerWidth = pages.clientWidth || window.innerWidth;
+                  const scale = Math.max(1, (containerWidth / viewport.width));
+                  const scaledViewport = page.getViewport({ scale });
 
-            let pdf;
-            try {
-              pdf = await pdfjsLib.getDocument(url).promise;
-            } catch (e) {
-              const err = document.createElement('div');
-              err.style.color = 'white';
-              err.style.padding = '1rem';
-              err.textContent = 'Unable to open PDF.';
-              pages.appendChild(err);
-              console.error('pdf.js getDocument error:', e);
-              return;
-            }
+                  const canvas = document.createElement('canvas');
+                  const ctx = canvas.getContext('2d');
+                  canvas.width = Math.floor(scaledViewport.width * DPR);
+                  canvas.height = Math.floor(scaledViewport.height * DPR);
+                  canvas.style.width = '100%';
+                  canvas.style.height = 'auto';
 
-            const DPR = window.devicePixelRatio || 1;
-            for (let p = 1; p <= pdf.numPages; p++) {
-              const page = await pdf.getPage(p);
-              const viewport = page.getViewport({ scale: 1 });
-              // Render at higher scale for crispness, then CSS-scale down to width
-              const containerWidth = pages.clientWidth || window.innerWidth;
-              const scale = (containerWidth / viewport.width) * 1.5; // 1.5x for retina crispness
-              const scaledViewport = page.getViewport({ scale });
-
-              const canvas = document.createElement('canvas');
-              const ctx = canvas.getContext('2d');
-              canvas.width = Math.floor(scaledViewport.width * DPR / 1.5);
-              canvas.height = Math.floor(scaledViewport.height * DPR / 1.5);
-              canvas.style.width = '100%';
-              canvas.style.height = 'auto';
-
-              const renderContext = {
-                canvasContext: ctx,
-                viewport: page.getViewport({ scale: scale * DPR / 1.5 }),
-              };
-              await page.render(renderContext).promise;
-              pages.appendChild(canvas);
-            }
-
-            // Hook prev/next buttons to scroll between canvases
-            const prevBtn = document.getElementById('prev-doc');
-            const nextBtn = document.getElementById('next-doc');
-            function visiblePageIndex() {
-              const canvases = Array.from(pages.querySelectorAll('canvas'));
-              const y = container.scrollTop;
-              // find the canvas whose top is closest to current scrollTop
-              let best = 0, bestDelta = Infinity;
-              canvases.forEach((c, idx) => {
-                const delta = Math.abs(c.offsetTop - y);
-                if (delta < bestDelta) { bestDelta = delta; best = idx; }
-              });
-              return best;
-            }
-            function scrollToPage(idx) {
-              const canvases = pages.querySelectorAll('canvas');
-              if (!canvases[idx]) return;
-              container.scrollTo({ top: canvases[idx].offsetTop, behavior: 'smooth' });
-            }
-            if (prevBtn) prevBtn.onclick = function() {
-              const i = visiblePageIndex();
-              scrollToPage(Math.max(0, i - 1));
-            };
-            if (nextBtn) nextBtn.onclick = function() {
-              const i = visiblePageIndex();
-              const canvases = pages.querySelectorAll('canvas');
-              scrollToPage(Math.min(canvases.length - 1, i + 1));
-            };
+                  const renderContext = {
+                    canvasContext: ctx,
+                    viewport: page.getViewport({ scale: scale * DPR }),
+                  };
+                  await page.render(renderContext).promise;
+                  pages.appendChild(canvas);
+                }
+              } catch (e) {
+                console.error('pdf.js render failed, falling back to native viewer:', e);
+                // If pdf.js fails, show the original embed again
+                embedEl.style.display = '';
+                if (container && container.parentNode) container.parentNode.removeChild(container);
+                embedEl.dataset.pdfjsMounted = "";
+              }
+            })();
           }
 
-          // MutationObserver to detect when an iframe/object is inserted and replace it
+          const wrapper = document.getElementById('doc-iframe-wrapper');
+          if (!wrapper) return;
+
           const observer = new MutationObserver((mutations) => {
             for (const m of mutations) {
               for (const node of m.addedNodes) {
                 if (!(node instanceof HTMLElement)) continue;
-                if (node.tagName === 'IFRAME' || node.tagName === 'OBJECT' || node.tagName === 'EMBED') {
-                  // Try to resolve URL
-                  const url = node.getAttribute('src') || node.getAttribute('data');
-                  if (url) {
-                    renderPdfInto(url);
-                  } else {
-                    // If the URL is nested (some code might wrap another element), look deeper
-                    const iframe = node.querySelector('iframe, object, embed');
-                    const u2 = iframe?.getAttribute('src') || iframe?.getAttribute('data');
-                    if (u2) renderPdfInto(u2);
+
+                const findAndMount = (el) => {
+                  const isEmbed = /^(IFRAME|OBJECT|EMBED)$/.test(el.tagName);
+                  if (isEmbed) {
+                    const url = el.getAttribute('src') || el.getAttribute('data');
+                    if (url) mountPdfJsForEmbed(el, url);
                   }
-                } else if (node.querySelector) {
-                  const sub = node.querySelector('iframe, object, embed');
-                  if (sub) {
-                    const url = sub.getAttribute('src') || sub.getAttribute('data');
-                    if (url) renderPdfInto(url);
-                  }
-                }
+                };
+
+                findAndMount(node);
+                node.querySelectorAll && node.querySelectorAll('iframe, object, embed').forEach(findAndMount);
               }
             }
           });
 
-          // Start observing whenever the doc viewer is opened
-          const wrapper = document.getElementById('doc-iframe-wrapper');
-          if (wrapper) {
-            observer.observe(wrapper, { childList: true, subtree: true });
-          }
+          observer.observe(wrapper, { childList: true, subtree: true });
 
-          // Ensure cleanup on close
-          document.getElementById('close-doc')?.addEventListener('click', function() {
-            const wrapper = document.getElementById('doc-iframe-wrapper');
-            if (wrapper) wrapper.innerHTML = '';
-          });
+          // Do not override any existing button handlers or cleanup.
+          // Their original logic remains untouched.
         })();
 
     </script>
