@@ -42,13 +42,12 @@
             cursor: move;
         }
         
-        /* UPDATED: Setlist reorder placeholder style */
         .sortable-placeholder {
-            background-color: #3b82f6; /* Solid blue */
-            opacity: 0.5;
+            background-color: #dbeafe;
+            border: 2px dashed #3b82f6;
+            height: 60px; /* Match item height */
             margin-bottom: 1px;
             border-radius: 0.5rem;
-            /* Height is set dynamically by JS to match the item being dragged */
         }
 
         /* Unified selected style for sidebar items */
@@ -334,7 +333,6 @@
             overflow-y: auto;
             overflow-x: hidden; /* PREVENT HORIZONTAL SCROLL */
             flex-grow: 1;
-            padding-right: 4px;
             margin-bottom: 0.5rem; /* Gap between venues and stats */
         }
 
@@ -397,6 +395,7 @@
              padding: 4px 8px;
              border-radius: 4px;
              color: white;
+             min-width: 0; /* FIX: Allows input to shrink to fit */
         }
         /* Fix for Genre Color Picker */
         #genre-color {
@@ -606,45 +605,54 @@
             overflow-y: auto;
             flex-grow: 1;
         }
-        /* Add Songs panel with checkboxes */
+        
+        /* Add Songs panel with custom checkboxes */
         .add-song-item {
             display: flex;
             align-items: center;
-            padding: 0.75rem 0.5rem;
             border-bottom: 1px solid #e5e7eb;
         }
         .dark .add-song-item {
             border-bottom-color: #374151;
         }
-        .add-song-item label {
-            flex-grow: 1;
+        .add-song-item > label {
+            display: flex;
+            align-items: center;
+            width: 100%;
             cursor: pointer;
-            padding-left: 0.5rem;
+            padding: 0.75rem 0.5rem;
         }
-        
-        /* ADDED/UPDATED: Custom checkbox styling */
-        .add-song-item input[type="checkbox"] {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-color: #3b82f6; /* Initial state is a blue box */
-            border: 1px solid #2563eb;
+        .add-song-item > label:hover .custom-checkbox-box {
+            background-color: #2563eb; /* Darker blue on hover */
+        }
+        .custom-checkbox-input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+        .custom-checkbox-box {
             width: 1.25rem;
             height: 1.25rem;
+            background-color: #3b82f6; /* Blue */
             border-radius: 0.25rem;
-            cursor: pointer;
-            position: relative;
-            vertical-align: middle;
             transition: background-color 0.2s;
-            background-size: 70%;
-            background-position: center;
-            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
-        .add-song-item input[type="checkbox"]:checked {
-            background-color: #2563eb; /* Darker blue when checked */
-            border-color: #1d4ed8;
-            /* White SVG checkmark */
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+        .custom-checkbox-box svg {
+            opacity: 0;
+            transition: opacity 0.2s;
+            width: 1rem;
+            height: 1rem;
+            stroke: white;
+            stroke-width: 2.5;
+        }
+        .custom-checkbox-input:checked ~ .custom-checkbox-box svg {
+            opacity: 1;
         }
 
 
@@ -1675,7 +1683,7 @@
 
         function handleSelection(event, containerSelector) { $(event.currentTarget).toggleClass('item-selected'); }
 
-        // UPDATED: Reusable helper function for draggable items with more robust logic
+        // FIX: Define a reusable helper function for draggable items
         const draggableOptions = {
             appendTo: 'body',
             revert: 'invalid',
@@ -1684,33 +1692,28 @@
             start: function(e, ui) {
                 const $sourceItem = $(this);
                 const $sourceList = $sourceItem.parent();
-                
-                // Ensure the dragged item is selected if it's not part of a multi-selection
-                if (!$sourceItem.hasClass('item-selected')) {
+                const $selectedItems = $sourceList.children('.item-selected');
+
+                // If not dragging a multi-selection, select the single item being dragged
+                if ($selectedItems.length <= 1 || !$sourceItem.hasClass('item-selected')) {
                     $sourceList.children('.item-selected').removeClass('item-selected');
                     $sourceItem.addClass('item-selected');
                 }
-                const $selectedItems = $sourceList.children('.item-selected');
-                const count = $selectedItems.length;
-
-                // FIXED: Attach the IDs of all selected items to the data for a reliable drop
-                const idsToDrag = [];
-                $selectedItems.each(function() {
-                    idsToDrag.push($(this).attr('id'));
-                });
-                $sourceItem.data('songIds', idsToDrag);
                 
-                // Style the helper to be a clean blue box with a subtle shadow
+                const count = $sourceList.children('.item-selected').length;
+
+                // Style the helper to be blue and correctly sized
                 ui.helper.css({
                     'background-color': '#3b82f6',
                     'color': 'white',
                     'width': $sourceItem.outerWidth(),
-                    'box-shadow': '0 4px 12px rgba(0, 0, 0, 0.2)',
+                    'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
                     'z-index': 9999,
                     'border-radius': '0.5rem'
-                });
-                ui.helper.find('*').css('color', 'white');
+                }).addClass('selected'); // Use selected class for consistency
+                ui.helper.find('*').css('color', 'white'); // Force text color
                 
+                // If dragging multiple items, create a summary badge
                 if (count > 1) {
                     ui.helper.empty()
                         .css({'height': '60px', 'padding': '1rem'})
@@ -1754,12 +1757,19 @@
                 const isChecked = currentSongs.includes(s.id);
                 const li = $(`
                     <li class="add-song-item" data-song-id="${s.id}">
-                        <input type="checkbox" id="add-${s.id}" ${isChecked ? 'checked' : ''}>
-                        <label for="add-${s.id}">${escapeHtml(s.name)}</label>
+                        <label for="add-${s.id}" class="flex items-center w-full cursor-pointer">
+                            <input type="checkbox" id="add-${s.id}" class="sr-only custom-checkbox-input" ${isChecked ? 'checked' : ''}>
+                            <div class="custom-checkbox-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                            </div>
+                            <span class="ml-3 flex-grow">${escapeHtml(s.name)}</span>
+                        </label>
                     </li>
                 `);
                 li.find('input').on('change', function() {
-                    const songId = $(this).parent().data('song-id');
+                    const songId = $(this).closest('.add-song-item').data('song-id');
                     const setlistSongs = setlists[currentSetlist].songs;
                     if(this.checked) {
                         if (!setlistSongs.includes(songId)) setlistSongs.push(songId);
@@ -1821,27 +1831,24 @@
                     const setlistName = $(this).data('name');
                     const setlist = setlists[setlistName];
                     let added = false;
-                    // FIXED: Use the reliable data-driven method to get song IDs
-                    const songIds = ui.draggable.data('songIds');
-                    if (songIds && songIds.length) {
-                        songIds.forEach(songId => {
-                            if (songId && !setlist.songs.includes(songId)) {
-                                setlist.songs.push(songId);
-                                added = true;
-                            }
-                        });
-                    }
+                    const sourceList = ui.draggable.parent();
+                    const selector = `#${sourceList.attr('id')} .item-selected`;
+                    const itemsToDrop = $(selector).length > 0 && ui.draggable.hasClass('item-selected') ? $(selector) : ui.draggable;
                     
+                    itemsToDrop.each(function() {
+                        const songId = $(this).attr('id');
+                        if (songId && !setlist.songs.includes(songId)) {
+                            setlist.songs.push(songId);
+                            added = true;
+                        }
+                    });
                     if (added) {
                         $(this).addClass('drop-flash');
                         setTimeout(() => $(this).removeClass('drop-flash'), 1000);
                         save();
                         if (currentSetlist === setlistName) renderSetlist();
                     }
-                    // Deselect items in the source list after drop
-                    if (ui.draggable.parent().length) {
-                        ui.draggable.parent().children('.item-selected').removeClass('item-selected');
-                    }
+                    $(selector).removeClass('item-selected');
                 }
             });
             $('#setlists-container').sortable({
@@ -1874,6 +1881,7 @@
             const setlist = setlists[currentSetlist];
             $('#setlist-title').text(currentSetlist);
 
+            // Correctly handle setlist details
             $('#setlist-date').val(setlist.date || '');
             $('#setlist-venue').val(setlist.venue || '');
 
@@ -1914,8 +1922,7 @@
             
             $('#setlist-list').sortable({
                 axis: 'y', cursor: 'move', placeholder: "sortable-placeholder", tolerance: 'pointer', scroll: true, forcePlaceholderSize: true, helper: 'clone',
-                // FIXED: Use outerHeight() to perfectly match the placeholder size
-                start: (e, ui) => { ui.placeholder.height(ui.item.outerHeight()); ui.item.addClass('dragging-source'); },
+                start: (e, ui) => { ui.placeholder.height(ui.item.height()); ui.item.addClass('dragging-source'); },
                 stop: (e, ui) => ui.item.removeClass('dragging-source'),
                 update: function() {
                     $('#setlist-sort-filter-dropdown').val('custom');
@@ -1969,6 +1976,7 @@
             currentGenre = genreName;
             $('#genre-view-title').text(`Genre: ${genreName}`);
             const $ul = $('#genre-song-list').empty();
+            // FIX: Use case-insensitive comparison for genre filtering
             let songsInGenre = masterSongs.filter(s => s.genre && s.genre.toLowerCase() === genreName.toLowerCase());
             const sortMode = $('#genre-sort-dropdown').val();
             songsInGenre.sort((a, b) => {
@@ -1986,7 +1994,7 @@
             const container = $('#energy-level-container').empty();
             [1, 2, 3].forEach(levelValue => {
                 const songs = masterSongs.filter(s => s.energy === levelValue).sort((a, b) => a.name.localeCompare(b.name));
-                const section = $(`<div class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg"><div class="flex justify-center mb-2">${energyIcons[levelValue]}</div><ul id="energy-level-${levelValue}-list" class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto"></ul></div>`);
+                const section = $(`<div class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg"><div class="flex justify-center mb-2">${energyIcons[levelValue]}</div><ul class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto"></ul></div>`);
                 const ul = section.find('ul');
                 if (songs.length > 0) {
                     songs.forEach(song => {
@@ -2046,15 +2054,11 @@
                 placeholder: "sortable-placeholder",
                 helper: 'clone',
                 start: function(e, ui) {
-                    // FIXED: Ensure the helper is a perfect visual clone
                     ui.helper.css({
                         'background-color': '#3b82f6',
                         'color': 'white',
                         'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
-                        'width': ui.item.outerWidth(),
-                        'height': ui.item.outerHeight(),
-                        'padding': ui.item.css('padding'),
-                        'box-sizing': 'border-box'
+                        'width': ui.item.outerWidth()
                     }).addClass('selected');
                     ui.helper.find('*').css('color', 'white');
                 },
@@ -2100,15 +2104,11 @@
                 placeholder: "sortable-placeholder",
                 helper: 'clone',
                 start: function(e, ui) {
-                    // FIXED: Ensure the helper is a perfect visual clone
                     ui.helper.css({
                         'background-color': '#3b82f6',
                         'color': 'white',
                         'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
-                        'width': ui.item.outerWidth(),
-                        'height': ui.item.outerHeight(),
-                        'padding': ui.item.css('padding'),
-                        'box-sizing': 'border-box'
+                        'width': ui.item.outerWidth()
                     }).addClass('selected');
                     ui.helper.find('*').css('color', 'white');
                 },
