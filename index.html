@@ -1164,42 +1164,12 @@
         let setlists = {};
         let currentSetlist = null;
         let playCounts = {};
-        let genres = [{
-            name: 'Rock',
-            color: '#ef4444'
-        }, {
-            name: 'Pop',
-            color: '#3b82f6'
-        }, {
-            name: 'Jazz',
-            color: '#10b981'
-        }];
+        let genres = [{ name: 'Rock', color: '#ef4444' }, { name: 'Pop', color: '#3b82f6' }, { name: 'Jazz', color: '#10b981' }];
         const energyIcons = [
-            // Level 0 (Outline)
             `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 dark:text-gray-500"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`,
-            // Level 1 (Large)
             `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="67%" style="stop-color:transparent" /><stop offset="67%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
-            // Level 2 (Large, slightly smaller appearance)
             `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="2 2 20 20"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="55%" style="stop-color:transparent" /><stop offset="55%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M13 4L6 14h6.5l-1 6 7-8h-6.5l1-5z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
-            // Level 3 (Largest)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-4 -4 32 32" class="energy-svg-3">
-                <defs>
-                    <radialGradient id="energy-grad-3" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                        <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
-                    </radialGradient>
-                </defs>
-                <g class="sparks">
-                    <path d="M12,0 L12.5,4 L15,4.5 L12.5,5 L12,9 L11.5,5 L9,4.5 L11.5,4 Z" fill="#FCD34D" opacity="1"/>
-                    <path d="M21,8 L21.5,12 L24,12.5 L21.5,13 L21,17 L20.5,13 L18,12.5 L20.5,12 Z" fill="#FCD34D" opacity="1"/>
-                    <path d="M3,8 L3.5,12 L6,12.5 L3.5,13 L3,17 L2.5,13 L0,12.5 L2.5,12 Z" fill="#FCD34D" opacity="1"/>
-                    <path d="M6,17 L6.5,21 L9,21.5 L6.5,22 L6,26 L5.5,22 L3,21.5 L5.5,21 Z" fill="#FCD34D" opacity="1"/>
-                    <path d="M18,17 L18.5,21 L21,21.5 L18.5,22 L18,26 L17.5,22 L15,21.5 L17.5,21 Z" fill="#FCD34D" opacity="1"/>
-                </g>
-                <g transform="scale(1.25) translate(-3, -3)">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-3)" stroke="#B45309" stroke-width="1.5"/>
-                </g>
-            </svg>`
+            `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-4 -4 32 32" class="energy-svg-3"><defs><radialGradient id="energy-grad-3" cx="50%" cy="50%" r="50%" fx="50%" fy="50%"><stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" /><stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" /></radialGradient></defs><g class="sparks"><path d="M12,0 L12.5,4 L15,4.5 L12.5,5 L12,9 L11.5,5 L9,4.5 L11.5,4 Z" fill="#FCD34D" opacity="1"/><path d="M21,8 L21.5,12 L24,12.5 L21.5,13 L21,17 L20.5,13 L18,12.5 L20.5,12 Z" fill="#FCD34D" opacity="1"/><path d="M3,8 L3.5,12 L6,12.5 L3.5,13 L3,17 L2.5,13 L0,12.5 L2.5,12 Z" fill="#FCD34D" opacity="1"/><path d="M6,17 L6.5,21 L9,21.5 L6.5,22 L6,26 L5.5,22 L3,21.5 L5.5,21 Z" fill="#FCD34D" opacity="1"/><path d="M18,17 L18.5,21 L21,21.5 L18.5,22 L18,26 L17.5,22 L15,21.5 L17.5,21 Z" fill="#FCD34D" opacity="1"/></g><g transform="scale(1.25) translate(-3, -3)"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-3)" stroke="#B45309" stroke-width="1.5"/></g></svg>`
         ];
         let venues = [];
         let recordings = [];
@@ -1225,93 +1195,28 @@
         }
 
         function load() {
-            const raw = localStorage.getItem('setlistData');
-            if (raw) {
-                try {
-                    const obj = JSON.parse(raw);
-                    masterSongs = obj.masterSongs || [];
-                    masterSongs.forEach(s => { s.lastPlayed = s.lastPlayed || null; s.favorite = s.favorite || false; });
-                    setlists = obj.setlists || {};
-                    Object.keys(setlists).forEach(k => { if (Array.isArray(setlists[k])) { setlists[k] = { songs: setlists[k].map(s => s.id), date: '', venue: '' }; } });
-                    playCounts = obj.playCounts || {};
-                    genres = obj.genres || genres;
-                    venues = obj.venues || [];
-                    recordings = obj.recordings || [];
-                } catch (e) { console.error("Error parsing localStorage data: ", e); masterSongs = []; setlists = {}; playCounts = {}; venues = []; recordings = []; }
-            }
-            const darkModePref = localStorage.getItem('darkMode');
-            if (darkModePref === 'disabled') { $('html').removeClass('dark'); $('#dark-mode-toggle').prop('checked', false); } 
-            else { $('html').addClass('dark'); $('#dark-mode-toggle').prop('checked', true); }
+            const raw = localStorage.getItem('setlistData'); if(raw){try{const o=JSON.parse(raw);masterSongs=o.masterSongs||[];masterSongs.forEach(s=>{s.lastPlayed=s.lastPlayed||null;s.favorite=s.favorite||!1});setlists=o.setlists||{};Object.keys(setlists).forEach(k=>{if(Array.isArray(setlists[k])){setlists[k]={songs:setlists[k].map(s=>s.id),date:"",venue:""}}});playCounts=o.playCounts||{};genres=o.genres||genres;venues=o.venues||[];recordings=o.recordings||[]}catch(e){console.error("Error parsing localStorage data: ",e);masterSongs=[];setlists={};playCounts={};venues=[];recordings=[]}}
+            const darkModePref = localStorage.getItem('darkMode'); if(darkModePref==='disabled'){$('html').removeClass('dark');$('#dark-mode-toggle').prop('checked',!1)}else{$('html').addClass('dark');$('#dark-mode-toggle').prop('checked',!0)}
         }
-
         // ================== File Handling ==================
-        function storeFile(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = e => resolve({ name: file.name, type: file.type, size: file.size, data: e.target.result });
-                reader.onerror = () => reject(new Error('Failed to read file'));
-                reader.readAsDataURL(file);
-            });
-        }
-
-        function getFileURL(song) {
-            if (!song || !song.fileInfo || !song.fileInfo.data) { console.error(`Invalid song or fileInfo for song: ${song?.name || 'unknown'}`); return null; }
-            if (!song.file || !objectURLs.has(song.file)) {
-                try {
-                    const blob = dataURItoBlob(song.fileInfo.data);
-                    const url = URL.createObjectURL(blob);
-                    if (song.file) { URL.revokeObjectURL(song.file); objectURLs.delete(song.file); }
-                    song.file = url;
-                    objectURLs.add(url);
-                } catch (e) { console.error(`Error creating object URL for ${song.name}:`, e); return null; }
-            }
-            return song.file;
-        }
-
-        function dataURItoBlob(dataURI) {
-            try {
-                const split = dataURI.split(','); if (split.length < 2) throw new Error('Invalid data URI');
-                const byteString = atob(split[1]);
-                const mimeString = split[0].split(':')[1].split(';')[0];
-                const ab = new ArrayBuffer(byteString.length);
-                const ia = new Uint8Array(ab);
-                for (let i = 0; i < byteString.length; i++) { ia[i] = byteString.charCodeAt(i); }
-                return new Blob([ab], { type: mimeString });
-            } catch (e) { console.error('Error converting data URI to Blob:', e); throw e; }
-        }
-
+        function storeFile(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res({name:f.name,type:f.type,size:f.size,data:e.target.result});r.onerror=()=>rej(new Error('Failed to read file'));r.readAsDataURL(f)})}
+        function getFileURL(s){if(!s||!s.fileInfo||!s.fileInfo.data){console.error(`Invalid song or fileInfo for song: ${s?.name||'unknown'}`);return null}if(!s.file||!objectURLs.has(s.file)){try{const b=dataURItoBlob(s.fileInfo.data),url=URL.createObjectURL(b);if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}s.file=url;objectURLs.add(url)}catch(e){console.error(`Error creating object URL for ${s.name}:`,e);return null}}return s.file}
+        function dataURItoBlob(d){try{const s=d.split(',');if(s.length<2)throw new Error('Invalid data URI');const b=atob(s[1]),m=s[0].split(':')[1].split(';')[0],a=new ArrayBuffer(b.length),i=new Uint8Array(a);for(let j=0;j<b.length;j++){i[j]=b.charCodeAt(j)}return new Blob([a],{type:m})}catch(e){console.error('Error converting data URI to Blob:',e);throw e}}
         // ================== UI Helpers ==================
-        function autoCollapseSidebar() {
-            const $sidebar = $('.left-col');
-            if (!$sidebar.hasClass('collapsed')) {
-                $sidebar.addClass('collapsed');
-                $('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />');
-            }
-        }
-
+        function autoCollapseSidebar(){const s=$('.left-col');if(!s.hasClass('collapsed')){s.addClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />')}}
         // ================== Initialization ==================
-        $(function() {
-            function deselectAllNav() {
-                $('#home-btn').removeClass('app-header-selected').addClass('app-header-unselected');
-                $('#nav-favorites, #nav-plays, #nav-recordings, #nav-energy, #setlists-container .setlist-item, #venue-list .venue-item, #genre-list .genre-item').removeClass('selected');
-            }
-            load();
-            deselectAllNav(); 
-            $('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected'); 
-            renderLeftSetlists(); renderGenres(deselectAllNav); renderVenues(deselectAllNav);
-            bindNav(deselectAllNav); updateTopLeast(); show('master');
-            
-            $(document).on('click','.genre-dot',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(!s)return;const g=[''].concat(genres.map(g=>g.name));s.genre=g[(g.indexOf(s.genre||'')+1)%g.length];const n=`<span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span>`;$(`li[id="${s.id}"]`).find('.genre-dot').parent().html(n);if($('#genre-view').is(':visible')){renderGenreView(currentGenre)}save()});
-            $(document).on('click','.energy-icon',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(s){s.energy=((s.energy||0)+1)%4;const n=energyIcons[s.energy||0];$(`li[id="${s.id}"]`).find('.energy-icon').html(n);if($('#energy-view').is(':visible')){renderEnergyLevels()}save()}});
-            $('#genre-color').on('input',function(){$('#genre-color-display').css({'background-image':'none','background-color':$(this).val()})});
-            $('#add-genre').click(function(){const n=$('#genre-name').val().trim(),c=$('#genre-color').val();if(!n)return alert('Enter a genre name');if(genres.some(g=>g.name.toLowerCase()===n.toLowerCase()))return alert('Genre already exists');genres.push({name:n,color:c});$('#genre-name').val('');renderGenres(deselectAllNav);$('#genre-color-display').css({'background-image':'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)','background-color':''});save()});
-            $('#add-venue').click(function(){const n=$('#venue-name').val().trim();if(!n)return alert('Enter a venue name');if(venues.some(v=>v.name.toLowerCase()===n.toLowerCase()))return alert('Venue already exists');venues.push({name:n});$('#venue-name').val('');renderVenues(deselectAllNav);save()});
-            $('#sidebar-toggle').click(function(){const s=$('.left-col');s.toggleClass('collapsed');$(this).find('svg').html(s.hasClass('collapsed')?'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />':'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')});
-            $('#sidebar-toggle').droppable({accept:'.draggable',tolerance:'pointer',over:function(){const s=$('.left-col');if(s.hasClass('collapsed')){s.removeClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')}}});
-            
-            // --- FIX: Stop propagation on mousedown for inputs to allow editing ---
-            $('main').on('mousedown','input',function(e){e.stopPropagation()});
-            $('main').on('click','li.draggable',function(e){if($(e.target).closest('input, button, a, .genre-dot, .energy-icon, .favorite-star-container').length>0){return}const s=$(this).attr('id'),c=$('main > section:visible').attr('id').replace('-view','');openSongInContext(s,c)});
+        $(function(){function ds(){$('#home-btn').removeClass('app-header-selected').addClass('app-header-unselected');$('#nav-favorites, #nav-plays, #nav-recordings, #nav-energy, #setlists-container .setlist-item, #venue-list .venue-item, #genre-list .genre-item').removeClass('selected')}load();ds();$('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');renderLeftSetlists();renderGenres(ds);renderVenues(ds);bindNav(ds);updateTopLeast();show('master');
+        $(document).on('click','.genre-dot',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(!s)return;const g=[''].concat(genres.map(g=>g.name));s.genre=g[(g.indexOf(s.genre||'')+1)%g.length];const n=`<span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span>`;$(`li[id="${s.id}"]`).find('.genre-dot').parent().html(n);if($('#genre-view').is(':visible')){renderGenreView(currentGenre)}save()});
+        $(document).on('click','.energy-icon',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(s){s.energy=((s.energy||0)+1)%4;const n=energyIcons[s.energy||0];$(`li[id="${s.id}"]`).find('.energy-icon').html(n);if($('#energy-view').is(':visible')){renderEnergyLevels()}save()}});
+        $('#genre-color').on('input',function(){$('#genre-color-display').css({'background-image':'none','background-color':$(this).val()})});
+        $('#add-genre').click(function(){const n=$('#genre-name').val().trim(),c=$('#genre-color').val();if(!n)return alert('Enter a genre name');if(genres.some(g=>g.name.toLowerCase()===n.toLowerCase()))return alert('Genre already exists');genres.push({name:n,color:c});$('#genre-name').val('');renderGenres(ds);$('#genre-color-display').css({'background-image':'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)','background-color':''});save()});
+        $('#add-venue').click(function(){const n=$('#venue-name').val().trim();if(!n)return alert('Enter a venue name');if(venues.some(v=>v.name.toLowerCase()===n.toLowerCase()))return alert('Venue already exists');venues.push({name:n});$('#venue-name').val('');renderVenues(ds);save()});
+        $('#sidebar-toggle').click(function(){const s=$('.left-col');s.toggleClass('collapsed');$(this).find('svg').html(s.hasClass('collapsed')?'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />':'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')});
+        $('#sidebar-toggle').droppable({accept:'.draggable',tolerance:'pointer',over:function(){const s=$('.left-col');if(s.hasClass('collapsed')){s.removeClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')}}});
+        
+        // --- FIX: Stop propagation on mousedown for inputs to allow editing ---
+        $('main').on('mousedown','input',function(e){e.stopPropagation()});
+        $('main').on('click','li.draggable',function(e){if($(e.target).closest('input, button, a, .genre-dot, .energy-icon, .favorite-star-container').length>0){return}const s=$(this).attr('id'),c=$('main > section:visible').attr('id').replace('-view','');openSongInContext(s,c)});
         });
         // ================== Event Handlers ==================
         function bindNav(ds){
