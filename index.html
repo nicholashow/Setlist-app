@@ -43,8 +43,9 @@
         }
         
         .sortable-placeholder {
-            background-color: rgba(59, 130, 246, 0.3); /* Semi-transparent blue */
-            border: none;
+            background-color: #dbeafe;
+            border: 2px dashed #3b82f6;
+            height: 60px; /* Match item height */
             margin-bottom: 1px;
             border-radius: 0.5rem;
         }
@@ -274,20 +275,6 @@
 
         .dark .drag-highlight {
             background-color: #1e3a8a;
-        }
-
-        /* Styling for the drag helper clone */
-        .drag-helper {
-            background-color: #3b82f6 !important;
-            color: white !important;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            border-radius: 0.5rem;
-            z-index: 9999;
-            border: none !important;
-            list-style: none; /* Remove list bullet */
-        }
-        .drag-helper * {
-            color: white !important;
         }
 
         .app-header {
@@ -633,30 +620,10 @@
             cursor: pointer;
             padding-left: 0.5rem;
         }
-
-        /* Custom Checkbox Styling */
         .add-song-item input[type="checkbox"] {
-            -webkit-appearance: none;
-            appearance: none;
-            background-color: #3b82f6;
-            border: 1px solid #2563eb;
-            border-radius: 4px;
             width: 1.25rem;
             height: 1.25rem;
             cursor: pointer;
-            position: relative;
-            display: inline-block;
-            vertical-align: middle;
-        }
-        .dark .add-song-item input[type="checkbox"] {
-            background-color: #60a5fa;
-            border-color: #93c5fd;
-        }
-        .add-song-item input[type="checkbox"]:checked {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3e%3cpath fill-rule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clip-rule='evenodd' /%3e%3c/svg%3e");
-            background-size: 90%;
-            background-position: center;
-            background-repeat: no-repeat;
         }
 
 
@@ -705,6 +672,129 @@
             stroke: white; /* White outline on dark backgrounds */
         }
 
+        /* === IMPROVED DRAG & DROP STYLING === */
+        .ui-draggable-dragging {
+            background-color: #3b82f6 !important;
+            color: white !important;
+            border-radius: 0.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3) !important;
+            z-index: 9999 !important;
+            transform: rotate(5deg);
+        }
+        
+        .ui-draggable-dragging * {
+            color: white !important;
+        }
+        
+        /* Improved placeholder for setlist reordering */
+        #setlist-list .sortable-placeholder {
+            background-color: #dbeafe !important;
+            border: 2px dashed #3b82f6 !important;
+            height: 60px !important;
+            visibility: visible !important;
+        }
+        
+        /* Improved drag highlight for setlists */
+        .setlist-item.drag-highlight {
+            background-color: #dbeafe !important;
+            border: 2px dashed #3b82f6 !important;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5) !important;
+        }
+        
+        .dark .setlist-item.drag-highlight {
+            background-color: #1e3a8a !important;
+            border-color: #60a5fa !important;
+        }
+        
+        /* Improved drop flash animation */
+        .drop-flash {
+            animation: dropFlash 1s ease;
+        }
+        
+        @keyframes dropFlash {
+            0% { background-color: #dbeafe; }
+            100% { background-color: transparent; }
+        }
+        
+        .dark .drop-flash {
+            animation: dropFlashDark 1s ease;
+        }
+        
+        @keyframes dropFlashDark {
+            0% { background-color: #1e3a8a; }
+            100% { background-color: transparent; }
+        }
+        
+        /* === IMPROVED CHECKBOX STYLING FOR ADD SONGS PANEL === */
+        .add-song-item input[type="checkbox"] {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid #3b82f6;
+            border-radius: 0.25rem;
+            background-color: white;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        
+        .add-song-item input[type="checkbox"]:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        .add-song-item input[type="checkbox"]:checked::after {
+            content: "✓";
+            position: absolute;
+            color: white;
+            font-size: 0.875rem;
+            font-weight: bold;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .dark .add-song-item input[type="checkbox"] {
+            background-color: #374151;
+            border-color: #6b7280;
+        }
+        
+        .dark .add-song-item input[type="checkbox"]:checked {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        
+        /* === IMPROVED SIDEBAR LAYOUT === */
+        .item-creation {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background-color: #1f2937;
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 8px;
+            flex-wrap: nowrap;
+        }
+        
+        .item-creation .item-name-input {
+            flex-grow: 1;
+            min-width: 0;
+            background-color: #374151;
+            border: 1px solid #4b5563;
+            padding: 6px 8px;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.875rem;
+        }
+        
+        .item-creation .btn-add {
+            padding: 6px 12px;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
 
     </style>
 </head>
@@ -720,47 +810,47 @@
 
                 <div class="mb-2 p-2 rounded-lg bg-gray-700" id="nav-setlists">
                     <div class="flex items-center justify-between">
-                         <span class="font-medium uppercase">Setlists</span>
+                        <span class="font-medium uppercase">Setlists</span>
                         <button class="text-sm px-2 py-1 rounded-md bg-gray-600" id="toggle-setlists">▾</button>
                     </div>
                     <div class="mt-2" id="setlists-container"></div>
-                     <div class="mt-2">
+                    <div class="mt-2">
                         <input class="w-full p-1 text-sm rounded-md bg-gray-700" id="new-setlist-name" placeholder="New setlist name" />
                         <button class="w-full mt-1 p-1 text-sm rounded-md btn-add" id="add-setlist-btn">Add Setlist</button>
                     </div>
-                 </div>
+                </div>
                 <div class="sidebar-item" id="nav-favorites">Favorites</div>
                 <div class="sidebar-item" id="nav-plays">Plays</div>
                 <div class="sidebar-item" id="nav-recordings">Recordings</div>
                 <div class="sidebar-item" id="nav-energy">Energy Levels</div>
 
                 <div class="mt-4">
-                     <h3 class="text-sm font-semibold uppercase">Genres</h3>
+                    <h3 class="text-sm font-semibold uppercase">Genres</h3>
                      <div class="item-creation">
                         <input type="color" id="genre-color" value="#3b82f6" title="Select color">
                         <input class="item-name-input" id="genre-name" placeholder="New genre" />
-                         <button class="p-1 px-2 text-sm rounded-md btn-add" id="add-genre">Add</button>
+                        <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-genre">Add</button>
                     </div>
                     <div class="mt-2 space-y-1" id="genre-list"></div>
                 </div>
 
-                 <div class="mt-4">
+                <div class="mt-4">
                     <h3 class="text-sm font-semibold uppercase">Venues</h3>
                     <div class="item-creation">
                         <input class="item-name-input" id="venue-name" placeholder="New venue" />
-                         <button class="p-1 px-2 text-sm rounded-md btn-add" id="add-venue">Add</button>
+                        <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-venue">Add</button>
                     </div>
                     <div class="mt-2 space-y-1" id="venue-list"></div>
                 </div>
             </div>
             
-             <div class="stats-container">
+            <div class="stats-container">
                 <h3 class="stats-title">Top Played</h3>
                 <ul class="text-xs mt-1" id="top-played"></ul>
                 <h3 class="stats-title mt-3">Least Played</h3>
                 <ul class="text-xs mt-1" id="least-played"></ul>
             </div>
-         </aside>
+        </aside>
 
         <button id="sidebar-toggle">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -770,75 +860,74 @@
 
         <main class="flex-1 p-4 overflow-auto">
             <section id="master-view">
-                <div id="master-view-controls">
+                 <div id="master-view-controls">
                     <div id="search-container">
                         <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..." />
                         <datalist id="search-results"></datalist>
-                         <div id="dark-mode-container">
+                        <div id="dark-mode-container">
                              <label for="dark-mode-toggle" class="flex items-center cursor-pointer ml-4">
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark</span>
-                                 <div class="relative">
+                                <div class="relative">
                                     <input type="checkbox" id="dark-mode-toggle" class="dark-mode-toggle sr-only">
-                                     <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
                                     <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
                                 </div>
-                             </label>
+                            </label>
                         </div>
                     </div>
                     <div id="controls-row">
-                         <div id="filters-group">
+                        <div id="filters-group">
                             <select id="sort-dropdown" class="p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select">
                                 <option value="name">Sort by Name</option>
-                                 <option value="artist">Sort by Artist</option>
+                                <option value="artist">Sort by Artist</option>
                                 <option value="lastPlayed">Sort by Last Played</option>
                                 <option value="energy">Sort by Energy</option>
-                             </select>
+                            </select>
                             <div id="genre-filter-container" class="relative">
                                 <button id="genre-filter-button" class="p-2 rounded-lg bg-transparent text-sm text-left dark:bg-transparent dark:text-gray-200">Select Genres</button>
-                                 <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
+                                <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
                             </div>
                         </div>
-                        
-                         <div id="master-view-buttons" class="flex gap-2">
+                        <div id="master-view-buttons" class="flex gap-2">
                             <input accept=".pdf" class="hidden" id="master-upload" multiple="" type="file" />
                             <button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow btn-master" id="upload-master-btn">Add files</button>
-                             <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow btn-master" id="delete-all-btn">Delete All</button>
+                            <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow btn-master" id="delete-all-btn">Delete All</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-                     <ul id="master-list"></ul>
+                    <ul id="master-list"></ul>
                 </div>
                 <div id="master-drop-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-8 pointer-events-none">
                     <div class="text-center bg-white dark:bg-gray-800 p-12 rounded-2xl border-4 border-dashed border-blue-500">
-                         <h2 class="text-2xl font-bold">Drop Files Here</h2>
+                        <h2 class="text-2xl font-bold">Drop Files Here</h2>
                         <p>Add PDF song sheets to ALL SONGS</p>
                     </div>
                 </div>
             </section>
 
 
-             <section class="hidden" id="setlist-view">
+            <section class="hidden" id="setlist-view">
                  <div class="flex items-center gap-2 mb-2">
                     <button id="back-to-venue-btn" class="hidden p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition dark:bg-gray-700 dark:hover:bg-gray-600">← Back</button>
                     <h2 class="text-xl font-bold" id="setlist-title">Setlist</h2>
-                     <p id="setlist-total-duration" class="text-sm text-gray-500 dark:text-white ml-2"></p>
+                    <p id="setlist-total-duration" class="text-sm text-gray-500 dark:text-white ml-2"></p>
                     <p id="setlist-song-count" class="text-sm text-gray-500 dark:text-white ml-2"></p>
                 </div>
 
                 <div class="flex items-end justify-between flex-wrap gap-4 mb-2">
                     <div class="flex items-center gap-2">
-                         <button id="record-show" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Record Show</button>
+                        <button id="record-show" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Record Show</button>
                         <button id="stop-record" class="p-2 bg-red-600 text-white rounded-lg hidden shadow">Stop Recording</button>
                         <button id="print-setlist" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">Print Setlist</button>
-                         <div class="relative inline-block">
+                        <div class="relative inline-block">
                             <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Share Setlist</button>
                             <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
-                                 <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
+                                <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
                                 <a href="#" id="share-email" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Email (text only)</a>
                                 <a href="#" id="share-gmail" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Gmail (text only)</a>
-                                 <a href="#" id="share-copy" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Copy to Clipboard (text only)</a>
+                                <a href="#" id="share-copy" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Copy to Clipboard (text only)</a>
                             </div>
                             <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
                         </div>
@@ -848,1439 +937,801 @@
                 <div id="setlist-details-container" class="mb-2">
                     <div id="setlist-details-toggle">
                         <span>Setlist Details</span>
-                        <span class="toggle-arrow">▾</span>
+                        <span class="toggle-arrow">▼</span>
                     </div>
-                     <div id="setlist-details-content">
+                    <div id="setlist-details-content">
                         <div>
-                            <label for="setlist-date" class="font-medium text-xs">Date</label>
-                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200">
+                            <label for="setlist-date">Date:</label>
+                            <input type="date" id="setlist-date" class="p-1 rounded-md border border-gray-300 dark:bg-gray-700 dark:border-gray-600">
                         </div>
                         <div>
-                            <label for="setlist-venue" class="font-medium text-xs">Venue</label>
-                             <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200 dark:placeholder-gray-400">
+                            <label for="setlist-venue">Venue:</label>
+                            <select id="setlist-venue" class="p-1 rounded-md border border-gray-300 dark:bg-gray-700 dark:border-gray-600"></select>
                         </div>
                         <div>
-                            <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
-                            <div class="relative">
-                                <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200">
-                                     <option value="custom">Custom Order</option>
-                                    <option value="name">Sort by Name</option>
-                                    <option value="artist">Sort by Artist</option>
-                                     <option value="genre">Sort by Genre</option>
-                                    <option value="energy">Sort by Energy</option>
-                                     </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
-                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                                 </div>
-                            </div>
+                            <label for="setlist-start-time">Start Time:</label>
+                            <input type="time" id="setlist-start-time" class="p-1 rounded-md border border-gray-300 dark:bg-gray-700 dark:border-gray-600">
                         </div>
-                     </div>
+                        <div>
+                            <label for="setlist-end-time">End Time:</label>
+                            <input type="time" id="setlist-end-time" class="p-1 rounded-md border border-gray-300 dark:bg-gray-700 dark:border-gray-600">
+                        </div>
+                        <div>
+                            <label for="setlist-notes">Notes:</label>
+                            <input type="text" id="setlist-notes" class="p-1 rounded-md border border-gray-300 dark:bg-gray-700 dark:border-gray-600">
+                        </div>
+                    </div>
                 </div>
 
-                <div id="setlist-recordings" class="mb-2"></div>
-                
-                 <div class="setlist-view-container">
+                <div class="setlist-view-container">
                     <div class="setlist-panel">
-                         <div class="panel-header">Setlist Songs</div>
-                        <ul id="setlist-list"></ul>
+                        <div class="panel-header">Setlist Songs</div>
+                        <ul id="setlist-list" class="sortable"></ul>
                     </div>
                     <div class="setlist-panel">
-                         <div class="panel-header">Add Songs to Setlist</div>
-                        <input id="setlist-search-add" class="w-full p-2 border-b dark:bg-gray-800 dark:border-gray-600 flex-shrink-0" placeholder="Search all songs...">
+                        <div class="panel-header">Add Songs</div>
                         <ul id="setlist-add-songs-list"></ul>
                     </div>
-                 </div>
-
+                </div>
             </section>
 
             <section class="hidden" id="favorites-view">
-                <div class="flex items-center justify-between mb-2">
-                     <h2 class="text-xl font-bold">Favorite Songs</h2>
-                    <div class="relative">
-                         <select id="favorites-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
-                            <option value="name">Sort by Name</option>
-                            <option value="artist">Sort by Artist</option>
-                             <option value="lastPlayed">Sort by Last Played</option>
-                            <option value="energy">Sort by Energy</option>
-                        </select>
-                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                         </div>
-                    </div>
-                </div>
+                <h2 class="text-xl font-bold mb-2">Favorites</h2>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul id="favorites-list"></ul>
-                 </div>
-            </section>
-
-            <section class="hidden" id="genre-view">
-                 <div class="flex items-center justify-between mb-2">
-                     <h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
-                     <div class="relative">
-                        <select id="genre-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
-                            <option value="name">Sort by Name</option>
-                             <option value="artist">Sort by Artist</option>
-                            <option value="lastPlayed">Sort by Last Played</option>
-                            <option value="energy">Sort by Energy</option>
-                        </select>
-                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-                     <ul id="genre-song-list"></ul>
                 </div>
             </section>
 
             <section class="hidden" id="plays-view">
-                <div class="flex items-center justify-between mb-2">
-                    <h2 class="text-xl font-bold">Plays</h2>
-                     <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow" id="reset-plays">Reset All Plays</button>
-                </div>
+                <h2 class="text-xl font-bold mb-2">Plays</h2>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul id="plays-list"></ul>
                 </div>
-             </section>
-
-            <section class="hidden" id="recordings-view">
-                <div class="flex items-center justify-between mb-2">
-                    <h2 class="text-xl font-bold">Recordings</h2>
-                </div>
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-                     <ul id="recordings-list"></ul>
-                </div>
             </section>
 
-            <section class="hidden" id="energy-view">
-                <h2 class="text-xl font-bold mb-2">Energy Levels</h2>
-                <div id="energy-level-container" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-             </section>
-
-            <section class="hidden" id="venue-setlists-view">
-                <h2 class="text-xl font-bold mb-2" id="venue-setlists-title"></h2>
+            <section class="hidden" id="genre-view">
+                <div class="flex items-center gap-2 mb-2">
+                    <button id="back-to-all-btn" class="p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition dark:bg-gray-700 dark:hover:bg-gray-600">← Back</button>
+                    <h2 class="text-xl font-bold" id="genre-title">Genre</h2>
+                </div>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-                    <ul id="venue-setlists-list"></ul>
-                 </div>
+                    <ul id="genre-song-list"></ul>
+                </div>
             </section>
         </main>
-
-        <section class="hidden" id="doc-view">
-            <div class="doc-top-bar" id="doc-top-bar"></div>
-            <div class="doc-nav-buttons" id="doc-nav-buttons">
-                <button class="doc-nav-button no-select" id="prev-doc">
-                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                    Previous
-                </button>
-                 <button class="doc-nav-button no-select" id="next-doc">
-                    Next
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                     </svg>
-                </button>
-                <button class="doc-nav-button doc-nav-close no-select" id="close-doc">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    Close
-                </button>
-            </div>
-            <div id="doc-iframe-container">
-             </div>
-        </section>
     </div>
+
     <script>
-        // ================== Disable Zoom on iPad ==================
-        document.addEventListener('touchstart', (event) => {
-          if (event.touches.length > 1) {
-             event.preventDefault();
-        }
-        }, { passive: false });
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', (event) => {
-          const now = (new Date()).getTime();
-          if (now - lastTouchEnd <= 300) {
-            event.preventDefault();
-          }
-          lastTouchEnd = now;
-        }, false);
-        // ================== Memory Management ==================
-        let objectURLs = new Set();
-        window.addEventListener('unload', () => {
-            objectURLs.forEach(url => URL.revokeObjectURL(url));
-            objectURLs.clear();
-        });
-        // ================== Data Structures ==================
-        let masterSongs = [];
-        let setlists = {};
-        let currentSetlist = null;
-        let playCounts = {};
-        let genres = [{
-            name: 'Rock',
-            color: '#ef4444'
-        }, {
-            name: 'Pop',
-            color: '#3b82f6'
-        }, {
-            name: 'Jazz',
-             color: '#10b981'
-        }];
-        const energyIcons = [
-            // Level 0 (Outline)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 dark:text-gray-500"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`,
-            // Level 1 (Large)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="67%" style="stop-color:transparent" /><stop offset="67%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
-            // Level 2 (Large, slightly smaller appearance)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="2 2 20 20"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="55%" style="stop-color:transparent" /><stop offset="55%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M13 4L6 14h6.5l-1 6 7-8h-6.5l1-5z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
-            // Level 3 (Largest)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-4 -4 32 32" class="energy-svg-3">
-                 <defs>
-                    <radialGradient id="energy-grad-3" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                        <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
-                     </radialGradient>
-                </defs>
-                <g class="sparks">
-                    <path d="M12,0 L12.5,4 L15,4.5 L12.5,5 L12,9 L11.5,5 L9,4.5 L11.5,4 Z" fill="#FCD34D" opacity="1"/>
-                    <path d="M21,8 L21.5,12 L24,12.5 L21.5,13 L21,17 L20.5,13 L18,12.5 L20.5,12 Z" fill="#FCD34D" opacity="1"/>
-                    <path d="M3,8 L3.5,12 L6,12.5 L3.5,13 L3,17 L2.5,13 L0,12.5 L2.5,12 Z" fill="#FCD34D" opacity="1"/>
-                    <path d="M6,17 L6.5,21 L9,21.5 L6.5,22 L6,26 L5.5,22 L3,21.5 L5.5,21 Z" fill="#FCD34D" opacity="1"/>
-                    <path d="M18,17 L18.5,21 L21,21.5 L18.5,22 L18,26 L17.5,22 L15,21.5 L17.5,21 Z" fill="#FCD34D" opacity="1"/>
-                 </g>
-                <g transform="scale(1.25) translate(-3, -3)">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-3)" stroke="#B45309" stroke-width="1.5"/>
-                </g>
-            </svg>`
-        ];
-        let venues = [];
-        let recordings = [];
-        let masterSelectedGenres = [];
-        let currentGenre = null;
-        let viewedSongsInSetlist = new Set();
-        let currentViewerContext = null;
-        let currentViewerList = [];
-        let currentViewerIndex = -1;
-        let inactivityTimer = null;
-
-
-        let recorder = null;
-        let audioChunks = [];
-        let cameFromVenue = null;
-        // ================== Persistent Storage ==================
-        function save() {
-            localStorage.setItem('setlistData', JSON.stringify({
-                masterSongs: masterSongs.map(song => ({ ...song,
-                    file: undefined,
-                    fileInfo: song.fileInfo ? {
-                         name: song.fileInfo.name,
-                        type: song.fileInfo.type,
-                        size: song.fileInfo.size,
-                        data: song.fileInfo.data
-                     } : undefined
-                })),
-                setlists,
-                playCounts,
-                genres,
-                venues,
-                 recordings: recordings.map(rec => ({ ...rec,
-                    audioData: rec.audioData
-                }))
-            }));
-            localStorage.setItem('darkMode', $('html').hasClass('dark') ? 'enabled' : 'disabled');
-        }
-
-        function load() {
-            const raw = localStorage.getItem('setlistData');
-            if (raw) {
-                try {
-                    const obj = JSON.parse(raw);
-                    masterSongs = obj.masterSongs || [];
-                    masterSongs.forEach(s => {
-                        if (!s.lastPlayed) s.lastPlayed = null;
-                        s.favorite = s.favorite || false; 
-                    });
-                    setlists = obj.setlists || {};
-                    Object.keys(setlists).forEach(k => {
-                        if (Array.isArray(setlists[k])) { // Legacy check
-                            setlists[k] = {
-                                songs: setlists[k].map(s => s.id),
-                                date: '',
-                                venue: ''
-                            };
-                         }
-                    });
-                    playCounts = obj.playCounts || {};
-                    genres = obj.genres || genres;
-                    venues = obj.venues || [];
-                    recordings = obj.recordings || [];
-                } catch (e) {
-                    console.error("Error parsing localStorage data: ", e);
-                    masterSongs = [];
-                    setlists = {};
-                    playCounts = {};
-                    venues = [];
-                    recordings = [];
-                }
-            }
-            const darkModePref = localStorage.getItem('darkMode');
-            if (darkModePref === 'disabled') {
-                $('html').removeClass('dark');
-                $('#dark-mode-toggle').prop('checked', false);
-            } else {
-                $('html').addClass('dark');
-                $('#dark-mode-toggle').prop('checked', true);
-            }
-        }
-
-        // ================== File Handling ==================
-        function storeFile(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                     resolve({
-                        name: file.name,
-                        type: file.type,
-                        size: file.size,
-                         data: e.target.result
-                    });
-                };
-                reader.onerror = function() {
-                    reject(new Error('Failed to read file'));
-                 };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        function getFileURL(song) {
-            if (!song || !song.fileInfo || !song.fileInfo.data) {
-                console.error(`Invalid song or fileInfo for song: ${song?.name || 'unknown'}`);
-                return null;
-            }
-
-            if (!song.file || !objectURLs.has(song.file)) {
-                try {
-                    const blob = dataURItoBlob(song.fileInfo.data);
-                    const url = URL.createObjectURL(blob);
-                    if (song.file) {
-                        URL.revokeObjectURL(song.file);
-                        objectURLs.delete(song.file);
-                    }
-                    song.file = url;
-                    objectURLs.add(url);
-                } catch (e) {
-                    console.error(`Error creating object URL for ${song.name}:`, e);
-                    return null;
-                }
-            }
-            return song.file;
-        }
-
-        function dataURItoBlob(dataURI) {
-            try {
-                const split = dataURI.split(',');
-                if (split.length < 2) {
-                    throw new Error('Invalid data URI');
-                }
-                const byteString = atob(split[1]);
-                const mimeString = split[0].split(':')[1].split(';')[0];
-                const ab = new ArrayBuffer(byteString.length);
-                const ia = new Uint8Array(ab);
-                for (let i = 0; i < byteString.length; i++) {
-                    ia[i] = byteString.charCodeAt(i);
-                }
-                return new Blob([ab], {
-                    type: mimeString
-                });
-            } catch (e) {
-                console.error('Error converting data URI to Blob:', e);
-                throw e;
-            }
-        }
-
-        // ================== UI Helpers ==================
-        function autoCollapseSidebar() {
-            const $sidebar = $('.left-col');
-            if (!$sidebar.hasClass('collapsed')) {
-                $sidebar.addClass('collapsed');
-                $('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />');
-            }
-        }
-
-        // ================== Initialization ==================
-        $(function() {
-            function deselectAllNav() {
-                $('#home-btn').removeClass('app-header-selected').addClass('app-header-unselected');
-                $('#nav-favorites, #nav-plays, #nav-recordings, #nav-energy').removeClass('selected');
-                 $('#setlists-container .setlist-item').removeClass('selected');
-                $('#venue-list .venue-item').removeClass('selected');
-                $('#genre-list .genre-item').removeClass('selected');
-            }
-
-            load();
-            deselectAllNav(); 
-            $('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected'); 
-            
-             renderLeftSetlists();
-            renderGenres(deselectAllNav);
-            renderVenues(deselectAllNav);
-            bindNav(deselectAllNav);
-            updateTopLeast();
-            show('master');
-            
-            $(document).on('click', '.genre-dot', function(e) {
-                 e.stopPropagation();
-                const li = $(this).closest('li');
-                const songId = li.attr('id');
-                const song = masterSongs.find(s => s.id === songId);
-                if (!song) return;
-                const genreNames = [''].concat(genres.map(g => g.name));
-                let idx = genreNames.indexOf(song.genre || '');
-                idx = (idx + 1) % genreNames.length;
-                song.genre = genreNames[idx];
-                
-                const newDot = `<span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span>`;
-                 $(`li[id="${songId}"]`).find('.genre-dot').parent().html(newDot);
-                // Re-render genre view if it's currently visible to reflect the change
-                if ($('#genre-view').is(':visible')) {
-                    renderGenreView(currentGenre);
-                }
-                save();
-            });
-            $(document).on('click', '.energy-icon', function(e) {
-                e.stopPropagation();
-                const songId = $(this).closest('li').attr('id');
-                const song = masterSongs.find(s => s.id === songId);
-                if (song) {
-                    song.energy = (song.energy || 0) + 1;
-                    if (song.energy > 3) song.energy = 0;
-                    const newIconHtml = energyIcons[song.energy || 0];
-                    const $listItems = $(`li[id="${songId}"]`);
-                    $listItems.find('.energy-icon').html(newIconHtml);
-
-                     if (song.energy === 3) {
-                        $listItems.find('.energy-svg-3').each(function() {
-                            const $svg = $(this);
-                             $svg.addClass('animate-sparks');
-                            setTimeout(() => $svg.removeClass('animate-sparks'), 600);
-                        });
-                    }
-                     if ($('#energy-view').is(':visible')) {
-                        renderEnergyLevels();
-                    }
-                    save();
-                }
-            });
-            $('#add-genre').click(function() {
-                const name = $('#genre-name').val().trim();
-                const color = $('#genre-color').val();
-                if (!name) return alert('Enter a genre name');
-                if (genres.some(g => g.name.toLowerCase() === name.toLowerCase())) return alert('Genre already exists');
-                 genres.push({ name, color });
-                $('#genre-name').val('');
-                renderGenres(deselectAllNav);
-                save();
-            });
-            $('#add-venue').click(function() {
-                const name = $('#venue-name').val().trim();
-                if (!name) return alert('Enter a venue name');
-                if (venues.some(v => v.name.toLowerCase() === name.toLowerCase())) return alert('Venue already exists');
-                venues.push({ name });
-                 $('#venue-name').val('');
-                renderVenues(deselectAllNav);
-                save();
-            });
-            $('#sidebar-toggle').click(function() {
-                const $sidebar = $('.left-col');
-                $sidebar.toggleClass('collapsed');
-                const $icon = $(this).find('svg');
-                if ($sidebar.hasClass('collapsed')) {
-                    $icon.html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />');
-                } else {
-                    $icon.html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />');
-                }
-            });
-            $('main').on('click', 'li.draggable', function(e) {
-                const listId = `#${$(this).parent().attr('id')}`;
-                if ($(e.target).is('input, button, a, .genre-dot, .energy-icon, .energy-icon *, .favorite-star-container, .favorite-star-container *') || $(e.target).closest('button').length > 0) {
-                    return;
-                }
-                 if (e.shiftKey || e.ctrlKey || e.metaKey) {
-                    handleSelection(e, listId);
-                    return;
-                }
-                $(listId + ' .item-selected').removeClass('item-selected');
-                 const songId = $(this).attr('id');
-                const context = $('main > section:visible').attr('id').replace('-view', '');
-                openSongInContext(songId, context);
-            });
-        });
-
-        // ================== Event Handlers ==================
-        function bindNav(deselectAllNav) {
-
-            $('#home-btn').click(() => {
-                deselectAllNav();
-                $('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');
-                show('master');
-                autoCollapseSidebar();
-             });
-            $('#nav-favorites').click(() => {
-                deselectAllNav();
-                $('#nav-favorites').addClass('selected');
-                show('favorites');
-            });
-            $('#nav-plays').click(() => {
-                deselectAllNav();
-                $('#nav-plays').addClass('selected');
-                show('plays');
-            });
-            $('#nav-recordings').click(() => {
-                deselectAllNav();
-                $('#nav-recordings').addClass('selected');
-                show('recordings');
-            });
-            $('#nav-energy').click(() => {
-                deselectAllNav();
-                $('#nav-energy').addClass('selected');
-                show('energy');
-            });
-            $('#setlists-container').on('click', '.setlist-item', function(e) {
-                if ($(e.target).closest('.del-setlist, .edit-input').length) return;
-                const name = $(this).data('name');
-                deselectAllNav();
-                $(this).addClass('selected');
-                cameFromVenue = null;
-                 currentSetlist = name;
-                viewedSongsInSetlist.clear();
-                $('#setlist-title').text(name);
-                show('setlist');
-                autoCollapseSidebar();
-            });
-            $('#venue-setlists-list').on('click', 'li', function() {
-                const setlistName = $(this).data('setlist-name');
-                if (setlists[setlistName]) {
-                    cameFromVenue = $('#venue-setlists-title .text-blue-600').text();
-                    currentSetlist = setlistName;
-                     viewedSongsInSetlist.clear();
-                    show('setlist');
-                }
-            });
-            $('#back-to-venue-btn').click(function() {
-                if (cameFromVenue) {
-                    renderVenueSetlists(cameFromVenue);
-                    show('venue-setlists');
-                }
-            });
-            $('#toggle-setlists').click(() => $('#setlists-container').slideToggle(150));
-            $(document).on('click', '#setlist-details-toggle', function() {
-                $(this).toggleClass('open');
-                // FIX: Use a callback to set display to flex after animation
-                $('#setlist-details-content').slideToggle(200, function() {
-                    if ($(this).is(':visible')) {
-                         $(this).css('display', 'flex');
-                    }
-                });
-            });
-            $('#add-setlist-btn').click(() => {
-                const name = $('#new-setlist-name').val().trim();
-                if (!name) return alert('Enter a name');
-                if (setlists[name]) return alert('Name exists');
-                setlists[name] = { songs: [], date: '', venue: '' };
-                 $('#new-setlist-name').val('');
-                renderLeftSetlists();
-                save();
-            });
-            $('#upload-master-btn').click(() => $('#master-upload').click());
-            $('#master-upload').on('change', handleMasterUpload);
-            $('#search').on('input', renderMaster);
-             $('#setlist-search-add').on('input', renderAddSongsPanel);
-            $('#sort-dropdown, #favorites-sort-dropdown, #genre-sort-dropdown').on('change', function() {
-                const view = $('main > section:visible').attr('id');
-                if (view === 'master-view') renderMaster();
-                else if (view === 'favorites-view') renderFavorites();
-                else if (view === 'genre-view' && currentGenre) renderGenreView(currentGenre);
-             });
-            $('#genre-filter-button').on('click', () => $('#genre-filter-dropdown').toggleClass('hidden'));
-            $(document).on('change', '#genre-filter-dropdown input[type="checkbox"]', function() {
-                masterSelectedGenres = [];
-                $('#genre-filter-dropdown input:checked').each(function() {
-                    masterSelectedGenres.push($(this).val());
-                });
-                updateGenreFilterButtonText('#genre-filter-button', masterSelectedGenres);
-                 renderMaster();
-            });
-            $('#setlist-sort-filter-dropdown').on('change', renderSetlist);
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('#genre-filter-container').length) {
-                    $('#genre-filter-dropdown').addClass('hidden');
-                }
-                if (!$(e.target).closest('.relative').has('#share-setlist-btn').length) {
-                    $('#share-options').addClass('hidden');
-                 }
-            });
-            $('#reset-plays').click(() => {
-                if (confirm('Reset all plays?')) {
-                    playCounts = {};
-                    masterSongs.forEach(s => s.lastPlayed = null);
-                    renderPlays();
-                     updateTopLeast();
-                    save();
-                }
-            });
-            $('#doc-top-bar, #close-doc, #prev-doc, #next-doc').off('click');
-            $('#doc-top-bar').on('click', function(e) {
-                if ($(e.target).is('button')) return;
-                $('#doc-nav-buttons').toggleClass('hidden');
-            });
-            $('#prev-doc').on('click', function(e) {
-                e.stopPropagation();
-                if (currentViewerIndex > 0) {
-                    const prevSongId = currentViewerList[currentViewerIndex - 1].id;
-                    openSongInContext(prevSongId, currentViewerContext, currentViewerIndex - 1);
-                 }
-            });
-            $('#next-doc').on('click', function(e) {
-                e.stopPropagation();
-                if (currentViewerIndex < currentViewerList.length - 1) {
-                    const nextSongId = currentViewerList[currentViewerIndex + 1].id;
-                    openSongInContext(nextSongId, currentViewerContext, currentViewerIndex + 1);
-                 }
-            });
-            $('#close-doc').on('click', function(e) {
-                e.stopPropagation();
-                $('body').removeClass('doc-viewer-active');
-                $('#doc-view').removeClass('doc-view-fullscreen').hide();
-                resetScrollHandlers();
-                $('#doc-iframe-container').empty();
-            });
-            $('#delete-all-btn').click(() => {
-                if (confirm('Are you sure you want to delete ALL songs?')) {
-                    masterSongs.forEach(song => {
-                        if (song.file) {
-                             URL.revokeObjectURL(song.file);
-                            objectURLs.delete(song.file);
-                        }
-                    });
-                    masterSongs = [];
-                     setlists = {};
-                    playCounts = {};
-                    renderAll();
-                    updateTopLeast();
-                     save();
-                }
-            });
-            $('#record-show, #stop-record').off('click');
-            $('#record-show').on('click', () => {
-                if (!currentSetlist) return alert('Select a setlist first');
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    navigator.mediaDevices.getUserMedia({ audio: true })
-                        .then(stream => {
-                             recorder = new MediaRecorder(stream);
-                            recorder.ondataavailable = e => audioChunks.push(e.data);
-                            recorder.onstop = () => {
-                                 const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                                audioChunks = [];
-                                saveRecording(blob);
-                             };
-                            recorder.start();
-                            $('#record-show').addClass('hidden');
-                             $('#stop-record').removeClass('hidden');
-                        }).catch(err => {
-                            console.error('Error accessing microphone:', err);
-                            alert('Could not access microphone');
-                        });
-                } else {
-                    alert('Microphone access not supported');
-                }
-            });
-            $('#stop-record').on('click', () => {
-                if (recorder) {
-                    recorder.stop();
-                    $('#stop-record').addClass('hidden');
-                    $('#record-show').removeClass('hidden');
-                }
-             });
-            $('#print-setlist').click(() => {
-                if (!currentSetlist) return;
-                const setlist = setlists[currentSetlist];
-                const songObjects = setlist.songs.map(id => masterSongs.find(s => s.id === id)).filter(Boolean);
-                const printWin = window.open('', '_blank');
-                
-                if (!printWin) {
-                    alert('Please allow popups for this feature to work.');
-                    return;
-                }
-                let html = `<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style></head><body>`;
-                 html += `<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(setlist.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(setlist.venue)||"Not set"}</div><ol>${songObjects.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;
-                printWin.document.write(html);
-                const songsWithFiles = songObjects.filter(s => s.fileInfo && s.fileInfo.data);
-                if (songsWithFiles.length === 0) {
-                    printWin.document.close();
-                    printWin.focus(); printWin.print(); return;
-                }
-                songsWithFiles.forEach(s => {
-                    const fileUrl = getFileURL(s);
-                    if (fileUrl) printWin.document.body.insertAdjacentHTML('beforeend', `<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${fileUrl}"></iframe>`);
-                });
-                const iframes = printWin.document.querySelectorAll('iframe');
-                const loadingPromises = Array.from(iframes).map(iframe => new Promise(resolve => { iframe.onload = resolve; iframe.onerror = resolve; }));
-                Promise.all(loadingPromises).then(() => { printWin.document.close(); printWin.focus(); printWin.print(); });
-            });
-            $('#share-setlist-btn, #share-native, #share-email, #share-gmail, #share-copy').off('click');
-            $('#share-setlist-btn').on('click', () => $('#share-options').toggleClass('hidden'));
-            $('#share-native').on('click', e => { e.preventDefault(); shareSetlist('native'); });
-            $('#share-email').on('click', e => { e.preventDefault(); shareSetlist('email'); });
-            $('#share-gmail').on('click', e => { e.preventDefault(); shareSetlist('gmail'); });
-            $('#share-copy').on('click', e => { e.preventDefault(); shareSetlist('copy'); });
-            $('#dark-mode-toggle').change(function() {
-                $('html').toggleClass('dark', this.checked);
-                save();
-            });
-            $(document).on('dragenter dragover', function(e) {
-                e.preventDefault(); e.stopPropagation();
-                if ($('#master-view').is(':visible')) $('#master-drop-overlay').removeClass('hidden');
-            }).on('dragleave drop', function(e) {
-                e.preventDefault(); e.stopPropagation();
-                $('#master-drop-overlay').addClass('hidden');
-                 if (e.type === 'drop' && $('#master-view').is(':visible')) {
-                    const dropEvent = e.originalEvent;
-                    if (dropEvent.dataTransfer && dropEvent.dataTransfer.files.length > 0) {
-                        handleMasterUpload({ target: { files: dropEvent.dataTransfer.files } });
-                     }
-                }
-            });
-            $(document).on('click', '.favorite-star-container', function(e) {
-                e.stopPropagation();
-                const songId = $(this).closest('li').attr('id');
-                const song = masterSongs.find(s => s.id === songId);
-                if (song) {
-                    song.favorite = !song.favorite;
-                    save();
-                    $(`li[id="${songId}"]`).find('.favorite-star-container').toggleClass('favorited', song.favorite);
-                    if ($('#favorites-view').is(':visible')) renderFavorites();
-                }
-            });
-            const handleInputChange = function(e) {
-                const songId = $(this).closest('li').attr('id');
-                const song = masterSongs.find(s => s.id === songId);
-                if (song) {
-                    const key = $(this).attr('class').match(/(\w+)-input/)[1];
-                    song[key] = e.target.value;
-                    save();
-                }
-            };
-            $('main').on('input', '.artist-input, .notes-input, .duration-input', handleInputChange);
-            $('main').on('click', '.delete-btn', function(e) {
-                e.stopPropagation();
-                const li = $(this).closest('li');
-                const songId = li.attr('id');
-                const song = masterSongs.find(s => s.id === songId);
-                 if (!song) return;
-                const context = $(this).text().toLowerCase();
-                if (context === 'delete') {
-                    if (confirm(`Permanently delete "${song.name}"?`)) {
-                        if (song.file) URL.revokeObjectURL(song.file);
-                         removeFromAllSetlists([songId]);
-                        masterSongs = masterSongs.filter(x => x.id !== songId);
-                        const visibleView = $('main > section:visible').attr('id');
-                        if (visibleView === 'favorites-view') renderFavorites();
-                        else if (visibleView === 'genre-view') renderGenreView(currentGenre);
-                        else renderMaster();
-                        if (currentSetlist) renderSetlist();
-                        updateTopLeast();
-                        save();
-                    }
-                } else {
-                    const setlist = setlists[currentSetlist];
-                    setlist.songs = setlist.songs.filter(id => id !== songId);
-                    renderSetlist();
-                    save();
-                }
-            });
-            $('#setlist-date').on('input', function() {
-                $('#date-placeholder').toggle(!$(this).val());
-            });
-        }
-
-        async function shareSetlist(method) {
-            if (!currentSetlist) return;
-            const setlist = setlists[currentSetlist];
-            const songObjects = setlist.songs.map(id => masterSongs.find(s => s.id === id)).filter(Boolean);
-            const text = `${escapeHtml(currentSetlist)} - ${escapeHtml(setlist.date)} @ ${escapeHtml(setlist.venue)}\n` +
-                songObjects.map((s, i) => `${i+1}. ${escapeHtml(s.name)}`).join('\n');
-            const subject = `Setlist: ${currentSetlist}`;
-            if (method === 'native' && navigator.share) {
-                const files = [];
-                for (let s of songObjects) {
-                    if (s.fileInfo && s.fileInfo.data) {
-                        try {
-                            const blob = dataURItoBlob(s.fileInfo.data);
-                            files.push(new File([blob], s.name + '.pdf', { type: 'application/pdf' }));
-                        } catch (e) { console.error("Could not process file for sharing:", s.name, e);
-                        }
-                    }
-                }
-                try {
-                    await navigator.share({ title: currentSetlist, text: text, files: files });
-                } catch (err) {
-                    console.error('Share failed:', err);
-                }
-            } else if (method === 'email') {
-                window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
-            } else if (method === 'gmail') {
-                window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`, '_blank');
-            } else {
-                fallbackCopy(text);
-            }
-            $('#share-options').addClass('hidden');
-        }
-
-        function fallbackCopy(text) {
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(text).then(() => {
-                    const feedback = $('#copy-feedback');
-                    feedback.css('opacity', 1);
-                     setTimeout(() => feedback.css('opacity', 0), 2000);
-                });
-            }
-        }
-
-        async function handleMasterUpload(e) {
-            const files = e.target.files;
-            for (let f of files) {
-                const fileName = stripExt(f.name);
-                if (masterSongs.some(s => s.name.toLowerCase() === fileName.toLowerCase())) {
-                    if (!confirm(`A file named "${fileName}" already exists. Add anyway?`)) continue;
-                }
-                const id = 's_' + Math.random().toString(36).slice(2, 9);
-                try {
-                    const fileInfo = await storeFile(f);
-                    masterSongs.push({ id, name: fileName, artist: '', genre: '', notes: '', duration: '', energy: 0, favorite: false, fileInfo, lastPlayed: null });
-                    playCounts[id] = 0;
-                } catch (error) {
-                    console.error('Error processing file:', f.name, error);
-                    alert(`Failed to process file: ${f.name}`);
-                }
-            }
-            renderMaster();
-            updateTopLeast();
-            save();
-            $('#master-upload').val('');
-        }
-
-        function stripExt(name) { return name.replace(/\.[^/.]+$/, '');
-        }
-
-        function createSongItem(song, idx, context) {
-            const favClass = song.favorite ?
-                'favorited' : '';
-            const star = `<div class="w-8 flex-shrink-0 flex justify-center items-center favorite-star-container ${favClass}" title="Toggle Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></div>`;
-            const dot = `<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span></div>`;
-            const energyIcon = `<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${song.energy||0}">${energyIcons[song.energy||0]}</div>`;
-            const buttonText = ['master', 'favorites', 'genre'].includes(context) ?
-                'Delete' : 'Remove';
-            const inputsHTML = `<div class="song-details-container"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(song.artist||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(song.notes||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(song.duration||'')}"><button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${buttonText}</button></div>`;
-            const viewedClass = context === 'setlist' && viewedSongsInSetlist.has(song.id) ? 'viewed-index' : '';
-            return $(`<li id="${song.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable">${star}<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${viewedClass}">${idx+1}</span></div>${dot}${energyIcon}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium">${escapeHtml(song.name)}</div>${inputsHTML}</li>`);
-        }
-
-        function handleSelection(event, containerSelector) { $(event.currentTarget).toggleClass('item-selected');
-        }
-
-        // Define a reusable helper function for draggable items
-        const draggableOptions = {
-            appendTo: 'body',
-            revert: 'invalid',
-            cursorAt: { left: 10, top: 10 },
-            helper: 'clone',
-            start: function(e, ui) {
-                const $sourceItem = $(this);
-                const $sourceList = $sourceItem.parent();
-                const $selectedItems = $sourceList.children('.item-selected');
-
-                // If not dragging a multi-selection, select the single item being dragged
-                if ($selectedItems.length <= 1 || !$sourceItem.hasClass('item-selected')) {
-                    $sourceList.children('.item-selected').removeClass('item-selected');
-                    $sourceItem.addClass('item-selected');
-                }
-                
-                const count = $sourceList.children('.item-selected').length;
-                
-                // Style the helper
-                ui.helper.addClass('drag-helper').width($sourceItem.outerWidth());
-                
-                // If dragging multiple items, create a summary badge
-                if (count > 1) {
-                    ui.helper.empty()
-                        .css({'height': '60px', 'padding': '1rem'})
-                        .addClass('flex items-center justify-center font-semibold')
-                        .html(`Dragging ${count} items`);
-                } else {
-                     ui.helper.height($sourceItem.outerHeight());
-                }
-            }
+        // State management
+        const state = {
+            songs: JSON.parse(localStorage.getItem('songs')) || [],
+            setlists: JSON.parse(localStorage.getItem('setlists')) || [],
+            genres: JSON.parse(localStorage.getItem('genres')) || [],
+            venues: JSON.parse(localStorage.getItem('venues')) || [],
+            plays: JSON.parse(localStorage.getItem('plays')) || [],
+            favorites: JSON.parse(localStorage.getItem('favorites')) || [],
+            currentView: 'master',
+            currentSetlistId: null,
+            currentGenreId: null,
+            currentVenueId: null,
+            selectedSongs: new Set(),
+            recording: false,
+            recordStartTime: null,
+            recordedSongs: [],
+            sortBy: 'name',
+            genreFilter: new Set(),
+            darkMode: localStorage.getItem('darkMode') === 'true'
         };
-        function renderMaster() {
-            const q = $('#search').val().toLowerCase();
-            let list = masterSongs.filter(s => (q ? (s.name.toLowerCase().includes(q) || (s.artist || '').toLowerCase().includes(q)) : true) && (masterSelectedGenres.length > 0 ? masterSelectedGenres.includes(s.genre) : true));
-            const sortMode = $('#sort-dropdown').val();
-            list.sort((a, b) => {
-                if (sortMode === 'artist') return (a.artist || '').localeCompare(b.artist || '');
-                if (sortMode === 'lastPlayed') return (b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0) - (a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0);
-                if (sortMode === 'energy') return (b.energy || 0) - (a.energy || 0);
-                return a.name.localeCompare(b.name);
-            });
-            window.currentMasterViewSongs = list;
-            const $ul = $('#master-list').empty();
-            if (list.length === 0) {
-                $ul.append(`<li class="p-8 text-center text-gray-500 italic">${(q || masterSelectedGenres.length > 0) ? 'No songs match your current filters.' : 'No songs yet. <br> Drag & drop PDF files onto the page or use the "Add files" button!'}</li>`);
-            } else {
-                list.forEach((s, idx) => $ul.append(createSongItem(s, idx, 'master')));
-            }
-            $('#master-list .draggable').draggable(draggableOptions);
-        }
-        
-        function renderAddSongsPanel() {
-            const q = $('#setlist-search-add').val().toLowerCase();
-            let list = masterSongs.filter(s => (q ? s.name.toLowerCase().includes(q) : true));
-            list.sort((a, b) => a.name.localeCompare(b.name));
-            
-            const $ul = $('#setlist-add-songs-list').empty();
-            const currentSongs = setlists[currentSetlist]?.songs || [];
 
-            list.forEach(s => {
-                const isChecked = currentSongs.includes(s.id);
-                const li = $(`
-                    <li class="add-song-item" data-song-id="${s.id}">
-                        <input type="checkbox" id="add-${s.id}" ${isChecked ? 'checked' : ''}>
-                         <label for="add-${s.id}">${escapeHtml(s.name)}</label>
-                    </li>
-                `);
-                li.find('input').on('change', function() {
-                    const songId = $(this).parent().data('song-id');
-                    const setlistSongs = setlists[currentSetlist].songs;
-                    if(this.checked) {
-                        if (!setlistSongs.includes(songId)) setlistSongs.push(songId);
-                    } else {
-                         setlists[currentSetlist].songs = setlistSongs.filter(id => id !== songId);
-                    }
-                    renderSetlist();
-                    save();
-                });
-                 $ul.append(li);
-            });
-        }
-
-
-        function removeFromAllSetlists(songIds) { Object.keys(setlists).forEach(k => { setlists[k].songs = setlists[k].songs.filter(id => !songIds.includes(id)); });
-        }
-
-        function renderLeftSetlists() {
-            const $c = $('#setlists-container').empty();
-            Object.keys(setlists).forEach(name => {
-                const el = $(`<div class="p-2 mb-1 rounded-lg cursor-pointer setlist-item bg-gray-700" data-name="${escapeHtml(name)}"><div class="flex items-center"><button class="del-setlist" title="Delete setlist"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg></button><span class="setlist-name">${escapeHtml(name)}</span></div></div>`);
-                 el.find('.del-setlist').click(e => {
-                    e.stopPropagation();
-                    if (confirm('Delete ' + name + '?')) {
-                        delete setlists[name];
-                        recordings = recordings.filter(r => r.setlist !== name);
-                        if (currentSetlist === name) {
-                            currentSetlist = null;
-                            $('#home-btn').trigger('click');
-                        }
-                        renderLeftSetlists();
-                        save();
-                    }
-                });
-                el.on('dblclick', function() {
-                    const input = $('<input class="edit-input w-full bg-gray-600 p-1 rounded-md" value="' + escapeHtml(name) + '">');
-                    $(this).find('.setlist-name').replaceWith(input);
-                    input.focus().on('blur keypress', function(ev) {
-                         if (ev.type === 'keypress' && ev.key !== 'Enter') return;
-                        const newName = input.val().trim();
-                        if (newName && newName !== name && !setlists[newName]) {
-                            setlists[newName] = setlists[name];
-                             recordings.forEach(r => { if (r.setlist === name) r.setlist = newName; });
-                            delete setlists[name];
-                            if (currentSetlist === name) {
-                                 currentSetlist = newName;
-                                $('#setlist-title').text(newName);
-                            }
-                         }
-                        renderLeftSetlists();
-                        save();
-                    });
-                });
-                $c.append(el);
-            });
-            $('.setlist-item').droppable({
-                accept: '.draggable',
-                hoverClass: 'drag-highlight',
-                drop: function(e, ui) {
-                    const setlistName = $(this).data('name');
-                     const setlist = setlists[setlistName];
-                    let added = false;
-                    const itemsToDrop = ui.draggable.hasClass('item-selected') ? ui.draggable.parent().find('.item-selected') : ui.draggable;
-                    
-                    itemsToDrop.each(function() {
-                        const songId = $(this).attr('id');
-                        if (songId && !setlist.songs.includes(songId)) {
-                            setlist.songs.push(songId);
-                            added = true;
-                        }
-                     });
-                    if (added) {
-                        $(this).addClass('drop-flash');
-                        setTimeout(() => $(this).removeClass('drop-flash'), 1000);
-                        save();
-                        if (currentSetlist === setlistName) renderSetlist();
-                    }
-                    ui.draggable.parent().find('.item-selected').removeClass('item-selected');
-                }
-            });
-            $('#setlists-container').sortable({
-                axis: 'y',
-                cursor: 'move',
-                helper: 'clone',
-                start: function(e, ui) {
-                    ui.helper.css({
-                         'background-color': '#3b82f6',
-                        'color': 'white',
-                        'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
-                         'width': ui.item.outerWidth()
-                     }).addClass('selected');
-                    ui.helper.find('*').css('color', 'white');
-                },
-                update: function() {
-                    const order = $(this).sortable('toArray', { attribute: 'data-name' });
-                     const newObj = {};
-                    order.forEach(n => { if (setlists[n]) newObj[n] = setlists[n]; });
-                    setlists = newObj;
-                    save();
-                 }
-            });
-        }
-
-        function renderSetlist() {
-            if (!currentSetlist) { $('#setlist-view').hide();
-                return; }
-            $('#back-to-venue-btn').toggle(!!cameFromVenue);
-            
-            const setlist = setlists[currentSetlist];
-            $('#setlist-title').text(currentSetlist);
-            // Correctly handle setlist details
-            $('#setlist-date').val(setlist.date || '');
-            $('#setlist-venue').val(setlist.venue || '');
-
-            renderAddSongsPanel(); 
-            
-            $('#setlist-recordings').empty();
-            const setlistRecs = recordings.filter(r => r.setlist === currentSetlist);
-            if (setlistRecs.length > 0) {
-                const $recsContainer = $('<div class="p-2 bg-gray-100 rounded-lg dark:bg-gray-700"></div>').append('<h4 class="font-semibold text-sm mb-2">Recordings for this Setlist:</h4>');
-                setlistRecs.forEach(r => {
-                    $recsContainer.append($(`<div class="flex items-center justify-between p-2 mb-1 bg-white rounded-lg shadow-sm dark:bg-gray-600"><span>${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</span><audio controls src="${r.audioData}" style="height:30px;"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition" data-id="${r.id}">Delete</button></div>`).on('click', 'button', function() {
-                        if (confirm('Delete this recording?')) {
-                             recordings = recordings.filter(rec => rec.id !== $(this).data('id'));
-                            save();
-                            renderSetlist();
-                        }
-                     }));
-                });
-                $('#setlist-recordings').append($recsContainer);
-            }
-            let songObjects = (setlist.songs || []).map(id => masterSongs.find(s => s.id === id)).filter(Boolean);
-            const sortFilterMode = $('#setlist-sort-filter-dropdown').val();
-            if (sortFilterMode !== 'custom') {
-                songObjects.sort((a, b) => {
-                    if (sortFilterMode === 'artist') return (a.artist || '').localeCompare(b.artist || '');
-                    if (sortFilterMode === 'name') return a.name.localeCompare(b.name);
-                     if (sortFilterMode === 'energy') return (b.energy || 0) - (a.energy || 0);
-                    if (sortFilterMode === 'genre') return (a.genre || '').localeCompare(b.genre || '');
-                    return 0;
-                });
-            }
-            $('#setlist-total-duration').text(`Runtime: ${songObjects.reduce((acc, s) => acc + (parseInt(s.duration, 10) || 0), 0)} min`);
-            $('#setlist-song-count').text(`${songObjects.length} songs`);
-            window.currentSetlistViewSongs = songObjects;
-            const $ul = $('#setlist-list').empty();
-            songObjects.forEach((s, idx) => { $ul.append(createSongItem(s, idx, 'setlist')); });
-            if ($('#setlist-list').hasClass('ui-sortable')) $('#setlist-list').sortable('destroy');
-            $('#setlist-list').sortable({
-                axis: 'y', cursor: 'move', placeholder: "sortable-placeholder", tolerance: 'pointer', scroll: true, forcePlaceholderSize: true, helper: 'clone',
-                start: (e, ui) => { ui.placeholder.height(ui.item.height()); ui.item.addClass('dragging-source'); },
-                stop: (e, ui) => ui.item.removeClass('dragging-source'),
-                update: function() {
-                     $('#setlist-sort-filter-dropdown').val('custom');
-                    setlists[currentSetlist].songs = $(this).sortable('toArray');
-                    $('#setlist-list .index-number').each((index, el) => $(el).text(index + 1));
-                    save();
-                }
-             }).disableSelection();
-        }
-        
-        function renderPlays() {
-            const $ul = $('#plays-list').empty();
-            if (masterSongs.length === 0) { $ul.append('<li class="p-8 text-center text-gray-500 italic">Add songs to start tracking plays.</li>'); return;
-            }
-            const sortedSongs = masterSongs.slice().sort((a, b) => (playCounts[b.id] || 0) - (playCounts[a.id] || 0));
-            window.currentPlaysViewSongs = sortedSongs;
-            if (Object.values(playCounts).every(c => c === 0)) { $ul.append('<li class="p-8 text-center text-gray-500 italic">No songs played yet. Click a song to log a play.</li>');
-                return; }
-            sortedSongs.forEach(s => {
-                const li = $(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable pl-4"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);
-                li.find('button').click(() => { playCounts[s.id] = 0; renderPlays(); updateTopLeast(); save(); });
-                $ul.append(li);
-             });
-            $('#plays-list .draggable').draggable(draggableOptions);
-        }
-
-        function renderRecordings() {
-            const $ul = $('#recordings-list').empty();
-            if (recordings.length === 0) { $ul.append('<li class="p-8 text-center text-gray-500 italic">No recordings saved.</li>'); return;
-            }
-            recordings.forEach(r => {
-                const li = $(`<li class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"><div class="flex-1">${escapeHtml(r.setlist)} - ${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</div><audio controls src="${r.audioData}"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-rec" data-id="${r.id}">Delete</button></li>`);
-                li.find('.delete-rec').click(() => { recordings = recordings.filter(rec => rec.id !== r.id); renderRecordings(); save(); });
-                
-                $ul.append(li);
-            });
-        }
-
-        function renderFavorites() {
-            const $ul = $('#favorites-list').empty();
-            let favorites = masterSongs.filter(s => s.favorite);
-            window.currentFavoritesViewSongs = favorites;
-            const sortMode = $('#favorites-sort-dropdown').val();
-            favorites.sort((a, b) => {
-                if (sortMode === 'artist') return (a.artist || '').localeCompare(b.artist || '');
-                if (sortMode === 'lastPlayed') return (b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0) - (a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0);
-                if (sortMode === 'energy') return (b.energy || 0) - (a.energy || 0);
-                 return a.name.localeCompare(b.name);
-            });
-            favorites.forEach((s, idx) => { $ul.append(createSongItem(s, idx, 'favorites')); });
-            $('#favorites-list .draggable').draggable(draggableOptions);
-        }
-
-        function renderGenreView(genreName) {
-            currentGenre = genreName;
-            $('#genre-view-title').text(`Genre: ${genreName}`);
-            const $ul = $('#genre-song-list').empty();
-            // Use case-insensitive comparison for genre filtering
-            let songsInGenre = masterSongs.filter(s => s.genre && s.genre.toLowerCase() === genreName.toLowerCase());
-            const sortMode = $('#genre-sort-dropdown').val();
-            songsInGenre.sort((a, b) => {
-                if (sortMode === 'artist') return (a.artist || '').localeCompare(b.artist || '');
-                if (sortMode === 'lastPlayed') return (b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0) - (a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0);
-                if (sortMode === 'energy') return (b.energy || 0) - (a.energy || 0);
-                return a.name.localeCompare(b.name);
-            });
-            window.currentGenreViewSongs = songsInGenre;
-            songsInGenre.forEach((s, idx) => { $ul.append(createSongItem(s, idx, 'genre')); });
-            $('#genre-song-list .draggable').draggable(draggableOptions);
-        }
-
-        function renderEnergyLevels() {
-            const container = $('#energy-level-container').empty();
-            [1, 2, 3].forEach(levelValue => {
-                const songs = masterSongs.filter(s => s.energy === levelValue).sort((a, b) => a.name.localeCompare(b.name));
-                const section = $(`<div class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg"><div class="flex justify-center mb-2">${energyIcons[levelValue]}</div><ul class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto"></ul></div>`);
-                const ul = section.find('ul');
-                if (songs.length > 0) {
-                    songs.forEach(song => {
-                        ul.append(`<li id="${song.id}" class="p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer draggable">${escapeHtml(song.name)}</li>`);
-                    });
-                } else {
-                     ul.append(`<li class="p-2 text-sm text-gray-500 italic">No songs in this category.</li>`);
-                }
-                container.append(section);
-            });
-            $('#energy-level-container .draggable').draggable(draggableOptions);
-        }
-
-        function renderGenres(deselectAllNav) {
-            $('#genre-list').empty();
-            genres.forEach(g => {
-                const el = $(`<div class="sidebar-item genre-item" data-name="${escapeHtml(g.name)}"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);
-                el.on('click', function(e) {
-                    if($(e.target).closest('.delete-genre, .genre-edit-input').length > 0) return;
-                    deselectAllNav();
-                     $(this).addClass('selected');
-                    currentGenre = g.name;
-                    show('genre-view');
-                });
-                el.find('.delete-genre').click(e => {
-                     e.stopPropagation();
-                    if (confirm(`Delete genre "${g.name}"?`)) {
-                        genres = genres.filter(genre => genre.name !== g.name);
-                        masterSongs.forEach(song => { if (song.genre === g.name) song.genre = '';
-                        });
-                        renderAll();
-                        save();
-                    }
-                });
-                el.find('.genre-name').on('dblclick', function(e) {
-                    e.stopPropagation();
-                    const oldName = $(this).text();
-                    const input = $('<input class="w-full bg-gray-600 p-1 rounded-md" type="text" value="' + oldName + '">');
-                    $(this).replaceWith(input);
-                     input.focus().select().on('blur keypress', function(ev) {
-                        if (ev.type === 'keypress' && ev.key !== 'Enter') return;
-                        const newName = input.val().trim();
-                         if (newName && newName !== oldName) {
-                            const genre = genres.find(genre => genre.name === oldName);
-                            if (genre) genre.name = newName;
-                             masterSongs.forEach(song => { if (song.genre === oldName) song.genre = newName; });
-                        }
-                        renderAll();
-                        save();
-                     });
-                });
-                $('#genre-list').append(el);
-            });
-            updateGenreFilters('#genre-filter-dropdown', masterSelectedGenres);
-            $('#genre-list').sortable({ 
-                axis: 'y', 
-                cursor: 'move', 
-                placeholder: "sortable-placeholder",
-                helper: 'clone',
-                start: function(e, ui) {
-                     ui.helper.css({
-                        'background-color': '#3b82f6',
-                        'color': 'white',
-                        'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
-                         'width': ui.item.outerWidth()
-                    }).addClass('selected');
-                    ui.helper.find('*').css('color', 'white');
-                },
-                update: function() {
-                     const newOrder = [];
-                    $('#genre-list .genre-item').each(function() {
-                        const name = $(this).data('name');
-                        const genre = genres.find(g => g.name === name);
-                         if (genre) newOrder.push(genre);
-                    });
-                    genres = newOrder;
-                    save();
-                }
-            });
-        }
-
-        function renderVenues(deselectAllNav) {
-            $('#venue-list').empty();
-            venues.forEach(v => {
-                const el = $(`<div class="sidebar-item venue-item" data-name="${escapeHtml(v.name)}"><div class="venue-name text-sm">${escapeHtml(v.name)}</div><span class="delete-venue" title="Delete venue">✕</span></div>`);
-                el.on('click', function(e) {
-                    if ($(e.target).closest('.delete-venue').length) return;
-                    deselectAllNav();
-                     $(this).addClass('selected');
-                    renderVenueSetlists(v.name);
-                    show('venue-setlists');
-                });
-                el.find('.delete-venue').click(e => {
-                     e.stopPropagation();
-                    venues = venues.filter(venue => venue.name !== v.name);
-                    Object.values(setlists).forEach(sl => { if (sl.venue === v.name) sl.venue = ''; });
-                    recordings.forEach(r => { if (r.venue === v.name) r.venue = ''; });
-                     renderVenues(deselectAllNav);
-                    if (currentSetlist) renderSetlist();
-                    if ($('#venue-setlists-view').is(':visible')) $('#home-btn').trigger('click');
-                    save();
-                });
-                $('#venue-list').append(el);
-            });
-            $('#venue-list').sortable({ 
-                axis: 'y', 
-                cursor: 'move', 
-                placeholder: "sortable-placeholder",
-                helper: 'clone',
-                start: function(e, ui) {
-                     ui.helper.css({
-                        'background-color': '#3b82f6',
-                        'color': 'white',
-                        'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
-                         'width': ui.item.outerWidth()
-                    }).addClass('selected');
-                    ui.helper.find('*').css('color', 'white');
-                },
-                update: function() {
-                     const newOrder = [];
-                    $('#venue-list .venue-item').each(function() {
-                        const name = $(this).data('name');
-                        const venue = venues.find(v => v.name === name);
-                         if (venue) newOrder.push(venue);
-                    });
-                    venues = newOrder;
-                    save();
-                }
-            });
-        }
-
-        function renderVenueSetlists(venueName) {
-            $('#venue-setlists-title').html(`Setlists for: <span class="text-blue-600">${escapeHtml(venueName)}</span>`);
-            const $ul = $('#venue-setlists-list').empty();
-            const matchingSetlists = Object.entries(setlists).filter(([name, data]) => data.venue === venueName);
-            if (matchingSetlists.length === 0) { $ul.append('<li class="p-4 text-center text-gray-500">No setlists found for this venue.</li>'); return;
-            }
-            matchingSetlists.forEach(([name, data]) => {
-                $ul.append(`<li class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" data-setlist-name="${escapeHtml(name)}"><div class="font-medium">${escapeHtml(name)}</div><div class="text-sm text-gray-500">${escapeHtml(data.date) || 'No date'}</div></li>`);
-            });
-        }
-
-        function updateGenreFilters(dropdownSelector, selectedArray) {
-            const $dropdown = $(dropdownSelector).empty();
-            if (genres.length === 0) { $dropdown.append('<div class="p-2 text-sm text-gray-500">No genres created.</div>'); return;
-            }
-            genres.forEach(g => {
-                $dropdown.append(`<label class="flex items-center p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"><input type="checkbox" value="${escapeHtml(g.name)}" class="form-checkbox h-4 w-4 text-blue-600 rounded-md mr-2" ${selectedArray.includes(g.name) ? 'checked' : ''}>${escapeHtml(g.name)}</label>`);
-            });
-        }
-
-        function updateGenreFilterButtonText(buttonSelector, selectedArray, defaultText = 'Select Genres') {
-            const button = $(buttonSelector);
-            if (selectedArray.length === 0) button.text(defaultText);
-            else if (selectedArray.length === 1) button.text(escapeHtml(selectedArray[0]));
-            else button.text(`${selectedArray.length} genres`);
-        }
-
-        function getGenreColor(name) {
-            const g = genres.find(x => x.name === name);
-            return g ? g.color : '#cbd5e1';
-        }
-
-        function escapeHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        }
-
-        function updateTopLeast() {
-            const pairs = Object.entries(playCounts).filter(([id]) => masterSongs.find(s => s.id === id)).sort((a, b) => b[1] - a[1]);
-            const validPairs = pairs.filter(([id, count]) => count > 0);
-            
-            if (validPairs.length === 0) {
-                $('.stats-container').hide();
-                return;
-            }
-            $('.stats-container').show();
-
-            $('#top-played').empty();
-            $('#least-played').empty();
-            validPairs.slice(0, 5).forEach(([id, c]) => {
-                const s = masterSongs.find(x => x.id === id);
-                if (s) $('#top-played').append(`<li>${escapeHtml(s.name)}: ${c}</li>`);
-            });
-            validPairs.slice(-5).reverse().forEach(([id, c]) => {
-                const s = masterSongs.find(x => x.id === id);
-                if (s) $('#least-played').append(`<li>${escapeHtml(s.name)}: ${c}</li>`);
-            });
-        }
-
-        function updateSearchDatalist() {
-            $('#search-results').empty();
-            masterSongs.forEach(s => { $('#search-results').append(`<option value="${escapeHtml(s.name)}">`); });
-        }
-
-        function renderAll() {
-            renderLeftSetlists();
+        // Initialize app
+        function initApp() {
+            applyDarkMode(state.darkMode);
+            renderMasterList();
+            renderSetlists();
             renderGenres();
             renderVenues();
-            renderMaster();
-            if (currentSetlist) renderSetlist();
-            renderPlays();
-            renderRecordings();
-            renderFavorites();
-            renderEnergyLevels();
-            if (currentGenre) renderGenreView(currentGenre);
-            updateTopLeast();
+            renderStats();
+            setupEventListeners();
+            setupDragAndDrop();
         }
 
-        function openSongInContext(songId, context, index = -1) {
-            const song = masterSongs.find(s => s.id === songId);
-            if (!song) { console.error('Song not found for ID:', songId); return;
+        // Apply dark mode
+        function applyDarkMode(isDark) {
+            state.darkMode = isDark;
+            localStorage.setItem('darkMode', isDark);
+            document.documentElement.classList.toggle('dark', isDark);
+            document.getElementById('dark-mode-toggle').checked = isDark;
+        }
+
+        // Render master list of songs
+        function renderMasterList() {
+            const masterList = document.getElementById('master-list');
+            masterList.innerHTML = '';
+
+            let filteredSongs = [...state.songs];
+
+            // Apply genre filter
+            if (state.genreFilter.size > 0) {
+                filteredSongs = filteredSongs.filter(song => 
+                    song.genre && state.genreFilter.has(song.genre)
+                );
             }
-            playCounts[song.id] = (playCounts[song.id] || 0) + 1;
-            song.lastPlayed = new Date().toISOString().split('T')[0];
-            updateTopLeast();
-            save();
-            switch (context) {
-                case 'master': currentViewerList = window.currentMasterViewSongs || []; break;
-                case 'setlist': currentViewerList = window.currentSetlistViewSongs || []; break;
-                case 'plays': currentViewerList = window.currentPlaysViewSongs || []; break;
-                case 'favorites': currentViewerList = window.currentFavoritesViewSongs || []; break;
-                case 'genre': currentViewerList = window.currentGenreViewSongs || []; break;
-                default: currentViewerList = masterSongs;
+
+            // Apply sorting
+            filteredSongs.sort((a, b) => {
+                switch (state.sortBy) {
+                    case 'artist':
+                        return (a.artist || '').localeCompare(b.artist || '');
+                    case 'lastPlayed':
+                        return new Date(b.lastPlayed || 0) - new Date(a.lastPlayed || 0);
+                    case 'energy':
+                        return (b.energy || 0) - (a.energy || 0);
+                    default: // 'name'
+                        return (a.name || '').localeCompare(b.name || '');
+                }
+            });
+
+            filteredSongs.forEach((song, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700 draggable';
+                li.draggable = true;
+                li.dataset.songId = song.id;
+
+                const songGenre = state.genres.find(g => g.id === song.genre);
+                const genreColor = songGenre ? songGenre.color : '#3b82f6';
+
+                li.innerHTML = `
+                    <div class="flex items-center flex-1 min-w-0">
+                        <div class="genre-dot mr-3" style="background-color: ${genreColor}"></div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium truncate">${song.name}</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400 truncate">${song.artist || 'Unknown Artist'}</div>
+                        </div>
+                    </div>
+                    <div class="song-details-container">
+                        <input type="number" min="0" class="energy-input p-1 rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600" 
+                               value="${song.energy || 0}" placeholder="Energy" title="Energy Level" />
+                        <input type="text" class="duration-input p-1 rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600" 
+                               value="${song.duration || ''}" placeholder="Duration" title="Duration (e.g., 3:30)" />
+                        <button class="delete-btn p-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm">Delete</button>
+                    </div>
+                `;
+
+                // Add drag event listeners
+                li.addEventListener('dragstart', handleDragStart);
+                li.addEventListener('dragend', handleDragEnd);
+
+                // Add event listeners for inputs and delete button
+                const energyInput = li.querySelector('.energy-input');
+                const durationInput = li.querySelector('.duration-input');
+                const deleteBtn = li.querySelector('.delete-btn');
+
+                energyInput.addEventListener('change', (e) => {
+                    song.energy = parseInt(e.target.value) || 0;
+                    saveState();
+                });
+
+                durationInput.addEventListener('change', (e) => {
+                    song.duration = e.target.value;
+                    saveState();
+                });
+
+                deleteBtn.addEventListener('click', () => {
+                    if (confirm(`Are you sure you want to delete "${song.name}"?`)) {
+                        state.songs = state.songs.filter(s => s.id !== song.id);
+                        saveState();
+                        renderMasterList();
+                        renderStats();
+                    }
+                });
+
+                masterList.appendChild(li);
+            });
+        }
+
+        // Setup drag and drop
+        function setupDragAndDrop() {
+            // Master list drag and drop
+            const masterList = document.getElementById('master-list');
+            
+            // Setlist reordering
+            $('#setlist-list').sortable({
+                placeholder: 'sortable-placeholder',
+                revert: 100,
+                start: function(event, ui) {
+                    ui.item.addClass('drag-highlight');
+                },
+                stop: function(event, ui) {
+                    ui.item.removeClass('drag-highlight');
+                    
+                    const songIds = [];
+                    $('#setlist-list li').each(function() {
+                        songIds.push($(this).data('song-id'));
+                    });
+                    
+                    const setlist = state.setlists.find(s => s.id === state.currentSetlistId);
+                    if (setlist) {
+                        setlist.songs = songIds.map(id => state.songs.find(s => s.id === id)).filter(Boolean);
+                        saveState();
+                    }
+                }
+            }).disableSelection();
+            
+            // Setlist add songs panel drag and drop
+            $('#setlist-add-songs-list').sortable({
+                connectWith: '#setlist-list',
+                placeholder: 'sortable-placeholder',
+                revert: 100,
+                start: function(event, ui) {
+                    ui.item.addClass('drag-highlight');
+                },
+                stop: function(event, ui) {
+                    ui.item.removeClass('drag-highlight');
+                }
+            }).disableSelection();
+        }
+
+        // Handle drag start
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.dataset.songId);
+            e.target.classList.add('drag-highlight');
+            
+            // Set drag image to a smaller, blue version
+            const dragImage = e.target.cloneNode(true);
+            dragImage.style.width = e.target.offsetWidth + 'px';
+            dragImage.style.backgroundColor = '#3b82f6';
+            dragImage.style.color = 'white';
+            dragImage.style.borderRadius = '0.5rem';
+            dragImage.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+            dragImage.style.transform = 'rotate(5deg)';
+            document.body.appendChild(dragImage);
+            e.dataTransfer.setDragImage(dragImage, e.target.offsetWidth / 2, e.target.offsetHeight / 2);
+            
+            setTimeout(() => {
+                document.body.removeChild(dragImage);
+            }, 0);
+        }
+
+        // Handle drag end
+        function handleDragEnd(e) {
+            e.target.classList.remove('drag-highlight');
+        }
+
+        // Render setlists in sidebar
+        function renderSetlists() {
+            const container = document.getElementById('setlists-container');
+            container.innerHTML = '';
+
+            state.setlists.forEach(setlist => {
+                const setlistEl = document.createElement('div');
+                setlistEl.className = 'setlist-item';
+                setlistEl.innerHTML = `
+                    <span class="setlist-name">${setlist.name}</span>
+                    <div class="flex items-center">
+                        <div class="del-setlist">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+                            </svg>
+                        </div>
+                    </div>
+                `;
+
+                setlistEl.addEventListener('click', () => {
+                    showSetlist(setlist.id);
+                });
+
+                const deleteBtn = setlistEl.querySelector('.del-setlist');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm(`Delete setlist "${setlist.name}"?`)) {
+                        state.setlists = state.setlists.filter(s => s.id !== setlist.id);
+                        saveState();
+                        renderSetlists();
+                        if (state.currentSetlistId === setlist.id) {
+                            showView('master');
+                        }
+                    }
+                });
+
+                container.appendChild(setlistEl);
+            });
+        }
+
+        // Show setlist view
+        function showSetlist(setlistId) {
+            state.currentSetlistId = setlistId;
+            const setlist = state.setlists.find(s => s.id === setlistId);
+            if (!setlist) return;
+
+            document.getElementById('setlist-title').textContent = setlist.name;
+            renderSetlistSongs();
+            renderAddSongsPanel();
+            updateSetlistStats();
+            showView('setlist');
+        }
+
+        // Render songs in setlist
+        function renderSetlistSongs() {
+            const setlistList = document.getElementById('setlist-list');
+            setlistList.innerHTML = '';
+
+            const setlist = state.setlists.find(s => s.id === state.currentSetlistId);
+            if (!setlist) return;
+
+            setlist.songs.forEach((song, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700 draggable';
+                li.draggable = true;
+                li.dataset.songId = song.id;
+
+                const songGenre = state.genres.find(g => g.id === song.genre);
+                const genreColor = songGenre ? songGenre.color : '#3b82f6';
+
+                li.innerHTML = `
+                    <div class="flex items-center flex-1 min-w-0">
+                        <div class="index-number mr-3 bg-blue-600 text-white text-xs">${index + 1}</div>
+                        <div class="genre-dot mr-3" style="background-color: ${genreColor}"></div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium truncate">${song.name}</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400 truncate">${song.artist || 'Unknown Artist'}</div>
+                        </div>
+                    </div>
+                    <div class="song-details-container">
+                        <input type="number" min="0" class="energy-input p-1 rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600" 
+                               value="${song.energy || 0}" placeholder="Energy" title="Energy Level" />
+                        <input type="text" class="duration-input p-1 rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600" 
+                               value="${song.duration || ''}" placeholder="Duration" title="Duration (e.g., 3:30)" />
+                        <button class="remove-btn p-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm">Remove</button>
+                    </div>
+                `;
+
+                const removeBtn = li.querySelector('.remove-btn');
+                removeBtn.addEventListener('click', () => {
+                    setlist.songs = setlist.songs.filter(s => s.id !== song.id);
+                    saveState();
+                    renderSetlistSongs();
+                    renderAddSongsPanel();
+                    updateSetlistStats();
+                });
+
+                setlistList.appendChild(li);
+            });
+
+            // Re-initialize sortable for setlist reordering
+            $('#setlist-list').sortable('refresh');
+        }
+
+        // Render add songs panel
+        function renderAddSongsPanel() {
+            const addSongsList = document.getElementById('setlist-add-songs-list');
+            addSongsList.innerHTML = '';
+
+            const setlist = state.setlists.find(s => s.id === state.currentSetlistId);
+            if (!setlist) return;
+
+            const setlistSongIds = new Set(setlist.songs.map(song => song.id));
+            const availableSongs = state.songs.filter(song => !setlistSongIds.has(song.id));
+
+            availableSongs.forEach(song => {
+                const li = document.createElement('li');
+                li.className = 'add-song-item draggable';
+                li.draggable = true;
+                li.dataset.songId = song.id;
+
+                const songGenre = state.genres.find(g => g.id === song.genre);
+                const genreColor = songGenre ? songGenre.color : '#3b82f6';
+
+                li.innerHTML = `
+                    <div class="genre-dot" style="background-color: ${genreColor}"></div>
+                    <label for="add-song-${song.id}" class="flex-1 min-w-0">
+                        <div class="font-medium truncate">${song.name}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400 truncate">${song.artist || 'Unknown Artist'}</div>
+                    </label>
+                    <input type="checkbox" id="add-song-${song.id}" class="song-checkbox" />
+                `;
+
+                const checkbox = li.querySelector('.song-checkbox');
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        setlist.songs.push(song);
+                    } else {
+                        setlist.songs = setlist.songs.filter(s => s.id !== song.id);
+                    }
+                    saveState();
+                    renderSetlistSongs();
+                    renderAddSongsPanel();
+                    updateSetlistStats();
+                });
+
+                addSongsList.appendChild(li);
+            });
+
+            // Re-initialize sortable for add songs panel
+            $('#setlist-add-songs-list').sortable('refresh');
+        }
+
+        // Update setlist statistics
+        function updateSetlistStats() {
+            const setlist = state.setlists.find(s => s.id === state.currentSetlistId);
+            if (!setlist) return;
+
+            const totalSongs = setlist.songs.length;
+            const totalDuration = setlist.songs.reduce((total, song) => {
+                if (song.duration) {
+                    const [minutes, seconds] = song.duration.split(':').map(Number);
+                    return total + (minutes * 60 + (seconds || 0));
+                }
+                return total;
+            }, 0);
+
+            const minutes = Math.floor(totalDuration / 60);
+            const seconds = totalDuration % 60;
+
+            document.getElementById('setlist-song-count').textContent = `${totalSongs} songs`;
+            document.getElementById('setlist-total-duration').textContent = 
+                totalDuration > 0 ? `${minutes}:${seconds.toString().padStart(2, '0')}` : '';
+        }
+
+        // Render genres in sidebar
+        function renderGenres() {
+            const genreList = document.getElementById('genre-list');
+            genreList.innerHTML = '';
+
+            state.genres.forEach(genre => {
+                const genreEl = document.createElement('div');
+                genreEl.className = 'sidebar-item';
+                genreEl.innerHTML = `
+                    <div class="genre-content">
+                        <div class="genre-dot" style="background-color: ${genre.color}"></div>
+                        <span class="genre-name">${genre.name}</span>
+                    </div>
+                    <div class="delete-genre">✕</div>
+                `;
+
+                genreEl.addEventListener('click', () => {
+                    showGenre(genre.id);
+                });
+
+                const deleteBtn = genreEl.querySelector('.delete-genre');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm(`Delete genre "${genre.name}"? This will remove the genre from all songs.`)) {
+                        // Remove genre from songs
+                        state.songs.forEach(song => {
+                            if (song.genre === genre.id) {
+                                song.genre = null;
+                            }
+                        });
+                        state.genres = state.genres.filter(g => g.id !== genre.id);
+                        saveState();
+                        renderGenres();
+                        renderMasterList();
+                        if (state.currentGenreId === genre.id) {
+                            showView('master');
+                        }
+                    }
+                });
+
+                genreList.appendChild(genreEl);
+            });
+        }
+
+        // Show genre view
+        function showGenre(genreId) {
+            state.currentGenreId = genreId;
+            const genre = state.genres.find(g => g.id === genreId);
+            if (!genre) return;
+
+            document.getElementById('genre-title').textContent = genre.name;
+            renderGenreSongs();
+            showView('genre');
+        }
+
+        // Render songs in genre view
+        function renderGenreSongs() {
+            const genreSongList = document.getElementById('genre-song-list');
+            genreSongList.innerHTML = '';
+
+            const genreSongs = state.songs.filter(song => song.genre === state.currentGenreId);
+
+            genreSongs.forEach(song => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700';
+                li.dataset.songId = song.id;
+
+                const genre = state.genres.find(g => g.id === state.currentGenreId);
+                const genreColor = genre ? genre.color : '#3b82f6';
+
+                li.innerHTML = `
+                    <div class="flex items-center flex-1 min-w-0">
+                        <div class="genre-dot mr-3" style="background-color: ${genreColor}"></div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium truncate">${song.name}</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400 truncate">${song.artist || 'Unknown Artist'}</div>
+                        </div>
+                    </div>
+                    <div class="song-details-container">
+                        <input type="number" min="0" class="energy-input p-1 rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600" 
+                               value="${song.energy || 0}" placeholder="Energy" title="Energy Level" />
+                        <input type="text" class="duration-input p-1 rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600" 
+                               value="${song.duration || ''}" placeholder="Duration" title="Duration (e.g., 3:30)" />
+                        <button class="remove-genre-btn p-1 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm">Remove</button>
+                    </div>
+                `;
+
+                const removeBtn = li.querySelector('.remove-genre-btn');
+                removeBtn.addEventListener('click', () => {
+                    song.genre = null;
+                    saveState();
+                    renderGenreSongs();
+                    renderMasterList();
+                });
+
+                genreSongList.appendChild(li);
+            });
+        }
+
+        // Render venues in sidebar
+        function renderVenues() {
+            const venueList = document.getElementById('venue-list');
+            venueList.innerHTML = '';
+
+            state.venues.forEach(venue => {
+                const venueEl = document.createElement('div');
+                venueEl.className = 'sidebar-item';
+                venueEl.innerHTML = `
+                    <span class="venue-name">${venue.name}</span>
+                    <div class="delete-venue">✕</div>
+                `;
+
+                venueEl.addEventListener('click', () => {
+                    // TODO: Implement venue view
+                    alert(`Venue: ${venue.name}`);
+                });
+
+                const deleteBtn = venueEl.querySelector('.delete-venue');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm(`Delete venue "${venue.name}"?`)) {
+                        state.venues = state.venues.filter(v => v.id !== venue.id);
+                        saveState();
+                        renderVenues();
+                    }
+                });
+
+                venueList.appendChild(venueEl);
+            });
+        }
+
+        // Render statistics
+        function renderStats() {
+            const topPlayed = document.getElementById('top-played');
+            const leastPlayed = document.getElementById('least-played');
+
+            // Calculate play counts
+            const playCounts = {};
+            state.plays.forEach(play => {
+                play.songs.forEach(songId => {
+                    playCounts[songId] = (playCounts[songId] || 0) + 1;
+                });
+            });
+
+            const songsWithPlays = state.songs.map(song => ({
+                ...song,
+                playCount: playCounts[song.id] || 0
+            }));
+
+            const topPlayedSongs = [...songsWithPlays]
+                .filter(song => song.playCount > 0)
+                .sort((a, b) => b.playCount - a.playCount)
+                .slice(0, 5);
+
+            const leastPlayedSongs = [...songsWithPlays]
+                .filter(song => song.playCount > 0)
+                .sort((a, b) => a.playCount - b.playCount)
+                .slice(0, 5);
+
+            topPlayed.innerHTML = topPlayedSongs.map(song => 
+                `<li class="truncate">${song.name} (${song.playCount})</li>`
+            ).join('');
+
+            leastPlayed.innerHTML = leastPlayedSongs.map(song => 
+                `<li class="truncate">${song.name} (${song.playCount})</li>`
+            ).join('');
+        }
+
+        // Show view
+        function showView(view) {
+            state.currentView = view;
+            document.querySelectorAll('main > section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(`${view}-view`).classList.remove('hidden');
+
+            // Update header selection
+            const header = document.getElementById('home-btn');
+            if (view === 'master') {
+                header.classList.remove('app-header-unselected');
+                header.classList.add('app-header-selected');
+            } else {
+                header.classList.remove('app-header-selected');
+                header.classList.add('app-header-unselected');
             }
-            currentViewerContext = context;
-            currentViewerIndex = (index === -1) ? currentViewerList.findIndex(s => s.id === songId) : index;
-            if (context === 'setlist') {
-                viewedSongsInSetlist.add(songId);
-                $(`#setlist-list li[id="${songId}"] .index-number`).addClass('viewed-index');
-            }
-            const url = getFileURL(song);
-            if (!url) { alert('File not available for this song.'); return;
-            }
-            $('body').addClass('doc-viewer-active');
-            $('#doc-iframe-container').empty().append(`<object id="doc-object" data="${url}" type="application/pdf"><p>PDF not supported. <a href="${url}" target="_blank">Download PDF</a>.</p></object>`);
-            $('#doc-view').addClass('doc-view-fullscreen').show();
-            $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
-            $('#next-doc').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
-            setupScrollHandlers();
         }
 
-        function saveRecording(blob) {
-            const reader = new FileReader();
-            reader.readAsDataURL(blob);
-            reader.onloadend = () => {
-                const setlist = setlists[currentSetlist];
-                recordings.push({ id: 'r_' + Math.random().toString(36).slice(2, 9), setlist: currentSetlist, date: setlist.date, venue: setlist.venue, audioData: reader.result });
-                save();
-                if ($('#recordings-view').is(':visible')) renderRecordings();
-                if ($('#setlist-view').is(':visible') && currentSetlist) renderSetlist();
-            };
+        // Save state to localStorage
+        function saveState() {
+            localStorage.setItem('songs', JSON.stringify(state.songs));
+            localStorage.setItem('setlists', JSON.stringify(state.setlists));
+            localStorage.setItem('genres', JSON.stringify(state.genres));
+            localStorage.setItem('venues', JSON.stringify(state.venues));
+            localStorage.setItem('plays', JSON.stringify(state.plays));
+            localStorage.setItem('favorites', JSON.stringify(state.favorites));
         }
 
-        function setupScrollHandlers() {
-            resetScrollHandlers();
-            $('#doc-view').on('mousemove', showNavButtons);
-            let touchstartX = 0;
-            $('#doc-view').on('touchstart', e => { touchstartX = e.originalEvent.changedTouches[0].screenX; })
-                         .on('touchend', e => {
-                            const touchendX = e.originalEvent.changedTouches[0].screenX;
-                            
-                            if (touchendX < touchstartX - 50) $('#next-doc').trigger('click');
-                            if (touchendX > touchstartX + 50) $('#prev-doc').trigger('click');
-                         });
-            startInactivityTimer();
+        // Setup event listeners
+        function setupEventListeners() {
+            // Dark mode toggle
+            document.getElementById('dark-mode-toggle').addEventListener('change', (e) => {
+                applyDarkMode(e.target.checked);
+            });
+
+            // Header click to return to master view
+            document.getElementById('home-btn').addEventListener('click', () => {
+                showView('master');
+            });
+
+            // Navigation items
+            document.getElementById('nav-favorites').addEventListener('click', () => {
+                // TODO: Implement favorites view
+                alert('Favorites view coming soon!');
+            });
+
+            document.getElementById('nav-plays').addEventListener('click', () => {
+                // TODO: Implement plays view
+                alert('Plays view coming soon!');
+            });
+
+            document.getElementById('nav-recordings').addEventListener('click', () => {
+                // TODO: Implement recordings view
+                alert('Recordings view coming soon!');
+            });
+
+            document.getElementById('nav-energy').addEventListener('click', () => {
+                // TODO: Implement energy levels view
+                alert('Energy levels view coming soon!');
+            });
+
+            // Setlist creation
+            document.getElementById('add-setlist-btn').addEventListener('click', () => {
+                const nameInput = document.getElementById('new-setlist-name');
+                const name = nameInput.value.trim();
+                if (name) {
+                    const newSetlist = {
+                        id: Date.now().toString(),
+                        name: name,
+                        songs: [],
+                        date: new Date().toISOString().split('T')[0],
+                        venue: null,
+                        startTime: null,
+                        endTime: null,
+                        notes: ''
+                    };
+                    state.setlists.push(newSetlist);
+                    saveState();
+                    renderSetlists();
+                    nameInput.value = '';
+                }
+            });
+
+            // Genre creation
+            document.getElementById('add-genre').addEventListener('click', () => {
+                const nameInput = document.getElementById('genre-name');
+                const colorInput = document.getElementById('genre-color');
+                const name = nameInput.value.trim();
+                if (name) {
+                    const newGenre = {
+                        id: Date.now().toString(),
+                        name: name,
+                        color: colorInput.value
+                    };
+                    state.genres.push(newGenre);
+                    saveState();
+                    renderGenres();
+                    nameInput.value = '';
+                }
+            });
+
+            // Venue creation
+            document.getElementById('add-venue').addEventListener('click', () => {
+                const nameInput = document.getElementById('venue-name');
+                const name = nameInput.value.trim();
+                if (name) {
+                    const newVenue = {
+                        id: Date.now().toString(),
+                        name: name
+                    };
+                    state.venues.push(newVenue);
+                    saveState();
+                    renderVenues();
+                    nameInput.value = '';
+                }
+            });
+
+            // File upload
+            document.getElementById('upload-master-btn').addEventListener('click', () => {
+                document.getElementById('master-upload').click();
+            });
+
+            document.getElementById('master-upload').addEventListener('change', handleFileUpload);
+
+            // Delete all songs
+            document.getElementById('delete-all-btn').addEventListener('click', () => {
+                if (confirm('Are you sure you want to delete ALL songs? This cannot be undone.')) {
+                    state.songs = [];
+                    saveState();
+                    renderMasterList();
+                    renderStats();
+                }
+            });
+
+            // Sort dropdown
+            document.getElementById('sort-dropdown').addEventListener('change', (e) => {
+                state.sortBy = e.target.value;
+                renderMasterList();
+            });
+
+            // Setlist details toggle
+            document.getElementById('setlist-details-toggle').addEventListener('click', () => {
+                const content = document.getElementById('setlist-details-content');
+                const toggle = document.getElementById('setlist-details-toggle');
+                if (content.style.display === 'flex') {
+                    content.style.display = 'none';
+                    toggle.classList.remove('open');
+                } else {
+                    content.style.display = 'flex';
+                    toggle.classList.add('open');
+                }
+            });
+
+            // Back buttons
+            document.getElementById('back-to-all-btn').addEventListener('click', () => {
+                showView('master');
+            });
+
+            // Sidebar toggle
+            document.getElementById('sidebar-toggle').addEventListener('click', () => {
+                const leftCol = document.querySelector('.left-col');
+                leftCol.classList.toggle('collapsed');
+            });
         }
 
-        function resetScrollHandlers() {
-            $('#doc-view').off('mousemove touchstart touchend');
-            clearTimeout(inactivityTimer);
+        // Handle file upload
+        function handleFileUpload(e) {
+            const files = e.target.files;
+            Array.from(files).forEach(file => {
+                if (file.type === 'application/pdf') {
+                    const song = {
+                        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                        name: file.name.replace('.pdf', ''),
+                        artist: 'Unknown Artist',
+                        file: file,
+                        energy: 0,
+                        duration: '',
+                        genre: null,
+                        lastPlayed: null
+                    };
+                    state.songs.push(song);
+                }
+            });
+            saveState();
+            renderMasterList();
+            renderStats();
+            e.target.value = '';
         }
 
-        function showNavButtons() {
-            $('#doc-nav-buttons').removeClass('hidden');
-            startInactivityTimer();
-        }
-
-        function startInactivityTimer() {
-            clearTimeout(inactivityTimer);
-            inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000);
-        }
-
-        function show(view) {
-            $('main > section').hide();
-            $(`#${view}-view`).show();
-            if (view === 'master') renderMaster();
-            else if (view === 'plays') renderPlays();
-            else if (view === 'recordings') renderRecordings();
-            else if (view === 'energy') renderEnergyLevels();
-            else if (view === 'favorites') renderFavorites();
-            else if (view === 'setlist') renderSetlist();
-            else if (view === 'genre-view' && currentGenre) renderGenreView(currentGenre);
-        }
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 
