@@ -297,21 +297,27 @@
         .dark #setlist-details-content label,
         .dark #setlist-details-content input,
         .dark #setlist-details-content select {
-            color: #f9fafb !important; /* Consistent near-white color */
+            color: #f9fafb !important;
         }
         .dark #setlist-details-content input::placeholder {
             color: #f9fafb !important;
-            opacity: 1;
         }
         .dark #setlist-date::-webkit-calendar-picker-indicator {
             filter: invert(1);
         }
+        .dark #setlist-date::-webkit-datetime-edit-text,
+        .dark #setlist-date::-webkit-datetime-edit-month-field,
+        .dark #setlist-date::-webkit-datetime-edit-day-field,
+        .dark #setlist-date::-webkit-datetime-edit-year-field {
+            color: #f9fafb;
+        }
+
         #setlist-details-content input, #setlist-details-content select {
             box-sizing: border-box;
             border: 1px solid #d1d5db;
         }
         .dark #setlist-details-content input, .dark #setlist-details-content select {
-            border-color: #4b5563; /* Give a consistent border in dark mode */
+            border-color: #4b5563;
         }
        
         .drag-highlight {
@@ -382,7 +388,7 @@
             overflow-y: auto;
             overflow-x: hidden; /* PREVENT HORIZONTAL SCROLL */
             flex-grow: 1;
-            margin-bottom: 0.5rem; /* Gap between venues and stats */
+            margin-bottom: 1rem; /* Gap between venues and stats */
         }
 
         .left-col.collapsed {
@@ -1385,6 +1391,11 @@
                 const songId = $(this).attr('id');
                 const context = $('main > section:visible').attr('id').replace('-view', '');
                 openSongInContext(songId, context);
+            });
+
+            // Prevent draggable from capturing clicks on inputs
+            $('main').on('mousedown', '.artist-input, .notes-input, .duration-input', function(e) {
+                e.stopPropagation();
             });
         });
 
