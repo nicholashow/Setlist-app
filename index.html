@@ -43,9 +43,9 @@
         }
         
         .sortable-placeholder {
-            background-color: rgba(59, 130, 246, 0.5); /* blue-500 with 50% opacity */
-            border: none;
-            height: 60px; /* Fallback height, JS will override */
+            background-color: #dbeafe;
+            border: 2px dashed #3b82f6;
+            height: 60px; /* Match item height */
             margin-bottom: 1px;
             border-radius: 0.5rem;
         }
@@ -271,16 +271,6 @@
             border: 2px dashed #3b82f6;
             transform: scale(1.05);
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
-        }
-
-        .drop-flash {
-            animation: flash-animation 1s ease-out;
-        }
-
-        @keyframes flash-animation {
-            0% { background-color: #22c55e; transform: scale(1.02); }
-            80% { background-color: #22c55e; transform: scale(1.02); }
-            100% { transform: scale(1); }
         }
 
         .dark .drag-highlight {
@@ -615,50 +605,55 @@
             overflow-y: auto;
             flex-grow: 1;
         }
-        /* Add Songs panel with checkboxes */
+
+        /* Add Songs panel with custom checkboxes */
         .add-song-item {
             display: flex;
             align-items: center;
-            padding: 0.75rem 0.5rem;
             border-bottom: 1px solid #e5e7eb;
         }
         .dark .add-song-item {
             border-bottom-color: #374151;
         }
-        .add-song-item label {
-            flex-grow: 1;
+        .add-song-item > label {
+            display: flex;
+            align-items: center;
+            width: 100%;
             cursor: pointer;
-            padding-left: 0.5rem;
+            padding: 0.75rem 0.5rem;
         }
-        .add-song-item input[type="checkbox"] {
-            -webkit-appearance: none;
-            appearance: none;
-            background-color: transparent;
-            margin: 0;
-            font: inherit;
-            color: currentColor;
+        .add-song-item > label:hover .custom-checkbox-box {
+            background-color: #2563eb; /* Darker blue on hover */
+        }
+        .custom-checkbox-input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+        .custom-checkbox-box {
             width: 1.25rem;
             height: 1.25rem;
-            background-color: #3b82f6; /* Always blue per request */
+            background-color: #3b82f6; /* Blue */
             border-radius: 0.25rem;
-            cursor: pointer;
-            display: grid;
-            place-content: center;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
-        .add-song-item input[type="checkbox"]::before {
-            content: "";
-            width: 0.65em;
-            height: 0.65em;
-            transform: scale(0);
-            transition: 120ms transform ease-in-out;
-            box-shadow: inset 1em 1em white;
-            transform-origin: bottom left;
-            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+        .custom-checkbox-box svg {
+            opacity: 0;
+            transition: opacity 0.2s;
+            width: 1rem;
+            height: 1rem;
+            stroke: white;
+            stroke-width: 2.5;
         }
-        .add-song-item input[type="checkbox"]:checked::before {
-            transform: scale(1);
+        .custom-checkbox-input:checked ~ .custom-checkbox-box svg {
+            opacity: 1;
         }
-
 
         /* Consistent border on all song list items */
         #master-list > li, #setlist-list > li, #favorites-list > li, #genre-song-list > li, #plays-list > li, .add-song-item {
@@ -1713,8 +1708,7 @@
                     'width': $sourceItem.outerWidth(),
                     'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
                     'z-index': 9999,
-                    'border-radius': '0.5rem',
-                    'border': 'none' // Remove any inherited border
+                    'border-radius': '0.5rem'
                 }).addClass('selected'); // Use selected class for consistency
                 ui.helper.find('*').css('color', 'white'); // Force text color
                 
@@ -1762,12 +1756,19 @@
                 const isChecked = currentSongs.includes(s.id);
                 const li = $(`
                     <li class="add-song-item" data-song-id="${s.id}">
-                        <input type="checkbox" id="add-${s.id}" ${isChecked ? 'checked' : ''}>
-                        <label for="add-${s.id}">${escapeHtml(s.name)}</label>
+                        <label for="add-${s.id}" class="flex items-center w-full cursor-pointer">
+                            <input type="checkbox" id="add-${s.id}" class="sr-only custom-checkbox-input" ${isChecked ? 'checked' : ''}>
+                            <div class="custom-checkbox-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                            </div>
+                            <span class="ml-3 flex-grow">${escapeHtml(s.name)}</span>
+                        </label>
                     </li>
                 `);
                 li.find('input').on('change', function() {
-                    const songId = $(this).parent().data('song-id');
+                    const songId = $(this).closest('.add-song-item').data('song-id');
                     const setlistSongs = setlists[currentSetlist].songs;
                     if(this.checked) {
                         if (!setlistSongs.includes(songId)) setlistSongs.push(songId);
