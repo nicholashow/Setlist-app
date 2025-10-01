@@ -42,13 +42,37 @@
             cursor: move;
         }
         
+        /* Subtle placeholder for sorting */
         .sortable-placeholder {
-            background-color: #dbeafe;
-            border: 2px dashed #3b82f6;
-            height: 60px; /* Match item height */
+            background-color: #e5e7eb;
+            border: 1px dashed #9ca3af;
+            opacity: 0.5;
+            height: 60px;
             margin-bottom: 1px;
             border-radius: 0.5rem;
         }
+        .dark .sortable-placeholder {
+            background-color: #374151;
+            border-color: #6b7280;
+        }
+
+        /* Style for the actual item being sorted */
+        .is-sorting {
+            background: #2563eb !important; /* Record Show button blue */
+            color: white !important;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+        .is-sorting * {
+            color: white !important;
+        }
+        .is-sorting .song-details-container {
+            display: none; /* Hide inputs while sorting songs */
+        }
+        .is-sorting .delete-genre, .is-sorting .delete-venue {
+            display: none; /* Hide delete button while sorting genres/venues */
+        }
+
 
         /* Unified selected style for sidebar items */
         .selected {
@@ -1867,7 +1891,6 @@
                         }
                     });
                     if (added) {
-                        // The drop function in draggableOptions will handle removing the 'item-selected' class now
                         save();
                         if (currentSetlist === setlistName) renderSetlist();
                     }
@@ -1876,15 +1899,14 @@
             $('#setlists-container').sortable({
                 axis: 'y',
                 cursor: 'move',
-                helper: 'clone',
+                placeholder: "sortable-placeholder",
+                helper: 'original',
                 start: function(e, ui) {
-                    ui.helper.css({
-                        'background-color': '#3b82f6',
-                        'color': 'white',
-                        'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
-                         'width': ui.item.outerWidth()
-                    }).addClass('selected');
-                    ui.helper.find('*').css('color', 'white');
+                    ui.placeholder.height(ui.item.height());
+                    ui.item.addClass('is-sorting');
+                },
+                stop: function(e, ui) {
+                    ui.item.removeClass('is-sorting');
                 },
                 update: function() {
                     const order = $(this).sortable('toArray', { attribute: 'data-name' });
@@ -1943,9 +1965,17 @@
             if ($('#setlist-list').hasClass('ui-sortable')) $('#setlist-list').sortable('destroy');
             
             $('#setlist-list').sortable({
-                axis: 'y', cursor: 'move', placeholder: "sortable-placeholder", tolerance: 'pointer', scroll: true, forcePlaceholderSize: true, helper: 'clone',
-                start: (e, ui) => { ui.placeholder.height(ui.item.height()); ui.item.addClass('dragging-source'); },
-                stop: (e, ui) => ui.item.removeClass('dragging-source'),
+                axis: 'y',
+                cursor: 'move',
+                placeholder: "sortable-placeholder",
+                helper: 'original',
+                start: function(e, ui) {
+                    ui.placeholder.height(ui.item.height());
+                    ui.item.addClass('is-sorting');
+                },
+                stop: function(e, ui) {
+                    ui.item.removeClass('is-sorting');
+                },
                 update: function() {
                     $('#setlist-sort-filter-dropdown').val('custom');
                     setlists[currentSetlist].songs = $(this).sortable('toArray');
@@ -2074,15 +2104,13 @@
                 axis: 'y', 
                 cursor: 'move', 
                 placeholder: "sortable-placeholder",
-                helper: 'clone',
+                helper: 'original',
                 start: function(e, ui) {
-                    ui.helper.css({
-                        'background-color': '#3b82f6',
-                        'color': 'white',
-                        'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
-                        'width': ui.item.outerWidth()
-                    }).addClass('selected');
-                    ui.helper.find('*').css('color', 'white');
+                    ui.placeholder.height(ui.item.height());
+                    ui.item.addClass('is-sorting');
+                },
+                stop: function(e, ui) {
+                    ui.item.removeClass('is-sorting');
                 },
                 update: function() {
                     const newOrder = [];
@@ -2124,15 +2152,13 @@
                 axis: 'y', 
                 cursor: 'move', 
                 placeholder: "sortable-placeholder",
-                helper: 'clone',
+                helper: 'original',
                 start: function(e, ui) {
-                    ui.helper.css({
-                        'background-color': '#3b82f6',
-                        'color': 'white',
-                        'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
-                        'width': ui.item.outerWidth()
-                    }).addClass('selected');
-                    ui.helper.find('*').css('color', 'white');
+                    ui.placeholder.height(ui.item.height());
+                    ui.item.addClass('is-sorting');
+                },
+                stop: function(e, ui) {
+                    ui.item.removeClass('is-sorting');
                 },
                 update: function() {
                     const newOrder = [];
