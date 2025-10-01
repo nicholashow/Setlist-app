@@ -28,11 +28,12 @@
         }
 
         /* --- FIX: Correctly enables scrolling on touch devices when PDF viewer is open --- */
-        body.doc-viewer-active {
-            position: static; /* Allow body to be a normal block element */
-            overflow: hidden; /* But prevent the body itself from showing a scrollbar */
+        .doc-viewer-active #app > aside,
+        .doc-viewer-active #app > main,
+        .doc-viewer-active #app > #sidebar-toggle {
+            display: none; /* Hide the main app UI instead of the whole container */
         }
-
+        
         .doc-view-fullscreen {
             overflow-y: auto; /* Make the entire viewer the scroll container */
             -webkit-overflow-scrolling: touch; /* Enable momentum scrolling on iOS */
@@ -210,7 +211,7 @@
         
         #doc-iframe-container {
             position: absolute;
-            top: 0;
+            top: 0; /* Position relative to the fullscreen viewer */
             left: 0;
             width: 100%;
             height: 100%;
@@ -279,7 +280,7 @@
         #setlist-details-toggle.open .toggle-arrow {
             transform: rotate(180deg);
         }
-        /* FINAL CORRECTED HORIZONTAL Setlist Details Layout */
+
         #setlist-details-content {
             display: none; /* Initial state */
             flex-direction: row; /* Force horizontal layout */
@@ -324,6 +325,23 @@
             border-color: #4b5563;
         }
        
+        /* --- FIX: Consistent size for setlist detail inputs --- */
+        #setlist-date, #setlist-venue, #setlist-sort-filter-dropdown {
+            width: 176px; /* 11rem, w-44 */
+        }
+        .dark #setlist-date {
+            color: #f9fafb; /* Ensure text is white */
+        }
+        
+        /* --- FIX: Date placeholder for dark mode --- */
+        #setlist-date:not(:focus):invalid {
+            color: #9ca3af; /* Light gray for placeholder text */
+        }
+        .dark #setlist-date:not(:focus):invalid {
+            color: #f9fafb; /* White for placeholder text in dark mode */
+        }
+
+
         .drag-highlight {
             background-color: #dbeafe;
             border: 2px dashed #3b82f6;
@@ -356,12 +374,13 @@
         .stats-container {
             background-color: #f3f4f6;
             border-radius: 0.75rem;
-            padding: 1rem;
             color: #1f2937;
             max-height: 200px;
             overflow-y: auto;
             margin-top: auto; /* Pushes to bottom */
             flex-shrink: 0; /* Prevent shrinking */
+            /* --- FIX: Restore original padding --- */
+            padding: 1rem;
         }
 
         .dark .stats-container {
@@ -385,8 +404,7 @@
             height: 100%;
             transition: width 0.4s ease-in-out, padding 0.4s ease-in-out;
             position: relative;
-            /* --- FIX: Adjust padding to move scrollbar to the edge --- */
-            padding: 1rem 0 1rem 1rem;
+            padding: 1rem; /* Restore original padding */
         }
 
         /* --- FIX: Wider, styled scrollbars for sidebar containers --- */
@@ -400,17 +418,14 @@
         }
         .left-col-main-content::-webkit-scrollbar-thumb,
         .stats-container::-webkit-scrollbar-thumb {
-            background-color: #4b5563;
+            background-color: #6b7280;
             border-radius: 8px;
-            border: 4px solid #1f2937; /* Use sidebar's inner color for a padded look */
-        }
-        .dark .left-col-main-content::-webkit-scrollbar-thumb,
-        .dark .stats-container::-webkit-scrollbar-thumb {
-            border-color: #000;
+            border: 4px solid transparent; /* Keep thumb wide */
+            background-clip: content-box;
         }
         .left-col-main-content::-webkit-scrollbar-thumb:hover,
         .stats-container::-webkit-scrollbar-thumb:hover {
-            background-color: #6b7280;
+            background-color: #9ca3af;
         }
         
         /* Sidebar scrolling fix */
@@ -419,13 +434,6 @@
             overflow-x: hidden; /* PREVENT HORIZONTAL SCROLL */
             flex-grow: 1;
             margin-bottom: 1rem; /* Gap between venues and stats */
-            /* --- FIX: Add padding to content to compensate for parent padding removal --- */
-            padding-right: 1rem;
-        }
-
-        .stats-container {
-             /* --- FIX: Add padding to content to compensate for parent padding removal --- */
-            padding-right: 1rem;
         }
 
         .left-col.collapsed {
@@ -948,18 +956,20 @@
                         <span class="toggle-arrow">▾</span>
                     </div>
                     <div id="setlist-details-content">
-                        <div>
+                        <!-- --- FIX: Add placeholder and required attribute for date styling --- -->
+                        <div class="relative">
                             <label for="setlist-date" class="font-medium text-xs">Date</label>
-                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200" placeholder="mm/dd/yyyy">
+                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" required>
+                            <span class="absolute top-6 left-2 pointer-events-none text-gray-400 dark:text-gray-400" id="date-placeholder">mm/dd/yyyy</span>
                         </div>
                         <div>
                             <label for="setlist-venue" class="font-medium text-xs">Venue</label>
-                            <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200 dark:placeholder-gray-400">
+                            <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400">
                         </div>
                         <div>
                             <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
                             <div class="relative">
-                                <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200">
+                                <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                                     <option value="custom">Custom Order</option>
                                     <option value="name">Sort by Name</option>
                                     <option value="artist">Sort by Artist</option>
@@ -1343,7 +1353,6 @@
                 const newDot = `<span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span>`;
                  $(`li[id="${songId}"]`).find('.genre-dot').parent().html(newDot);
 
-                // Re-render genre view if it's currently visible to reflect the change
                 if ($('#genre-view').is(':visible')) {
                     renderGenreView(currentGenre);
                 }
@@ -1418,7 +1427,6 @@
                 }
             });
 
-            // Add droppable functionality to the sidebar toggle to expand on drag hover
             $('#sidebar-toggle').droppable({
                 accept: '.draggable',
                 tolerance: 'pointer',
@@ -1432,21 +1440,15 @@
             });
 
             $('main').on('click', 'li.draggable', function(e) {
-                const listId = `#${$(this).parent().attr('id')}`;
                 if ($(e.target).is('input, button, a, .genre-dot, .energy-icon, .energy-icon *, .favorite-star-container, .favorite-star-container *') || $(e.target).closest('button').length > 0) {
                     return;
                 }
-                if (e.shiftKey || e.ctrlKey || e.metaKey) {
-                    handleSelection(e, listId);
-                    return;
-                }
-                $(listId + ' .item-selected').removeClass('item-selected');
                 const songId = $(this).attr('id');
                 const context = $('main > section:visible').attr('id').replace('-view', '');
                 openSongInContext(songId, context);
             });
 
-            // Prevent draggable from capturing clicks on inputs
+            // --- FIX: Ensure inputs are always editable ---
             $('main').on('mousedown', '.artist-input, .notes-input, .duration-input', function(e) {
                 e.stopPropagation();
             });
@@ -1482,7 +1484,6 @@
                 show('energy');
             });
 
-            // Make Favorites a drop target
              $('#nav-favorites').droppable({
                 accept: '.draggable',
                 hoverClass: 'drag-hover-setlist',
@@ -1541,7 +1542,6 @@
             $('#toggle-setlists').click(() => $('#setlists-container').slideToggle(150));
             $(document).on('click', '#setlist-details-toggle', function() {
                 $(this).toggleClass('open');
-                // FIX: Use a callback to set display to flex after animation
                 $('#setlist-details-content').slideToggle(200, function() {
                     if ($(this).is(':visible')) {
                         $(this).css('display', 'flex');
@@ -1616,9 +1616,8 @@
             });
             $('#close-doc').on('click', function(e) {
                 e.stopPropagation();
-                // --- FIX: Hide app, then restore it on close for scrolling ---
+                // --- FIX: Restore main app view correctly ---
                 $('body').removeClass('doc-viewer-active');
-                $('#app').css('display', 'flex'); // Restore main app view
                 $('#doc-view').removeClass('doc-view-fullscreen').hide();
                 resetScrollHandlers();
                 $('#doc-iframe-container').empty();
@@ -1765,6 +1764,8 @@
                     save();
                 }
             });
+
+            // --- FIX: Date placeholder visibility handler ---
             $('#setlist-date').on('input', function() {
                 $('#date-placeholder').toggle(!$(this).val());
             });
@@ -1855,13 +1856,12 @@
             revert: 'invalid',
             cursorAt: { left: 10, top: 10 },
             helper: 'clone',
-            cancel: 'input, button, a, .genre-dot, .energy-icon, .favorite-star-container', // Prevent drag on interactive elements
+            cancel: 'input, button, a, .genre-dot, .energy-icon, .favorite-star-container',
             start: function(e, ui) {
                 const $sourceItem = $(this);
                 const $sourceList = $sourceItem.parent();
                 const $selectedItems = $sourceList.children('.item-selected');
 
-                // Handle multi-selection state
                 if ($selectedItems.length <= 1 || !$sourceItem.hasClass('item-selected')) {
                     $sourceList.children('.item-selected').removeClass('item-selected');
                     $sourceItem.addClass('item-selected');
@@ -1876,22 +1876,11 @@
                     helperContent = $sourceItem.find('.song-name').text();
                 }
                 
-                // Create a custom horizontal helper
                 ui.helper.empty().html(helperContent).css({
-                    'background-color': '#3b82f6',
-                    'color': 'white',
-                    'padding': '0.5rem 1rem',
-                    'height': 'auto',
-                    'width': 'auto',
-                    'white-space': 'nowrap',
-                    'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
-                    'z-index': 9999,
-                    'border-radius': '0.5rem',
-                    'font-weight': '600'
+                    'background-color': '#3b82f6', 'color': 'white', 'padding': '0.5rem 1rem', 'height': 'auto', 'width': 'auto', 'white-space': 'nowrap', 'box-shadow': '0 5px 15px rgba(0,0,0,0.3)', 'z-index': 9999, 'border-radius': '0.5rem', 'font-weight': '600'
                 });
             },
             stop: function(e, ui) {
-                // Clean up any selection styles from the source list after the drag operation is complete
                 const sourceListId = $(this).parent().attr('id');
                 $(`#${sourceListId} .item-selected`).removeClass('item-selected');
             }
@@ -2021,17 +2010,9 @@
                 }
             });
             $('#setlists-container').sortable({
-                axis: 'y',
-                cursor: 'move',
-                placeholder: "sortable-placeholder",
-                helper: 'original',
-                start: function(e, ui) {
-                    ui.placeholder.height(ui.item.height());
-                    ui.item.addClass('is-sorting');
-                },
-                stop: function(e, ui) {
-                    ui.item.removeClass('is-sorting');
-                },
+                axis: 'y', cursor: 'move', placeholder: "sortable-placeholder", helper: 'original',
+                start: (e, ui) => { ui.placeholder.height(ui.item.height()); ui.item.addClass('is-sorting'); },
+                stop: (e, ui) => ui.item.removeClass('is-sorting'),
                 update: function() {
                     const order = $(this).sortable('toArray', { attribute: 'data-name' });
                     const newObj = {};
@@ -2045,17 +2026,15 @@
         function renderSetlist() {
             if (!currentSetlist) { $('#setlist-view').hide(); return; }
 
-            // Always reset the details view when a setlist is rendered
             $('#setlist-details-toggle').removeClass('open');
             $('#setlist-details-content').hide();
-
             $('#back-to-venue-btn').toggle(!!cameFromVenue);
             
             const setlist = setlists[currentSetlist];
             $('#setlist-title').text(currentSetlist);
 
-            // Correctly handle setlist details
             $('#setlist-date').val(setlist.date || '');
+            $('#date-placeholder').toggle(!setlist.date); // Toggle placeholder
             $('#setlist-venue').val(setlist.venue || '');
 
             renderAddSongsPanel(); 
@@ -2094,17 +2073,9 @@
             if ($('#setlist-list').hasClass('ui-sortable')) $('#setlist-list').sortable('destroy');
             
             $('#setlist-list').sortable({
-                axis: 'y',
-                cursor: 'move',
-                placeholder: "sortable-placeholder",
-                helper: 'original',
-                start: function(e, ui) {
-                    ui.placeholder.height(ui.item.height());
-                    ui.item.addClass('is-sorting');
-                },
-                stop: function(e, ui) {
-                    ui.item.removeClass('is-sorting');
-                },
+                axis: 'y', cursor: 'move', placeholder: "sortable-placeholder", helper: 'original',
+                start: (e, ui) => { ui.placeholder.height(ui.item.height()); ui.item.addClass('is-sorting'); },
+                stop: (e, ui) => ui.item.removeClass('is-sorting'),
                 update: function() {
                     $('#setlist-sort-filter-dropdown').val('custom');
                     setlists[currentSetlist].songs = $(this).sortable('toArray');
@@ -2157,7 +2128,6 @@
             currentGenre = genreName;
             $('#genre-view-title').text(`Genre: ${genreName}`);
             const $ul = $('#genre-song-list').empty();
-            // FIX: Use case-insensitive comparison for genre filtering
             let songsInGenre = masterSongs.filter(s => s.genre && s.genre.toLowerCase() === genreName.toLowerCase());
             const sortMode = $('#genre-sort-dropdown').val();
             songsInGenre.sort((a, b) => {
@@ -2230,17 +2200,9 @@
             });
             updateGenreFilters('#genre-filter-dropdown', masterSelectedGenres);
             $('#genre-list').sortable({ 
-                axis: 'y', 
-                cursor: 'move', 
-                placeholder: "sortable-placeholder",
-                helper: 'original',
-                start: function(e, ui) {
-                    ui.placeholder.height(ui.item.height());
-                    ui.item.addClass('is-sorting');
-                },
-                stop: function(e, ui) {
-                    ui.item.removeClass('is-sorting');
-                },
+                axis: 'y', cursor: 'move', placeholder: "sortable-placeholder", helper: 'original',
+                start: (e, ui) => { ui.placeholder.height(ui.item.height()); ui.item.addClass('is-sorting'); },
+                stop: (e, ui) => ui.item.removeClass('is-sorting'),
                 update: function() {
                     const newOrder = [];
                     $('#genre-list .genre-item').each(function() {
@@ -2278,17 +2240,9 @@
                 $('#venue-list').append(el);
             });
             $('#venue-list').sortable({ 
-                axis: 'y', 
-                cursor: 'move', 
-                placeholder: "sortable-placeholder",
-                helper: 'original',
-                start: function(e, ui) {
-                    ui.placeholder.height(ui.item.height());
-                    ui.item.addClass('is-sorting');
-                },
-                stop: function(e, ui) {
-                    ui.item.removeClass('is-sorting');
-                },
+                axis: 'y', cursor: 'move', placeholder: "sortable-placeholder", helper: 'original',
+                start: (e, ui) => { ui.placeholder.height(ui.item.height()); ui.item.addClass('is-sorting'); },
+                stop: (e, ui) => ui.item.removeClass('is-sorting'),
                 update: function() {
                     const newOrder = [];
                     $('#venue-list .venue-item').each(function() {
@@ -2362,15 +2316,9 @@
         }
 
         function renderAll() {
-            renderLeftSetlists();
-            renderGenres();
-            renderVenues();
-            renderMaster();
+            renderLeftSetlists(); renderGenres(); renderVenues(); renderMaster();
             if (currentSetlist) renderSetlist();
-            renderPlays();
-            renderRecordings();
-            renderFavorites();
-            renderEnergyLevels();
+            renderPlays(); renderRecordings(); renderFavorites(); renderEnergyLevels();
             if (currentGenre) renderGenreView(currentGenre);
             updateTopLeast();
         }
@@ -2399,10 +2347,8 @@
             const url = getFileURL(song);
             if (!url) { alert('File not available for this song.'); return; }
             
-            // --- FIX: Hide app, then restore it on close for scrolling ---
             $('body').addClass('doc-viewer-active');
-            $('#app').hide(); // Hide main app to prevent background scrolling
-
+            
             $('#doc-iframe-container').empty().append(`<object id="doc-object" data="${url}" type="application/pdf"><p>PDF not supported. <a href="${url}" target="_blank">Download PDF</a>.</p></object>`);
             $('#doc-view').addClass('doc-view-fullscreen').show();
             $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
@@ -2465,3 +2411,4 @@
 </body>
 
 </html>
+
