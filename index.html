@@ -123,6 +123,8 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0; /* Prevent shrinking */
+            font-size: 1rem; /* Bigger numbers */
+            font-weight: 600; /* Bolder numbers */
         }
 
         /* Fullscreen viewer styles */
@@ -357,6 +359,7 @@
             height: 100%;
             transition: width 0.4s ease-in-out, padding 0.4s ease-in-out;
             position: relative;
+            padding: 1rem; /* Apply consistent padding here */
         }
         /* Sidebar scrolling fix */
         .left-col-main-content {
@@ -364,7 +367,6 @@
             overflow-x: hidden; /* PREVENT HORIZONTAL SCROLL */
             flex-grow: 1;
             margin-bottom: 0.5rem; /* Gap between venues and stats */
-            padding-right: 1rem; /* Push content away from the edge scrollbar */
         }
 
         .left-col.collapsed {
@@ -381,7 +383,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 24px;
+            width: 48px; /* Increased width */
             height: 60px;
             border-radius: 0 8px 8px 0;
             flex-shrink: 0;
@@ -433,18 +435,19 @@
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
-            background-color: transparent;
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
             border: none;
             cursor: pointer;
+            background-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
         }
         #genre-color::-webkit-color-swatch {
-            border-radius: 4px;
+            border-radius: 50%;
             border: 1px solid #4b5563;
         }
         #genre-color::-moz-color-swatch {
-            border-radius: 4px;
+            border-radius: 50%;
             border: 1px solid #4b5563;
         }
 
@@ -510,6 +513,7 @@
             color: #3b82f6 !important; /* Blue button color */
             border: 1px solid #3b82f6;
             font-weight: bold;
+            font-size: 1.125rem; /* Even bigger when viewed */
         }
         
         /* === Redesigned Responsive Controls for Master View === */
@@ -738,7 +742,7 @@
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
     <div class="flex h-screen font-sans" id="app">
-        <aside class="left-col w-64 bg-gray-800 text-white py-4 pl-4 flex-shrink-0 dark:bg-black">
+        <aside class="left-col w-64 bg-gray-800 text-white flex-shrink-0 dark:bg-black">
             <div class="left-col-main-content">
                 <div class="app-header app-header-selected" id="home-btn">
                     <h1 class="text-2xl font-bold mb-2 underline">ALL SONGS</h1>
@@ -764,7 +768,7 @@
                 <div class="mt-4">
                     <h3 class="text-sm font-semibold uppercase">Genres</h3>
                      <div class="item-creation">
-                        <input type="color" id="genre-color" value="#3b82f6" title="Select color">
+                        <input type="color" id="genre-color" title="Select color">
                         <input class="item-name-input" id="genre-name" placeholder="New genre" />
                         <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-genre">Add</button>
                     </div>
@@ -1390,6 +1394,36 @@
                 $('#nav-energy').addClass('selected');
                 show('energy');
             });
+
+            // Make Favorites a drop target
+             $('#nav-favorites').droppable({
+                accept: '.draggable',
+                hoverClass: 'drag-hover-setlist',
+                drop: function(e, ui) {
+                    let changed = false;
+                    const sourceList = ui.draggable.parent();
+                    const selector = `#${sourceList.attr('id')} .item-selected`;
+                    const itemsToDrop = $(selector).length > 0 && ui.draggable.hasClass('item-selected') ? $(selector) : ui.draggable;
+                    
+                    itemsToDrop.each(function() {
+                        const songId = $(this).attr('id');
+                        const song = masterSongs.find(s => s.id === songId);
+                        if (song && !song.favorite) {
+                            song.favorite = true;
+                            changed = true;
+                            $(`li[id="${songId}"]`).find('.favorite-star-container').addClass('favorited');
+                        }
+                    });
+
+                    if (changed) {
+                        save();
+                        if ($('#favorites-view').is(':visible')) {
+                            renderFavorites();
+                        }
+                    }
+                }
+            });
+
             $('#setlists-container').on('click', '.setlist-item', function(e) {
                 if ($(e.target).closest('.del-setlist, .edit-input').length) return;
                 const name = $(this).data('name');
