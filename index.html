@@ -299,8 +299,9 @@
         .dark #setlist-details-content select {
             color: #f9fafb !important; /* Consistent near-white color */
         }
-        .dark #setlist-details-content #setlist-venue::placeholder {
-            color: #9ca3af !important; /* A light gray for the placeholder */
+        .dark #setlist-details-content input::placeholder {
+            color: #f9fafb !important;
+            opacity: 0.7;
         }
        
         .drag-highlight {
@@ -364,7 +365,7 @@
             height: 100%;
             transition: width 0.4s ease-in-out, padding 0.4s ease-in-out;
             position: relative;
-            padding: 1rem 0 1rem 1rem; /* Adjust padding for scrollbar alignment */
+            padding: 1rem; /* Consistent padding for alignment */
         }
         /* Sidebar scrolling fix */
         .left-col-main-content {
@@ -372,7 +373,6 @@
             overflow-x: hidden; /* PREVENT HORIZONTAL SCROLL */
             flex-grow: 1;
             margin-bottom: 0.5rem; /* Gap between venues and stats */
-            padding-right: 1rem; /* Space for scrollbar */
         }
 
         .left-col.collapsed {
@@ -558,6 +558,7 @@
             background-color: white;
             border-radius: 0.5rem;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            min-width: 200px;
         }
         #sort-dropdown {
             flex-grow: 1; /* The dropdown itself expands */
@@ -1778,6 +1779,7 @@
             revert: 'invalid',
             cursorAt: { left: 10, top: 10 },
             helper: 'clone',
+            cancel: 'input, button, a, .genre-dot, .energy-icon, .favorite-star-container', // Prevent drag on interactive elements
             start: function(e, ui) {
                 const $sourceItem = $(this);
                 const $sourceList = $sourceItem.parent();
@@ -1966,6 +1968,11 @@
 
         function renderSetlist() {
             if (!currentSetlist) { $('#setlist-view').hide(); return; }
+
+            // Always reset the details view when a setlist is rendered
+            $('#setlist-details-toggle').removeClass('open');
+            $('#setlist-details-content').hide();
+
             $('#back-to-venue-btn').toggle(!!cameFromVenue);
             
             const setlist = setlists[currentSetlist];
