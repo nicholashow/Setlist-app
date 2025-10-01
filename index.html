@@ -27,9 +27,12 @@
             height: 100%;
         }
 
+        /* --- FIX: Correctly enables scrolling on touch devices when PDF viewer is open --- */
+        html.doc-viewer-active,
         body.doc-viewer-active {
-            position: relative; /* Revert fixed position to allow scrolling for doc viewer */
-            overflow: visible !important;
+            position: static; /* Revert to default positioning */
+            overflow: auto !important;   /* Explicitly allow scrolling */
+            height: auto;
         }
 
         .sortable {
@@ -1563,7 +1566,8 @@
             });
             $('#close-doc').on('click', function(e) {
                 e.stopPropagation();
-                $('body').removeClass('doc-viewer-active');
+                // --- FIX: Remove class from both html and body to restore locked layout ---
+                $('html, body').removeClass('doc-viewer-active');
                 $('#doc-view').removeClass('doc-view-fullscreen').hide();
                 resetScrollHandlers();
                 $('#doc-iframe-container').empty();
@@ -2343,7 +2347,8 @@
             }
             const url = getFileURL(song);
             if (!url) { alert('File not available for this song.'); return; }
-            $('body').addClass('doc-viewer-active');
+            // --- FIX: Add class to both html and body to enable scrolling ---
+            $('html, body').addClass('doc-viewer-active');
             $('#doc-iframe-container').empty().append(`<object id="doc-object" data="${url}" type="application/pdf"><p>PDF not supported. <a href="${url}" target="_blank">Download PDF</a>.</p></object>`);
             $('#doc-view').addClass('doc-view-fullscreen').show();
             $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
