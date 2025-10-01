@@ -1,4 +1,3 @@
-<DOCUMENT filename="app2000 copy.txt">
 <!DOCTYPE html>
 <html lang="en" class="dark">
 
@@ -17,103 +16,106 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
     <style>
         html,
-        body {
+   
+     body {
             height: 100%;
-            width: 100%;
+width: 100%;
             overflow: hidden;
             position: fixed; /* Prevents panning/scrolling on touch devices */
         }
         
         #app {
             height: 100%;
-        }
+}
 
         body.doc-viewer-active {
-            position: relative; /* Revert fixed position to allow scrolling for doc viewer */
+            position: relative;
+/* Revert fixed position to allow scrolling for doc viewer */
             overflow: visible !important;
-        }
+}
 
         .sortable {
             list-style: none;
-            padding: 0;
+padding: 0;
             margin: 0;
         }
 
         .draggable {
             cursor: move;
-        }
+}
         
         .sortable-placeholder {
-            background-color: #3b82f6;
-            border: 2px dashed #3b82f6;
+            background-color: #bfdbfe;
+border: 2px solid #3b82f6;
             height: 60px; /* Match item height */
             margin-bottom: 1px;
-            border-radius: 0.5rem;
+border-radius: 0.5rem;
         }
 
         /* Unified selected style for sidebar items */
         .selected {
             background-color: #3b82f6 !important;
-            color: white !important;
+color: white !important;
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
-        }
+}
 
         .selected .genre-name, .selected .venue-name {
              color: white !important;
-        }
+}
         
         /* Multiple selection highlight */
         .item-selected {
             background-color: #93c5fd !important;
-            border-left: 4px solid #2563eb;
+border-left: 4px solid #2563eb;
         }
         .dark .item-selected {
             background-color: #1e40af !important;
-            border-left: 4px solid #60a5fa;
+border-left: 4px solid #60a5fa;
         }
 
 
         /* Consistent Add Button Style */
         .btn-add {
             background-color: #3b82f6;
-            color: white;
+color: white;
             border: none;
             transition: background-color 0.2s;
             flex-shrink: 0; /* Prevent button from shrinking */
         }
         .btn-add:hover {
             background-color: #2563eb;
-        }
+}
 
         /* Genre dot and viewed indicator unified size */
         .genre-dot, .index-number {
             width: 24px;
-            height: 24px;
+height: 24px;
             border-radius: 50%;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0; /* Prevent shrinking */
+            flex-shrink: 0;
+/* Prevent shrinking */
         }
 
         /* Fullscreen viewer styles */
         .doc-view-fullscreen {
             position: fixed;
-            top: 0;
+top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
             z-index: 100;
             background: white;
-        }
+}
 
         .dark .doc-view-fullscreen {
             background: #111827;
-        }
+}
 
         .doc-nav-buttons {
             position: fixed;
-            top: 0;
+top: 0;
             left: 0;
             width: 100%;
             height: 50px;
@@ -123,24 +125,24 @@
             gap: 10px;
             z-index: 103;
             opacity: 1;
-            transition: opacity 0.3s;
+transition: opacity 0.3s;
             background: rgba(255, 255, 255, 0.9);
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
+}
 
         .dark .doc-nav-buttons {
             background: rgba(31, 41, 55, 0.9);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
         .doc-nav-buttons.hidden {
             opacity: 0;
-            pointer-events: none;
+pointer-events: none;
         }
 
         .doc-nav-button {
             padding: 8px 16px;
-            background: #3b82f6;
+background: #3b82f6;
             color: white;
             border-radius: 4px;
             cursor: pointer;
@@ -149,84 +151,84 @@
             gap: 5px;
             font-size: 14px;
             border: none;
-            transition: background-color 0.2s;
+transition: background-color 0.2s;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             user-select: none;
-        }
+}
 
         .doc-nav-button:disabled {
             background: #9ca3af;
-            cursor: not-allowed;
+cursor: not-allowed;
         }
 
         .doc-nav-close {
             background: #ef4444;
-        }
+}
 
         .doc-nav-button:not(:disabled):hover {
             background-color: #2563eb;
-        }
+}
 
         .doc-nav-close:hover {
             background-color: #dc2626;
-        }
+}
         
         #doc-iframe-container {
             position: absolute;
-            top: 0;
+top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: 99;
             overflow: auto;
             -webkit-overflow-scrolling: touch;
-        }
+}
 
 
         #doc-object {
             width: 100%;
-            height: 100%;
+height: 100%;
             border: 0;
         }
 
         .del-setlist {
             background: #ef4444;
-            border-radius: 4px;
+border-radius: 4px;
             width: 24px;
             height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-right: 8px;
-        }
+}
 
         .del-setlist svg {
             width: 14px;
-            height: 14px;
+height: 14px;
             fill: white;
         }
 
         .del-setlist:hover {
             background: #dc2626;
-        }
+}
 
         .setlist-item {
             display: flex;
-            align-items: center;
+align-items: center;
             transition: all 0.2s ease-out;
         }
 
         .setlist-name {
             flex: 1;
-            min-width: 0; /* Prevent overflow */
+min-width: 0; /* Prevent overflow */
             white-space: nowrap;
-            overflow: hidden;
+overflow: hidden;
             text-overflow: ellipsis;
         }
         
         #setlist-details-toggle {
             padding: 0.5rem 0.75rem;
-            background-color: #e5e7eb;
+background-color: #e5e7eb;
             border-radius: 0.5rem;
             margin-bottom: 0.5rem;
             cursor: pointer;
@@ -234,119 +236,126 @@
             justify-content: space-between;
             align-items: center;
             font-weight: 600;
-        }
+}
         .dark #setlist-details-toggle {
             background-color: #374151;
-        }
+}
         #setlist-details-toggle .toggle-arrow {
             transition: transform 0.2s ease-in-out;
-        }
+}
         #setlist-details-toggle.open .toggle-arrow {
             transform: rotate(180deg);
-        }
+}
         /* FINAL CORRECTED HORIZONTAL Setlist Details Layout */
         #setlist-details-content {
-            display: none; /* Initial state */
-            flex-direction: row; /* Force horizontal layout */
-            align-items: flex-end; /* Align items at the bottom */
+            display: none;
+/* Initial state */
+            flex-direction: row;
+/* Force horizontal layout */
+            align-items: flex-end;
+/* Align items at the bottom */
             gap: 1rem;
-            padding: 1rem;
+padding: 1rem;
             background-color: #f3f4f6;
             border-radius: 0.5rem;
             flex-wrap: wrap;
         }
         #setlist-details-content > div {
             display: flex;
-            flex-direction: column; /* Stack label/input vertically within their group */
+flex-direction: column; /* Stack label/input vertically within their group */
             gap: 0.25rem;
-        }
+}
         .dark #setlist-details-content {
             background-color: #374151;
-        }
+}
         .dark #setlist-details-content label {
-            color: #f9fafb !important; /* Force white color */
+            color: #f9fafb !important;
+/* Force white color */
         }
        
         .drag-highlight {
             background-color: #dbeafe;
-            border: 2px dashed #3b82f6;
+border: 2px dashed #3b82f6;
             transform: scale(1.05);
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
-        }
+}
 
         .dark .drag-highlight {
             background-color: #1e3a8a;
-        }
+}
 
         .app-header {
             color: white;
-            padding: 1rem;
+padding: 1rem;
             border-radius: 0.75rem;
             margin-bottom: 1rem;
             transition: background 0.3s ease;
             cursor: pointer;
-        }
+}
         .app-header-selected {
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-        }
+}
         .app-header-unselected {
             background: #374151;
-        }
+}
         .app-header-unselected:hover {
             background: #4b5563;
-        }
+}
 
         .stats-container {
             background-color: #f3f4f6;
-            border-radius: 0.75rem;
+border-radius: 0.75rem;
             padding: 1rem;
             color: #1f2937;
             max-height: 200px;
             overflow-y: auto;
-            margin-top: auto; /* Pushes to bottom */
-            flex-shrink: 0; /* Prevent shrinking */
+            margin-top: auto;
+/* Pushes to bottom */
+            flex-shrink: 0;
+/* Prevent shrinking */
         }
 
         .dark .stats-container {
             background-color: #374151;
-            color: #d1d5db;
+color: #d1d5db;
         }
 
         .stats-title {
             font-weight: 600;
-            margin-bottom: 0.5rem;
+margin-bottom: 0.5rem;
             color: #1e40af;
         }
 
         .dark .stats-title {
             color: #60a5fa;
-        }
+}
         
         .left-col {
             display: flex;
-            flex-direction: column;
+flex-direction: column;
             height: 100%;
             transition: width 0.4s ease-in-out, padding 0.4s ease-in-out;
             position: relative;
-        }
+}
         /* Sidebar scrolling fix */
         .left-col-main-content {
             overflow-y: auto;
-            overflow-x: hidden; /* PREVENT HORIZONTAL SCROLL */
+overflow-x: hidden; /* PREVENT HORIZONTAL SCROLL */
             flex-grow: 1;
-            padding-right: 4px;
+padding-right: 4px;
             margin-bottom: 0.5rem; /* Gap between venues and stats */
         }
 
         .left-col.collapsed {
             width: 0;
-            padding: 0; /* Ensures no leftover space */
-            overflow: hidden; /* Hides content fully */
+padding: 0; /* Ensures no leftover space */
+            overflow: hidden;
+/* Hides content fully */
         }
 
         #sidebar-toggle {
             background-color: #1f2937;
-            color: white;
+color: white;
             border: none;
             cursor: pointer;
             display: flex;
@@ -354,18 +363,18 @@
             justify-content: center;
             width: 24px;
             height: 60px;
-            border-radius: 0 8px 8px 0;
+border-radius: 0 8px 8px 0;
             flex-shrink: 0;
             transition: all 0.3s ease-in-out;
-        }
+}
 
         #sidebar-toggle:hover {
             background-color: #374151;
-        }
+}
 
         .sidebar-item {
             display: flex;
-            align-items: center;
+align-items: center;
             justify-content: space-between;
             padding: 8px;
             border-radius: 0.5rem;
@@ -374,61 +383,61 @@
             cursor: pointer;
             color: #e5e7eb;
             transition: background-color 0.2s;
-            overflow: hidden; /* Fix width issues */
+overflow: hidden; /* Fix width issues */
         }
         .sidebar-item:hover {
             background: #4b5563;
-        }
+}
 
         /* Reverted Genre/Venue Creation Style */
         .item-creation {
             display: flex;
-            gap: 8px;
+gap: 8px;
             align-items: center;
             background-color: #1f2937;
             padding: 8px;
             border-radius: 8px;
             margin-top: 8px;
-        }
+}
         .item-creation .item-name-input {
              flex-grow: 1;
-             background-color: #374151;
+background-color: #374151;
              border: 1px solid #4b5563;
              padding: 4px 8px;
              border-radius: 4px;
              color: white;
-        }
+}
         /* Fix for Genre Color Picker */
         #genre-color {
             -webkit-appearance: none;
-            -moz-appearance: none;
+-moz-appearance: none;
             appearance: none;
             background-color: transparent;
             width: 28px;
             height: 28px;
             border: none;
             cursor: pointer;
-        }
+}
         #genre-color::-webkit-color-swatch {
             border-radius: 4px;
-            border: 1px solid #4b5563;
+border: 1px solid #4b5563;
         }
         #genre-color::-moz-color-swatch {
             border-radius: 4px;
-            border: 1px solid #4b5563;
+border: 1px solid #4b5563;
         }
 
 
         .genre-content {
             display: flex;
-            align-items: center;
+align-items: center;
             gap: 8px;
             flex-grow: 1;
             min-width: 0; /* Prevent overflow */
         }
         .genre-name, .venue-name {
             min-width: 0;
-            white-space: nowrap;
+white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -436,7 +445,7 @@
         .delete-genre,
         .delete-venue {
             color: #ef4444;
-            cursor: pointer;
+cursor: pointer;
             padding: 2px 6px;
             border-radius: 4px;
             flex-shrink: 0;
@@ -445,246 +454,241 @@
         .delete-genre:hover,
         .delete-venue:hover {
             background-color: #fee2e2;
-        }
+}
 
         .dark .delete-genre:hover,
         .dark .delete-venue:hover {
             background-color: #991b1b;
-        }
+}
         
         /* CORRECTED Dark Mode Toggle Visual */
         .dark-mode-toggle+div {
             transition: all 0.3s ease;
-        }
+}
         .dark-mode-toggle+div .dot {
             transition: all 0.3s ease;
-        }
+}
         /* Dark mode on (checked) */
         .dark-mode-toggle:checked+div {
             background-color: #22c55e;
-        }
+}
         .dark-mode-toggle:checked+div .dot {
-            transform: translateX(1px); /* Ball is on the LEFT */
+            transform: translateX(1px);
+/* Ball is on the LEFT */
         }
         /* Light mode on (not checked) */
         .dark-mode-toggle:not(:checked)+div {
-            background-color: #1f2937; /* Black */
+            background-color: #1f2937;
+/* Black */
         }
         .dark-mode-toggle:not(:checked)+div .dot {
-            transform: translateX(20px); /* Ball is on the RIGHT */
+            transform: translateX(20px);
+/* Ball is on the RIGHT */
         }
 
         /* Highly specific selector for viewed number color */
         #setlist-list li .index-number.viewed-index {
             background-color: white;
-            color: #3b82f6 !important; /* Blue button color */
+color: #3b82f6 !important; /* Blue button color */
             border: 1px solid #3b82f6;
-            font-weight: bold;
+font-weight: bold;
         }
         
         /* === Redesigned Responsive Controls for Master View === */
         #master-view-controls {
             display: flex;
-            flex-direction: column;
+flex-direction: column;
             gap: 0.5rem;
             margin-bottom: 0.5rem;
         }
         #search-container {
             position: relative;
-        }
+}
         #search {
-            padding-right: 120px; /* Make space for the toggle */
+            padding-right: 120px;
+/* Make space for the toggle */
         }
         #dark-mode-container {
             position: absolute;
-            right: 8px;
+right: 8px;
             top: 50%;
             transform: translateY(-50%);
         }
         /* Sort dropdown width fix */
         #controls-row {
             display: flex;
-            gap: 0.75rem;
+gap: 0.75rem;
             align-items: center;
         }
         #filters-group {
             display: flex;
-            flex-grow: 1; /* Allows this to expand */
+flex-grow: 1; /* Allows this to expand */
             gap: 0.5rem;
-            padding: 0.25rem;
+padding: 0.25rem;
             background-color: white;
             border-radius: 0.5rem;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        }
+}
         #sort-dropdown {
-            flex-grow: 1; /* The dropdown itself expands */
+            flex-grow: 1;
+/* The dropdown itself expands */
         }
         .dark #filters-group {
             background-color: #1f2937;
-        }
+}
 
         #master-view-buttons {
-            flex-shrink: 0; /* Prevent buttons from shrinking */
+            flex-shrink: 0;
+/* Prevent buttons from shrinking */
         }
 
         #master-view-buttons .btn-master {
-            width: 100px; /* Equal sized buttons */
+            width: 100px;
+/* Equal sized buttons */
         }
         .filter-select, #genre-filter-button {
             border: none;
-            background: none;
+background: none;
             appearance: none;
             padding: 0.5rem;
         }
         #genre-filter-button {
             width: auto;
-            min-width: 120px;
+min-width: 120px;
         }
         
         /* === Redesigned Grid Layout for Song Item Details === */
         .song-details-container {
             display: flex;
-            align-items: center;
+align-items: center;
             flex-wrap: wrap;
             gap: 0.5rem;
             margin-left: auto;
         }
         .song-details-container input, .song-details-container .delete-btn {
             width: 112px;
-            text-align: center; /* Center text in inputs */
+text-align: center; /* Center text in inputs */
         }
         .song-details-container .delete-btn {
             width: 80px;
-        }
+}
         
         .left-col:not(.collapsed) ~ main .song-details-container {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+grid-template-columns: repeat(2, 1fr);
             width: 280px;
             gap: 0.5rem;
             align-items: stretch; /* Ensures items fill the cell height */
         }
         .left-col:not(.collapsed) ~ main .song-details-container input,
         .left-col:not(.collapsed) ~ main .song-details-container button {
-            width: 100%; /* Make items fill the grid cell */
+            width: 100%;
+/* Make items fill the grid cell */
             height: 100%;
-        }
+}
         
         /* === Setlist View 1-Column Layout === */
         .setlist-view-container {
             display: flex;
-            flex-direction: column; /* Stack panels vertically */
+flex-direction: column; /* Stack panels vertically */
             gap: 1rem;
-            height: calc(100% - 150px); /* Adjust based on controls height */
+height: calc(100% - 150px); /* Adjust based on controls height */
             min-height: 0;
-        }
+}
         .setlist-panel {
             display: flex;
-            flex-direction: column;
+flex-direction: column;
             min-height: 0;
             background-color: #fff;
             border-radius: 0.75rem;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
-            overflow: hidden;
+overflow: hidden;
             flex: 1; /* Allow panels to share space */
         }
         .dark .setlist-panel {
             background-color: #1f2937;
-        }
+}
         .setlist-panel > .panel-header {
             padding: 0.5rem 0.75rem;
-            font-weight: 600;
+font-weight: 600;
             background-color: #f3f4f6;
             border-bottom: 1px solid #e5e7eb;
             flex-shrink: 0;
-        }
+}
         .dark .setlist-panel > .panel-header {
             background-color: #374151;
-            border-bottom-color: #4b5563;
+border-bottom-color: #4b5563;
         }
         .setlist-panel > ul {
             overflow-y: auto;
-            flex-grow: 1;
+flex-grow: 1;
         }
         /* Add Songs panel with checkboxes */
         .add-song-item {
             display: flex;
-            align-items: center;
+align-items: center;
             padding: 0.75rem 0.5rem;
             border-bottom: 1px solid #e5e7eb;
         }
         .dark .add-song-item {
             border-bottom-color: #374151;
-        }
+}
         .add-song-item label {
             flex-grow: 1;
-            cursor: pointer;
+cursor: pointer;
             padding-left: 0.5rem;
         }
         .add-song-item input[type="checkbox"] {
-            display: none;
-        }
-        .add-song-item label::before {
-            content: '';
-            display: inline-block;
             width: 1.25rem;
-            height: 1.25rem;
-            background: #3b82f6;
-            border-radius: 4px;
-            margin-right: 0.5rem;
-            vertical-align: middle;
-        }
-        .add-song-item input:checked + label::before {
-            content: '✔';
-            color: white;
-            text-align: center;
-            line-height: 1.25rem;
+height: 1.25rem;
+            cursor: pointer;
         }
 
 
         /* Consistent border on all song list items */
         #master-list > li, #setlist-list > li, #favorites-list > li, #genre-song-list > li, #plays-list > li, .add-song-item {
             border-bottom-width: 1px;
-        }
+}
         #master-list, #setlist-list, #favorites-list, #genre-song-list, #plays-list, #setlist-add-songs-list {
             border-color: #e5e7eb;
-        }
+}
         .dark #master-list, .dark #setlist-list, .dark #favorites-list, .dark #genre-song-list, .dark #plays-list, .dark #setlist-add-songs-list {
             border-color: #374151;
-        }
+}
         
         /* Touch Device Enhancements */
         main.overflow-auto,
         .setlist-songs-container,
         #genre-filter-dropdown {
             -webkit-overflow-scrolling: touch;
-        }
+}
 
         #master-list > li, #setlist-list > li, #favorites-list > li, #plays-list > li, #genre-song-list > li {
             padding-top: 1rem;
-            padding-bottom: 1rem;
+padding-bottom: 1rem;
             padding-left: 0.5rem;
             padding-right: 0.5rem;
         }
         #plays-list > li {
             padding-left: 1rem;
-        }
+}
 
         /* Single Favorite Star Fix */
         .favorite-star-container svg {
             width: 20px;
-            height: 20px;
+height: 20px;
             fill: none;
             stroke: #9ca3af; /* Gray outline */
             stroke-width: 1.5;
-            transition: all 0.2s;
+transition: all 0.2s;
         }
         .favorite-star-container.favorited svg {
             fill: white;
-            stroke: #4b5563; /* Dark outline for visibility on light backgrounds */
+stroke: #4b5563; /* Dark outline for visibility on light backgrounds */
         }
         .dark .favorite-star-container.favorited svg {
-            stroke: white; /* White outline on dark backgrounds */
+            stroke: white;
+/* White outline on dark backgrounds */
         }
 
 
@@ -696,53 +700,63 @@
         <aside class="left-col w-64 bg-gray-800 text-white p-4 flex-shrink-0 dark:bg-black">
             <div class="left-col-main-content">
                 <div class="app-header app-header-selected" id="home-btn">
-                    <h1 class="text-2xl font-bold mb-2 underline">ALL SONGS</h1>
+                    <h1 class="text-2xl font-bold mb-2 
+underline">ALL SONGS</h1>
                     <p class="text-sm whitespace-nowrap">Organize music performances</p>
                 </div>
 
                 <div class="mb-2 p-2 rounded-lg bg-gray-700" id="nav-setlists">
                     <div class="flex items-center justify-between">
-                        <span class="font-medium uppercase">Setlists</span>
+               
+         <span class="font-medium uppercase">Setlists</span>
                         <button class="text-sm px-2 py-1 rounded-md bg-gray-600" id="toggle-setlists">▾</button>
                     </div>
                     <div class="mt-2" id="setlists-container"></div>
-                    <div class="mt-2">
+                 
+   <div class="mt-2">
                         <input class="w-full p-1 text-sm rounded-md bg-gray-700" id="new-setlist-name" placeholder="New setlist name" />
                         <button class="w-full mt-1 p-1 text-sm rounded-md btn-add" id="add-setlist-btn">Add Setlist</button>
                     </div>
-                </div>
+          
+      </div>
                 <div class="sidebar-item" id="nav-favorites">Favorites</div>
                 <div class="sidebar-item" id="nav-plays">Plays</div>
                 <div class="sidebar-item" id="nav-recordings">Recordings</div>
                 <div class="sidebar-item" id="nav-energy">Energy Levels</div>
 
                 <div class="mt-4">
-                    <h3 class="text-sm font-semibold uppercase">Genres</h3>
+    
+                <h3 class="text-sm font-semibold uppercase">Genres</h3>
                      <div class="item-creation">
                         <input type="color" id="genre-color" value="#3b82f6" title="Select color">
                         <input class="item-name-input" id="genre-name" placeholder="New genre" />
-                        <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-genre">Add</button>
+ 
+                       <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-genre">Add</button>
                     </div>
                     <div class="mt-2 space-y-1" id="genre-list"></div>
                 </div>
 
-                <div class="mt-4">
+           
+     <div class="mt-4">
                     <h3 class="text-sm font-semibold uppercase">Venues</h3>
                     <div class="item-creation">
                         <input class="item-name-input" id="venue-name" placeholder="New venue" />
-                        <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-venue">Add</button>
+                     
+   <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-venue">Add</button>
                     </div>
                     <div class="mt-2 space-y-1" id="venue-list"></div>
                 </div>
             </div>
             
-            <div class="stats-container">
+       
+     <div class="stats-container">
                 <h3 class="stats-title">Top Played</h3>
                 <ul class="text-xs mt-1" id="top-played"></ul>
                 <h3 class="stats-title mt-3">Least Played</h3>
                 <ul class="text-xs mt-1" id="least-played"></ul>
             </div>
-        </aside>
+       
+ </aside>
 
         <button id="sidebar-toggle">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -752,125 +766,159 @@
 
         <main class="flex-1 p-4 overflow-auto">
             <section id="master-view">
-                 <div id="master-view-controls">
+  
+               <div id="master-view-controls">
                     <div id="search-container">
                         <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..." />
                         <datalist id="search-results"></datalist>
-                        <div id="dark-mode-container">
+  
+                      <div id="dark-mode-container">
                              <label for="dark-mode-toggle" class="flex items-center cursor-pointer ml-4">
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark</span>
-                                <div class="relative">
+       
+                         <div class="relative">
                                     <input type="checkbox" id="dark-mode-toggle" class="dark-mode-toggle sr-only">
-                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                  
+  <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
                                     <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
                                 </div>
-                            </label>
+                
+            </label>
                         </div>
                     </div>
                     <div id="controls-row">
-                        <div id="filters-group">
+                       
+ <div id="filters-group">
                             <select id="sort-dropdown" class="p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select">
                                 <option value="name">Sort by Name</option>
-                                <option value="artist">Sort by Artist</option>
+                           
+     <option value="artist">Sort by Artist</option>
                                 <option value="lastPlayed">Sort by Last Played</option>
                                 <option value="energy">Sort by Energy</option>
-                            </select>
+                     
+       </select>
                             <div id="genre-filter-container" class="relative">
                                 <button id="genre-filter-button" class="p-2 rounded-lg bg-transparent text-sm text-left dark:bg-transparent dark:text-gray-200">Select Genres</button>
-                                <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
+                      
+          <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
                             </div>
                         </div>
-                        <div id="master-view-buttons" class="flex gap-2">
+                        
+<div id="master-view-buttons" class="flex gap-2">
                             <input accept=".pdf" class="hidden" id="master-upload" multiple="" type="file" />
                             <button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow btn-master" id="upload-master-btn">Add files</button>
-                            <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow btn-master" id="delete-all-btn">Delete All</button>
+                         
+   <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow btn-master" id="delete-all-btn">Delete All</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-                    <ul id="master-list"></ul>
+      
+              <ul id="master-list"></ul>
                 </div>
                 <div id="master-drop-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-8 pointer-events-none">
                     <div class="text-center bg-white dark:bg-gray-800 p-12 rounded-2xl border-4 border-dashed border-blue-500">
-                        <h2 class="text-2xl font-bold">Drop Files Here</h2>
+             
+           <h2 class="text-2xl font-bold">Drop Files Here</h2>
                         <p>Add PDF song sheets to ALL SONGS</p>
                     </div>
                 </div>
             </section>
 
 
-            <section class="hidden" id="setlist-view">
+       
+     <section class="hidden" id="setlist-view">
                  <div class="flex items-center gap-2 mb-2">
                     <button id="back-to-venue-btn" class="hidden p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition dark:bg-gray-700 dark:hover:bg-gray-600">← Back</button>
                     <h2 class="text-xl font-bold" id="setlist-title">Setlist</h2>
-                    <p id="setlist-total-duration" class="text-sm text-gray-500 dark:text-white ml-2"></p>
+                   
+ <p id="setlist-total-duration" class="text-sm text-gray-500 dark:text-white ml-2"></p>
                     <p id="setlist-song-count" class="text-sm text-gray-500 dark:text-white ml-2"></p>
                 </div>
 
                 <div class="flex items-end justify-between flex-wrap gap-4 mb-2">
                     <div class="flex items-center gap-2">
-                        <button id="record-show" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Record Show</button>
+        
+                <button id="record-show" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Record Show</button>
                         <button id="stop-record" class="p-2 bg-red-600 text-white rounded-lg hidden shadow">Stop Recording</button>
                         <button id="print-setlist" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">Print Setlist</button>
-                        <div class="relative inline-block">
+          
+              <div class="relative inline-block">
                             <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Share Setlist</button>
                             <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
-                                <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
+      
+                          <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc.
+PDFs)</a>
                                 <a href="#" id="share-email" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Email (text only)</a>
                                 <a href="#" id="share-gmail" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Gmail (text only)</a>
-                                <a href="#" id="share-copy" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Copy to Clipboard (text only)</a>
+        
+                        <a href="#" id="share-copy" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Copy to Clipboard (text only)</a>
                             </div>
-                            <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
+                            <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 
+text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
                         </div>
                     </div>
                 </div>
                 
-                <div id="setlist-details-container" class="mb-2">
+                <div id="setlist-details-container" 
+class="mb-2">
                     <div id="setlist-details-toggle">
                         <span>Setlist Details</span>
                         <span class="toggle-arrow">▾</span>
                     </div>
-                    <div id="setlist-details-content">
+         
+           <div id="setlist-details-content">
                         <div>
                             <label for="setlist-date" class="font-medium text-xs">Date</label>
-                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200">
+                            <input type="date" id="setlist-date" class="block p-1 
+rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200">
                         </div>
                         <div>
                             <label for="setlist-venue" class="font-medium text-xs">Venue</label>
-                            <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200 dark:placeholder-gray-400">
+                 
+           <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200 dark:placeholder-gray-400">
                         </div>
                         <div>
-                            <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
+                            <label 
+for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
                             <div class="relative">
                                 <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200">
-                                    <option value="custom">Custom Order</option>
+                     
+               <option value="custom">Custom Order</option>
                                     <option value="name">Sort by Name</option>
                                     <option value="artist">Sort by Artist</option>
-                                    <option value="genre">Sort by Genre</option>
+     
+                               <option value="genre">Sort by Genre</option>
                                     <option value="energy">Sort by Energy</option>
-                                </select>
+                           
+     </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
                                     <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                                </div>
+ 
+                               </div>
                             </div>
                         </div>
-                    </div>
+                 
+   </div>
                 </div>
 
                 <div id="setlist-recordings" class="mb-2"></div>
                 
                  <div class="setlist-view-container">
                     <div class="setlist-panel">
-                        <div class="panel-header">Setlist Songs</div>
+        
+                <div class="panel-header">Setlist Songs</div>
                         <ul id="setlist-list"></ul>
                     </div>
                     <div class="setlist-panel">
-                        <div class="panel-header">Add Songs to Setlist</div>
+                
+        <div class="panel-header">Add Songs to Setlist</div>
                         <input id="setlist-search-add" class="w-full p-2 border-b dark:bg-gray-800 dark:border-gray-600 flex-shrink-0" placeholder="Search all songs...">
                         <ul id="setlist-add-songs-list"></ul>
                     </div>
-                </div>
+         
+       </div>
 
             </section>
 
@@ -878,73 +926,88 @@
                 <div class="flex items-center justify-between mb-2">
                      <h2 class="text-xl font-bold">Favorite Songs</h2>
                     <div class="relative">
-                        <select id="favorites-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
+  
+                      <select id="favorites-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
                             <option value="name">Sort by Name</option>
                             <option value="artist">Sort by Artist</option>
-                            <option value="lastPlayed">Sort by Last Played</option>
+  
+                          <option value="lastPlayed">Sort by Last Played</option>
                             <option value="energy">Sort by Energy</option>
                         </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+               
+         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                             <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                 <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                        </div>
+      
+                  </div>
                     </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul id="favorites-list"></ul>
-                </div>
+    
+            </div>
             </section>
 
             <section class="hidden" id="genre-view">
                  <div class="flex items-center justify-between mb-2">
                      <h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
-                    <div class="relative">
+                 
+   <div class="relative">
                         <select id="genre-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
                             <option value="name">Sort by Name</option>
-                            <option value="artist">Sort by Artist</option>
+                           
+ <option value="artist">Sort by Artist</option>
                             <option value="lastPlayed">Sort by Last Played</option>
                             <option value="energy">Sort by Energy</option>
                         </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+         
+               <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                             <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" 
+/></svg>
                         </div>
                     </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-                    <ul id="genre-song-list"></ul>
+                   
+ <ul id="genre-song-list"></ul>
                 </div>
             </section>
 
             <section class="hidden" id="plays-view">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="text-xl font-bold">Plays</h2>
-                    <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow" id="reset-plays">Reset All Plays</button>
+              
+      <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow" id="reset-plays">Reset All Plays</button>
                 </div>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul id="plays-list"></ul>
                 </div>
-            </section>
+          
+  </section>
 
             <section class="hidden" id="recordings-view">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="text-xl font-bold">Recordings</h2>
                 </div>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-                    <ul id="recordings-list"></ul>
+     
+               <ul id="recordings-list"></ul>
                 </div>
             </section>
 
             <section class="hidden" id="energy-view">
                 <h2 class="text-xl font-bold mb-2">Energy Levels</h2>
                 <div id="energy-level-container" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-            </section>
+ 
+           </section>
 
             <section class="hidden" id="venue-setlists-view">
                 <h2 class="text-xl font-bold mb-2" id="venue-setlists-title"></h2>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul id="venue-setlists-list"></ul>
-                </div>
+             
+   </div>
             </section>
         </main>
 
@@ -952,26 +1015,31 @@
             <div class="doc-top-bar" id="doc-top-bar"></div>
             <div class="doc-nav-buttons" id="doc-nav-buttons">
                 <button class="doc-nav-button no-select" id="prev-doc">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    
+<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                     Previous
                 </button>
-                <button class="doc-nav-button no-select" id="next-doc">
+    
+            <button class="doc-nav-button no-select" id="next-doc">
                     Next
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
+    
+                </svg>
                 </button>
                 <button class="doc-nav-button doc-nav-close no-select" id="close-doc">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                   
+     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                     Close
                 </button>
             </div>
             <div id="doc-iframe-container">
-            </div>
+     
+       </div>
         </section>
     </div>
     <script>
@@ -979,26 +1047,26 @@
         document.addEventListener('touchstart', (event) => {
           if (event.touches.length > 1) {
              event.preventDefault();
-          }
+}
         }, { passive: false });
         let lastTouchEnd = 0;
-        document.addEventListener('touchend', (event) => {
+document.addEventListener('touchend', (event) => {
           const now = (new Date()).getTime();
           if (now - lastTouchEnd <= 300) {
             event.preventDefault();
           }
           lastTouchEnd = now;
         }, false);
-        // ================== Memory Management ==================
+// ================== Memory Management ==================
         let objectURLs = new Set();
-        window.addEventListener('unload', () => {
+window.addEventListener('unload', () => {
             objectURLs.forEach(url => URL.revokeObjectURL(url));
             objectURLs.clear();
         });
-        // ================== Data Structures ==================
+// ================== Data Structures ==================
         let masterSongs = [];
         let setlists = {};
-        let currentSetlist = null;
+let currentSetlist = null;
         let playCounts = {};
         let genres = [{
             name: 'Rock',
@@ -1008,113 +1076,123 @@
             color: '#3b82f6'
         }, {
             name: 'Jazz',
-            color: '#10b981'
+      
+      color: '#10b981'
         }];
-        const energyIcons = [
+const energyIcons = [
             // Level 0 (Outline)
             `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400 dark:text-gray-500"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>`,
             // Level 1 (Large)
-            `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="67%" style="stop-color:transparent" /><stop offset="67%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
+            `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><defs><linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="67%" style="stop-color:transparent" /><stop offset="67%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" 
+fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
             // Level 2 (Large, slightly smaller appearance)
             `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="2 2 20 20"><defs><linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="55%" style="stop-color:transparent" /><stop offset="55%" style="stop-color:#f59e0b" /></linearGradient></defs><path d="M13 4L6 14h6.5l-1 6 7-8h-6.5l1-5z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.5"></path></svg>`,
             // Level 3 (Largest)
             `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="-4 -4 32 32" class="energy-svg-3">
-                <defs>
+       
+         <defs>
                     <radialGradient id="energy-grad-3" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
                         <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
                         <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
-                    </radialGradient>
+           
+         </radialGradient>
                 </defs>
                 <g class="sparks">
                     <path d="M12,0 L12.5,4 L15,4.5 L12.5,5 L12,9 L11.5,5 L9,4.5 L11.5,4 Z" fill="#FCD34D" opacity="1"/>
-                    <path d="M21,8 L21.5,12 L24,12.5 L21.5,13 L21,17 L20.5,13 L18,12.5 L20.5,12 Z" fill="#FCD34D" opacity="1"/>
+                    <path d="M21,8 L21.5,12 L24,12.5 L21.5,13 L21,17 L20.5,13 
+L18,12.5 L20.5,12 Z" fill="#FCD34D" opacity="1"/>
                     <path d="M3,8 L3.5,12 L6,12.5 L3.5,13 L3,17 L2.5,13 L0,12.5 L2.5,12 Z" fill="#FCD34D" opacity="1"/>
                     <path d="M6,17 L6.5,21 L9,21.5 L6.5,22 L6,26 L5.5,22 L3,21.5 L5.5,21 Z" fill="#FCD34D" opacity="1"/>
                     <path d="M18,17 L18.5,21 L21,21.5 L18.5,22 L18,26 L17.5,22 L15,21.5 L17.5,21 Z" fill="#FCD34D" opacity="1"/>
-                </g>
+   
+             </g>
                 <g transform="scale(1.25) translate(-3, -3)">
                     <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#energy-grad-3)" stroke="#B45309" stroke-width="1.5"/>
                 </g>
             </svg>`
         ];
-        let venues = [];
+let venues = [];
         let recordings = [];
         let masterSelectedGenres = [];
         let currentGenre = null;
-        let viewedSongsInSetlist = new Set();
+let viewedSongsInSetlist = new Set();
         let currentViewerContext = null;
         let currentViewerList = [];
         let currentViewerIndex = -1;
-        let inactivityTimer = null;
+let inactivityTimer = null;
 
 
         let recorder = null;
         let audioChunks = [];
         let cameFromVenue = null;
-        
-        // ================== Persistent Storage ==================
+// ================== Persistent Storage ==================
         function save() {
             localStorage.setItem('setlistData', JSON.stringify({
                 masterSongs: masterSongs.map(song => ({ ...song,
                     file: undefined,
                     fileInfo: song.fileInfo ? {
-                        name: song.fileInfo.name,
+         
+               name: song.fileInfo.name,
                         type: song.fileInfo.type,
                         size: song.fileInfo.size,
                         data: song.fileInfo.data
-                    } : undefined
+         
+           } : undefined
                 })),
                 setlists,
                 playCounts,
                 genres,
                 venues,
-                recordings: recordings.map(rec => ({ ...rec,
+       
+         recordings: recordings.map(rec => ({ ...rec,
                     audioData: rec.audioData
                 }))
             }));
-            localStorage.setItem('darkMode', $('html').hasClass('dark') ? 'enabled' : 'disabled');
+localStorage.setItem('darkMode', $('html').hasClass('dark') ? 'enabled' : 'disabled');
         }
 
         function load() {
             const raw = localStorage.getItem('setlistData');
-            if (raw) {
+if (raw) {
                 try {
                     const obj = JSON.parse(raw);
-                    masterSongs = obj.masterSongs || [];
+masterSongs = obj.masterSongs || [];
                     masterSongs.forEach(s => {
                         if (!s.lastPlayed) s.lastPlayed = null;
                         s.favorite = s.favorite || false; 
                     });
-                    setlists = obj.setlists || {};
+setlists = obj.setlists || {};
                     Object.keys(setlists).forEach(k => {
                         if (Array.isArray(setlists[k])) { // Legacy check
                             setlists[k] = {
-                                songs: setlists[k].map(s => s.id),
+                                songs: setlists[k].map(s 
+=> s.id),
                                 date: '',
                                 venue: ''
                             };
-                        }
+     
+                   }
                     });
-                    playCounts = obj.playCounts || {};
+playCounts = obj.playCounts || {};
                     genres = obj.genres || genres;
                     venues = obj.venues || [];
                     recordings = obj.recordings || [];
-                } catch (e) {
+} catch (e) {
                     console.error("Error parsing localStorage data: ", e);
-                    masterSongs = [];
+masterSongs = [];
                     setlists = {};
                     playCounts = {};
                     venues = [];
                     recordings = [];
-                }
+}
             }
             const darkModePref = localStorage.getItem('darkMode');
-            if (darkModePref === 'disabled') {
+if (darkModePref === 'disabled') {
                 $('html').removeClass('dark');
-                $('#dark-mode-toggle').prop('checked', false);
+$('#dark-mode-toggle').prop('checked', false);
             } else {
                 $('html').addClass('dark');
-                $('#dark-mode-toggle').prop('checked', true);
+$('#dark-mode-toggle').prop('checked', true);
             }
         }
 
@@ -1123,72 +1201,75 @@
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    resolve({
+            
+        resolve({
                         name: file.name,
                         type: file.type,
                         size: file.size,
-                        data: e.target.result
+                 
+       data: e.target.result
                     });
                 };
                 reader.onerror = function() {
                     reject(new Error('Failed to read file'));
-                };
+             
+   };
                 reader.readAsDataURL(file);
             });
-        }
+}
 
         function getFileURL(song) {
             if (!song || !song.fileInfo || !song.fileInfo.data) {
                 console.error(`Invalid song or fileInfo for song: ${song?.name || 'unknown'}`);
-                return null;
+return null;
             }
 
             if (!song.file || !objectURLs.has(song.file)) {
                 try {
                     const blob = dataURItoBlob(song.fileInfo.data);
-                    const url = URL.createObjectURL(blob);
+const url = URL.createObjectURL(blob);
                     if (song.file) {
                         URL.revokeObjectURL(song.file);
-                        objectURLs.delete(song.file);
+objectURLs.delete(song.file);
                     }
                     song.file = url;
-                    objectURLs.add(url);
+objectURLs.add(url);
                 } catch (e) {
                     console.error(`Error creating object URL for ${song.name}:`, e);
-                    return null;
+return null;
                 }
             }
             return song.file;
-        }
+}
 
         function dataURItoBlob(dataURI) {
             try {
                 const split = dataURI.split(',');
-                if (split.length < 2) {
+if (split.length < 2) {
                     throw new Error('Invalid data URI');
-                }
+}
                 const byteString = atob(split[1]);
-                const mimeString = split[0].split(':')[1].split(';')[0];
+const mimeString = split[0].split(':')[1].split(';')[0];
                 const ab = new ArrayBuffer(byteString.length);
                 const ia = new Uint8Array(ab);
-                for (let i = 0; i < byteString.length; i++) {
+for (let i = 0; i < byteString.length; i++) {
                     ia[i] = byteString.charCodeAt(i);
-                }
+}
                 return new Blob([ab], {
                     type: mimeString
                 });
-            } catch (e) {
+} catch (e) {
                 console.error('Error converting data URI to Blob:', e);
-                throw e;
+throw e;
             }
         }
 
         // ================== UI Helpers ==================
         function autoCollapseSidebar() {
             const $sidebar = $('.left-col');
-            if (!$sidebar.hasClass('collapsed')) {
+if (!$sidebar.hasClass('collapsed')) {
                 $sidebar.addClass('collapsed');
-                $('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />');
+$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />');
             }
         }
 
@@ -1197,7 +1278,8 @@
             function deselectAllNav() {
                 $('#home-btn').removeClass('app-header-selected').addClass('app-header-unselected');
                 $('#nav-favorites, #nav-plays, #nav-recordings, #nav-energy').removeClass('selected');
-                $('#setlists-container .setlist-item').removeClass('selected');
+              
+  $('#setlists-container .setlist-item').removeClass('selected');
                 $('#venue-list .venue-item').removeClass('selected');
                 $('#genre-list .genre-item').removeClass('selected');
             }
@@ -1206,7 +1288,8 @@
             deselectAllNav(); 
             $('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected'); 
             
-            renderLeftSetlists();
+ 
+           renderLeftSetlists();
             renderGenres(deselectAllNav);
             renderVenues(deselectAllNav);
             bindNav(deselectAllNav);
@@ -1214,168 +1297,184 @@
             show('master');
             
             $(document).on('click', '.genre-dot', function(e) {
-                e.stopPropagation();
+  
+              e.stopPropagation();
                 const li = $(this).closest('li');
-                const songId = li.attr('id');
+const songId = li.attr('id');
                 const song = masterSongs.find(s => s.id === songId);
                 if (!song) return;
-                const genreNames = [''].concat(genres.map(g => g.name));
+const genreNames = [''].concat(genres.map(g => g.name));
                 let idx = genreNames.indexOf(song.genre || '');
                 idx = (idx + 1) % genreNames.length;
-                song.genre = genreNames[idx];
+song.genre = genreNames[idx];
                 
                 const newDot = `<span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span>`;
                  $(`li[id="${songId}"]`).find('.genre-dot').parent().html(newDot);
-
-                // Re-render genre view if it's currently visible to reflect the change
+// Re-render genre view if it's currently visible to reflect the change
                 if ($('#genre-view').is(':visible')) {
                     renderGenreView(currentGenre);
-                }
+}
                 save();
             });
-            $(document).on('click', '.energy-icon', function(e) {
+$(document).on('click', '.energy-icon', function(e) {
                 e.stopPropagation();
                 const songId = $(this).closest('li').attr('id');
                 const song = masterSongs.find(s => s.id === songId);
                 if (song) {
-                    song.energy = (song.energy || 0) + 1;
+                    song.energy 
+= (song.energy || 0) + 1;
                     if (song.energy > 3) song.energy = 0;
                     const newIconHtml = energyIcons[song.energy || 0];
                     const $listItems = $(`li[id="${songId}"]`);
                     $listItems.find('.energy-icon').html(newIconHtml);
 
-                    if (song.energy === 3) {
+ 
+                   if (song.energy === 3) {
                         $listItems.find('.energy-svg-3').each(function() {
                             const $svg = $(this);
-                            $svg.addClass('animate-sparks');
+                     
+       $svg.addClass('animate-sparks');
                             setTimeout(() => $svg.removeClass('animate-sparks'), 600);
                         });
                     }
-                    if ($('#energy-view').is(':visible')) {
+                  
+  if ($('#energy-view').is(':visible')) {
                         renderEnergyLevels();
-                    }
+}
                     save();
-                }
+}
             });
-            $('#add-genre').click(function() {
+$('#add-genre').click(function() {
                 const name = $('#genre-name').val().trim();
                 const color = $('#genre-color').val();
                 if (!name) return alert('Enter a genre name');
                 if (genres.some(g => g.name.toLowerCase() === name.toLowerCase())) return alert('Genre already exists');
-                genres.push({ name, color });
+              
+  genres.push({ name, color });
                 $('#genre-name').val('');
                 renderGenres(deselectAllNav);
                 save();
             });
-            $('#add-venue').click(function() {
+$('#add-venue').click(function() {
                 const name = $('#venue-name').val().trim();
                 if (!name) return alert('Enter a venue name');
                 if (venues.some(v => v.name.toLowerCase() === name.toLowerCase())) return alert('Venue already exists');
                 venues.push({ name });
-                $('#venue-name').val('');
+               
+ $('#venue-name').val('');
                 renderVenues(deselectAllNav);
                 save();
             });
-            $('#sidebar-toggle').click(function() {
+$('#sidebar-toggle').click(function() {
                 const $sidebar = $('.left-col');
                 $sidebar.toggleClass('collapsed');
                 const $icon = $(this).find('svg');
                 if ($sidebar.hasClass('collapsed')) {
-                    $icon.html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />');
+                    $icon.html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 
+7" />');
                 } else {
                     $icon.html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />');
                 }
             });
-
-            $('main').on('click', 'li.draggable', function(e) {
+$('main').on('click', 'li.draggable', function(e) {
                 const listId = `#${$(this).parent().attr('id')}`;
                 if ($(e.target).is('input, button, a, .genre-dot, .energy-icon, .energy-icon *, .favorite-star-container, .favorite-star-container *') || $(e.target).closest('button').length > 0) {
                     return;
                 }
-                if (e.shiftKey || e.ctrlKey || e.metaKey) {
+           
+     if (e.shiftKey || e.ctrlKey || e.metaKey) {
                     handleSelection(e, listId);
                     return;
                 }
                 $(listId + ' .item-selected').removeClass('item-selected');
-                $(this).addClass('item-selected');
-                const id = $(this).attr('id');
-                const view = $('main > section:visible').attr('id');
-                const context = view === 'setlist-view' ? 'setlist' : view === 'favorites-view' ? 'favorites' : view === 'plays-view' ? 'plays' : view === 'genre-view' ? 'genre' : 'master';
-                openSongInContext(id, context);
+             
+   const songId = $(this).attr('id');
+                const context = $('main > section:visible').attr('id').replace('-view', '');
+                openSongInContext(songId, context);
             });
+});
+
+        // ================== Event Handlers ==================
+        function bindNav(deselectAllNav) {
+
             $('#home-btn').click(() => {
                 deselectAllNav();
                 $('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');
                 show('master');
-            });
+                autoCollapseSidebar();
+       
+     });
             $('#nav-favorites').click(() => {
                 deselectAllNav();
                 $('#nav-favorites').addClass('selected');
                 show('favorites');
             });
-            $('#nav-plays').click(() => {
+$('#nav-plays').click(() => {
                 deselectAllNav();
                 $('#nav-plays').addClass('selected');
                 show('plays');
             });
-            $('#nav-recordings').click(() => {
+$('#nav-recordings').click(() => {
                 deselectAllNav();
                 $('#nav-recordings').addClass('selected');
                 show('recordings');
             });
-            $('#nav-energy').click(() => {
+$('#nav-energy').click(() => {
                 deselectAllNav();
                 $('#nav-energy').addClass('selected');
                 show('energy');
             });
-            $('#setlists-container').on('click', '.setlist-item', function(e) {
+$('#setlists-container').on('click', '.setlist-item', function(e) {
                 if ($(e.target).closest('.del-setlist, .edit-input').length) return;
                 const name = $(this).data('name');
                 deselectAllNav();
                 $(this).addClass('selected');
                 cameFromVenue = null;
-                currentSetlist = name;
+         
+       currentSetlist = name;
                 viewedSongsInSetlist.clear();
                 $('#setlist-title').text(name);
                 show('setlist');
                 autoCollapseSidebar();
             });
-            $('#venue-setlists-list').on('click', 'li', function() {
+$('#venue-setlists-list').on('click', 'li', function() {
                 const setlistName = $(this).data('setlist-name');
                 if (setlists[setlistName]) {
                     cameFromVenue = $('#venue-setlists-title .text-blue-600').text();
                     currentSetlist = setlistName;
-                    viewedSongsInSetlist.clear();
+               
+     viewedSongsInSetlist.clear();
                     show('setlist');
                 }
             });
-            $('#back-to-venue-btn').click(function() {
+$('#back-to-venue-btn').click(function() {
                 if (cameFromVenue) {
                     renderVenueSetlists(cameFromVenue);
                     show('venue-setlists');
                 }
             });
-            $('#toggle-setlists').click(() => $('#setlists-container').slideToggle(150));
+$('#toggle-setlists').click(() => $('#setlists-container').slideToggle(150));
             $(document).on('click', '#setlist-details-toggle', function() {
                 $(this).toggleClass('open');
                 // FIX: Use a callback to set display to flex after animation
                 $('#setlist-details-content').slideToggle(200, function() {
                     if ($(this).is(':visible')) {
-                        $(this).css('display', 'flex');
+           
+             $(this).css('display', 'flex');
                     }
                 });
             });
-
-            $('#add-setlist-btn').click(() => {
+$('#add-setlist-btn').click(() => {
                 const name = $('#new-setlist-name').val().trim();
                 if (!name) return alert('Enter a name');
                 if (setlists[name]) return alert('Name exists');
                 setlists[name] = { songs: [], date: '', venue: '' };
-                $('#new-setlist-name').val('');
+             
+   $('#new-setlist-name').val('');
                 renderLeftSetlists();
                 save();
             });
-            $('#upload-master-btn').click(() => $('#master-upload').click());
+$('#upload-master-btn').click(() => $('#master-upload').click());
             $('#master-upload').on('change', handleMasterUpload);
             $('#search').on('input', renderMaster);
              $('#setlist-search-add').on('input', renderAddSongsPanel);
@@ -1384,290 +1483,315 @@
                 if (view === 'master-view') renderMaster();
                 else if (view === 'favorites-view') renderFavorites();
                 else if (view === 'genre-view' && currentGenre) renderGenreView(currentGenre);
-            });
+  
+          });
             $('#genre-filter-button').on('click', () => $('#genre-filter-dropdown').toggleClass('hidden'));
-            $(document).on('change', '#genre-filter-dropdown input[type="checkbox"]', function() {
+$(document).on('change', '#genre-filter-dropdown input[type="checkbox"]', function() {
                 masterSelectedGenres = [];
                 $('#genre-filter-dropdown input:checked').each(function() {
                     masterSelectedGenres.push($(this).val());
                 });
                 updateGenreFilterButtonText('#genre-filter-button', masterSelectedGenres);
-                renderMaster();
+       
+         renderMaster();
             });
-            $('#setlist-sort-filter-dropdown').on('change', renderSetlist);
+$('#setlist-sort-filter-dropdown').on('change', renderSetlist);
             $(document).on('click', function(e) {
                 if (!$(e.target).closest('#genre-filter-container').length) {
                     $('#genre-filter-dropdown').addClass('hidden');
                 }
                 if (!$(e.target).closest('.relative').has('#share-setlist-btn').length) {
                     $('#share-options').addClass('hidden');
-                }
+    
+            }
             });
-            $('#reset-plays').click(() => {
+$('#reset-plays').click(() => {
                 if (confirm('Reset all plays?')) {
                     playCounts = {};
                     masterSongs.forEach(s => s.lastPlayed = null);
                     renderPlays();
-                    updateTopLeast();
+            
+        updateTopLeast();
                     save();
                 }
             });
-            $('#doc-top-bar, #close-doc, #prev-doc, #next-doc').off('click');
+$('#doc-top-bar, #close-doc, #prev-doc, #next-doc').off('click');
             $('#doc-top-bar').on('click', function(e) {
                 if ($(e.target).is('button')) return;
                 $('#doc-nav-buttons').toggleClass('hidden');
             });
-            $('#prev-doc').on('click', function(e) {
+$('#prev-doc').on('click', function(e) {
                 e.stopPropagation();
                 if (currentViewerIndex > 0) {
                     const prevSongId = currentViewerList[currentViewerIndex - 1].id;
                     openSongInContext(prevSongId, currentViewerContext, currentViewerIndex - 1);
-                }
+             
+   }
             });
-            $('#next-doc').on('click', function(e) {
+$('#next-doc').on('click', function(e) {
                 e.stopPropagation();
                 if (currentViewerIndex < currentViewerList.length - 1) {
                     const nextSongId = currentViewerList[currentViewerIndex + 1].id;
                     openSongInContext(nextSongId, currentViewerContext, currentViewerIndex + 1);
-                }
+           
+     }
             });
-            $('#close-doc').on('click', function(e) {
+$('#close-doc').on('click', function(e) {
                 e.stopPropagation();
                 $('body').removeClass('doc-viewer-active');
                 $('#doc-view').removeClass('doc-view-fullscreen').hide();
                 resetScrollHandlers();
                 $('#doc-iframe-container').empty();
             });
-            $('#delete-all-btn').click(() => {
+$('#delete-all-btn').click(() => {
                 if (confirm('Are you sure you want to delete ALL songs?')) {
                     masterSongs.forEach(song => {
                         if (song.file) {
-                            URL.revokeObjectURL(song.file);
+                        
+    URL.revokeObjectURL(song.file);
                             objectURLs.delete(song.file);
                         }
                     });
                     masterSongs = [];
-                    setlists = {};
+  
+                  setlists = {};
                     playCounts = {};
                     renderAll();
                     updateTopLeast();
-                    save();
+                  
+  save();
                 }
             });
-            $('#record-show, #stop-record').off('click');
+$('#record-show, #stop-record').off('click');
             $('#record-show').on('click', () => {
                 if (!currentSetlist) return alert('Select a setlist first');
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     navigator.mediaDevices.getUserMedia({ audio: true })
                         .then(stream => {
-                            recorder = new MediaRecorder(stream);
+    
+                        recorder = new MediaRecorder(stream);
                             recorder.ondataavailable = e => audioChunks.push(e.data);
                             recorder.onstop = () => {
-                                const blob = new Blob(audioChunks, { type: 'audio/webm' });
+         
+                       const blob = new Blob(audioChunks, { type: 'audio/webm' });
                                 audioChunks = [];
                                 saveRecording(blob);
-                            };
+   
+                         };
                             recorder.start();
                             $('#record-show').addClass('hidden');
-                            $('#stop-record').removeClass('hidden');
+                   
+         $('#stop-record').removeClass('hidden');
                         }).catch(err => {
                             console.error('Error accessing microphone:', err);
-                            alert('Could not access microphone');
+alert('Could not access microphone');
                         });
                 } else {
                     alert('Microphone access not supported');
-                }
+}
             });
-            $('#stop-record').on('click', () => {
+$('#stop-record').on('click', () => {
                 if (recorder) {
                     recorder.stop();
                     $('#stop-record').addClass('hidden');
                     $('#record-show').removeClass('hidden');
                 }
-            });
-            $('#print-setlist').click(() => {
+   
+         });
+$('#print-setlist').click(() => {
                 if (!currentSetlist) return;
                 const setlist = setlists[currentSetlist];
                 const songObjects = setlist.songs.map(id => masterSongs.find(s => s.id === id)).filter(Boolean);
                 const printWin = window.open('', '_blank');
-                if (!printWin) {
+                
+if (!printWin) {
                     alert('Please allow popups for this feature to work.');
                     return;
                 }
                 let html = `<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style></head><body>`;
-                html += `<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(setlist.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(setlist.venue)||"Not set"}</div><ol>${songObjects.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;
+            
+    html += `<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(setlist.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(setlist.venue)||"Not set"}</div><ol>${songObjects.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;
                 printWin.document.write(html);
-                const songsWithFiles = songObjects.filter(s => s.fileInfo && s.fileInfo.data);
+const songsWithFiles = songObjects.filter(s => s.fileInfo && s.fileInfo.data);
                 if (songsWithFiles.length === 0) {
-                    printWin.document.close(); printWin.focus(); printWin.print(); return;
+                    printWin.document.close();
+printWin.focus(); printWin.print(); return;
                 }
                 songsWithFiles.forEach(s => {
                     const fileUrl = getFileURL(s);
                     if (fileUrl) printWin.document.body.insertAdjacentHTML('beforeend', `<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${fileUrl}"></iframe>`);
                 });
-                const iframes = printWin.document.querySelectorAll('iframe');
+const iframes = printWin.document.querySelectorAll('iframe');
                 const loadingPromises = Array.from(iframes).map(iframe => new Promise(resolve => { iframe.onload = resolve; iframe.onerror = resolve; }));
-                Promise.all(loadingPromises).then(() => { printWin.document.close(); printWin.focus(); printWin.print(); });
+Promise.all(loadingPromises).then(() => { printWin.document.close(); printWin.focus(); printWin.print(); });
             });
             $('#share-setlist-btn, #share-native, #share-email, #share-gmail, #share-copy').off('click');
             $('#share-setlist-btn').on('click', () => $('#share-options').toggleClass('hidden'));
-            $('#share-native').on('click', e => { e.preventDefault(); shareSetlist('native'); });
+$('#share-native').on('click', e => { e.preventDefault(); shareSetlist('native'); });
             $('#share-email').on('click', e => { e.preventDefault(); shareSetlist('email'); });
-            $('#share-gmail').on('click', e => { e.preventDefault(); shareSetlist('gmail'); });
+$('#share-gmail').on('click', e => { e.preventDefault(); shareSetlist('gmail'); });
             $('#share-copy').on('click', e => { e.preventDefault(); shareSetlist('copy'); });
-            $('#dark-mode-toggle').change(function() {
+$('#dark-mode-toggle').change(function() {
                 $('html').toggleClass('dark', this.checked);
                 save();
             });
-            $(document).on('dragenter dragover', function(e) {
+$(document).on('dragenter dragover', function(e) {
                 e.preventDefault(); e.stopPropagation();
                 if ($('#master-view').is(':visible')) $('#master-drop-overlay').removeClass('hidden');
             }).on('dragleave drop', function(e) {
                 e.preventDefault(); e.stopPropagation();
                 $('#master-drop-overlay').addClass('hidden');
-                if (e.type === 'drop' && $('#master-view').is(':visible')) {
+              
+  if (e.type === 'drop' && $('#master-view').is(':visible')) {
                     const dropEvent = e.originalEvent;
                     if (dropEvent.dataTransfer && dropEvent.dataTransfer.files.length > 0) {
                         handleMasterUpload({ target: { files: dropEvent.dataTransfer.files } });
-                    }
+             
+       }
                 }
             });
-            $(document).on('click', '.favorite-star-container', function(e) {
+$(document).on('click', '.favorite-star-container', function(e) {
                 e.stopPropagation();
                 const songId = $(this).closest('li').attr('id');
                 const song = masterSongs.find(s => s.id === songId);
                 if (song) {
-                    song.favorite = !song.favorite;
+                    song.favorite 
+= !song.favorite;
                     save();
                     $(`li[id="${songId}"]`).find('.favorite-star-container').toggleClass('favorited', song.favorite);
                     if ($('#favorites-view').is(':visible')) renderFavorites();
                 }
             });
-            const handleInputChange = function(e) {
+const handleInputChange = function(e) {
                 const songId = $(this).closest('li').attr('id');
-                const song = masterSongs.find(s => s.id === songId);
+const song = masterSongs.find(s => s.id === songId);
                 if (song) {
                     const key = $(this).attr('class').match(/(\w+)-input/)[1];
-                    song[key] = e.target.value;
+song[key] = e.target.value;
                     save();
                 }
             };
-            $('main').on('input', '.artist-input, .notes-input, .duration-input', handleInputChange);
+$('main').on('input', '.artist-input, .notes-input, .duration-input', handleInputChange);
             $('main').on('click', '.delete-btn', function(e) {
                 e.stopPropagation();
                 const li = $(this).closest('li');
                 const songId = li.attr('id');
                 const song = masterSongs.find(s => s.id === songId);
-                if (!song) return;
+               
+ if (!song) return;
                 const context = $(this).text().toLowerCase();
                 if (context === 'delete') {
                     if (confirm(`Permanently delete "${song.name}"?`)) {
                         if (song.file) URL.revokeObjectURL(song.file);
-                        removeFromAllSetlists([songId]);
+        
+                removeFromAllSetlists([songId]);
                         masterSongs = masterSongs.filter(x => x.id !== songId);
                         const visibleView = $('main > section:visible').attr('id');
-                        if (visibleView === 'favorites-view') renderFavorites();
+                        if 
+(visibleView === 'favorites-view') renderFavorites();
                         else if (visibleView === 'genre-view') renderGenreView(currentGenre);
                         else renderMaster();
                         if (currentSetlist) renderSetlist();
-                        updateTopLeast();
+updateTopLeast();
                         save();
                     }
                 } else {
                     const setlist = setlists[currentSetlist];
-                    setlist.songs = setlist.songs.filter(id => id !== songId);
+setlist.songs = setlist.songs.filter(id => id !== songId);
                     renderSetlist();
                     save();
                 }
             });
-            $('#setlist-date').on('input', function() {
+$('#setlist-date').on('input', function() {
                 $('#date-placeholder').toggle(!$(this).val());
             });
-            $('#setlist-venue').on('input', function() {
-                setlists[currentSetlist].venue = $(this).val();
-                save();
-            });
-        });
+}
 
         async function shareSetlist(method) {
             if (!currentSetlist) return;
-            const setlist = setlists[currentSetlist];
+const setlist = setlists[currentSetlist];
             const songObjects = setlist.songs.map(id => masterSongs.find(s => s.id === id)).filter(Boolean);
-            const text = `${escapeHtml(currentSetlist)} - ${escapeHtml(setlist.date)} @ ${escapeHtml(setlist.venue)}\n` +
+const text = `${escapeHtml(currentSetlist)} - ${escapeHtml(setlist.date)} @ ${escapeHtml(setlist.venue)}\n` +
                 songObjects.map((s, i) => `${i+1}. ${escapeHtml(s.name)}`).join('\n');
-            const subject = `Setlist: ${currentSetlist}`;
+const subject = `Setlist: ${currentSetlist}`;
             if (method === 'native' && navigator.share) {
                 const files = [];
-                for (let s of songObjects) {
+for (let s of songObjects) {
                     if (s.fileInfo && s.fileInfo.data) {
                         try {
                             const blob = dataURItoBlob(s.fileInfo.data);
-                            files.push(new File([blob], s.name + '.pdf', { type: 'application/pdf' }));
-                        } catch (e) { console.error("Could not process file for sharing:", s.name, e); }
+files.push(new File([blob], s.name + '.pdf', { type: 'application/pdf' }));
+                        } catch (e) { console.error("Could not process file for sharing:", s.name, e);
+}
                     }
                 }
                 try {
                     await navigator.share({ title: currentSetlist, text: text, files: files });
-                } catch (err) {
+} catch (err) {
                     console.error('Share failed:', err);
-                }
+}
             } else if (method === 'email') {
                 window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
-            } else if (method === 'gmail') {
+} else if (method === 'gmail') {
                 window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`, '_blank');
-            } else {
+} else {
                 fallbackCopy(text);
-            }
+}
             $('#share-options').addClass('hidden');
-        }
+}
 
         function fallbackCopy(text) {
             if (navigator.clipboard) {
                 navigator.clipboard.writeText(text).then(() => {
                     const feedback = $('#copy-feedback');
                     feedback.css('opacity', 1);
-                    setTimeout(() => feedback.css('opacity', 0), 2000);
+              
+      setTimeout(() => feedback.css('opacity', 0), 2000);
                 });
-            }
+}
         }
 
         async function handleMasterUpload(e) {
             const files = e.target.files;
-            for (let f of files) {
+for (let f of files) {
                 const fileName = stripExt(f.name);
-                if (masterSongs.some(s => s.name.toLowerCase() === fileName.toLowerCase())) {
+if (masterSongs.some(s => s.name.toLowerCase() === fileName.toLowerCase())) {
                     if (!confirm(`A file named "${fileName}" already exists. Add anyway?`)) continue;
-                }
+}
                 const id = 's_' + Math.random().toString(36).slice(2, 9);
-                try {
+try {
                     const fileInfo = await storeFile(f);
-                    masterSongs.push({ id, name: fileName, artist: '', genre: '', notes: '', duration: '', energy: 0, favorite: false, fileInfo, lastPlayed: null });
-                    playCounts[id] = 0;
+masterSongs.push({ id, name: fileName, artist: '', genre: '', notes: '', duration: '', energy: 0, favorite: false, fileInfo, lastPlayed: null });
+playCounts[id] = 0;
                 } catch (error) {
                     console.error('Error processing file:', f.name, error);
-                    alert(`Failed to process file: ${f.name}`);
+alert(`Failed to process file: ${f.name}`);
                 }
             }
             renderMaster();
-            updateTopLeast();
+updateTopLeast();
             save();
             $('#master-upload').val('');
         }
 
-        function stripExt(name) { return name.replace(/\.[^/.]+$/, ''); }
+        function stripExt(name) { return name.replace(/\.[^/.]+$/, '');
+}
 
         function createSongItem(song, idx, context) {
-            const favClass = song.favorite ? 'favorited' : '';
+            const favClass = song.favorite ?
+'favorited' : '';
             const star = `<div class="w-8 flex-shrink-0 flex justify-center items-center favorite-star-container ${favClass}" title="Toggle Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></div>`;
-            const dot = `<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span></div>`;
-            const energyIcon = `<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${song.energy||0}">${energyIcons[song.energy||0]}</div>`;
-            const buttonText = ['master', 'favorites', 'genre'].includes(context) ? 'Delete' : 'Remove';
+const dot = `<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span></div>`;
+const energyIcon = `<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${song.energy||0}">${energyIcons[song.energy||0]}</div>`;
+            const buttonText = ['master', 'favorites', 'genre'].includes(context) ?
+'Delete' : 'Remove';
             const inputsHTML = `<div class="song-details-container"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(song.artist||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(song.notes||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(song.duration||'')}"><button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${buttonText}</button></div>`;
-            const viewedClass = context === 'setlist' && viewedSongsInSetlist.has(song.id) ? 'viewed-index' : '';
-            return $(`<li id="${song.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable">${star}<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${viewedClass}">${idx+1}</span></div>${dot}${energyIcon}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium">${escapeHtml(song.name)}</div>${inputsHTML}</li>`);
-        }
+const viewedClass = context === 'setlist' && viewedSongsInSetlist.has(song.id) ? 'viewed-index' : '';
+return $(`<li id="${song.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable">${star}<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${viewedClass}">${idx+1}</span></div>${dot}${energyIcon}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium">${escapeHtml(song.name)}</div>${inputsHTML}</li>`);
+}
 
-        function handleSelection(event, containerSelector) { $(event.currentTarget).toggleClass('item-selected'); }
+        function handleSelection(event, containerSelector) { $(event.currentTarget).toggleClass('item-selected');
+}
 
         // FIX: Define a reusable helper function for draggable items
         const draggableOptions = {
@@ -1675,131 +1799,144 @@
             revert: 'invalid',
             cursorAt: { left: 10, top: 10 },
             helper: 'clone',
-            start: function(e, ui) {
+            start: function(e, ui) 
+{
                 const $sourceItem = $(this);
-                const $sourceList = $sourceItem.parent();
+const $sourceList = $sourceItem.parent();
                 const $selectedItems = $sourceList.children('.item-selected');
 
                 // If not dragging a multi-selection, select the single item being dragged
                 if ($selectedItems.length <= 1 || !$sourceItem.hasClass('item-selected')) {
                     $sourceList.children('.item-selected').removeClass('item-selected');
-                    $sourceItem.addClass('item-selected');
+$sourceItem.addClass('item-selected');
                 }
                 
                 const count = $sourceList.children('.item-selected').length;
-
-                // Style the helper to be blue and correctly sized
+// Style the helper to be blue and correctly sized
                 ui.helper.css({
                     'background-color': '#3b82f6',
                     'color': 'white',
                     'width': $sourceItem.outerWidth(),
-                    'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
+            
+        'box-shadow': 'none',
                     'z-index': 9999,
-                    'border-radius': '0.5rem',
-                    'border': 'none'
-                }).addClass('selected'); // Use selected class for consistency
-                ui.helper.find('*').css('color', 'white'); // Force text color
+                    'border-radius': '0.5rem'
+                }).addClass('selected');
+// Use selected class for consistency
+                ui.helper.find('*').css('color', 'white');
+// Force text color
                 
                 // If dragging multiple items, create a summary badge
                 if (count > 1) {
                     ui.helper.empty()
-                        .css({'height': '60px', 'padding': '1rem'})
+                 
+       .css({'height': '60px', 'padding': '1rem'})
                         .addClass('flex items-center justify-center font-semibold')
                         .html(`Dragging ${count} items`);
-                } else {
+} else {
                      ui.helper.css('height', $sourceItem.outerHeight());
-                }
+}
             }
         };
-
-        function renderMaster() {
+function renderMaster() {
             const q = $('#search').val().toLowerCase();
-            let list = masterSongs.filter(s => (q ? (s.name.toLowerCase().includes(q) || (s.artist || '').toLowerCase().includes(q)) : true) && (masterSelectedGenres.length > 0 ? masterSelectedGenres.includes(s.genre) : true));
-            const sortMode = $('#sort-dropdown').val();
+let list = masterSongs.filter(s => (q ? (s.name.toLowerCase().includes(q) || (s.artist || '').toLowerCase().includes(q)) : true) && (masterSelectedGenres.length > 0 ? masterSelectedGenres.includes(s.genre) : true));
+const sortMode = $('#sort-dropdown').val();
             list.sort((a, b) => {
                 if (sortMode === 'artist') return (a.artist || '').localeCompare(b.artist || '');
                 if (sortMode === 'lastPlayed') return (b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0) - (a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0);
                 if (sortMode === 'energy') return (b.energy || 0) - (a.energy || 0);
-                return a.name.localeCompare(b.name);
+        
+        return a.name.localeCompare(b.name);
             });
-            window.currentMasterViewSongs = list;
+window.currentMasterViewSongs = list;
             const $ul = $('#master-list').empty();
             if (list.length === 0) {
                 $ul.append(`<li class="p-8 text-center text-gray-500 italic">${(q || masterSelectedGenres.length > 0) ? 'No songs match your current filters.' : 'No songs yet. <br> Drag & drop PDF files onto the page or use the "Add files" button!'}</li>`);
-            } else {
+} else {
                 list.forEach((s, idx) => $ul.append(createSongItem(s, idx, 'master')));
-            }
+}
             $('#master-list .draggable').draggable(draggableOptions);
-        }
+}
         
         function renderAddSongsPanel() {
             const q = $('#setlist-search-add').val().toLowerCase();
-            let list = masterSongs.filter(s => (q ? s.name.toLowerCase().includes(q) : true));
+let list = masterSongs.filter(s => (q ? s.name.toLowerCase().includes(q) : true));
             list.sort((a, b) => a.name.localeCompare(b.name));
             
             const $ul = $('#setlist-add-songs-list').empty();
-            const currentSongs = setlists[currentSetlist]?.songs || [];
+const currentSongs = setlists[currentSetlist]?.songs || [];
 
             list.forEach(s => {
                 const isChecked = currentSongs.includes(s.id);
                 const li = $(`
                     <li class="add-song-item" data-song-id="${s.id}">
                         <input type="checkbox" id="add-${s.id}" ${isChecked ? 'checked' : ''}>
-                        <label for="add-${s.id}">${escapeHtml(s.name)}</label>
+ 
+                       <label for="add-${s.id}">${escapeHtml(s.name)}</label>
                     </li>
                 `);
                 li.find('input').on('change', function() {
-                    const songId = $(this).parent().data('song-id');
+                    const songId 
+= $(this).parent().data('song-id');
                     const setlistSongs = setlists[currentSetlist].songs;
                     if(this.checked) {
                         if (!setlistSongs.includes(songId)) setlistSongs.push(songId);
                     } else {
-                        setlists[currentSetlist].songs = setlistSongs.filter(id => id !== songId);
+       
+                 setlists[currentSetlist].songs = setlistSongs.filter(id => id !== songId);
                     }
                     renderSetlist();
                     save();
                 });
-                $ul.append(li);
+ 
+               $ul.append(li);
             });
-        }
+}
 
 
-        function removeFromAllSetlists(songIds) { Object.keys(setlists).forEach(k => { setlists[k].songs = setlists[k].songs.filter(id => !songIds.includes(id)); }); }
+        function removeFromAllSetlists(songIds) { Object.keys(setlists).forEach(k => { setlists[k].songs = setlists[k].songs.filter(id => !songIds.includes(id)); });
+}
 
         function renderLeftSetlists() {
             const $c = $('#setlists-container').empty();
-            Object.keys(setlists).forEach(name => {
+Object.keys(setlists).forEach(name => {
                 const el = $(`<div class="p-2 mb-1 rounded-lg cursor-pointer setlist-item bg-gray-700" data-name="${escapeHtml(name)}"><div class="flex items-center"><button class="del-setlist" title="Delete setlist"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg></button><span class="setlist-name">${escapeHtml(name)}</span></div></div>`);
-                el.find('.del-setlist').click(e => {
+      
+          el.find('.del-setlist').click(e => {
                     e.stopPropagation();
-                    if (confirm('Delete ' + name + '?')) {
+if (confirm('Delete ' + name + '?')) {
                         delete setlists[name];
-                        recordings = recordings.filter(r => r.setlist !== name);
+recordings = recordings.filter(r => r.setlist !== name);
                         if (currentSetlist === name) {
                             currentSetlist = null;
-                            $('#home-btn').trigger('click');
+$('#home-btn').trigger('click');
                         }
                         renderLeftSetlists();
-                        save();
+save();
                     }
                 });
-                el.on('dblclick', function() {
+el.on('dblclick', function() {
                     const input = $('<input class="edit-input w-full bg-gray-600 p-1 rounded-md" value="' + escapeHtml(name) + '">');
                     $(this).find('.setlist-name').replaceWith(input);
                     input.focus().on('blur keypress', function(ev) {
-                        if (ev.type === 'keypress' && ev.key !== 'Enter') return;
+                      
+  if (ev.type === 'keypress' && ev.key !== 'Enter') return;
                         const newName = input.val().trim();
                         if (newName && newName !== name && !setlists[newName]) {
                             setlists[newName] = setlists[name];
-                            recordings.forEach(r => { if (r.setlist === name) r.setlist = newName; });
+ 
+                           recordings.forEach(r => { if (r.setlist === name) r.setlist = newName; });
                             delete setlists[name];
                             if (currentSetlist === name) {
-                                currentSetlist = newName;
+  
+                              currentSetlist = newName;
                                 $('#setlist-title').text(newName);
                             }
-                        }
+        
+                }
                         renderLeftSetlists();
-                        save();
+save();
                     });
                 });
                 $c.append(el);
@@ -1809,223 +1946,251 @@
                 hoverClass: 'drag-highlight',
                 drop: function(e, ui) {
                     const setlistName = $(this).data('name');
-                    const setlist = setlists[setlistName];
+                   
+ const setlist = setlists[setlistName];
                     let added = false;
                     const sourceList = ui.draggable.parent();
                     const selector = `#${sourceList.attr('id')} .item-selected`;
-                    const itemsToDrop = $(selector).length > 0 && ui.draggable.hasClass('item-selected') ? $(selector) : ui.draggable;
+                    const itemsToDrop = $(selector).length > 0 
+&& ui.draggable.hasClass('item-selected') ? $(selector) : ui.draggable;
                     
                     itemsToDrop.each(function() {
                         const songId = $(this).attr('id');
-                        if (songId && !setlist.songs.includes(songId)) {
+                        if (songId && 
+!setlist.songs.includes(songId)) {
                             setlist.songs.push(songId);
                             added = true;
                         }
-                    });
+                 
+   });
                     if (added) {
                         $(this).addClass('drop-flash');
-                        setTimeout(() => $(this).removeClass('drop-flash'), 1000);
+setTimeout(() => $(this).removeClass('drop-flash'), 1000);
                         save();
                         if (currentSetlist === setlistName) renderSetlist();
-                    }
+}
                     $(selector).removeClass('item-selected');
-                }
+}
             });
-            $('#setlists-container').sortable({
+$('#setlists-container').sortable({
                 axis: 'y',
                 cursor: 'move',
                 helper: 'clone',
                 start: function(e, ui) {
                     ui.helper.css({
-                        'background-color': '#3b82f6',
+          
+              'background-color': '#3b82f6',
                         'color': 'white',
                         'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
                          'width': ui.item.outerWidth()
-                    }).addClass('selected');
+      
+              }).addClass('selected');
                     ui.helper.find('*').css('color', 'white');
                 },
                 update: function() {
                     const order = $(this).sortable('toArray', { attribute: 'data-name' });
-                    const newObj = {};
+    
+                const newObj = {};
                     order.forEach(n => { if (setlists[n]) newObj[n] = setlists[n]; });
                     setlists = newObj;
                     save();
-                }
+           
+     }
             });
-        }
+}
 
         function renderSetlist() {
-            if (!currentSetlist) { $('#setlist-view').hide(); return; }
+            if (!currentSetlist) { $('#setlist-view').hide();
+return; }
             $('#back-to-venue-btn').toggle(!!cameFromVenue);
             
             const setlist = setlists[currentSetlist];
             $('#setlist-title').text(currentSetlist);
-
-            // Correctly handle setlist details
+// Correctly handle setlist details
             $('#setlist-date').val(setlist.date || '');
-            $('#setlist-venue').val(setlist.venue || '');
+$('#setlist-venue').val(setlist.venue || '');
 
             renderAddSongsPanel(); 
             
             $('#setlist-recordings').empty();
             const setlistRecs = recordings.filter(r => r.setlist === currentSetlist);
-            if (setlistRecs.length > 0) {
+if (setlistRecs.length > 0) {
                 const $recsContainer = $('<div class="p-2 bg-gray-100 rounded-lg dark:bg-gray-700"></div>').append('<h4 class="font-semibold text-sm mb-2">Recordings for this Setlist:</h4>');
-                setlistRecs.forEach(r => {
+setlistRecs.forEach(r => {
                     $recsContainer.append($(`<div class="flex items-center justify-between p-2 mb-1 bg-white rounded-lg shadow-sm dark:bg-gray-600"><span>${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</span><audio controls src="${r.audioData}" style="height:30px;"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition" data-id="${r.id}">Delete</button></div>`).on('click', 'button', function() {
                         if (confirm('Delete this recording?')) {
-                            recordings = recordings.filter(rec => rec.id !== $(this).data('id'));
+                       
+     recordings = recordings.filter(rec => rec.id !== $(this).data('id'));
                             save();
                             renderSetlist();
                         }
-                    }));
+         
+           }));
                 });
-                $('#setlist-recordings').append($recsContainer);
+$('#setlist-recordings').append($recsContainer);
             }
             let songObjects = (setlist.songs || []).map(id => masterSongs.find(s => s.id === id)).filter(Boolean);
-            const sortFilterMode = $('#setlist-sort-filter-dropdown').val();
+const sortFilterMode = $('#setlist-sort-filter-dropdown').val();
             if (sortFilterMode !== 'custom') {
                 songObjects.sort((a, b) => {
                     if (sortFilterMode === 'artist') return (a.artist || '').localeCompare(b.artist || '');
                     if (sortFilterMode === 'name') return a.name.localeCompare(b.name);
-                    if (sortFilterMode === 'energy') return (b.energy || 0) - (a.energy || 0);
+                   
+ if (sortFilterMode === 'energy') return (b.energy || 0) - (a.energy || 0);
                     if (sortFilterMode === 'genre') return (a.genre || '').localeCompare(b.genre || '');
                     return 0;
                 });
-            }
+}
             $('#setlist-total-duration').text(`Runtime: ${songObjects.reduce((acc, s) => acc + (parseInt(s.duration, 10) || 0), 0)} min`);
-            $('#setlist-song-count').text(`${songObjects.length} songs`);
+$('#setlist-song-count').text(`${songObjects.length} songs`);
             window.currentSetlistViewSongs = songObjects;
             const $ul = $('#setlist-list').empty();
             songObjects.forEach((s, idx) => { $ul.append(createSongItem(s, idx, 'setlist')); });
             if ($('#setlist-list').hasClass('ui-sortable')) $('#setlist-list').sortable('destroy');
-            
-            $('#setlist-list').sortable({
+$('#setlist-list').sortable({
                 axis: 'y', cursor: 'move', placeholder: "sortable-placeholder", tolerance: 'pointer', scroll: true, forcePlaceholderSize: true, helper: 'clone',
                 start: (e, ui) => { ui.placeholder.height(ui.item.height()); ui.item.addClass('dragging-source'); },
                 stop: (e, ui) => ui.item.removeClass('dragging-source'),
                 update: function() {
-                    $('#setlist-sort-filter-dropdown').val('custom');
+          
+          $('#setlist-sort-filter-dropdown').val('custom');
                     setlists[currentSetlist].songs = $(this).sortable('toArray');
                     $('#setlist-list .index-number').each((index, el) => $(el).text(index + 1));
                     save();
                 }
-            }).disableSelection();
+      
+      }).disableSelection();
         }
         
         function renderPlays() {
             const $ul = $('#plays-list').empty();
-            if (masterSongs.length === 0) { $ul.append('<li class="p-8 text-center text-gray-500 italic">Add songs to start tracking plays.</li>'); return; }
+if (masterSongs.length === 0) { $ul.append('<li class="p-8 text-center text-gray-500 italic">Add songs to start tracking plays.</li>'); return;
+}
             const sortedSongs = masterSongs.slice().sort((a, b) => (playCounts[b.id] || 0) - (playCounts[a.id] || 0));
-            window.currentPlaysViewSongs = sortedSongs;
-            if (Object.values(playCounts).every(c => c === 0)) { $ul.append('<li class="p-8 text-center text-gray-500 italic">No songs played yet. Click a song to log a play.</li>'); return; }
+window.currentPlaysViewSongs = sortedSongs;
+            if (Object.values(playCounts).every(c => c === 0)) { $ul.append('<li class="p-8 text-center text-gray-500 italic">No songs played yet. Click a song to log a play.</li>');
+return; }
             sortedSongs.forEach(s => {
                 const li = $(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable pl-4"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);
                 li.find('button').click(() => { playCounts[s.id] = 0; renderPlays(); updateTopLeast(); save(); });
                 $ul.append(li);
-            });
+   
+         });
             $('#plays-list .draggable').draggable(draggableOptions);
-        }
+}
 
         function renderRecordings() {
             const $ul = $('#recordings-list').empty();
-            if (recordings.length === 0) { $ul.append('<li class="p-8 text-center text-gray-500 italic">No recordings saved.</li>'); return; }
+if (recordings.length === 0) { $ul.append('<li class="p-8 text-center text-gray-500 italic">No recordings saved.</li>'); return;
+}
             recordings.forEach(r => {
                 const li = $(`<li class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"><div class="flex-1">${escapeHtml(r.setlist)} - ${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</div><audio controls src="${r.audioData}"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-rec" data-id="${r.id}">Delete</button></li>`);
                 li.find('.delete-rec').click(() => { recordings = recordings.filter(rec => rec.id !== r.id); renderRecordings(); save(); });
-                $ul.append(li);
+                
+$ul.append(li);
             });
-        }
+}
 
         function renderFavorites() {
             const $ul = $('#favorites-list').empty();
-            let favorites = masterSongs.filter(s => s.favorite);
+let favorites = masterSongs.filter(s => s.favorite);
             window.currentFavoritesViewSongs = favorites;
             const sortMode = $('#favorites-sort-dropdown').val();
-            favorites.sort((a, b) => {
+favorites.sort((a, b) => {
                 if (sortMode === 'artist') return (a.artist || '').localeCompare(b.artist || '');
                 if (sortMode === 'lastPlayed') return (b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0) - (a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0);
                 if (sortMode === 'energy') return (b.energy || 0) - (a.energy || 0);
-                return a.name.localeCompare(b.name);
+            
+    return a.name.localeCompare(b.name);
             });
-            favorites.forEach((s, idx) => { $ul.append(createSongItem(s, idx, 'favorites')); });
+favorites.forEach((s, idx) => { $ul.append(createSongItem(s, idx, 'favorites')); });
             $('#favorites-list .draggable').draggable(draggableOptions);
-        }
+}
 
         function renderGenreView(genreName) {
             currentGenre = genreName;
-            $('#genre-view-title').text(`Genre: ${genreName}`);
+$('#genre-view-title').text(`Genre: ${genreName}`);
             const $ul = $('#genre-song-list').empty();
             // FIX: Use case-insensitive comparison for genre filtering
             let songsInGenre = masterSongs.filter(s => s.genre && s.genre.toLowerCase() === genreName.toLowerCase());
-            const sortMode = $('#genre-sort-dropdown').val();
+const sortMode = $('#genre-sort-dropdown').val();
             songsInGenre.sort((a, b) => {
                 if (sortMode === 'artist') return (a.artist || '').localeCompare(b.artist || '');
                 if (sortMode === 'lastPlayed') return (b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0) - (a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0);
                 if (sortMode === 'energy') return (b.energy || 0) - (a.energy || 0);
-                return a.name.localeCompare(b.name);
+        
+        return a.name.localeCompare(b.name);
             });
-            window.currentGenreViewSongs = songsInGenre;
+window.currentGenreViewSongs = songsInGenre;
             songsInGenre.forEach((s, idx) => { $ul.append(createSongItem(s, idx, 'genre')); });
             $('#genre-song-list .draggable').draggable(draggableOptions);
-        }
+}
 
         function renderEnergyLevels() {
             const container = $('#energy-level-container').empty();
-            [1, 2, 3].forEach(levelValue => {
+[1, 2, 3].forEach(levelValue => {
                 const songs = masterSongs.filter(s => s.energy === levelValue).sort((a, b) => a.name.localeCompare(b.name));
                 const section = $(`<div class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg"><div class="flex justify-center mb-2">${energyIcons[levelValue]}</div><ul class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto"></ul></div>`);
                 const ul = section.find('ul');
-                if (songs.length > 0) {
+                if (songs.length > 
+0) {
                     songs.forEach(song => {
                         ul.append(`<li id="${song.id}" class="p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer draggable">${escapeHtml(song.name)}</li>`);
                     });
                 } else {
-                    ul.append(`<li class="p-2 text-sm text-gray-500 italic">No songs in this category.</li>`);
+        
+            ul.append(`<li class="p-2 text-sm text-gray-500 italic">No songs in this category.</li>`);
                 }
                 container.append(section);
             });
-            $('#energy-level-container .draggable').draggable(draggableOptions);
+$('#energy-level-container .draggable').draggable(draggableOptions);
         }
 
         function renderGenres(deselectAllNav) {
             $('#genre-list').empty();
-            genres.forEach(g => {
+genres.forEach(g => {
                 const el = $(`<div class="sidebar-item genre-item" data-name="${escapeHtml(g.name)}"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);
                 el.on('click', function(e) {
                     if($(e.target).closest('.delete-genre, .genre-edit-input').length > 0) return;
                     deselectAllNav();
-                    $(this).addClass('selected');
+      
+              $(this).addClass('selected');
                     currentGenre = g.name;
                     show('genre-view');
                 });
                 el.find('.delete-genre').click(e => {
-                    e.stopPropagation();
+          
+          e.stopPropagation();
                     if (confirm(`Delete genre "${g.name}"?`)) {
                         genres = genres.filter(genre => genre.name !== g.name);
-                        masterSongs.forEach(song => { if (song.genre === g.name) song.genre = ''; });
+                        masterSongs.forEach(song => { if (song.genre === g.name) song.genre = '';
+});
                         renderAll();
                         save();
                     }
                 });
-                el.find('.genre-name').on('dblclick', function(e) {
+el.find('.genre-name').on('dblclick', function(e) {
                     e.stopPropagation();
                     const oldName = $(this).text();
                     const input = $('<input class="w-full bg-gray-600 p-1 rounded-md" type="text" value="' + oldName + '">');
                     $(this).replaceWith(input);
-                    input.focus().select().on('blur keypress', function(ev) {
+  
+                  input.focus().select().on('blur keypress', function(ev) {
                         if (ev.type === 'keypress' && ev.key !== 'Enter') return;
                         const newName = input.val().trim();
-                        if (newName && newName !== oldName) {
+                    
+    if (newName && newName !== oldName) {
                             const genre = genres.find(genre => genre.name === oldName);
                             if (genre) genre.name = newName;
-                            masterSongs.forEach(song => { if (song.genre === oldName) song.genre = newName; });
+                       
+     masterSongs.forEach(song => { if (song.genre === oldName) song.genre = newName; });
                         }
                         renderAll();
                         save();
-                    });
+             
+       });
                 });
-                $('#genre-list').append(el);
+$('#genre-list').append(el);
             });
             updateGenreFilters('#genre-filter-dropdown', masterSelectedGenres);
             $('#genre-list').sortable({ 
@@ -2034,46 +2199,53 @@
                 placeholder: "sortable-placeholder",
                 helper: 'clone',
                 start: function(e, ui) {
-                    ui.helper.css({
+      
+              ui.helper.css({
                         'background-color': '#3b82f6',
                         'color': 'white',
                         'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
-                        'width': ui.item.outerWidth()
+        
+                'width': ui.item.outerWidth()
                     }).addClass('selected');
                     ui.helper.find('*').css('color', 'white');
                 },
                 update: function() {
-                    const newOrder = [];
+        
+            const newOrder = [];
                     $('#genre-list .genre-item').each(function() {
                         const name = $(this).data('name');
                         const genre = genres.find(g => g.name === name);
-                        if (genre) newOrder.push(genre);
+     
+                   if (genre) newOrder.push(genre);
                     });
                     genres = newOrder;
                     save();
-                }
+}
             });
-        }
+}
 
         function renderVenues(deselectAllNav) {
             $('#venue-list').empty();
-            venues.forEach(v => {
+venues.forEach(v => {
                 const el = $(`<div class="sidebar-item venue-item" data-name="${escapeHtml(v.name)}"><div class="venue-name text-sm">${escapeHtml(v.name)}</div><span class="delete-venue" title="Delete venue">✕</span></div>`);
                 el.on('click', function(e) {
                     if ($(e.target).closest('.delete-venue').length) return;
                     deselectAllNav();
-                    $(this).addClass('selected');
+           
+         $(this).addClass('selected');
                     renderVenueSetlists(v.name);
                     show('venue-setlists');
                 });
                 el.find('.delete-venue').click(e => {
-                    e.stopPropagation();
+                 
+   e.stopPropagation();
                     venues = venues.filter(venue => venue.name !== v.name);
                     Object.values(setlists).forEach(sl => { if (sl.venue === v.name) sl.venue = ''; });
                     recordings.forEach(r => { if (r.venue === v.name) r.venue = ''; });
-                    renderVenues(deselectAllNav);
+           
+         renderVenues(deselectAllNav);
                     if (currentSetlist) renderSetlist();
-                    if ($('#venue-setlists-view').is(':visible')) $('#home-btn').trigger('click');
+if ($('#venue-setlists-view').is(':visible')) $('#home-btn').trigger('click');
                     save();
                 });
                 $('#venue-list').append(el);
@@ -2084,89 +2256,96 @@
                 placeholder: "sortable-placeholder",
                 helper: 'clone',
                 start: function(e, ui) {
-                    ui.helper.css({
+   
+                 ui.helper.css({
                         'background-color': '#3b82f6',
                         'color': 'white',
                         'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
-                        'width': ui.item.outerWidth()
+     
+                   'width': ui.item.outerWidth()
                     }).addClass('selected');
                     ui.helper.find('*').css('color', 'white');
                 },
                 update: function() {
-                    const newOrder = [];
+     
+               const newOrder = [];
                     $('#venue-list .venue-item').each(function() {
                         const name = $(this).data('name');
                         const venue = venues.find(v => v.name === name);
-                        if (venue) newOrder.push(venue);
+  
+                      if (venue) newOrder.push(venue);
                     });
                     venues = newOrder;
                     save();
-                }
+}
             });
-        }
+}
 
         function renderVenueSetlists(venueName) {
             $('#venue-setlists-title').html(`Setlists for: <span class="text-blue-600">${escapeHtml(venueName)}</span>`);
-            const $ul = $('#venue-setlists-list').empty();
+const $ul = $('#venue-setlists-list').empty();
             const matchingSetlists = Object.entries(setlists).filter(([name, data]) => data.venue === venueName);
-            if (matchingSetlists.length === 0) { $ul.append('<li class="p-4 text-center text-gray-500">No setlists found for this venue.</li>'); return; }
+if (matchingSetlists.length === 0) { $ul.append('<li class="p-4 text-center text-gray-500">No setlists found for this venue.</li>'); return;
+}
             matchingSetlists.forEach(([name, data]) => {
                 $ul.append(`<li class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" data-setlist-name="${escapeHtml(name)}"><div class="font-medium">${escapeHtml(name)}</div><div class="text-sm text-gray-500">${escapeHtml(data.date) || 'No date'}</div></li>`);
             });
-        }
+}
 
         function updateGenreFilters(dropdownSelector, selectedArray) {
             const $dropdown = $(dropdownSelector).empty();
-            if (genres.length === 0) { $dropdown.append('<div class="p-2 text-sm text-gray-500">No genres created.</div>'); return; }
+if (genres.length === 0) { $dropdown.append('<div class="p-2 text-sm text-gray-500">No genres created.</div>'); return;
+}
             genres.forEach(g => {
                 $dropdown.append(`<label class="flex items-center p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"><input type="checkbox" value="${escapeHtml(g.name)}" class="form-checkbox h-4 w-4 text-blue-600 rounded-md mr-2" ${selectedArray.includes(g.name) ? 'checked' : ''}>${escapeHtml(g.name)}</label>`);
             });
-        }
+}
 
         function updateGenreFilterButtonText(buttonSelector, selectedArray, defaultText = 'Select Genres') {
             const button = $(buttonSelector);
-            if (selectedArray.length === 0) button.text(defaultText);
+if (selectedArray.length === 0) button.text(defaultText);
             else if (selectedArray.length === 1) button.text(escapeHtml(selectedArray[0]));
             else button.text(`${selectedArray.length} genres`);
-        }
+}
 
         function getGenreColor(name) {
             const g = genres.find(x => x.name === name);
-            return g ? g.color : '#cbd5e1';
+return g ? g.color : '#cbd5e1';
         }
 
-        function escapeHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        function escapeHtml(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
         function updateTopLeast() {
             const pairs = Object.entries(playCounts).filter(([id]) => masterSongs.find(s => s.id === id)).sort((a, b) => b[1] - a[1]);
-            const validPairs = pairs.filter(([id, count]) => count > 0);
+const validPairs = pairs.filter(([id, count]) => count > 0);
             
             if (validPairs.length === 0) {
                 $('.stats-container').hide();
-                return;
+return;
             }
             $('.stats-container').show();
 
             $('#top-played').empty();
             $('#least-played').empty();
-            validPairs.slice(0, 5).forEach(([id, c]) => {
+validPairs.slice(0, 5).forEach(([id, c]) => {
                 const s = masterSongs.find(x => x.id === id);
                 if (s) $('#top-played').append(`<li>${escapeHtml(s.name)}: ${c}</li>`);
             });
-            validPairs.slice(-5).reverse().forEach(([id, c]) => {
+validPairs.slice(-5).reverse().forEach(([id, c]) => {
                 const s = masterSongs.find(x => x.id === id);
                 if (s) $('#least-played').append(`<li>${escapeHtml(s.name)}: ${c}</li>`);
             });
-        }
+}
 
         function updateSearchDatalist() {
             $('#search-results').empty();
-            masterSongs.forEach(s => { $('#search-results').append(`<option value="${escapeHtml(s.name)}">`); });
+masterSongs.forEach(s => { $('#search-results').append(`<option value="${escapeHtml(s.name)}">`); });
         }
 
         function renderAll() {
             renderLeftSetlists();
-            renderGenres();
+renderGenres();
             renderVenues();
             renderMaster();
             if (currentSetlist) renderSetlist();
@@ -2176,91 +2355,95 @@
             renderEnergyLevels();
             if (currentGenre) renderGenreView(currentGenre);
             updateTopLeast();
-        }
+}
 
         function openSongInContext(songId, context, index = -1) {
             const song = masterSongs.find(s => s.id === songId);
-            if (!song) { console.error('Song not found for ID:', songId); return; }
+if (!song) { console.error('Song not found for ID:', songId); return;
+}
             playCounts[song.id] = (playCounts[song.id] || 0) + 1;
-            song.lastPlayed = new Date().toISOString().split('T')[0];
+song.lastPlayed = new Date().toISOString().split('T')[0];
             updateTopLeast();
             save();
             switch (context) {
-                case 'master': currentViewerList = window.currentMasterViewSongs || []; break;
+                case 'master': currentViewerList = window.currentMasterViewSongs ||
+[]; break;
                 case 'setlist': currentViewerList = window.currentSetlistViewSongs || []; break;
                 case 'plays': currentViewerList = window.currentPlaysViewSongs || []; break;
-                case 'favorites': currentViewerList = window.currentFavoritesViewSongs || []; break;
+case 'favorites': currentViewerList = window.currentFavoritesViewSongs || []; break;
                 case 'genre': currentViewerList = window.currentGenreViewSongs || []; break;
                 default: currentViewerList = masterSongs;
-            }
+}
             currentViewerContext = context;
-            currentViewerIndex = (index === -1) ? currentViewerList.findIndex(s => s.id === songId) : index;
-            if (context === 'setlist') {
+currentViewerIndex = (index === -1) ? currentViewerList.findIndex(s => s.id === songId) : index;
+if (context === 'setlist') {
                 viewedSongsInSetlist.add(songId);
-                $(`#setlist-list li[id="${songId}"] .index-number`).addClass('viewed-index');
+$(`#setlist-list li[id="${songId}"] .index-number`).addClass('viewed-index');
             }
             const url = getFileURL(song);
-            if (!url) { alert('File not available for this song.'); return; }
+if (!url) { alert('File not available for this song.'); return;
+}
             $('body').addClass('doc-viewer-active');
-            $('#doc-iframe-container').empty().append(`<object id="doc-object" data="${url}" type="application/pdf"><p>PDF not supported. <a href="${url}" target="_blank">Download PDF</a>.</p></object>`);
+$('#doc-iframe-container').empty().append(`<object id="doc-object" data="${url}" type="application/pdf"><p>PDF not supported. <a href="${url}" target="_blank">Download PDF</a>.</p></object>`);
             $('#doc-view').addClass('doc-view-fullscreen').show();
             $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
-            $('#next-doc').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
+$('#next-doc').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
             setupScrollHandlers();
         }
 
         function saveRecording(blob) {
             const reader = new FileReader();
-            reader.readAsDataURL(blob);
+reader.readAsDataURL(blob);
             reader.onloadend = () => {
                 const setlist = setlists[currentSetlist];
-                recordings.push({ id: 'r_' + Math.random().toString(36).slice(2, 9), setlist: currentSetlist, date: setlist.date, venue: setlist.venue, audioData: reader.result });
+recordings.push({ id: 'r_' + Math.random().toString(36).slice(2, 9), setlist: currentSetlist, date: setlist.date, venue: setlist.venue, audioData: reader.result });
                 save();
                 if ($('#recordings-view').is(':visible')) renderRecordings();
-                if ($('#setlist-view').is(':visible') && currentSetlist) renderSetlist();
+if ($('#setlist-view').is(':visible') && currentSetlist) renderSetlist();
             };
         }
 
         function setupScrollHandlers() {
             resetScrollHandlers();
-            $('#doc-view').on('mousemove', showNavButtons);
+$('#doc-view').on('mousemove', showNavButtons);
             let touchstartX = 0;
             $('#doc-view').on('touchstart', e => { touchstartX = e.originalEvent.changedTouches[0].screenX; })
                          .on('touchend', e => {
                             const touchendX = e.originalEvent.changedTouches[0].screenX;
-                            if (touchendX < touchstartX - 50) $('#next-doc').trigger('click');
+                            
+if (touchendX < touchstartX - 50) $('#next-doc').trigger('click');
                             if (touchendX > touchstartX + 50) $('#prev-doc').trigger('click');
                          });
-            startInactivityTimer();
+startInactivityTimer();
         }
 
         function resetScrollHandlers() {
             $('#doc-view').off('mousemove touchstart touchend');
-            clearTimeout(inactivityTimer);
+clearTimeout(inactivityTimer);
         }
 
         function showNavButtons() {
             $('#doc-nav-buttons').removeClass('hidden');
-            startInactivityTimer();
+startInactivityTimer();
         }
 
         function startInactivityTimer() {
             clearTimeout(inactivityTimer);
-            inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000);
+inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000);
         }
 
         function show(view) {
             $('main > section').hide();
-            $(`#${view}-view`).show();
+$(`#${view}-view`).show();
             if (view === 'master') renderMaster();
             else if (view === 'plays') renderPlays();
             else if (view === 'recordings') renderRecordings();
-            else if (view === 'energy') renderEnergyLevels();
+else if (view === 'energy') renderEnergyLevels();
             else if (view === 'favorites') renderFavorites();
             else if (view === 'setlist') renderSetlist();
-            else if (view === 'genre-view' && currentGenre) renderGenreView(currentGenre);
+else if (view === 'genre-view' && currentGenre) renderGenreView(currentGenre);
         }
     </script>
 </body>
 
-</html></DOCUMENT>
+</html>
