@@ -11,6 +11,16 @@
             darkMode: 'class',
         }
     </script>
+    <script>
+        (function() {
+            var ua = navigator.userAgent || navigator.vendor || window.opera;
+            var isiOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            if (isiOS) {
+                document.documentElement.classList.add('ios');
+            }
+        })();
+    </script>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
@@ -426,11 +436,7 @@
             margin-top: auto; /* Pushes to bottom */
             flex-shrink: 0; /* Prevent shrinking */
             padding: 0.5rem;
-        
-            width: 100%; /* Ensure stats container matches sidebar width on iPad */
-            width: 100%; /* Full width of sidebar */
-            margin-left: 0;
-            margin-right: 0;}
+        }
 
         .dark .stats-container {
             background-color: #374151;
@@ -868,6 +874,42 @@
         .dark .favorite-star-container.favorited svg {
             stroke: white; /* White outline on dark backgrounds */
         }
+    
+        /* === iOS PDF scrolling fix: disable 3D transforms around iframe/object so all pages scroll === */
+        html.ios #doc-iframe-wrapper { perspective: none !important; }
+        html.ios .doc-iframe-container { 
+            transform: none !important;
+            transition: none !important;
+            backface-visibility: visible !important;
+            overflow: auto !important;
+        }
+        html.ios .doc-iframe-container.current,
+        html.ios .doc-iframe-container.next,
+        html.ios .doc-iframe-container.prev {
+            transform: none !important;
+        }
+        html.ios .turning-next,
+        html.ios .turning-prev,
+        html.ios .incoming-next,
+        html.ios .incoming-prev {
+            transform: none !important;
+        }
+        /* Ensure embedded document fills available space and scrolls smoothly on iPad */
+        html.ios #doc-object,
+        html.ios .doc-iframe-container iframe,
+        html.ios .doc-iframe-container embed,
+        html.ios .doc-iframe-container object {
+            width: 100% !important;
+            height: 100% !important;
+            display: block !important;
+        }
+        html.ios .doc-view-fullscreen {
+            overflow: hidden;
+        }
+        html.ios .doc-iframe-container {
+            -webkit-overflow-scrolling: touch;
+        }
+
     </style>
 </head>
 
