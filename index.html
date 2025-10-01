@@ -123,7 +123,7 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0; /* Prevent shrinking */
-            font-size: 1rem; /* Bigger numbers */
+            font-size: 1.125rem; /* Bigger numbers */
             font-weight: 600; /* Bolder numbers */
         }
 
@@ -294,8 +294,13 @@
         .dark #setlist-details-content {
             background-color: #374151;
         }
-        .dark #setlist-details-content label {
-            color: #f9fafb !important; /* Force white color */
+        .dark #setlist-details-content label,
+        .dark #setlist-details-content input,
+        .dark #setlist-details-content select {
+            color: #f9fafb !important; /* Consistent near-white color */
+        }
+        .dark #setlist-details-content #setlist-venue::placeholder {
+            color: #9ca3af !important; /* A light gray for the placeholder */
         }
        
         .drag-highlight {
@@ -359,7 +364,7 @@
             height: 100%;
             transition: width 0.4s ease-in-out, padding 0.4s ease-in-out;
             position: relative;
-            padding: 1rem;
+            padding: 1rem 0 1rem 1rem; /* Adjust padding for scrollbar alignment */
         }
         /* Sidebar scrolling fix */
         .left-col-main-content {
@@ -367,6 +372,7 @@
             overflow-x: hidden; /* PREVENT HORIZONTAL SCROLL */
             flex-grow: 1;
             margin-bottom: 0.5rem; /* Gap between venues and stats */
+            padding-right: 1rem; /* Space for scrollbar */
         }
 
         .left-col.collapsed {
@@ -889,7 +895,7 @@
                     <div id="setlist-details-content">
                         <div>
                             <label for="setlist-date" class="font-medium text-xs">Date</label>
-                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200">
+                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 w-44 dark:text-gray-200" placeholder="mm/dd/yyyy">
                         </div>
                         <div>
                             <label for="setlist-venue" class="font-medium text-xs">Venue</label>
