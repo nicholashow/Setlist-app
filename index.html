@@ -1301,6 +1301,19 @@
                 }
             });
 
+            // Add droppable functionality to the sidebar toggle to expand on drag hover
+            $('#sidebar-toggle').droppable({
+                accept: '.draggable',
+                tolerance: 'pointer',
+                over: function(event, ui) {
+                    const $sidebar = $('.left-col');
+                    if ($sidebar.hasClass('collapsed')) {
+                        $sidebar.removeClass('collapsed');
+                        $('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />');
+                    }
+                }
+            });
+
             $('main').on('click', 'li.draggable', function(e) {
                 const listId = `#${$(this).parent().attr('id')}`;
                 if ($(e.target).is('input, button, a, .genre-dot, .energy-icon, .energy-icon *, .favorite-star-container, .favorite-star-container *') || $(e.target).closest('button').length > 0) {
@@ -1683,7 +1696,6 @@
 
         function handleSelection(event, containerSelector) { $(event.currentTarget).toggleClass('item-selected'); }
 
-        // FIX: Define a reusable helper function for draggable items
         const draggableOptions = {
             appendTo: 'body',
             revert: 'invalid',
@@ -1694,34 +1706,34 @@
                 const $sourceList = $sourceItem.parent();
                 const $selectedItems = $sourceList.children('.item-selected');
 
-                // If not dragging a multi-selection, select the single item being dragged
+                // Handle multi-selection state
                 if ($selectedItems.length <= 1 || !$sourceItem.hasClass('item-selected')) {
                     $sourceList.children('.item-selected').removeClass('item-selected');
                     $sourceItem.addClass('item-selected');
                 }
                 
                 const count = $sourceList.children('.item-selected').length;
+                let helperContent;
 
-                // Style the helper to be blue and correctly sized
-                ui.helper.css({
+                if (count > 1) {
+                    helperContent = `Dragging ${count} items`;
+                } else {
+                    helperContent = $sourceItem.find('.song-name').text();
+                }
+                
+                // Create a custom horizontal helper
+                ui.helper.empty().html(helperContent).css({
                     'background-color': '#3b82f6',
                     'color': 'white',
-                    'width': $sourceItem.outerWidth(),
+                    'padding': '0.5rem 1rem',
+                    'height': 'auto',
+                    'width': 'auto',
+                    'white-space': 'nowrap',
                     'box-shadow': '0 5px 15px rgba(0,0,0,0.3)',
                     'z-index': 9999,
-                    'border-radius': '0.5rem'
-                }).addClass('selected'); // Use selected class for consistency
-                ui.helper.find('*').css('color', 'white'); // Force text color
-                
-                // If dragging multiple items, create a summary badge
-                if (count > 1) {
-                    ui.helper.empty()
-                        .css({'height': '60px', 'padding': '1rem'})
-                        .addClass('flex items-center justify-center font-semibold')
-                        .html(`Dragging ${count} items`);
-                } else {
-                     ui.helper.css('height', $sourceItem.outerHeight());
-                }
+                    'border-radius': '0.5rem',
+                    'font-weight': '600'
+                });
             }
         };
 
@@ -1826,7 +1838,7 @@
             });
             $('.setlist-item').droppable({
                 accept: '.draggable',
-                hoverClass: 'drag-highlight',
+                hoverClass: 'selected',
                 drop: function(e, ui) {
                     const setlistName = $(this).data('name');
                     const setlist = setlists[setlistName];
