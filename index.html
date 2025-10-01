@@ -445,12 +445,11 @@
         }
         #genre-color::-webkit-color-swatch {
             border-radius: 50%;
-            border: 1px solid #4b5563;
-            background-color: transparent; /* Show gradient underneath */
+            border: none;
         }
         #genre-color::-moz-color-swatch {
             border-radius: 50%;
-            border: 1px solid #4b5563;
+            border: none;
         }
 
 
@@ -524,6 +523,8 @@
             flex-direction: column;
             gap: 0.5rem;
             margin-bottom: 0.5rem;
+            padding-right: 0.5rem;
+            box-sizing: border-box;
         }
         #search-container {
             position: relative;
@@ -586,17 +587,17 @@
             flex-shrink: 0; /* Prevent from being overlapped */
         }
         .song-details-container input, .song-details-container .delete-btn {
-            width: 112px;
+            width: 96px;
             text-align: center; /* Center text in inputs */
         }
         .song-details-container .delete-btn {
-            width: 80px;
+            width: 72px;
         }
         
         .left-col:not(.collapsed) ~ main .song-details-container {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            width: 280px;
+            width: 220px;
             gap: 0.5rem;
             align-items: stretch; /* Ensures items fill the cell height */
         }
@@ -1752,13 +1753,13 @@
 
         function createSongItem(song, idx, context) {
             const favClass = song.favorite ? 'favorited' : '';
-            const star = `<div class="w-6 flex-shrink-0 flex justify-center items-center favorite-star-container ${favClass}" title="Toggle Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></div>`;
-            const dot = `<div class="w-6 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span></div>`;
-            const energyIcon = `<div class="w-6 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${song.energy||0}">${energyIcons[song.energy||0]}</div>`;
+            const star = `<div class="w-8 flex-shrink-0 flex justify-center items-center favorite-star-container ${favClass}" title="Toggle Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></div>`;
+            const dot = `<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${song.genre?getGenreColor(song.genre):'#cbd5e1'}" title="${song.genre||'no genre'}"></span></div>`;
+            const energyIcon = `<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${song.energy||0}">${energyIcons[song.energy||0]}</div>`;
             const buttonText = ['master', 'favorites', 'genre'].includes(context) ? 'Delete' : 'Remove';
             const inputsHTML = `<div class="song-details-container"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(song.artist||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(song.notes||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(song.duration||'')}"><button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${buttonText}</button></div>`;
             const viewedClass = context === 'setlist' && viewedSongsInSetlist.has(song.id) ? 'viewed-index' : '';
-            return $(`<li id="${song.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable">${star}<div class="w-6 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${viewedClass}">${idx+1}</span></div>${dot}${energyIcon}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium">${escapeHtml(song.name)}</div>${inputsHTML}</li>`);
+            return $(`<li id="${song.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable">${star}<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${viewedClass}">${idx+1}</span></div>${dot}${energyIcon}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium">${escapeHtml(song.name)}</div>${inputsHTML}</li>`);
         }
 
         function handleSelection(event, containerSelector) { $(event.currentTarget).toggleClass('item-selected'); }
