@@ -28,11 +28,14 @@
         }
 
         /* --- FIX: Correctly enables scrolling on touch devices when PDF viewer is open --- */
-        html.doc-viewer-active,
         body.doc-viewer-active {
-            position: static; /* Revert to default positioning */
-            overflow: auto !important;   /* Explicitly allow scrolling */
-            height: auto;
+            position: static; /* Allow body to be a normal block element */
+            overflow: hidden; /* But prevent the body itself from showing a scrollbar */
+        }
+
+        .doc-view-fullscreen {
+            overflow-y: auto; /* Make the entire viewer the scroll container */
+            -webkit-overflow-scrolling: touch; /* Enable momentum scrolling on iOS */
         }
 
         .sortable {
@@ -212,8 +215,6 @@
             width: 100%;
             height: 100%;
             z-index: 99;
-            overflow: auto;
-            -webkit-overflow-scrolling: touch;
         }
 
 
@@ -384,14 +385,47 @@
             height: 100%;
             transition: width 0.4s ease-in-out, padding 0.4s ease-in-out;
             position: relative;
-            padding: 1rem;
+            /* --- FIX: Adjust padding to move scrollbar to the edge --- */
+            padding: 1rem 0 1rem 1rem;
         }
+
+        /* --- FIX: Wider, styled scrollbars for sidebar containers --- */
+        .left-col-main-content::-webkit-scrollbar,
+        .stats-container::-webkit-scrollbar {
+            width: 16px;
+        }
+        .left-col-main-content::-webkit-scrollbar-track,
+        .stats-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .left-col-main-content::-webkit-scrollbar-thumb,
+        .stats-container::-webkit-scrollbar-thumb {
+            background-color: #4b5563;
+            border-radius: 8px;
+            border: 4px solid #1f2937; /* Use sidebar's inner color for a padded look */
+        }
+        .dark .left-col-main-content::-webkit-scrollbar-thumb,
+        .dark .stats-container::-webkit-scrollbar-thumb {
+            border-color: #000;
+        }
+        .left-col-main-content::-webkit-scrollbar-thumb:hover,
+        .stats-container::-webkit-scrollbar-thumb:hover {
+            background-color: #6b7280;
+        }
+        
         /* Sidebar scrolling fix */
         .left-col-main-content {
             overflow-y: auto;
             overflow-x: hidden; /* PREVENT HORIZONTAL SCROLL */
             flex-grow: 1;
             margin-bottom: 1rem; /* Gap between venues and stats */
+            /* --- FIX: Add padding to content to compensate for parent padding removal --- */
+            padding-right: 1rem;
+        }
+
+        .stats-container {
+             /* --- FIX: Add padding to content to compensate for parent padding removal --- */
+            padding-right: 1rem;
         }
 
         .left-col.collapsed {
@@ -467,6 +501,7 @@
             height: 100%;
             border-radius: 50%;
             background-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
+            transition: background 0.2s;
         }
         #genre-color {
             position: absolute;
@@ -1338,6 +1373,15 @@
                     save();
                 }
             });
+
+            // --- FIX: Genre color picker functionality ---
+            $('#genre-color').on('input', function() {
+                $('#genre-color-display').css({
+                    'background-image': 'none',
+                    'background-color': $(this).val()
+                });
+            });
+
             $('#add-genre').click(function() {
                 const name = $('#genre-name').val().trim();
                 const color = $('#genre-color').val();
@@ -1346,8 +1390,14 @@
                 genres.push({ name, color });
                 $('#genre-name').val('');
                 renderGenres(deselectAllNav);
+                // Reset color display to default rainbow
+                $('#genre-color-display').css({
+                    'background-image': 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
+                    'background-color': ''
+                });
                 save();
             });
+
             $('#add-venue').click(function() {
                 const name = $('#venue-name').val().trim();
                 if (!name) return alert('Enter a venue name');
@@ -1566,8 +1616,9 @@
             });
             $('#close-doc').on('click', function(e) {
                 e.stopPropagation();
-                // --- FIX: Remove class from both html and body to restore locked layout ---
-                $('html, body').removeClass('doc-viewer-active');
+                // --- FIX: Hide app, then restore it on close for scrolling ---
+                $('body').removeClass('doc-viewer-active');
+                $('#app').css('display', 'flex'); // Restore main app view
                 $('#doc-view').removeClass('doc-view-fullscreen').hide();
                 resetScrollHandlers();
                 $('#doc-iframe-container').empty();
@@ -2347,8 +2398,11 @@
             }
             const url = getFileURL(song);
             if (!url) { alert('File not available for this song.'); return; }
-            // --- FIX: Add class to both html and body to enable scrolling ---
-            $('html, body').addClass('doc-viewer-active');
+            
+            // --- FIX: Hide app, then restore it on close for scrolling ---
+            $('body').addClass('doc-viewer-active');
+            $('#app').hide(); // Hide main app to prevent background scrolling
+
             $('#doc-iframe-container').empty().append(`<object id="doc-object" data="${url}" type="application/pdf"><p>PDF not supported. <a href="${url}" target="_blank">Download PDF</a>.</p></object>`);
             $('#doc-view').addClass('doc-view-fullscreen').show();
             $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
