@@ -60,15 +60,21 @@
         .selected .genre-name, .selected .venue-name {
              color: white !important;
         }
+
+        /* Simple hover class for dragging over a setlist */
+        .drag-hover-setlist {
+            background-color: #3b82f6 !important;
+            color: white !important;
+        }
         
         /* Multiple selection highlight */
         .item-selected {
-            background-color: #93c5fd !important;
-            border-left: 4px solid #2563eb;
+            background-color: #3b82f6 !important;
+            color: white !important;
         }
         .dark .item-selected {
-            background-color: #1e40af !important;
-            border-left: 4px solid #60a5fa;
+            background-color: #2563eb !important;
+            color: white !important;
         }
 
 
@@ -334,6 +340,7 @@
             overflow-x: hidden; /* PREVENT HORIZONTAL SCROLL */
             flex-grow: 1;
             margin-bottom: 0.5rem; /* Gap between venues and stats */
+            padding-right: 1rem; /* Push content away from the edge scrollbar */
         }
 
         .left-col.collapsed {
@@ -707,7 +714,7 @@
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
     <div class="flex h-screen font-sans" id="app">
-        <aside class="left-col w-64 bg-gray-800 text-white p-4 flex-shrink-0 dark:bg-black">
+        <aside class="left-col w-64 bg-gray-800 text-white py-4 pl-4 flex-shrink-0 dark:bg-black">
             <div class="left-col-main-content">
                 <div class="app-header app-header-selected" id="home-btn">
                     <h1 class="text-2xl font-bold mb-2 underline">ALL SONGS</h1>
@@ -1734,6 +1741,11 @@
                     'border-radius': '0.5rem',
                     'font-weight': '600'
                 });
+            },
+            stop: function(e, ui) {
+                // Clean up any selection styles from the source list after the drag operation is complete
+                const sourceListId = $(this).parent().attr('id');
+                $(`#${sourceListId} .item-selected`).removeClass('item-selected');
             }
         };
 
@@ -1838,7 +1850,7 @@
             });
             $('.setlist-item').droppable({
                 accept: '.draggable',
-                hoverClass: 'selected',
+                hoverClass: 'drag-hover-setlist',
                 drop: function(e, ui) {
                     const setlistName = $(this).data('name');
                     const setlist = setlists[setlistName];
@@ -1855,12 +1867,10 @@
                         }
                     });
                     if (added) {
-                        $(this).addClass('drop-flash');
-                        setTimeout(() => $(this).removeClass('drop-flash'), 1000);
+                        // The drop function in draggableOptions will handle removing the 'item-selected' class now
                         save();
                         if (currentSetlist === setlistName) renderSetlist();
                     }
-                    $(selector).removeClass('item-selected');
                 }
             });
             $('#setlists-container').sortable({
