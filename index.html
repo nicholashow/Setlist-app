@@ -436,14 +436,6 @@
             margin-top: auto; /* Pushes to bottom */
             flex-shrink: 0; /* Prevent shrinking */
             padding: 0.5rem;
-        
-            max-width: 100%;
-        
-            box-sizing: border-box;
-        
-            margin-left: 0;
-        
-            margin-right: 0;
         }
 
         .dark .stats-container {
@@ -1279,27 +1271,13 @@
         // --- IPAD INPUT FIX: Manually focus inputs on touchstart and stop the event ---
         // This intercepts the tap before jQuery UI Touch Punch can hijack it for dragging.
         $('main').on('touchstart', 'input.artist-input, input.notes-input, input.duration-input', function(e) {
-            // Strong iOS tap-to-type fix: block drag plugins and native gestures from hijacking focus
-            e.preventDefault();
-            e.stopImmediatePropagation();
             this.focus();
-            // Also place caret at end (helps when tapping prefilled fields on iPad)
-            const len = this.value ? this.value.length : 0;
-            try { this.setSelectionRange(len, len); } catch (_) {}
+            e.stopPropagation();
         });
 
         $('main').on('click','li.draggable',function(e){if($(e.target).closest('input, button, a, .genre-dot, .energy-icon, .favorite-star-container').length>0){return}const s=$(this).attr('id'),c=$('main > section:visible').attr('id').replace('-view','');openSongInContext(s,c)});
         });
-        
-        // --- Helper: ensure doc viewer scrolls on iPad by toggling body class safely ---
-        function ensureDocViewerActive() {
-            if (!document.body.classList.contains('doc-viewer-active')) {
-                document.body.classList.add('doc-viewer-active');
-            }
-            const dv = document.getElementById('doc-view');
-            if (dv) { dv.style.display = 'block'; }
-        }
-    // ================== Event Handlers ==================
+        // ================== Event Handlers ==================
         function bindNav(ds){
             $('#home-btn').click(()=>{ds();$('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');show('master');autoCollapseSidebar()});
             $('#nav-favorites').click(()=>{ds();$('#nav-favorites').addClass('selected');show('favorites')});
