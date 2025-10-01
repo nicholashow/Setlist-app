@@ -13,8 +13,9 @@
     </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js">
-    <!-- pdf.js for reliable multi-page PDF rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+    
+    <!-- pdf.js for reliable multi-page PDF rendering (scoped) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
       if (window['pdfjsLib']) {
@@ -877,20 +878,21 @@
             stroke: white; /* White outline on dark backgrounds */
         }
     
-        /* === pdf.js viewer container === */
-        #pdfjs-container {
+        /* === Scoped pdf.js viewer under #doc-view only === */
+        #doc-view [data-pdfjs-root] {
             width: 100%;
-            height: 100%;
+            height: calc(100vh - 50px); /* account for fixed top nav */
             overflow: auto;
             -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
             position: relative;
-            background: #111827; /* match dark viewer bg */
+            background: #111827;
         }
-        #pdfjs-pages {
+        #doc-view [data-pdfjs-root] .pdfjs-pages {
             padding: 16px;
             box-sizing: border-box;
         }
-        #pdfjs-pages canvas {
+        #doc-view [data-pdfjs-root] .pdfjs-pages canvas {
             width: 100%;
             height: auto;
             display: block;
@@ -1369,88 +1371,103 @@
         function showNavButtons() { $('#doc-nav-buttons').removeClass('hidden'); startInactivityTimer(); }
         function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000); }
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
-    
-        
-        // ========== pdf.js integration (safe observer) ==========
-        (function() {
-          function mountPdfJsForEmbed(embedEl, url) {
-            if (!window.pdfjsLib || embedEl.dataset.pdfjsMounted === "1") return;
-            // Hide the native embed and add a container after it as our renderer
-            embedEl.style.display = 'none';
-            embedEl.dataset.pdfjsMounted = "1";
-            const container = document.createElement('div');
-            container.id = 'pdfjs-container';
-            const pages = document.createElement('div');
-            pages.id = 'pdfjs-pages';
-            container.appendChild(pages);
-            embedEl.parentNode.insertBefore(container, embedEl.nextSibling);
+    </script>
 
-            (async () => {
-              try {
-                const loadingTask = pdfjsLib.getDocument(url);
-                const pdf = await loadingTask.promise;
-                const DPR = window.devicePixelRatio || 1;
-                for (let p = 1; p <= pdf.numPages; p++) {
-                  const page = await pdf.getPage(p);
-                  const viewport = page.getViewport({ scale: 1 });
-                  // Fit to container width
-                  const containerWidth = pages.clientWidth || window.innerWidth;
-                  const scale = Math.max(1, (containerWidth / viewport.width));
-                  const scaledViewport = page.getViewport({ scale });
+    <script>
+    // ======= Scoped pdf.js renderer (best-practice) =======
+    (function() {
+      function isiOS() {
+        var ua = navigator.userAgent || navigator.vendor || window.opera;
+        return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      }
 
-                  const canvas = document.createElement('canvas');
-                  const ctx = canvas.getContext('2d');
-                  canvas.width = Math.floor(scaledViewport.width * DPR);
-                  canvas.height = Math.floor(scaledViewport.height * DPR);
-                  canvas.style.width = '100%';
-                  canvas.style.height = 'auto';
+      async function renderCurrentPdf() {
+        try {
+          if (!window.pdfjsLib) return;
+          var wrapper = document.getElementById('doc-iframe-wrapper');
+          if (!wrapper) return;
+          if (!window.currentViewerList || typeof window.currentViewerIndex !== 'number') return;
+          var item = window.currentViewerList[window.currentViewerIndex];
+          if (!item) return;
+          // Use existing helper to derive an object URL
+          if (typeof window.getFileURL !== 'function') return;
+          var url = window.getFileURL(item);
+          if (!url) return;
 
-                  const renderContext = {
-                    canvasContext: ctx,
-                    viewport: page.getViewport({ scale: scale * DPR }),
-                  };
-                  await page.render(renderContext).promise;
-                  pages.appendChild(canvas);
-                }
-              } catch (e) {
-                console.error('pdf.js render failed, falling back to native viewer:', e);
-                // If pdf.js fails, show the original embed again
-                embedEl.style.display = '';
-                if (container && container.parentNode) container.parentNode.removeChild(container);
-                embedEl.dataset.pdfjsMounted = "";
-              }
-            })();
+          // Create a unique, scoped root
+          // Remove any previous pdf.js root we added
+          Array.from(wrapper.querySelectorAll('[data-pdfjs-root]')).forEach(n => n.remove());
+
+          var root = document.createElement('div');
+          root.setAttribute('data-pdfjs-root', '1');
+          var pages = document.createElement('div');
+          pages.className = 'pdfjs-pages';
+          root.appendChild(pages);
+          // Clear native embed only if present and we are on iOS (where iframe is problematic)
+          if (isiOS()) {
+            wrapper.innerHTML = '';
+          }
+          wrapper.appendChild(root);
+
+          const loadingTask = pdfjsLib.getDocument(url);
+          const pdf = await loadingTask.promise;
+          const DPR = window.devicePixelRatio || 1;
+
+          for (let p = 1; p <= pdf.numPages; p++) {
+            const page = await pdf.getPage(p);
+            const viewport = page.getViewport({ scale: 1 });
+            const containerWidth = pages.clientWidth || window.innerWidth;
+            const scale = Math.max(1, (containerWidth / viewport.width)); // fit width
+            const scaledViewport = page.getViewport({ scale });
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = Math.floor(scaledViewport.width * DPR);
+            canvas.height = Math.floor(scaledViewport.height * DPR);
+            canvas.style.width = '100%';
+            canvas.style.height = 'auto';
+
+            const renderContext = {
+              canvasContext: ctx,
+              viewport: page.getViewport({ scale: scale * DPR }),
+            };
+            await page.render(renderContext).promise;
+            pages.appendChild(canvas);
           }
 
-          const wrapper = document.getElementById('doc-iframe-wrapper');
-          if (!wrapper) return;
+          // Hook prev/next to re-render if the app changes currentViewerIndex
+          var prev = document.getElementById('prev-doc');
+          var next = document.getElementById('next-doc');
+          if (!root._pdfjsNavBound) {
+            root._pdfjsNavBound = true;
+            if (prev) prev.addEventListener('click', () => setTimeout(renderCurrentPdf, 40));
+            if (next) next.addEventListener('click', () => setTimeout(renderCurrentPdf, 40));
+          }
+        } catch (e) {
+          console.error('pdf.js render error:', e);
+        }
+      }
 
-          const observer = new MutationObserver((mutations) => {
-            for (const m of mutations) {
-              for (const node of m.addedNodes) {
-                if (!(node instanceof HTMLElement)) continue;
+      // Observe when the viewer opens: body gets class 'doc-viewer-active' and #doc-view is shown
+      var lastActive = false;
+      setInterval(function() {
+        var docView = document.getElementById('doc-view');
+        var active = document.body.classList.contains('doc-viewer-active') || (docView && docView.style.display !== 'none' && !docView.classList.contains('hidden'));
+        if (active && !lastActive) {
+          // viewer just opened
+          if (isiOS()) {
+            // on iPad, always use pdf.js rendering
+            setTimeout(renderCurrentPdf, 0);
+          }
+        }
+        lastActive = active;
+      }, 200);
 
-                const findAndMount = (el) => {
-                  const isEmbed = /^(IFRAME|OBJECT|EMBED)$/.test(el.tagName);
-                  if (isEmbed) {
-                    const url = el.getAttribute('src') || el.getAttribute('data');
-                    if (url) mountPdfJsForEmbed(el, url);
-                  }
-                };
-
-                findAndMount(node);
-                node.querySelectorAll && node.querySelectorAll('iframe, object, embed').forEach(findAndMount);
-              }
-            }
-          });
-
-          observer.observe(wrapper, { childList: true, subtree: true });
-
-          // Do not override any existing button handlers or cleanup.
-          // Their original logic remains untouched.
-        })();
-
+      // Also expose a manual hook in case you want to call it directly after opening:
+      window.__renderCurrentPdfWithPdfJs = renderCurrentPdf;
+    })();
     </script>
+
 </body>
 
 </html>
