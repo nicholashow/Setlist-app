@@ -616,12 +616,24 @@
             margin-top: auto; /* Pushes to bottom */
             flex-shrink: 0; /* Prevent shrinking */
             padding: 0.5rem;
-            /* Align internal scrollbar with main sidebar scrollbar */
-    scrollbar-gutter: stable;
-    margin-right: -12px; /* push scrollbar into black sidebar area */
-    padding-right: calc(0.5rem + 12px); /* protect content from overlay */
-    width: calc(100% + 12px); /* extend scroll box to the right without shrinking content */
+        }
+
+/* === Scrollbar alignment for Top/Least Played (non-intrusive) === */
+:root { --sb: 12px; } /* scrollbar visual width */
+
+.stats-container {
+    /* keep the element's size IDENTICAL; just reserve space on the right for the scrollbar */
+    padding-right: calc(0.5rem + var(--sb)); /* 0.5rem existing padding + scrollbar width */
+    background-clip: content-box; /* make right padding area show the parent's background (black) */
+    overflow-y: auto; /* ensure the container scrolls */
 }
+
+/* WebKit/iPad scrollbar sizing to match --sb */
+.stats-container::-webkit-scrollbar { width: var(--sb); }
+.stats-container::-webkit-scrollbar-thumb { border-radius: 8px; }
+.stats-container::-webkit-scrollbar-track { background: transparent; }
+
+
 
         .dark .stats-container {
             background-color: #374151;
