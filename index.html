@@ -916,21 +916,22 @@
         html.ios .doc-iframe-container {
             -webkit-overflow-scrolling: touch;
         }
-        /* === Ensure long lists are scrollable on iPad/iOS === */
-        /* Constrain master list container and enable scrolling */
+        /* === Fix All Songs scroll and clipping === */
+        /* Let MAIN be the only scroll container; don't constrain the white card */
         #master-view > .bg-white {
-            max-height: calc(100vh - 260px); /* leave room for controls */
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            overflow: visible; /* don't clip last item inside rounded container */
         }
-        #master-list {
+        /* Smooth iOS momentum and bottom padding so the last row isn't cut off */
+        #master-list { 
             -webkit-overflow-scrolling: touch;
+            padding-bottom: 1rem;
         }
         /* Momentum scrolling for setlist lists */
         #setlist-list,
         #setlist-add-songs-list {
             -webkit-overflow-scrolling: touch;
         }
+
 
     </style>
 </head>
