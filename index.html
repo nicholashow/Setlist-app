@@ -1226,20 +1226,6 @@
         }
 
     </style>
-
-<!-- PATCH: stats-container scrollbar alignment -->
-<style>
-/* Align the Top/Least Played scrollbar flush with the sidebar's right edge */
-.stats-container{
-  /* keep original behavior */
-  max-height: 200px !important;
-  overflow-y: auto !important;
-  /* pull internal scrollbar to the outer edge like .left-col-main-content does */
-  margin-right: -1rem !important;
-  padding-right: 1rem !important;
-}
-</style>
-
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -1262,7 +1248,14 @@
                         <button class="w-full mt-1 p-1 text-sm rounded-md btn-add" id="add-setlist-btn">Add Setlist</button>
                     </div>
                 </div>
-                <div class="sidebar-item" id="nav-favorites">Favorites</div>
+                <div class="sidebar-item" id="nav-favorites">
+<div class="p-2 flex justify-end">
+  <button id="collapseSidebar" aria-label="Collapse sidebar" class="p-1.5 rounded-full shadow-sm transition duration-300 ease-out hover:shadow active:scale-95 backdrop-blur border border-black/10 dark:border-white/10">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+      <polyline points="15 18 9 12 15 6"></polyline>
+    </svg>
+  </button>
+</div>Favorites</div>
                 <div class="sidebar-item" id="nav-plays">Plays</div>
                 <div class="sidebar-item" id="nav-recordings">Recordings</div>
                 <div class="sidebar-item" id="nav-energy">Energy Levels</div>
@@ -1756,149 +1749,6 @@ const s=$('.left-col');s.toggleClass('collapsed');
     <div id="edge-scrollbar" class="hidden" aria-hidden="true">
         <div id="edge-thumb"></div>
     </div>
-
-
-<!-- PATCH: long-press renaming for genres, setlists, venues, songs -->
-<script>
-(function(){
-  const HOLD_MS = 2000;
-  const MOVE_PX = 8;
-
-  function makeInput($label, initial, onCommit){
-    const $input = $('<input type="text" class="edit-input rounded-md border px-2 py-1 text-sm dark:bg-gray-700 dark:text-white">')
-      .val(initial);
-    const origClass = $label.attr('class') || '';
-    $label.replaceWith($input);
-    $input.focus().select();
-    function finish(val){
-      const value = (val !== undefined ? val : $input.val().trim());
-      const $new = $('<span>').text(value || initial).attr('class', origClass);
-      $input.replaceWith($new);
-      if (value && value !== initial){ onCommit(value); }
-    }
-    $input.on('keydown', function(e){
-      if (e.key === 'Enter'){ e.preventDefault(); finish(); }
-      if (e.key === 'Escape'){ e.preventDefault(); finish(initial); }
-    });
-    $input.on('blur', function(){ finish(); });
-  }
-
-  function bindLongPress(selector, labelSelector, onCommit){
-    let timer=null, sx=0, sy=0, fired=false, startTarget=null;
-
-    function start(e){
-      if (e.type === 'mousedown' && e.button !== 0) return;
-      fired = false;
-      startTarget = e.currentTarget;
-      const p = (e.touches && e.touches[0]) ? e.touches[0] : e;
-      sx = p.clientX || 0; sy = p.clientY || 0;
-      clearTimeout(timer);
-      timer = setTimeout(()=>{
-        // Only trigger if pointer hasn't moved
-        fired = true;
-        // Stop other handlers (like drag long-press on li.draggable)
-        e.stopImmediatePropagation && e.stopImmediatePropagation();
-        e.stopPropagation && e.stopPropagation();
-        e.preventDefault && e.preventDefault();
-        const $item = $(startTarget);
-        // Decide the label to edit
-        let $label = labelSelector ? $item.find(labelSelector).first() : $item;
-        if (!$label.length) $label = $item;
-        const initial = ($label.text() || '').trim();
-        // Temporarily disable dragging if the parent is draggable
-        const $li = $item.closest('li.draggable');
-        try{ if ($li.length && $li.data('ui-draggable')) { $li.draggable('disable'); } }catch(_){}
-        makeInput($label, initial, (newVal)=>{
-          onCommit($item, newVal, initial);
-          // Re-enable draggable
-          try{ if ($li.length && $li.data('ui-draggable')) { $li.draggable('enable'); } }catch(_){}
-        });
-      }, HOLD_MS);
-    }
-    function move(e){
-      if (!timer) return;
-      const p = (e.touches && e.touches[0]) ? e.touches[0] : e;
-      if (Math.hypot((p.clientX||0)-sx, (p.clientY||0)-sy) > MOVE_PX){
-        clearTimeout(timer); timer=null;
-      }
-    }
-    function end(){
-      if (!fired){ clearTimeout(timer); timer=null; }
-    }
-
-    // Bind to both touch and mouse
-    $(document)
-      .off('touchstart.longpress mousedown.longpress', selector)
-      .on('touchstart.longpress mousedown.longpress', selector, start)
-      .off('touchmove.longpress mousemove.longpress', selector)
-      .on('touchmove.longpress mousemove.longpress', selector, move)
-      .off('touchend.longpress mouseup.longpress', selector)
-      .on('touchend.longpress mouseup.longpress', selector, end);
-  }
-
-  // ---- Genres ----
-  bindLongPress('#genre-list .genre-item', '.genre-name', function($item, newName, oldName){
-    const old = $item.attr('data-name') || oldName;
-    if (Array.isArray(window.genres)){
-      const g = window.genres.find(x => x.name === old);
-      if (g){ g.name = newName; }
-      $item.attr('data-name', newName);
-      // Update visible text if there wasn't a dedicated .genre-name
-      if (!$item.find('.genre-name').length){ $item.contents().filter(function(){return this.nodeType===3;}).first().replaceWith(newName); }
-      if (typeof save === 'function') save();
-    }
-  });
-
-  // ---- Venues ----
-  bindLongPress('#venue-list .venue-item', '.venue-name', function($item, newName, oldName){
-    const old = $item.attr('data-name') || oldName;
-    if (Array.isArray(window.venues)){
-      const v = window.venues.find(x => x.name === old);
-      if (v){ v.name = newName; }
-      $item.attr('data-name', newName);
-      if (!$item.find('.venue-name').length){ $item.contents().filter(function(){return this.nodeType===3;}).first().replaceWith(newName); }
-      if (typeof save === 'function') save();
-    }
-  });
-
-  // ---- Setlists ----
-  bindLongPress('#setlists-container .setlist-item', '.setlist-name', function($item, newName, oldName){
-    const span = $item.find('.setlist-name');
-    const prev = (span.text() || '').trim();
-    const old = prev || oldName;
-    if (window.setlists && typeof window.setlists === 'object'){
-      if (window.setlists[newName]){ alert('Name exists'); return; }
-      const updated = {};
-      Object.keys(window.setlists).forEach(k=>{
-        updated[k===old? newName: k] = window.setlists[k];
-      });
-      window.setlists = updated;
-      if (window.currentSetlist === old) window.currentSetlist = newName;
-      span.text(newName);
-      $item.attr('data-name', newName);
-      $('#setlist-title').text(function(_,t){ return t && t.trim()===old ? newName : t; });
-      if (typeof save === 'function') save();
-    }
-  });
-
-  // ---- Songs (Master, Setlist, Genre view) ----
-  function bindSong(selector){
-    bindLongPress(selector + ' li.draggable .font-medium', null, function($labelNode, newName, oldName){
-      const $li = $labelNode.closest('li.draggable');
-      const id = $li.attr('id');
-      if (Array.isArray(window.masterSongs)){
-        const song = window.masterSongs.find(x => String(x.id)===String(id));
-        if (song){ song.name = newName; }
-        if (typeof save === 'function') save();
-      }
-    });
-  }
-  bindSong('#master-list');
-  bindSong('#setlist-list');
-  bindSong('#genre-song-list');
-
-})();
-</script>
 
 </body>
 
