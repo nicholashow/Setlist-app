@@ -1316,11 +1316,22 @@
           backdrop-filter: saturate(180%) blur(8px);
           z-index: 2;
         }
-        #pdf-overlay .pdfjs-scroll { padding-top: 64px; }
+        #pdf-overlay .pdfjs-scroll { position: relative; inset: auto; flex: 1 1 auto; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px; }
         #pdf-overlay #prev-doc,
         #pdf-overlay #next-doc,
         #pdf-overlay #close-doc { pointer-events: auto; }      
     
+
+/* === Overlay flex layout to guarantee scrolling === */
+#pdf-overlay {
+  display: flex;
+  flex-direction: column;
+}
+#pdf-overlay-nav {
+  flex: 0 0 auto;
+}
+#pdf-overlay .pdfjs-scroll { position: relative; inset: auto; flex: 1 1 auto; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px; }
+
 </style>
 </head>
 
