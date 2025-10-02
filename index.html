@@ -1298,6 +1298,10 @@
 }
 /* Keep siblings from shifting during edit */
 .song-name.renaming { position: relative; }
+
+/* ipad pdfjs scroller */
+.doc-iframe-container { overflow: hidden; }
+.doc-iframe-container .pdfjs-scroller { overflow: auto; -webkit-overflow-scrolling: touch; }
 </style>
 
     <!-- PDF.js for multi-page rendering on iPad -->
@@ -1714,6 +1718,7 @@ $('#sidebar-toggle').off('click').on('click', function(){
     if (isCollapsed) {
         $sidebar.removeClass('collapsed');
         $sidebar.find('.left-col-main-content').scrollTop(0);
+        $sidebar.find('.left-col-main-content').scrollTop(0);
         $sidebar.removeClass('closing');
         // Icon should now indicate "collapse" (pointing left)
         $svg.html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />');
@@ -1854,6 +1859,19 @@ button, .sidebar-item, select, input { min-height: 44px; }
             const $wrapper = $('#doc-iframe-wrapper');
             const $oldContainer = $wrapper.find('.current');
             const $newContainer = $(`<div class="doc-iframe-container"><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
+            // iPad multi-page PDF: replace native <object> viewer with PDF.js canvases
+            (async () => {
+                try {
+                    const mount = $newContainer[0].querySelector('.doc-iframe-container .doc-iframe-object')?.parentElement || $newContainer[0];
+                    const ok = await tryRenderPDFMultiPage_iPad(song, url, mount);
+                    if (ok) {
+                        // Remove native <object> so it doesn't overlay canvases
+                        const nativeObj = $newContainer[0].querySelector('.doc-iframe-object');
+                        if (nativeObj) nativeObj.remove();
+                    }
+                } catch (e) { console.warn('iPad PDF hook failed', e); }
+            })();
+    
             // iPad multi-page fix: if PDF on iOS, render with PDF.js
             const isPdf = /\.pdf(\?|$)/i.test(url);
             if (isPdf && isIOS()) {
@@ -2112,6 +2130,80 @@ async function renderPDFWithPDFJS(url, mountEl) {
         console.error('PDF.js render failed', e);
         return false;
     }
+}
+
+// ===== iPad-safe multi-page PDF rendering (no native <object>) =====
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+// Get raw bytes for pdf.js: prefer File/Blob from song.fileInfo, else fetch URL
+function getPdfArrayBuffer(song, url) {
+  return new Promise((resolve, reject) => {
+    try {
+      if (song && song.fileInfo && song.fileInfo.file) {
+        const file = song.fileInfo.file;
+        const fr = new FileReader();
+        fr.onload = e => resolve(e.target.result);
+        fr.onerror = reject;
+        fr.readAsArrayBuffer(file);
+      } else {
+        fetch(url, { credentials: 'same-origin' })
+          .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+          .then(resolve, reject);
+      }
+    } catch (e) { reject(e); }
+  });
+}
+
+// Render all pages into a scrollable container with momentum scrolling on iPad
+async function renderPdfIntoContainer(arrayBuffer, mountEl, scaleHint) {
+  if (!window['pdfjsLib']) throw new Error('pdfjsLib missing');
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  // Prepare a full-fit scroller
+  mountEl.innerHTML = '';
+  const scroller = document.createElement('div');
+  scroller.className = 'pdfjs-scroller';
+  scroller.style.position = 'absolute';
+  scroller.style.inset = '0';
+  scroller.style.overflow = 'auto';
+  scroller.style.webkitOverflowScrolling = 'touch';
+  scroller.style.background = 'transparent';
+  mountEl.appendChild(scroller);
+
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const scale = Math.min(scaleHint || 1.25, 1.5); // keep memory in check on iPad
+
+  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+    const page = await pdf.getPage(pageNum);
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    canvas.style.display = 'block';
+    canvas.style.margin = '0 auto 16px';
+    const ctx = canvas.getContext('2d');
+    canvas.width = Math.floor(viewport.width * DPR);
+    canvas.height = Math.floor(viewport.height * DPR);
+    canvas.style.width = Math.floor(viewport.width) + 'px';
+    canvas.style.height = Math.floor(viewport.height) + 'px';
+    await page.render({ canvasContext: ctx, viewport: page.getViewport({ scale: scale * DPR }) }).promise;
+    scroller.appendChild(canvas);
+  }
+}
+
+// Master function used by openSongInContext after inserting the container
+async function tryRenderPDFMultiPage_iPad(song, url, containerEl) {
+  if (!isIOS()) return false;
+  const isPdf = /\.pdf($|\?)/i.test(url || '');
+  if (!isPdf) return false;
+  try {
+    const buf = await getPdfArrayBuffer(song, url);
+    await renderPdfIntoContainer(buf, containerEl, 1.2);
+    return true;
+  } catch (e) {
+    console.error('PDF multi-page render failed:', e);
+    return false;
+  }
 }
 </script>
 
