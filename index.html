@@ -1338,6 +1338,36 @@
         .pdfjs-page { margin: 0 auto 10px auto; }
         .pdfjs-page canvas { display:block; width:100% !important; height:auto !important; background:#fff; border-radius:6px; }
 
+
+        /* === Top-level PDF overlay (outside all transforms) === */
+        #pdf-overlay {
+          position: fixed; inset: 0; z-index: 999999;
+          background: #000;
+          display: none;
+        }
+        html.pdf-overlay-active, body.pdf-overlay-active {
+          position: static !important;
+          overflow: auto !important;
+          height: 100% !important;
+        }
+        html.ios #pdf-overlay, html.ios #pdf-overlay * {
+          transform: none !important;
+          perspective: none !important;
+          backface-visibility: visible !important;
+          will-change: auto !important;
+          filter: none !important;
+        }
+        #pdf-overlay .pdfjs-scroll {
+          position: absolute; inset: 0;
+          overflow: auto; -webkit-overflow-scrolling: touch;
+          padding: 12px 12px 72px;
+        }
+        #pdf-overlay .pdfjs-page { margin: 0 auto 12px; }
+        #pdf-overlay .pdfjs-page canvas {
+          display: block; width: 100% !important; height: auto !important;
+          background: #fff; border-radius: 6px;
+        }
+
 </style>
 </head>
 
@@ -1822,7 +1852,21 @@ const s=$('.left-col');s.toggleClass('collapsed');
             currentViewerIndex = (index === -1) ? currentViewerList.findIndex(s => s.id === songId) : index;
             if (context === 'setlist') { viewedSongsInSetlist.add(songId); $(`#setlist-list li[id="${songId}"] .index-number`).addClass('viewed-index'); }
             const url = getFileURL(song); if (!url) { alert('File not available for this song.'); return; }
-            const $wrapper = $('#doc-iframe-wrapper');
+            
+        (function(){
+            const scroller = showPdfOverlay();
+            (async () => {
+                try {
+                    await renderPDFInto(scroller, url);
+                    if (window.showNavButtons) window.showNavButtons();
+                } catch (e) {
+                    console.error('PDF render failed, opening natively', e);
+                    destroyPdfOverlay();
+                    try { window.open(url, '_blank'); } catch(_) {}
+                }
+            })();
+        })();
+        const $wrapper = $('#doc-iframe-wrapper');
             const $oldContainer = $wrapper.find('.current');
             const $newContainer = $(`<div class="doc-iframe-container"><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
             if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20); } 
@@ -2128,6 +2172,88 @@ async function renderPDFWithPDFJS(url, containerEl) {
   document.addEventListener('touchstart', cap, {passive:true, capture:true});
   document.addEventListener('pointerdown', cap, {passive:true, capture:true});
 })();
+</script>
+
+<script>
+function loadPDFJSLib() {
+  return new Promise((resolve, reject) => {
+    if (window.pdfjsLib) return resolve(window.pdfjsLib);
+    const s = document.createElement('script');
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    s.onload = () => {
+      try {
+        if (!window.pdfjsLib) return reject(new Error('pdfjsLib missing'));
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        resolve(window.pdfjsLib);
+      } catch(e){ reject(e); }
+    };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+async function renderPDFInto(containerEl, url) {
+  let src = url, revoke = null;
+  try {
+    const r = await fetch(url, { credentials: 'include' });
+    if (r.ok) { const b = await r.blob(); src = URL.createObjectURL(b); revoke = src; }
+  } catch(e) {}
+  const lib = await loadPDFJSLib();
+  const pdf = await lib.getDocument(src).promise;
+  containerEl.innerHTML = '';
+  const dpr = window.devicePixelRatio || 1;
+  for (let i=1; i<=pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const base = page.getViewport({ scale: 1 });
+    const fit = containerEl.clientWidth || base.width;
+    let scale = Math.max(0.8, Math.min(2.0, fit / base.width));
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { alpha:false });
+    canvas.width  = Math.floor(viewport.width  * dpr);
+    canvas.height = Math.floor(viewport.height * dpr);
+    canvas.style.width  = viewport.width  + 'px';
+    canvas.style.height = viewport.height + 'px';
+    const holder = document.createElement('div');
+    holder.className = 'pdfjs-page';
+    holder.appendChild(canvas);
+    containerEl.appendChild(holder);
+    await page.render({ canvasContext: ctx, viewport, transform:[dpr,0,0,dpr,0,0] }).promise;
+  }
+  if (revoke) setTimeout(() => URL.revokeObjectURL(revoke), 30000);
+}
+</script>
+
+<script>
+function ensurePdfOverlay() {
+  let ov = document.getElementById('pdf-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'pdf-overlay';
+    ov.innerHTML = '<div id="pdf-overlay-scroll" class="pdfjs-scroll"></div>';
+    document.body.appendChild(ov);
+  }
+  return ov;
+}
+function showPdfOverlay() {
+  document.documentElement.classList.add('pdf-overlay-active');
+  document.body.classList.add('pdf-overlay-active');
+  const ov = ensurePdfOverlay();
+  ov.style.display = 'block';
+  const scroller = document.getElementById('pdf-overlay-scroll');
+  const showBar = () => { try { if (window.showNavButtons) window.showNavButtons(); } catch(e){} };
+  scroller.addEventListener('touchstart', showBar, {passive:true});
+  scroller.addEventListener('pointerdown', showBar, {passive:true});
+  return scroller;
+}
+function destroyPdfOverlay() {
+  document.documentElement.classList.remove('pdf-overlay-active');
+  document.body.classList.remove('pdf-overlay-active');
+  const ov = document.getElementById('pdf-overlay');
+  if (ov) ov.style.display = 'none';
+  const sc = document.getElementById('pdf-overlay-scroll');
+  if (sc) sc.innerHTML = '';
+}
 </script>
 </body>
 
