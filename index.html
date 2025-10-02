@@ -616,12 +616,12 @@
             margin-top: auto; /* Pushes to bottom */
             flex-shrink: 0; /* Prevent shrinking */
             padding: 0.5rem;
-    /* Align the internal scrollbar to the far right to match the sidebar */
-    scrollbar-gutter: stable both-edges;
-    margin-right: -8px; /* shift box right edge into the sidebar black area */
-    padding-right: calc(0.5rem + 8px); /* keep content clear of the scrollbar */
-
-        }
+            /* Align internal scrollbar with main sidebar scrollbar */
+    scrollbar-gutter: stable;
+    margin-right: -12px; /* push scrollbar into black sidebar area */
+    padding-right: calc(0.5rem + 12px); /* protect content from overlay */
+    width: calc(100% + 12px); /* extend scroll box to the right without shrinking content */
+}
 
         .dark .stats-container {
             background-color: #374151;
