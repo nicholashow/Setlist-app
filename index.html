@@ -76,6 +76,119 @@
                 } catch(e) {}
             });
         })();
+        // === Left-edge custom scrollbar logic (shown when sidebar is collapsed) ===
+        (function(){
+            const $main = $('main');
+            const $sidebar = $('.left-col');
+            const $edge = $('#edge-scrollbar');
+            const $thumb = $('#edge-thumb');
+
+            const MIN_THUMB = 48; // px minimum size
+            let dragging = false;
+            let trackTop = 0;
+            let trackHeight = 0;
+            let startY = 0;
+            let startScroll = 0;
+
+            function updateThumb(){
+                // Only operate if element present
+                if ($edge.length === 0) return;
+                const scrollEl = $main.get(0);
+                const scrollH = scrollEl.scrollHeight;
+                const clientH  = scrollEl.clientHeight;
+                const maxScroll = Math.max(1, scrollH - clientH);
+                const trackRect = $edge.get(0).getBoundingClientRect();
+                trackTop = trackRect.top + (window.innerHeight * 0.04); // 4vh top offset to match ::before
+                trackHeight = window.innerHeight * 0.92; // 92vh like CSS
+
+                // Thumb size proportional to viewport/total
+                let thumbH = Math.max(MIN_THUMB, (clientH / scrollH) * trackHeight);
+                $thumb.css('height', thumbH + 'px');
+
+                const ratio = $main.scrollTop() / maxScroll;
+                const maxY = trackHeight - thumbH;
+                const y = trackTop + (ratio * maxY);
+                $thumb.css('top', y + 'px');
+            }
+
+            function setScrollFromThumb(pageY){
+                const scrollEl = $main.get(0);
+                const scrollH = scrollEl.scrollHeight;
+                const clientH  = scrollEl.clientHeight;
+                const maxScroll = Math.max(1, scrollH - clientH);
+
+                const thumbH = $thumb.outerHeight();
+                const maxY = trackHeight - thumbH;
+                let localY = pageY - trackTop - (thumbH/2);
+                localY = Math.max(0, Math.min(maxY, localY));
+                const ratio = localY / maxY;
+                $main.scrollTop(ratio * maxScroll);
+            }
+
+            function showEdgeIfCollapsed(){
+                if ($sidebar.hasClass('collapsed')) {
+                    $edge.addClass('visible').removeClass('hidden');
+                    updateThumb();
+                } else {
+                    $edge.removeClass('visible').addClass('hidden');
+                }
+            }
+
+            // Sync on load and on changes
+            $(function(){
+                showEdgeIfCollapsed();
+                updateThumb();
+                // Update on main scroll & resize
+                $main.on('scroll', updateThumb);
+                $(window).on('resize', updateThumb);
+            });
+
+            // Tie into existing sidebar toggle
+            $('#sidebar-toggle').on('click', function(){
+                // Delay to allow class toggle to settle
+                setTimeout(showEdgeIfCollapsed, 0);
+                setTimeout(updateThumb, 0);
+            });
+
+            // Drag handling (mouse + touch) on the thumb
+            function onMove(e){
+                if (!dragging) return;
+                const pageY = (e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY);
+                setScrollFromThumb(pageY);
+                e.preventDefault();
+            }
+            function onUp(){
+                dragging = false;
+                $(document).off('mousemove touchmove', onMove);
+                $(document).off('mouseup touchend touchcancel', onUp);
+            }
+            $thumb.on('mousedown touchstart', function(e){
+                dragging = true;
+                $(document).on('mousemove touchmove', onMove);
+                $(document).on('mouseup touchend touchcancel', onUp);
+                e.preventDefault();
+            });
+
+            // Clicking the track jumps the thumb to that position
+            $edge.on('mousedown touchstart', function(e){
+                if (e.target === $thumb.get(0)) return; // handled by thumb
+                const pageY = (e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY);
+                setScrollFromThumb(pageY);
+            });
+
+            // Also update when content visibility changes (navigation)
+            const originalShow = window.show;
+            if (typeof originalShow === 'function') {
+                window.show = function(view){
+                    originalShow(view);
+                    // after view switch, update thumb position
+                    setTimeout(function(){
+                        showEdgeIfCollapsed();
+                        updateThumb();
+                    }, 0);
+                }
+            }
+        })();
 
     </script>
     <script>
@@ -1007,6 +1120,57 @@
         #master-list, #setlist-list, #setlist-add-songs-list, #favorites-list, #genre-song-list, #plays-list {
             touch-action: pan-y;
         }
+        /* === Left-edge custom scrollbar for collapsed sidebar === */
+        #edge-scrollbar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 18px;              /* track width */
+            height: 100vh;
+            z-index: 120;             /* above app content, below nav buttons */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;     /* let pointer events pass except on the thumb */
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        /* Subtle dark translucent track, centered line */
+        #edge-scrollbar::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 92vh;
+            top: 4vh;
+            border-radius: 9999px;
+            background: rgba(0,0,0,0.25);
+        }
+        .dark #edge-scrollbar::before {
+            background: rgba(255,255,255,0.12);
+        }
+        #edge-thumb {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;               /* white line */
+            height: 60px;             /* will be sized by JS */
+            border-radius: 9999px;    /* soft edges */
+            background: #ffffff;
+            box-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 2px rgba(0,0,0,0.2);
+            pointer-events: auto;     /* interactive */
+            touch-action: none;       /* we manage drag */
+        }
+        .dark #edge-thumb {
+            background: #ffffff;
+            box-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 2px rgba(0,0,0,0.4);
+        }
+        /* Visible state */
+        #edge-scrollbar.visible {
+            opacity: 1;
+            pointer-events: none; /* only thumb is interactive */
+        }
 
     </style>
 </head>
@@ -1482,6 +1646,11 @@ const s=$('.left-col');s.toggleClass('collapsed');
         function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000); }
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
     </script>
+    <!-- Left-edge custom scrollbar (visible only when sidebar is collapsed) -->
+    <div id="edge-scrollbar" class="hidden" aria-hidden="true">
+        <div id="edge-thumb"></div>
+    </div>
+
 </body>
 
 </html>
