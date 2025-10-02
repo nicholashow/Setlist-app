@@ -1183,7 +1183,48 @@
         .energy-svg-3 .energy-spark:nth-child(3) { animation-delay: 0.4s; }
         .energy-svg-3 .energy-spark:nth-child(4) { animation-delay: 0.6s; }
         .energy-svg-3 .energy-spark:nth-child(5) { animation-delay: 0.8s; }
-    
+        /* === Smooth sidebar closing/opening with curtain cover === */
+        .left-col {
+            position: relative;
+            z-index: 20;              /* ensure it sits above main while animating */
+            overflow: hidden;         /* hide inner content during slide */
+        }
+        main {
+            position: relative;
+            z-index: 10;
+        }
+        /* Curtain overlay that sweeps over options while closing */
+        .left-col::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: #1f2937;      /* matches .left-col dark bg */
+            opacity: 0;
+            transform: translateX(-10%);
+            transition: transform 0.35s ease, opacity 0.25s ease;
+            pointer-events: none;
+        }
+        .dark .left-col::after {
+            background: #000000;
+        }
+        /* When closing, fade in the curtain and sweep it right to cover items smoothly */
+        .left-col.closing::after {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        /* Optional subtle blur of inner items when closing */
+        .left-col.closing .left-col-main-content,
+        .left-col.closing .stats-container {
+            filter: blur(1px);
+        }
+        /* Keep width/padding transitions already present; improve easing */
+        .left-col {
+            transition: width 0.4s cubic-bezier(0.4, 0.0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+        main {
+            transition: margin 0.4s cubic-bezier(0.4, 0.0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
     </style>
 </head>
 
