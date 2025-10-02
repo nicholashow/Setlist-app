@@ -1300,7 +1300,7 @@
 .song-name.renaming { position: relative; }
 </style>
 
-    <!-- PDF.js for iPad multi-page rendering (isolated) -->
+    <!-- PDF.js for iPad multi-page rendering -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.min.js"></script>
     <script>
       if (window['pdfjsLib']) {
@@ -1792,23 +1792,28 @@ const s=$('.left-col');s.toggleClass('collapsed');
             const url = getFileURL(song); if (!url) { alert('File not available for this song.'); return; }
             const $wrapper = $('#doc-iframe-wrapper');
             const $oldContainer = $wrapper.find('.current');
-            let $newContainer = $(`<div class="doc-iframe-container"></div>`);
+            const $newContainer = $(`<div class="doc-iframe-container"><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
             if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20); } 
             else if (direction === 'prev') { $newContainer.addClass('prev'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-prev').removeClass('current'); $newContainer.addClass('current incoming-prev').removeClass('prev'); }, 20); } 
             else { $newContainer.addClass('current'); $wrapper.html($newContainer);
 
-            const isPdf = /\.pdf($|\?)/i.test(url||'');
-            if (__isIOS__() && isPdf) {
-                const mount = $newContainer[0];
-                __mountPdfIOS__(song, url, mount).catch(e => { console.warn('iOS PDF render failed', e); });
-            } else {
-                // fall back to native object for non-iOS or non-PDF
-                const obj = document.createElement('object');
-                obj.className = 'doc-iframe-object';
-                obj.type = 'application/pdf';
-                obj.data = url;
-                $newContainer[0].appendChild(obj);
-            }
+            (function(){
+              try {
+                const isPdf = /\.pdf($|\?)/i.test(url||'');
+                if (__isIOS__() && isPdf) {
+                  const mount = $newContainer[0];
+                  __mountPdfIOS__(song, url, mount).catch(e => console.warn('iOS PDF render failed', e));
+                } else {
+                  if (!$newContainer[0].querySelector('.doc-iframe-object')) {
+                      const obj = document.createElement('object');
+                      obj.className = 'doc-iframe-object';
+                      obj.type = 'application/pdf';
+                      obj.data = url;
+                      $newContainer[0].appendChild(obj);
+                  }
+                }
+              } catch(e) { console.warn('PDF mount hook error', e); }
+            })();
  }
             setTimeout(() => $oldContainer.remove(), 800);
             if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
@@ -2015,11 +2020,11 @@ const s=$('.left-col');s.toggleClass('collapsed');
 })();
 
 
-// --- iPad-only PDF multi-page (isolated, no global CSS changes) ---
+// --- iPad-only PDF multi-page (scoped to viewer) ---
 function __isIOS__() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
-function __getPdfBytes__(song, url) {
+function __pdfBytes__(song, url) {
   return new Promise((resolve, reject) => {
     try {
       if (song && song.fileInfo && song.fileInfo.file) {
@@ -2038,14 +2043,18 @@ function __getPdfBytes__(song, url) {
 }
 async function __mountPdfIOS__(song, url, hostEl) {
   if (!window['pdfjsLib']) throw new Error('pdfjsLib missing');
-  const bytes = await __getPdfBytes__(song, url);
+  const bytes = await __pdfBytes__(song, url);
   hostEl.innerHTML = '';
   const scroller = document.createElement('div');
-  scroller.style.cssText = 'position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;background:transparent;';
+  scroller.style.position = 'absolute';
+  scroller.style.inset = '0';
+  scroller.style.overflow = 'auto';
+  scroller.style.webkitOverflowScrolling = 'touch';
+  scroller.style.background = 'transparent';
   hostEl.appendChild(scroller);
   const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
   const DPR = Math.min(window.devicePixelRatio||1, 2);
-  const scale = 1.1;
+  const scale = 1.15;
   for (let p=1; p<=pdf.numPages; p++) {
     const page = await pdf.getPage(p);
     const viewport = page.getViewport({ scale });
