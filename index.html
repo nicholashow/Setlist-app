@@ -1380,6 +1380,19 @@ html.pdf-overlay-active #doc-nav-buttons {
 }
 /* Do not modify overlay scroll area at all */
 
+
+/* === Ensure original nav is above overlay and not trapped in a transform context === */
+html.pdf-overlay-active #doc-view { display: block !important; transform: none !important; }
+html.pdf-overlay-active #doc-view * { transform: none !important; }
+html.pdf-overlay-active #doc-nav-buttons {
+  position: fixed !important;
+  top: 0; left: 0; right: 0;
+  z-index: 2147483000 !important; /* way above any overlay */
+  pointer-events: auto !important;
+}
+/* Make sure overlay stays below */
+#pdf-overlay { z-index: 2147482000 !important; }
+
 </style>
 </head>
 
