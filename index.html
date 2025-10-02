@@ -1263,6 +1263,13 @@
 }
 #stats-external-scroll:hover #stats-thumb { background: rgba(255,255,255,0.7); }
 
+
+/* inline-rename */
+.song-name.renaming { contain: layout paint; } /* isolate to avoid shifts */
+.edit-input { font-size: 0.95rem; font-weight: 600; }
+@media (prefers-color-scheme: dark) {
+  .edit-input { background: #111827; color: #e5e7eb; border-color: #2563eb; }
+}
 </style>
 </head>
 
@@ -1889,7 +1896,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
 (function(){
     let holdTimer = null;
     let startX = 0, startY = 0;
-    const HOLD_MS = 2000;
+    const HOLD_MS = 1300;
     const THRESHOLD = 8;
 
     function getPoint(e){
