@@ -1265,7 +1265,11 @@
         $('#genre-color').on('input',function(){$('#genre-color-display').css({'background-image':'none','background-color':$(this).val()})});
         $('#add-genre').click(function(){const n=$('#genre-name').val().trim(),c=$('#genre-color').val();if(!n)return alert('Enter a genre name');if(genres.some(g=>g.name.toLowerCase()===n.toLowerCase()))return alert('Genre already exists');genres.push({name:n,color:c});$('#genre-name').val('');renderGenres(ds);$('#genre-color-display').css({'background-image':'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)','background-color':''});save()});
         $('#add-venue').click(function(){const n=$('#venue-name').val().trim();if(!n)return alert('Enter a venue name');if(venues.some(v=>v.name.toLowerCase()===n.toLowerCase()))return alert('Venue already exists');venues.push({name:n});$('#venue-name').val('');renderVenues(ds);save()});
-        $('#sidebar-toggle').click(function(){const s=$('.left-col');s.toggleClass('collapsed');$(this).find('svg').html(s.hasClass('collapsed')?'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />':'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')});
+        $('#sidebar-toggle').click(function(){
+const s=$('.left-col');s.toggleClass('collapsed');
+    if (!s.hasClass('collapsed')) {
+        s.find('.left-col-main-content').scrollTop(0);
+    }$(this).find('svg').html(s.hasClass('collapsed')?'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />':'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')});
         $('#sidebar-toggle').droppable({accept:'.draggable',tolerance:'pointer',over:function(){const s=$('.left-col');if(s.hasClass('collapsed')){s.removeClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')}}});
         
         // --- IPAD INPUT FIX: Manually focus inputs on touchstart and stop the event ---
