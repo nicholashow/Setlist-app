@@ -728,7 +728,7 @@
             transition: background-color 0.2s;
             overflow: hidden; /* Fix width issues */
         }
-        .sidebar-item:hover { transform: translateX(2px); 
+        .sidebar-item:hover {
             background: #4b5563;
         }
 
@@ -1298,50 +1298,9 @@
 }
 /* Keep siblings from shifting during edit */
 .song-name.renaming { position: relative; }
-
-/* ipad pdfjs scroller */
-.doc-iframe-container { overflow: hidden; }
-.doc-iframe-container .pdfjs-scroller { overflow: auto; -webkit-overflow-scrolling: touch; }
-
-/* iOS PDF mode: disable transforms & perspective that break momentum scrolling */
-.ios-pdf-mode .doc-view-fullscreen,
-.ios-pdf-mode #doc-iframe-wrapper,
-.ios-pdf-mode .doc-iframe-container {
-  transform: none !important;
-  transition: none !important;
-  perspective: none !important;
-  backface-visibility: visible !important;
-}
-.ios-pdf-mode .doc-iframe-container { position: relative !important; overflow: hidden !important; }
-.doc-iframe-container .pdfjs-scroller { overflow: auto; -webkit-overflow-scrolling: touch; }
-
-/* Ensure no invisible overlays catch touches above the PDF canvases */
-.ios-pdf-mode .incoming-next,
-.ios-pdf-mode .incoming-prev,
-.ios-pdf-mode .prev,
-.ios-pdf-mode .next {
-  pointer-events: none !important;
-}
-
-/* ios pdf final */
-.ios-pdf-mode .doc-view-fullscreen,
-.ios-pdf-mode #doc-iframe-wrapper,
-.ios-pdf-mode .doc-iframe-container,
-.ios-pdf-mode body,
-.ios-pdf-mode html {
-  transform: none !important;
-  transition: none !important;
-  perspective: none !important;
-  backface-visibility: visible !important;
-}
-.ios-pdf-mode .incoming-next,
-.ios-pdf-mode .incoming-prev,
-.ios-pdf-mode .prev,
-.ios-pdf-mode .next { pointer-events: none !important; }
-.doc-iframe-container .pdfjs-scroller { overflow: auto; -webkit-overflow-scrolling: touch; }
 </style>
 
-    <!-- PDF.js for multi-page rendering on iPad -->
+    <!-- PDF.js for iPad multi-page rendering (isolated) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.min.js"></script>
     <script>
       if (window['pdfjsLib']) {
@@ -1743,41 +1702,11 @@
         $('#genre-color').on('input',function(){$('#genre-color-display').css({'background-image':'none','background-color':$(this).val()})});
         $('#add-genre').click(function(){const n=$('#genre-name').val().trim(),c=$('#genre-color').val();if(!n)return alert('Enter a genre name');if(genres.some(g=>g.name.toLowerCase()===n.toLowerCase()))return alert('Genre already exists');genres.push({name:n,color:c});$('#genre-name').val('');renderGenres(ds);$('#genre-color-display').css({'background-image':'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)','background-color':''});save()});
         $('#add-venue').click(function(){const n=$('#venue-name').val().trim();if(!n)return alert('Enter a venue name');if(venues.some(v=>v.name.toLowerCase()===n.toLowerCase()))return alert('Venue already exists');venues.push({name:n});$('#venue-name').val('');renderVenues(ds);save()});
-        
-$('#sidebar-toggle').off('click').on('click', function(){
-    const $btn = $(this);
-    const $svg = $btn.find('svg');
-    const $sidebar = $('.left-col');
-
-    const isCollapsed = $sidebar.hasClass('collapsed');
-    // We are switching the behavior: if it's collapsed, OPEN it; if open, CLOSE it.
-    // Add a 'closing' class for the curtain effect when closing.
-    if (isCollapsed) {
-        $sidebar.removeClass('collapsed');
-        $sidebar.find('.left-col-main-content').scrollTop(0);
-        $sidebar.find('.left-col-main-content').scrollTop(0);
-        $sidebar.removeClass('closing');
-        // Icon should now indicate "collapse" (pointing left)
-        $svg.html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />');
-        $btn.attr({'aria-label':'Collapse sidebar','title':'Collapse'});
-    } else {
-        $sidebar.addClass('closing');
-        // allow curtain to sweep then collapse
-        setTimeout(function(){
-            $sidebar.addClass('collapsed').removeClass('closing');
-        }, 120);
-        // Icon should now indicate "open" (pointing right)
-        $svg.html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />');
-        $btn.attr({'aria-label':'Open sidebar','title':'Open'});
-    }
-
-    // After state change, refresh edge scrollbar if present
-    setTimeout(function(){
-        if (typeof showEdgeIfCollapsed === 'function') showEdgeIfCollapsed();
-        if (typeof updateThumb === 'function') updateThumb();
-    }, 0);
-});
-
+        $('#sidebar-toggle').click(function(){
+const s=$('.left-col');s.toggleClass('collapsed');
+    if (!s.hasClass('collapsed')) {
+        s.find('.left-col-main-content').scrollTop(0);
+    }$(this).find('svg').html(s.hasClass('collapsed')?'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />':'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')});
         $('#sidebar-toggle').droppable({accept:'.draggable',tolerance:'pointer',over:function(){const s=$('.left-col');if(s.hasClass('collapsed')){s.removeClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')}}});
         
         // --- IPAD INPUT FIX: Manually focus inputs on touchstart and stop the event ---
@@ -1817,39 +1746,7 @@ $('#sidebar-toggle').off('click').on('click', function(){
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
-            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}
-/* --- Modern UI polish --- */
-:root { --radius-xl: 1rem; --radius-2xl: 1.25rem; --shadow-lg: 0 10px 25px rgba(0,0,0,.18); }
-.bg-card { background: #ffffff; border-radius: var(--radius-2xl); box-shadow: var(--shadow-lg); }
-.dark .bg-card { background: #111827; }
-.rounded-2xl { border-radius: var(--radius-2xl); }
-/* Razorblade button */
-#sidebar-toggle {
-  position: sticky;
-  top: 50vh;
-  transform: translateY(-50%);
-  background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
-  width: 54px;
-  height: 96px;
-  border-radius: 12px 0 0 12px; /* straight right edge */
-  border-right: 2px solid rgba(255,255,255,0.08);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
-  -webkit-tap-highlight-color: transparent;
-}
-#sidebar-toggle svg { width: 28px; height: 28px; }
-#sidebar-toggle:active { transform: translateY(-50%) scale(0.98); }
-.left-col:not(.collapsed) + #sidebar-toggle { left: 16px; }
-.left-col.collapsed + #sidebar-toggle { left: 0; }
-/* Safe areas on iPad */
-main { padding-bottom: max(env(safe-area-inset-bottom), 16px); }
-/* Cardify primary lists */
-#master-view > .bg-white, #favorites-view > .bg-white, #genre-view > .bg-white, #plays-view > .bg-white, #recordings-view > .bg-white {
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-lg);
-}
-/* Larger touch targets */
-button, .sidebar-item, select, input { min-height: 44px; }
-</style></head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
+            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style></head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
             $('#share-email').on('click',e=>{e.preventDefault();shareSetlist('email')});
@@ -1895,95 +1792,24 @@ button, .sidebar-item, select, input { min-height: 44px; }
             const url = getFileURL(song); if (!url) { alert('File not available for this song.'); return; }
             const $wrapper = $('#doc-iframe-wrapper');
             const $oldContainer = $wrapper.find('.current');
-            
-            let $newContainer;
-            const isPdf = /\.pdf($|\?)/i.test(url || '');
-            if (isIOS() && isPdf) {
-                $newContainer = $(`<div class="doc-iframe-container"></div>`);
-            } else {
-                $newContainer = $(`<div class="doc-iframe-container"><object class="doc-iframe-object" data="${url}" type="application/pdf"></object></div>`);
-            }
-            // iPad multi-page PDF: replace native <object> viewer with PDF.js canvases
-            (async () => {
-                try {
-                    const mount = $newContainer[0].querySelector('.doc-iframe-container .doc-iframe-object')?.parentElement || $newContainer[0];
-                    const ok = await tryRenderPDFMultiPage_iPad(song, url, mount);
-                    if (ok) {
-                        // Remove native <object> so it doesn't overlay canvases
-                        const nativeObj = $newContainer[0].querySelector('.doc-iframe-object');
-                        if (nativeObj) nativeObj.remove();
-                    }
-                } catch (e) { console.warn('iPad PDF hook failed', e); }
-            })();
-    
-            // iPad multi-page fix: if PDF on iOS, render with PDF.js
-            const isPdf = /\.pdf(\?|$)/i.test(url);
-            if (isPdf && isIOS()) {
-                const mount = $newContainer[0].querySelector('.doc-iframe-object');
-                // Try to render; if success, remove the object fallback
-                setTimeout(async () => {
-                    const ok = await renderPDFWithPDFJS(url, mount.parentElement);
-                    if (ok) { mount.remove(); }
-                }, 0);
-            }
-        
+            let $newContainer = $(`<div class="doc-iframe-container"></div>`);
             if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20); } 
             else if (direction === 'prev') { $newContainer.addClass('prev'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-prev').removeClass('current'); $newContainer.addClass('current incoming-prev').removeClass('prev'); }, 20); } 
-            else { $newContainer.addClass('current'); $wrapper.html($newContainer); }
+            else { $newContainer.addClass('current'); $wrapper.html($newContainer);
 
-            // After container is current and stable, iOS PDF mount
-            const tryMountIOS = () => {
-                const isPdfNow = /\.pdf($|\?)/i.test(url || '');
-                if (isIOS() && isPdfNow) {
-                    try { enterIOSPdfMode(); } catch(e){}
-                    const mount = $newContainer[0].querySelector('.doc-iframe-container') || $newContainer[0];
-                    // Ensure mount is empty and ready
-                    if (mount.querySelector('.doc-iframe-object')) mount.querySelector('.doc-iframe-object').remove();
-                    const pane = document.createElement('div');
-                    pane.style.position = 'absolute';
-                    pane.style.inset = '0';
-                    pane.style.overflow = 'auto';
-                    pane.style.webkitOverflowScrolling = 'touch';
-                    mount.innerHTML = '';
-                    mount.appendChild(pane);
-                    mountIOSPDFMultiPage(song, url, pane).catch(e => console.warn('iOS PDF failed', e));
-                } else {
-                    try { exitIOSPdfMode(); } catch(e){}
-                }
-            };
-            // wait for next frame to ensure classes applied
-            requestAnimationFrame(() => { setTimeout(tryMountIOS, 0); });
-
-            // ---- iOS PDF path: replace native viewer with PDF.js canvases ----
-            (async () => {
-                try {
-                    const isPdf = /\.pdf($|\?)/i.test(url || '');
-                    if (isIOS() && isPdf) {
-                        enterIOSPdfMode();
-                        // Mount into the visible CURRENT container
-                        const mount = $newContainer[0].querySelector('.doc-iframe-container') || $newContainer[0];
-                        // Clear any native object immediately
-                        const obj = $newContainer[0].querySelector('.doc-iframe-object');
-                        if (obj) obj.remove();
-                        // Ensure mount occupies full pane
-                        mount.innerHTML = '';
-                        const pane = document.createElement('div');
-                        pane.style.position = 'absolute';
-                        pane.style.inset = '0';
-                        pane.style.overflow = 'auto';
-                        pane.style.webkitOverflowScrolling = 'touch';
-                        mount.appendChild(pane);
-                        // Render from bytes (FileReader preferred)
-                        await mountIOSPDFMultiPage(song, url, pane);
-                    } else {
-                        exitIOSPdfMode();
-                    }
-                } catch (e) {
-                    console.warn('iOS PDF mounting failed', e);
-                    exitIOSPdfMode();
-                }
-            })();
-    
+            const isPdf = /\.pdf($|\?)/i.test(url||'');
+            if (__isIOS__() && isPdf) {
+                const mount = $newContainer[0];
+                __mountPdfIOS__(song, url, mount).catch(e => { console.warn('iOS PDF render failed', e); });
+            } else {
+                // fall back to native object for non-iOS or non-PDF
+                const obj = document.createElement('object');
+                obj.className = 'doc-iframe-object';
+                obj.type = 'application/pdf';
+                obj.data = url;
+                $newContainer[0].appendChild(obj);
+            }
+ }
             setTimeout(() => $oldContainer.remove(), 800);
             if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
             $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
@@ -2189,58 +2015,11 @@ button, .sidebar-item, select, input { min-height: 44px; }
 })();
 
 
-// ---- iPad multi-page PDF fallback using PDF.js ----
-function isIOS() {
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-}
-async function renderPDFWithPDFJS(url, mountEl) {
-    if (!window['pdfjsLib']) return false;
-    try {
-        const resp = await fetch(url);
-        const buf = await resp.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-        // Clear mount and create a scroller
-        mountEl.innerHTML = '';
-        const scroller = document.createElement('div');
-        scroller.style.position = 'absolute';
-        scroller.style.top = '0';
-        scroller.style.left = '0';
-        scroller.style.right = '0';
-        scroller.style.bottom = '0';
-        scroller.style.overflow = 'auto';
-        scroller.style.webkitOverflowScrolling = 'touch';
-        mountEl.appendChild(scroller);
-
-        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-            const page = await pdf.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 1.5 });
-            const canvas = document.createElement('canvas');
-            canvas.style.display = 'block';
-            canvas.style.margin = '0 auto 16px auto';
-            const ctx = canvas.getContext('2d');
-            canvas.width = Math.floor(viewport.width);
-            canvas.height = Math.floor(viewport.height);
-            await page.render({ canvasContext: ctx, viewport }).promise;
-            scroller.appendChild(canvas);
-        }
-        return true;
-    } catch (e) {
-        console.error('PDF.js render failed', e);
-        return false;
-    }
-}
-
-</script>
-
-</body>
-
-</html>
-// ===== iPad-safe multi-page PDF rendering (final) =====
-function isIOS() {
+// --- iPad-only PDF multi-page (isolated, no global CSS changes) ---
+function __isIOS__() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
-
-function getPdfArrayBuffer(song, url) {
+function __getPdfBytes__(song, url) {
   return new Promise((resolve, reject) => {
     try {
       if (song && song.fileInfo && song.fileInfo.file) {
@@ -2249,80 +2028,41 @@ function getPdfArrayBuffer(song, url) {
         fr.onerror = reject;
         fr.readAsArrayBuffer(song.fileInfo.file);
       } else {
-        fetch(url, { credentials: 'same-origin' })
-          .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
-          .then(resolve, reject);
+        fetch(url, { credentials: 'same-origin' }).then(r => {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.arrayBuffer();
+        }).then(resolve, reject);
       }
     } catch (e) { reject(e); }
   });
 }
-
-async function mountIOSPDFMultiPage(song, url, containerEl) {
+async function __mountPdfIOS__(song, url, hostEl) {
   if (!window['pdfjsLib']) throw new Error('pdfjsLib missing');
-  const bytes = await getPdfArrayBuffer(song, url);
-  const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
-
-  // Make the scroller the real touch target
-  containerEl.innerHTML = '';
+  const bytes = await __getPdfBytes__(song, url);
+  hostEl.innerHTML = '';
   const scroller = document.createElement('div');
-  scroller.className = 'pdfjs-scroller';
-  scroller.style.position = 'absolute';
-  scroller.style.inset = '0';
-  scroller.style.overflow = 'auto';
-  scroller.style.webkitOverflowScrolling = 'touch';
-  scroller.style.background = 'transparent';
-  containerEl.appendChild(scroller);
-
-  const DPR = Math.min(window.devicePixelRatio || 1, 2);
-  const baseScale = 1.15;
-
-  const placeholders = [];
-  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-    const holder = document.createElement('div');
-    holder.className = 'pdfjs-page-holder';
-    holder.dataset.page = String(pageNum);
-    holder.style.margin = '0 auto 16px';
-    holder.style.minHeight = '60px';
-    holder.style.maxWidth = '100%';
-    scroller.appendChild(holder);
-    placeholders.push(holder);
+  scroller.style.cssText = 'position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;background:transparent;';
+  hostEl.appendChild(scroller);
+  const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+  const DPR = Math.min(window.devicePixelRatio||1, 2);
+  const scale = 1.1;
+  for (let p=1; p<=pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = Math.floor(viewport.width * DPR);
+    canvas.height = Math.floor(viewport.height * DPR);
+    canvas.style.width = Math.floor(viewport.width) + 'px';
+    canvas.style.height = Math.floor(viewport.height) + 'px';
+    canvas.style.display = 'block';
+    canvas.style.margin = '0 auto 12px';
+    scroller.appendChild(canvas);
+    await page.render({ canvasContext: ctx, viewport: page.getViewport({ scale: scale * DPR }) }).promise;
   }
-
-  const io = new IntersectionObserver(async (entries, obs) => {
-    for (const entry of entries) {
-      if (!entry.isIntersecting) continue;
-      const holder = entry.target;
-      obs.unobserve(holder);
-      const pageNum = parseInt(holder.dataset.page, 10);
-      try {
-        const page = await pdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale: baseScale });
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const targetW = Math.floor(viewport.width);
-        const targetH = Math.floor(viewport.height);
-        canvas.width = Math.floor(targetW * DPR);
-        canvas.height = Math.floor(targetH * DPR);
-        canvas.style.width = targetW + 'px';
-        canvas.style.height = targetH + 'px';
-        holder.innerHTML = '';
-        holder.appendChild(canvas);
-        await page.render({ canvasContext: ctx, viewport: page.getViewport({ scale: baseScale * DPR }) }).promise;
-      } catch (e) {
-        console.error('Render page failed', pageNum, e);
-        holder.textContent = 'Failed to render page ' + pageNum;
-      }
-    }
-  }, { root: scroller, rootMargin: '800px 0px 1400px 0px', threshold: 0.01 });
-
-  placeholders.forEach(h => io.observe(h));
 }
+</script>
 
-function enterIOSPdfMode() {
-  document.documentElement.classList.add('ios-pdf-mode');
-  document.body.classList.add('ios-pdf-mode');
-}
-function exitIOSPdfMode() {
-  document.documentElement.classList.remove('ios-pdf-mode');
-  document.body.classList.remove('ios-pdf-mode');
-}
+</body>
+
+</html>
