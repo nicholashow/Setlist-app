@@ -1,5 +1,3 @@
-[file name]: rollback_stable_app.txt
-[file content begin]
 <!DOCTYPE html>
 <html lang="en" class="dark">
 
@@ -349,11 +347,7 @@
         }
         
         /* --- Page Turn Animation --- */
-        #doc-iframe-wrapper {
-            width: 100%;
-            height: 100%;
-            perspective: 2500px; /* Enable 3D space for a more dramatic effect */
-        }
+        
         .doc-iframe-container {
             position: absolute;
             top: 0;
@@ -1064,40 +1058,25 @@
             stroke: white; /* White outline on dark backgrounds */
         }
     
-        /* === FIXED: iPad PDF scrolling - More aggressive approach === */
-        html.ios #doc-iframe-wrapper { 
-            perspective: none !important;
-            position: relative !important;
-            height: auto !important;
-            min-height: 100vh !important;
-            overflow-y: auto !important;
-            -webkit-overflow-scrolling: touch !important;
-        }
-
+        /* === iOS PDF scrolling fix: disable 3D transforms around iframe/object so all pages scroll === */
+        html.ios 
         html.ios .doc-iframe-container { 
             transform: none !important;
             transition: none !important;
             backface-visibility: visible !important;
-            position: relative !important;
-            height: auto !important;
-            min-height: 100% !important;
-            overflow: visible !important;
+            overflow: auto !important;
         }
-
-        html.ios #doc-object,
-        html.ios .doc-iframe-container object {
-            width: 100% !important;
-            height: auto !important;
-            min-height: 100vh !important;
-            position: relative !important;
+        html.ios .doc-iframe-container.current,
+        html.ios .doc-iframe-container.next,
+        html.ios .doc-iframe-container.prev {
+            transform: none !important;
         }
-
-        html.ios .doc-view-fullscreen {
-            overflow-y: auto !important;
-            height: auto !important;
-            min-height: 100vh !important;
+        html.ios .turning-next,
+        html.ios .turning-prev,
+        html.ios .incoming-next,
+        html.ios .incoming-prev {
+            transform: none !important;
         }
-
         /* Ensure embedded document fills available space and scrolls smoothly on iPad */
         html.ios #doc-object,
         html.ios .doc-iframe-container iframe,
@@ -1315,6 +1294,76 @@
 }
 /* Keep siblings from shifting during edit */
 .song-name.renaming { position: relative; }
+
+        /* === iPad PDF fix: prefer iframe on iOS, keep <object> on desktop === */
+        .doc-iframe { display: none; width: 100%; height: 100%; border: 0; }
+        html.ios .doc-iframe { display: block !important; }
+        html.ios #doc-object { display: none !important; }
+        /* Allow body to scroll while viewer is open (overrides initial fixed/hidden) */
+        body.doc-viewer-active {
+            position: static !important;
+            overflow: auto !important;
+            height: 100% !important;
+            -webkit-overflow-scrolling: touch;
+        }
+        /* Ensure viewer section takes full viewport and is the only scroll container */
+        #doc-view { 
+            position: fixed; inset: 0; 
+            overflow: hidden; 
+            background: var(--tw-colors-gray-900, #000);
+        }
+        
+
+
+        /* Ensure <html> isn't locking scroll while the doc viewer is open (iPad/Safari needs this) */
+        html.doc-viewer-active {
+            position: static !important;
+            overflow: auto !important;
+            height: 100% !important;
+        }
+        html.ios.doc-viewer-active #doc-iframe-wrapper,
+        html.ios.doc-viewer-active .doc-iframe-container {
+            transform: none !important;
+            transition: none !important;
+            backface-visibility: visible !important;
+        }
+        /* As a hard stop, kill any transform in the viewer subtree on iOS */
+        html.ios.doc-viewer-active #doc-iframe-wrapper, html.ios.doc-viewer-active #doc-iframe-wrapper * { transform: none !important; }
+
+
+        
+        #doc-nav-buttons .doc-nav-button {
+            pointer-events: auto;
+        }
+
+
+        /* --- PDF.js iPad rendering (iOS only) --- */
+        .pdfjs-container {
+            position: absolute;
+            inset: 0;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 12px;
+        }
+        .pdfjs-page {
+            margin: 0 auto 12px auto;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .pdfjs-page canvas {
+            width: 100% !important;
+            height: auto !important;
+            display: block;
+            background: #fff;
+            border-radius: 6px;
+        }
+
+
+        /* Ensure no transform stacking context interferes with touch/scroll in the viewer on iOS */
+        html.ios #doc-view, 
+        html.ios #doc-iframe-wrapper, 
+        html.ios .doc-iframe-container { transform: none !important; }
+
 </style>
 </head>
 
@@ -1716,7 +1765,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
     if (!s.hasClass('collapsed')) {
         s.find('.left-col-main-content').scrollTop(0);
     }$(this).find('svg').html(s.hasClass('collapsed')?'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />':'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')});
-        $('#sidebar-toggle').droppable({accept:'.draggable',tolerance:'pointer',over:function(){const s=$('.left-col');if(s.hasClass('collapsed')){s.removeClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')}});
+        $('#sidebar-toggle').droppable({accept:'.draggable',tolerance:'pointer',over:function(){const s=$('.left-col');if(s.hasClass('collapsed')){s.removeClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')}}});
         
         // --- IPAD INPUT FIX: Manually focus inputs on touchstart and stop the event ---
         // This intercepts the tap before jQuery UI Touch Punch can hijack it for dragging.
@@ -1775,7 +1824,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
         function renderMaster(){const q=$('#search').val().toLowerCase();let l=masterSongs.filter(s=>(q?(s.name.toLowerCase().includes(q)||(s.artist||'').toLowerCase().includes(q)):!0)&&(masterSelectedGenres.length>0?masterSelectedGenres.includes(s.genre):!0));const m=$('#sort-dropdown').val();l.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentMasterViewSongs=l;const u=$('#master-list').empty();if(l.length===0)u.append(`<li class="p-8 text-center text-gray-500 italic">${(q||masterSelectedGenres.length>0)?'No songs match your current filters.':'No songs yet. <br> Drag & drop PDF files onto the page or use the "Add files" button!'}</li>`);else l.forEach((s,i)=>u.append(createSongItem(s,i,'master')));$('#master-list .draggable').draggable(draggableOptions)}
         function renderAddSongsPanel(){const q=$('#setlist-search-add').val().toLowerCase();let l=masterSongs.filter(s=>q?s.name.toLowerCase().includes(q):!0);l.sort((a,b)=>a.name.localeCompare(b.name));const u=$('#setlist-add-songs-list').empty(),c=setlists[currentSetlist]?.songs||[];l.forEach(s=>{const i=c.includes(s.id),li=$(`<li class="add-song-item" data-song-id="${s.id}"><label for="add-${s.id}" class="flex items-center w-full cursor-pointer"><input type="checkbox" id="add-${s.id}" class="sr-only custom-checkbox-input" ${i?'checked':''}><div class="custom-checkbox-box"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></div><span class="ml-3 flex-grow">${escapeHtml(s.name)}</span></label></li>`);li.find('input').on('change',function(){const i=$(this).closest('.add-song-item').data('song-id');if(this.checked){if(!setlists[currentSetlist].songs.includes(i))setlists[currentSetlist].songs.push(i)}else{setlists[currentSetlist].songs=setlists[currentSetlist].songs.filter(id=>id!==i)}renderSetlist();save()});u.append(li)})}
         function removeFromAllSetlists(i){Object.values(setlists).forEach(s=>{s.songs=s.songs.filter(id=>!i.includes(id))})}
-        function renderLeftSetlists(){const c=$('#setlists-container').empty();Object.keys(setlists).forEach(n=>{const e=$(`<div class="p-2 mb-1 rounded-lg cursor-pointer setlist-item bg-gray-700" data-name="${escapeHtml(n)}"><div class="flex items-center"><button class="del-setlist" title="Delete setlist"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52l.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg></button><span class="setlist-name">${escapeHtml(n)}</span></div></div>`);e.find('.del-setlist').click(ev=>{ev.stopPropagation();if(confirm('Delete '+n+'?')){delete setlists[n];recordings=recordings.filter(r=>r.setlist!==n);if(currentSetlist===n){currentSetlist=null;$('#home-btn').trigger('click')}renderLeftSetlists();save()}});e.on('dblclick',function(){const i=$('<input class="edit-input w-full bg-gray-600 p-1 rounded-md" value="'+escapeHtml(n)+'">');$(this).find('.setlist-name').replaceWith(i);i.focus().on('blur keypress',function(ev){if(ev.type==='keypress'&&ev.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==n&&!setlists[newName]){setlists[newName]=setlists[n];recordings.forEach(r=>{if(r.setlist===n)r.setlist=newName});delete setlists[n];if(currentSetlist===n){currentSetlist=newName;$('#setlist-title').text(newName)}}renderLeftSetlists();save()})});c.append(e)});$('.setlist-item').droppable({accept:'.draggable',hoverClass:'drag-hover-setlist',drop:function(e,ui){const s=setlists[$(this).data('name')];let a=!1;const i=ui.draggable.hasClass('item-selected')?$(`#${ui.draggable.parent().attr('id')} .item-selected`):ui.draggable;i.each(function(){const d=$(this).attr('id');if(d&&!s.songs.includes(d)){s.songs.push(d);a=!0}});if(a){save();if(currentSetlist===$(this).data('name'))renderSetlist()}}});$('#setlists-container').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=$(this).sortable('toArray',{attribute:'data-name'}),n={};o.forEach(i=>{if(setlists[i])n[i]=setlists[i]});setlists=n;save()}})}
+        function renderLeftSetlists(){const c=$('#setlists-container').empty();Object.keys(setlists).forEach(n=>{const e=$(`<div class="p-2 mb-1 rounded-lg cursor-pointer setlist-item bg-gray-700" data-name="${escapeHtml(n)}"><div class="flex items-center"><button class="del-setlist" title="Delete setlist"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg></button><span class="setlist-name">${escapeHtml(n)}</span></div></div>`);e.find('.del-setlist').click(ev=>{ev.stopPropagation();if(confirm('Delete '+n+'?')){delete setlists[n];recordings=recordings.filter(r=>r.setlist!==n);if(currentSetlist===n){currentSetlist=null;$('#home-btn').trigger('click')}renderLeftSetlists();save()}});e.on('dblclick',function(){const i=$('<input class="edit-input w-full bg-gray-600 p-1 rounded-md" value="'+escapeHtml(n)+'">');$(this).find('.setlist-name').replaceWith(i);i.focus().on('blur keypress',function(ev){if(ev.type==='keypress'&&ev.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==n&&!setlists[newName]){setlists[newName]=setlists[n];recordings.forEach(r=>{if(r.setlist===n)r.setlist=newName});delete setlists[n];if(currentSetlist===n){currentSetlist=newName;$('#setlist-title').text(newName)}}renderLeftSetlists();save()})});c.append(e)});$('.setlist-item').droppable({accept:'.draggable',hoverClass:'drag-hover-setlist',drop:function(e,ui){const s=setlists[$(this).data('name')];let a=!1;const i=ui.draggable.hasClass('item-selected')?$(`#${ui.draggable.parent().attr('id')} .item-selected`):ui.draggable;i.each(function(){const d=$(this).attr('id');if(d&&!s.songs.includes(d)){s.songs.push(d);a=!0}});if(a){save();if(currentSetlist===$(this).data('name'))renderSetlist()}}});$('#setlists-container').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=$(this).sortable('toArray',{attribute:'data-name'}),n={};o.forEach(i=>{if(setlists[i])n[i]=setlists[i]});setlists=n;save()}})}
         function renderSetlist(){if(!currentSetlist){$('#setlist-view').hide();return}$('#setlist-details-toggle').removeClass('open');$('#setlist-details-content').hide();$('#back-to-venue-btn').toggle(!!cameFromVenue);const s=setlists[currentSetlist];$('#setlist-title').text(currentSetlist);$('#setlist-date').val(s.date||'');$('#date-placeholder').toggle(!s.date);$('#setlist-venue').val(s.venue||'');renderAddSongsPanel();$('#setlist-recordings').empty();const r=recordings.filter(r=>r.setlist===currentSetlist);if(r.length>0){const c=$('<div class="p-2 bg-gray-100 rounded-lg dark:bg-gray-700"></div>').append('<h4 class="font-semibold text-sm mb-2">Recordings for this Setlist:</h4>');r.forEach(r=>{c.append($(`<div class="flex items-center justify-between p-2 mb-1 bg-white rounded-lg shadow-sm dark:bg-gray-600"><span>${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</span><audio controls src="${r.audioData}" style="height:30px;"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition" data-id="${r.id}">Delete</button></div>`).on('click','button',function(){if(confirm('Delete this recording?')){recordings=recordings.filter(rec=>rec.id!==$(this).data('id'));save();renderSetlist()}}))});$('#setlist-recordings').append(c)}let o=(s.songs||[]).map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean);const m=$('#setlist-sort-filter-dropdown').val();if(m!=='custom')o.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='name'?a.name.localeCompare(b.name):m==='energy'?(b.energy||0)-(a.energy||0):m==='genre'?(a.genre||'').localeCompare(b.genre||''):0);$('#setlist-total-duration').text(`Runtime: ${o.reduce((a,s)=>a+(parseInt(s.duration,10)||0),0)} min`);$('#setlist-song-count').text(`${o.length} songs`);window.currentSetlistViewSongs=o;const u=$('#setlist-list').empty();o.forEach((s,i)=>{u.append(createSongItem(s,i,'setlist'))});if($('#setlist-list').hasClass('ui-sortable'))$('#setlist-list').sortable('destroy');$('#setlist-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){$('#setlist-sort-filter-dropdown').val('custom');setlists[currentSetlist].songs=$(this).sortable('toArray');$('#setlist-list .index-number').each((i,el)=>$(el).text(i+1));save()}}).disableSelection()}
         function renderPlays(){const u=$('#plays-list').empty();if(masterSongs.length===0){u.append('<li class="p-8 text-center text-gray-500 italic">Add songs to start tracking plays.</li>');return}const s=masterSongs.slice().sort((a,b)=>(playCounts[b.id]||0)-(playCounts[a.id]||0));window.currentPlaysViewSongs=s;if(Object.values(playCounts).every(c=>c===0)){u.append('<li class="p-8 text-center text-gray-500 italic">No songs played yet. Click a song to log a play.</li>');return}s.forEach(s=>{const l=$(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable pl-4"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);l.find('button').click(()=>{playCounts[s.id]=0;renderPlays();updateTopLeast();save()});u.append(l)});$('#plays-list .draggable').draggable(draggableOptions)}
         function renderRecordings(){const u=$('#recordings-list').empty();if(recordings.length===0){u.append('<li class="p-8 text-center text-gray-500 italic">No recordings saved.</li>');return}recordings.forEach(r=>{const l=$(`<li class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"><div class="flex-1">${escapeHtml(r.setlist)} - ${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</div><audio controls src="${r.audioData}"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-rec" data-id="${r.id}">Delete</button></li>`);l.find('.delete-rec').click(()=>{recordings=recordings.filter(rec=>rec.id!==r.id);renderRecordings();save()});u.append(l)})}
@@ -1799,14 +1848,36 @@ const s=$('.left-col');s.toggleClass('collapsed');
             currentViewerIndex = (index === -1) ? currentViewerList.findIndex(s => s.id === songId) : index;
             if (context === 'setlist') { viewedSongsInSetlist.add(songId); $(`#setlist-list li[id="${songId}"] .index-number`).addClass('viewed-index'); }
             const url = getFileURL(song); if (!url) { alert('File not available for this song.'); return; }
-            const $wrapper = $('#doc-iframe-wrapper');
+            
+            // iOS hard fallback: open natively if inline viewer misbehaves
+            if (document.documentElement.classList.contains('ios')) {
+                // If we're not already using the iframe successfully, open natively:
+                try {
+                    // Attempt to render inline; if it fails to show multipage, user can use native viewer
+                    // We still proceed to build the container; but also open in a new tab to guarantee multipage
+                    // Comment the next line if you prefer inline-only behavior on iPad
+                    // window.open(url, '_blank');
+                } catch (e) {
+                    window.open(url, '_blank');
+                    return;
+                }
+            }
+const $wrapper = $('#doc-iframe-wrapper');
             const $oldContainer = $wrapper.find('.current');
-            const $newContainer = $(`<div class="doc-iframe-container"><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
+            const $newContainer = $(`<div class="doc-iframe-container"><iframe class="doc-iframe" src="${url}"></iframe><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
             if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20); } 
             else if (direction === 'prev') { $newContainer.addClass('prev'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-prev').removeClass('current'); $newContainer.addClass('current incoming-prev').removeClass('prev'); }, 20); } 
             else { $newContainer.addClass('current'); $wrapper.html($newContainer); }
             setTimeout(() => $oldContainer.remove(), 800);
-            if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
+            
+            // Trigger PDF.js rendering after insertion (iOS only)
+            if (document.documentElement.classList.contains('ios')) {
+                const pdfContainer = $newContainer.find('.pdfjs-container')[0];
+                if (pdfContainer) {
+                    renderPDFWithPDFJS(url, pdfContainer);
+                }
+            }
+if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
             $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
             $('#next-doc').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
         }
@@ -2011,7 +2082,116 @@ const s=$('.left-col');s.toggleClass('collapsed');
 
 </script>
 
+
+<script>
+
+// === PDF.js helper: dynamically load and render all pages into a scrollable container ===
+function loadPDFJSLib() {
+    return new Promise((resolve, reject) => {
+        if (window.pdfjsLib) { resolve(window.pdfjsLib); return; }
+        const s = document.createElement('script');
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+        s.onload = () => {
+            try {
+                if (window['pdfjsLib']) {
+                    // Set worker
+                    if (!window['pdfjsLib'].GlobalWorkerOptions.workerSrc) {
+                        const w = document.createElement('script');
+                        w.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+                        w.onload = () => resolve(window['pdfjsLib']);
+                        w.onerror = reject;
+                        document.head.appendChild(w);
+                    } else {
+                        resolve(window['pdfjsLib']);
+                    }
+                } else { reject(new Error('pdfjsLib not found after load')); }
+            } catch (e) { reject(e); }
+        };
+        s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
+
+async function renderPDFWithPDFJS(url, containerEl) {
+    try {
+        // Fetch as Blob to avoid cross-origin issues, then feed to PDF.js
+        const resp = await fetch(url, { credentials: 'include' }).catch(()=>null);
+        if (!resp || !resp.ok) { 
+            // As a fallback, try direct URL (may fail if CORS)
+            console.warn('PDF fetch failed or blocked, trying direct URL with PDF.js');
+        }
+        let pdfDataURL = url;
+        let revokeURL = null;
+        if (resp && resp.ok) {
+            const blob = await resp.blob();
+            pdfDataURL = URL.createObjectURL(blob);
+            revokeURL = pdfDataURL;
+        }
+        const pdfjsLib = await loadPDFJSLib();
+        const loadingTask = pdfjsLib.getDocument(pdfDataURL);
+        const pdf = await loadingTask.promise;
+        containerEl.innerHTML = '';
+        const pixelRatio = window.devicePixelRatio || 1;
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const baseViewport = page.getViewport({ scale: 1 });
+            const fitWidth = containerEl.clientWidth || baseViewport.width;
+            let scale = fitWidth / baseViewport.width;
+            // Reasonable bounds
+            scale = Math.max(0.8, Math.min(2.0, scale));
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d', { alpha:false });
+            canvas.width = Math.floor(viewport.width * pixelRatio);
+            canvas.height = Math.floor(viewport.height * pixelRatio);
+            canvas.style.width = viewport.width + 'px';
+            canvas.style.height = viewport.height + 'px';
+            const holder = document.createElement('div');
+            holder.className = 'pdfjs-page';
+            holder.appendChild(canvas);
+            containerEl.appendChild(holder);
+            const renderContext = { canvasContext: ctx, viewport, transform: [pixelRatio, 0, 0, pixelRatio, 0, 0] };
+            await page.render(renderContext).promise;
+        }
+        if (revokeURL) { setTimeout(() => URL.revokeObjectURL(revokeURL), 30000); }
+    } catch (err) {
+        console.error('PDF.js render error:', err);
+        try { window.open(url, '_blank'); } catch(e) {}
+    }
+}
+
+</script>
+<script>
+
+// === Dynamic layout: keep nav buttons clickable and PDF area sized correctly ===
+function adjustDocViewerLayout() {
+    try {
+        const nav = document.getElementById('doc-nav-buttons');
+        const wrap = document.getElementById('doc-iframe-wrapper');
+        if (!nav || !wrap) return;
+        const navH = nav.offsetHeight || 0;
+        // Leave *exactly* nav height at bottom so buttons are never covered
+        wrap.style.bottom = navH + 'px';
+        wrap.style.position = 'absolute';
+        wrap.style.top = '0';
+        wrap.style.left = '0';
+        wrap.style.right = '0';
+        // Ensure layering
+        nav.style.zIndex = '9999';
+        wrap.style.zIndex = '1';
+        // Keep viewer filling screen area
+        const docView = document.getElementById('doc-view');
+        if (docView) {
+            docView.style.position = 'fixed';
+            docView.style.inset = '0';
+            docView.style.overflow = 'hidden';
+        }
+    } catch (e) {}
+}
+window.addEventListener('resize', adjustDocViewerLayout);
+window.addEventListener('orientationchange', adjustDocViewerLayout);
+
+</script>
 </body>
 
 </html>
-[file content end]
