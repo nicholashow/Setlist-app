@@ -1224,30 +1224,6 @@
         main {
             transition: margin 0.4s cubic-bezier(0.4, 0.0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
         }
-        /* === Sidebar slide cover for smooth open/close === */
-        #sidebar-cover { width:0 !important; pointer-events:none !important; }
-        .dark #sidebar-cover { width:0 !important; pointer-events:none !important; }
-        /* Slow the sidebar's own width/padding transitions for fluidity */
-        .left-col {
-            transition: width 0.65s cubic-bezier(0.4, 0.0, 0.2, 1), padding 0.65s cubic-bezier(0.4, 0.0, 0.2, 1);
-        }
-        main {
-            transition: transform 0.65s cubic-bezier(0.4, 0.0, 0.2, 1);
-        }
-        /* Keep inner content hidden/blurred while closing so you never see it collapse */
-        .left-col.closing .left-col-main-content,
-        .left-col.closing .stats-container {
-            filter: blur(1px);
-            opacity: 0.0;
-        }
-        /* === Transform-based sidebar overlay animation (faster, no flash) === */
-        :root { --sidebar-w: 256px; } /* Tailwind w-64 */
-        .left-col { z-index: 40; }
-        main { position: relative; z-index: 80; will-change: transform; }
-        .main-slide { transition: transform 0.45s cubic-bezier(0.4, 0.0, 0.2, 1); }
-        .no-transition { transition: none !important; }
-        /* Make sidebar width/padding changes quick so the layout snap happens offscreen under <main> */
-        .left-col { transition: width 0.2s ease, padding 0.2s ease; }
 
     </style>
 </head>
@@ -1643,84 +1619,11 @@
         $('#genre-color').on('input',function(){$('#genre-color-display').css({'background-image':'none','background-color':$(this).val()})});
         $('#add-genre').click(function(){const n=$('#genre-name').val().trim(),c=$('#genre-color').val();if(!n)return alert('Enter a genre name');if(genres.some(g=>g.name.toLowerCase()===n.toLowerCase()))return alert('Genre already exists');genres.push({name:n,color:c});$('#genre-name').val('');renderGenres(ds);$('#genre-color-display').css({'background-image':'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)','background-color':''});save()});
         $('#add-venue').click(function(){const n=$('#venue-name').val().trim();if(!n)return alert('Enter a venue name');if(venues.some(v=>v.name.toLowerCase()===n.toLowerCase()))return alert('Venue already exists');venues.push({name:n});$('#venue-name').val('');renderVenues(ds);save()});
-        
-
-$('#sidebar-toggle').off('click').on('click', function(){
-    const $sidebar = $('.left-col');
-    const $main = $('main');
-    const isCollapsed = $sidebar.hasClass('collapsed');
-    const W = 256; // px
-
-    if (!isCollapsed) {
-        // CLOSE: slide the page left to cover the open sidebar
-        $main.addClass('main-slide').css('transform', 'translateX(' + (-W) + 'px)');
-        // After the slide finishes, collapse the sidebar under the covered area and reset transform without visual jump
-        setTimeout(() => {
-            $main.addClass('no-transition').css('transform', 'translateX(0)');
-            $sidebar.addClass('collapsed');
-            // allow reflow then cleanup flags
-            setTimeout(() => {
-                $main.removeClass('no-transition main-slide');
-            }, 30);
-        }, 470);
-    } else {
-        // OPEN: first expand the sidebar instantly under the page,
-        // keep the page covering it (shifted left), then slide the page right to reveal
-        $sidebar.addClass('no-transition').removeClass('collapsed');
-        // ensure the scroll resets to top on open (your earlier requirement)
-        $sidebar.find('.left-col-main-content').scrollTop(0);
-        // keep main covering the sidebar for one frame
-        $main.addClass('no-transition').css('transform', 'translateX(' + (-W) + 'px)');
-        // next frame: enable smooth slide and reveal
-        requestAnimationFrame(() => {
-            $sidebar.removeClass('no-transition');
-            $main.removeClass('no-transition').addClass('main-slide').css('transform', 'translateX(0)');
-            setTimeout(() => {
-                $main.removeClass('main-slide');
-            }, 470);
-        });
-    }
-
-    // Update icon to reflect the incoming state
-    const iconPath = isCollapsed
-        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />'
-        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />';
-    $(this).find('svg').html(iconPath);
-});
-
-        // After the sweep completes, actually collapse the sidebar
-        setTimeout(() => {
-            s.addClass('collapsed');
-            // reset cover for next time
-            $cover.css('width', '0px');
-            setTimeout(() => {
-                $cover.addClass('hidden');
-                s.removeClass('closing');
-            }, 200);
-        }, 700); // a bit longer than CSS duration to be safe
-    } else {
-        // Opening sequence: show cover at full width, reveal sidebar under it, then pull cover away
-        $cover.removeClass('hidden').css('width', targetW + 'px');
-        // Reveal sidebar content beneath the cover
-        s.addClass('closing').removeClass('collapsed');
+        $('#sidebar-toggle').click(function(){
+const s=$('.left-col');s.toggleClass('collapsed');
+    if (!s.hasClass('collapsed')) {
         s.find('.left-col-main-content').scrollTop(0);
-        // Pull the cover away
-        requestAnimationFrame(() => {
-            $cover.css('width', '0px');
-        });
-        setTimeout(() => {
-            $cover.addClass('hidden');
-            s.removeClass('closing');
-        }, 700);
-    }
-
-    // Update the chevron icon to reflect the *incoming* state
-    const iconPath = isCollapsed
-        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />'
-        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />';
-    $(this).find('svg').html(iconPath);
-});
-
+    }$(this).find('svg').html(s.hasClass('collapsed')?'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />':'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')});
         $('#sidebar-toggle').droppable({accept:'.draggable',tolerance:'pointer',over:function(){const s=$('.left-col');if(s.hasClass('collapsed')){s.removeClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')}}});
         
         // --- IPAD INPUT FIX: Manually focus inputs on touchstart and stop the event ---
