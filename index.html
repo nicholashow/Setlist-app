@@ -228,7 +228,7 @@
             display: none; /* Hide the main app UI to prevent interaction and layout shifts */
         }
         
-        #doc-view.doc-view-fullscreen {
+        .doc-view-fullscreen {
             overflow: hidden; /* Prevent scrollbars on the main viewer, child will scroll */
         }
 
@@ -333,7 +333,7 @@
         }
 
         /* Fullscreen viewer styles */
-        #doc-view.doc-view-fullscreen {
+        .doc-view-fullscreen {
             position: fixed;
             top: 0;
             left: 0;
@@ -342,16 +342,12 @@
             z-index: 100;
             background: #333; /* Dark background for page turn effect */
         }
-        .dark #doc-view.doc-view-fullscreen {
+        .dark .doc-view-fullscreen {
             background: #111827;
         }
         
         /* --- Page Turn Animation --- */
-        #doc-iframe-wrapper {
-            width: 100%;
-            height: 100%;
-            perspective: 2500px; /* Enable 3D space for a more dramatic effect */
-        }
+        
         .doc-iframe-container {
             position: absolute;
             top: 0;
@@ -1063,7 +1059,7 @@
         }
     
         /* === iOS PDF scrolling fix: disable 3D transforms around iframe/object so all pages scroll === */
-        html.ios #doc-iframe-wrapper { perspective: none !important; }
+        html.ios 
         html.ios .doc-iframe-container { 
             transform: none !important;
             transition: none !important;
@@ -1090,7 +1086,7 @@
             height: 100% !important;
             display: block !important;
         }
-        html.ios #doc-view.doc-view-fullscreen {
+        html.ios .doc-view-fullscreen {
             overflow: hidden;
         }
         html.ios .doc-iframe-container {
@@ -1316,12 +1312,7 @@
             overflow: hidden; 
             background: var(--tw-colors-gray-900, #000);
         }
-        #doc-iframe-wrapper { 
-            position: absolute; inset: 0; 
-            overflow: auto; 
-            -webkit-overflow-scrolling: touch;
-            perspective: none;
-        }
+        
 
 
         /* Ensure <html> isn't locking scroll while the doc viewer is open (iPad/Safari needs this) */
@@ -1337,41 +1328,10 @@
             backface-visibility: visible !important;
         }
         /* As a hard stop, kill any transform in the viewer subtree on iOS */
-        html.ios.doc-viewer-active #doc-view * {
-            transform: none !important;
-        }
+        html.ios.doc-viewer-active #doc-iframe-wrapper, html.ios.doc-viewer-active #doc-iframe-wrapper * { transform: none !important; }
 
 
-        /* --- Ensure PDF area doesn't cover the nav buttons; keep buttons clickable --- */
-        #doc-view {
-            position: fixed;
-            inset: 0;
-            background: var(--tw-colors-gray-900, #000);
-        }
-        #doc-iframe-wrapper {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0; /* dynamic bottom will be applied via JS */
-            overflow: auto;
-            -webkit-overflow-scrolling: touch;
-            perspective: none;
-            z-index: 1;
-        }
-        #doc-nav-buttons {
-            position: absolute;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            z-index: 9999; /* above wrapper */
-            pointer-events: auto;
-        }
+        
         #doc-nav-buttons .doc-nav-button {
             pointer-events: auto;
         }
@@ -1840,7 +1800,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#setlist-sort-filter-dropdown').on('change',renderSetlist);
             $(document).on('click',function(e){if(!$(e.target).closest('#genre-filter-container').length)$('#genre-filter-dropdown').addClass('hidden');if(!$(e.target).closest('.relative').has('#share-setlist-btn').length)$('#share-options').addClass('hidden')});
             $('#reset-plays').click(()=>{if(confirm('Reset all plays?')){playCounts={};masterSongs.forEach(s=>s.lastPlayed=null);renderPlays();updateTopLeast();save()}});
-            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
+            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
@@ -1917,7 +1877,7 @@ const $wrapper = $('#doc-iframe-wrapper');
                     renderPDFWithPDFJS(url, pdfContainer);
                 }
             }
-if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
+if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
             $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
             $('#next-doc').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
         }
