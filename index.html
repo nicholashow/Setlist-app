@@ -1535,31 +1535,31 @@
         let playCounts = {};
         let genres = [{ name: 'Rock', color: '#ef4444' }, { name: 'Pop', color: '#3b82f6' }, { name: 'Jazz', color: '#10b981' }];
         const energyIcons = [
-            // Level 0 - solid bolt, light/neutral tone
+            // Level 0 - outline only
             `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M11 2L4 14h6l-2 8L22 8h-7l2-6z" fill="#e5e7eb"></path>
+                <path d="M12 1L5 14h6l-2 9 11-13h-7l3-10z" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linejoin="round"/>
             </svg>`,
-            // Level 1 - lower portion filled via gradient
+            // Level 1 - lower fill
             `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
                 <defs>
                     <linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="60%" style="stop-color:#e5e7eb" />
+                        <stop offset="60%" style="stop-color:transparent" />
                         <stop offset="60%" style="stop-color:#f59e0b" />
                     </linearGradient>
                 </defs>
-                <path d="M11 2L4 14h6l-2 8L22 8h-7l2-6z" fill="url(#energy-grad-1)"></path>
+                <path d="M12 1L5 14h6l-2 9 11-13h-7l3-10z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.8" stroke-linejoin="round"/>
             </svg>`,
             // Level 2 - deeper fill
             `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
                 <defs>
                     <linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="40%" style="stop-color:#e5e7eb" />
+                        <stop offset="40%" style="stop-color:transparent" />
                         <stop offset="40%" style="stop-color:#f59e0b" />
                     </linearGradient>
                 </defs>
-                <path d="M11 2L4 14h6l-2 8L22 8h-7l2-6z" fill="url(#energy-grad-2)"></path>
+                <path d="M12 1L5 14h6l-2 9 11-13h-7l3-10z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.8" stroke-linejoin="round"/>
             </svg>`,
-            // Level 3 - full warm fill + twinkle
+            // Level 3 - full warm fill + twinkle sparks
             `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="-4 -4 32 32" class="energy-svg-3" aria-hidden="true">
                 <defs>
                     <radialGradient id="energy-grad-3" cx="50%" cy="50%" r="50%">
@@ -1575,7 +1575,7 @@
                     <path class="energy-spark" d="M18,17 L18.5,21 L21,21.5 L18.5,22 L18,26 L17.5,22 L15,21.5 L17.5,21 Z" fill="#FCD34D"/>
                 </g>
                 <g transform="scale(1.25) translate(-3, -3)">
-                    <path d="M11 2L4 14h6l-2 8L22 8h-7l2-6z" fill="url(#energy-grad-3)"/>
+                    <path d="M12 1L5 14h6l-2 9 11-13h-7l3-10z" fill="url(#energy-grad-3)" stroke="#b45309" stroke-width="1.8" stroke-linejoin="round"/>
                 </g>
             </svg>`
         ];
