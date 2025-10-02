@@ -1299,6 +1299,14 @@
 /* Keep siblings from shifting during edit */
 .song-name.renaming { position: relative; }
 </style>
+
+    <!-- PDF.js for multi-page rendering on iPad -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.min.js"></script>
+    <script>
+      if (window['pdfjsLib']) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.worker.min.js";
+      }
+    </script>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -1705,6 +1713,7 @@ $('#sidebar-toggle').off('click').on('click', function(){
     // Add a 'closing' class for the curtain effect when closing.
     if (isCollapsed) {
         $sidebar.removeClass('collapsed');
+        $sidebar.find('.left-col-main-content').scrollTop(0);
         $sidebar.removeClass('closing');
         // Icon should now indicate "collapse" (pointing left)
         $svg.html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />');
@@ -1845,6 +1854,17 @@ button, .sidebar-item, select, input { min-height: 44px; }
             const $wrapper = $('#doc-iframe-wrapper');
             const $oldContainer = $wrapper.find('.current');
             const $newContainer = $(`<div class="doc-iframe-container"><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
+            // iPad multi-page fix: if PDF on iOS, render with PDF.js
+            const isPdf = /\.pdf(\?|$)/i.test(url);
+            if (isPdf && isIOS()) {
+                const mount = $newContainer[0].querySelector('.doc-iframe-object');
+                // Try to render; if success, remove the object fallback
+                setTimeout(async () => {
+                    const ok = await renderPDFWithPDFJS(url, mount.parentElement);
+                    if (ok) { mount.remove(); }
+                }, 0);
+            }
+        
             if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20); } 
             else if (direction === 'prev') { $newContainer.addClass('prev'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-prev').removeClass('current'); $newContainer.addClass('current incoming-prev').removeClass('prev'); }, 20); } 
             else { $newContainer.addClass('current'); $wrapper.html($newContainer); }
@@ -2052,6 +2072,47 @@ button, .sidebar-item, select, input { min-height: 44px; }
     }
 })();
 
+
+// ---- iPad multi-page PDF fallback using PDF.js ----
+function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+async function renderPDFWithPDFJS(url, mountEl) {
+    if (!window['pdfjsLib']) return false;
+    try {
+        const resp = await fetch(url);
+        const buf = await resp.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+        // Clear mount and create a scroller
+        mountEl.innerHTML = '';
+        const scroller = document.createElement('div');
+        scroller.style.position = 'absolute';
+        scroller.style.top = '0';
+        scroller.style.left = '0';
+        scroller.style.right = '0';
+        scroller.style.bottom = '0';
+        scroller.style.overflow = 'auto';
+        scroller.style.webkitOverflowScrolling = 'touch';
+        mountEl.appendChild(scroller);
+
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement('canvas');
+            canvas.style.display = 'block';
+            canvas.style.margin = '0 auto 16px auto';
+            const ctx = canvas.getContext('2d');
+            canvas.width = Math.floor(viewport.width);
+            canvas.height = Math.floor(viewport.height);
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            scroller.appendChild(canvas);
+        }
+        return true;
+    } catch (e) {
+        console.error('PDF.js render failed', e);
+        return false;
+    }
+}
 </script>
 
 </body>
