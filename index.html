@@ -2,15 +2,6 @@
 <html lang="en" class="dark">
 
 <head>
-    <script data-ios-detect-early>
-    (function(){
-      try{
-        var isiOS = /AppleWebKit/.test(navigator.userAgent||'') && (navigator.maxTouchPoints||0) > 1;
-        if (isiOS) document.documentElement.classList.add('ios');
-      }catch(e){}
-    })();
-    </script>
-
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>Setlist Manager - Enhanced</title>
@@ -1308,66 +1299,28 @@
 /* Keep siblings from shifting during edit */
 .song-name.renaming { position: relative; }
 
-        /* === iPad multipage viewer (Option B) === */
-        html.doc-viewer-active, body.doc-viewer-active {
-            position: static !important;
-            overflow: auto !important;
-            height: 100% !important;
+        /* --- Overlay TOP nav bar --- */
+        #pdf-overlay-nav {
+          position: sticky;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 56px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          padding: 8px 12px;
+          background: rgba(0,0,0,0.75);
+          -webkit-backdrop-filter: saturate(180%) blur(8px);
+          backdrop-filter: saturate(180%) blur(8px);
+          z-index: 2;
         }
-        /* Make the document wrapper the scroller while viewer is open */
-        .doc-viewer-active #doc-iframe-wrapper {
-            overflow: auto !important;
-            -webkit-overflow-scrolling: touch !important;
-        }
-        /* Remove transforms/perspective in viewer ancestry on iOS (prevents single-page snapshot) */
-        html.ios.doc-viewer-active #doc-view,
-        html.ios.doc-viewer-active #doc-iframe-wrapper,
-        html.ios.doc-viewer-active .doc-iframe-container,
-        html.ios.doc-viewer-active .incoming-next,
-        html.ios.doc-viewer-active .incoming-prev,
-        html.ios.doc-viewer-active .turning-next,
-        html.ios.doc-viewer-active .turning-prev {
-            transform: none !important;
-            perspective: none !important;
-            backface-visibility: visible !important;
-            will-change: auto !important;
-            filter: none !important;
-        }
-        /* PDF.js container styles */
-        .pdfjs-container { position:absolute; inset:0; overflow:auto; -webkit-overflow-scrolling:touch; padding: 8px; }
-        .pdfjs-page { margin: 0 auto 10px auto; }
-        .pdfjs-page canvas { display:block; width:100% !important; height:auto !important; background:#fff; border-radius:6px; }
-
-
-        /* === Top-level PDF overlay (outside all transforms) === */
-        #pdf-overlay {
-          position: fixed; inset: 0; z-index: 999999;
-          background: #000;
-          display: none;
-        }
-        html.pdf-overlay-active, body.pdf-overlay-active {
-          position: static !important;
-          overflow: auto !important;
-          height: 100% !important;
-        }
-        html.ios #pdf-overlay, html.ios #pdf-overlay * {
-          transform: none !important;
-          perspective: none !important;
-          backface-visibility: visible !important;
-          will-change: auto !important;
-          filter: none !important;
-        }
-        #pdf-overlay .pdfjs-scroll {
-          position: absolute; inset: 0;
-          overflow: auto; -webkit-overflow-scrolling: touch;
-          padding: 12px 12px 72px;
-        }
-        #pdf-overlay .pdfjs-page { margin: 0 auto 12px; }
-        #pdf-overlay .pdfjs-page canvas {
-          display: block; width: 100% !important; height: auto !important;
-          background: #fff; border-radius: 6px;
-        }
-
+        #pdf-overlay .pdfjs-scroll { padding-top: 64px; }
+        #pdf-overlay #prev-doc,
+        #pdf-overlay #next-doc,
+        #pdf-overlay #close-doc { pointer-events: auto; }      
+    
 </style>
 </head>
 
@@ -1804,7 +1757,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#setlist-sort-filter-dropdown').on('change',renderSetlist);
             $(document).on('click',function(e){if(!$(e.target).closest('#genre-filter-container').length)$('#genre-filter-dropdown').addClass('hidden');if(!$(e.target).closest('.relative').has('#share-setlist-btn').length)$('#share-options').addClass('hidden')});
             $('#reset-plays').click(()=>{if(confirm('Reset all plays?')){playCounts={};masterSongs.forEach(s=>s.lastPlayed=null);renderPlays();updateTopLeast();save()}});
-            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
+            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
@@ -1852,34 +1805,14 @@ const s=$('.left-col');s.toggleClass('collapsed');
             currentViewerIndex = (index === -1) ? currentViewerList.findIndex(s => s.id === songId) : index;
             if (context === 'setlist') { viewedSongsInSetlist.add(songId); $(`#setlist-list li[id="${songId}"] .index-number`).addClass('viewed-index'); }
             const url = getFileURL(song); if (!url) { alert('File not available for this song.'); return; }
-            
-        (function(){
-            const scroller = showPdfOverlay();
-            (async () => {
-                try {
-                    await renderPDFInto(scroller, url);
-                    if (window.showNavButtons) window.showNavButtons();
-                } catch (e) {
-                    console.error('PDF render failed, opening natively', e);
-                    destroyPdfOverlay();
-                    try { window.open(url, '_blank'); } catch(_) {}
-                }
-            })();
-        })();
-        const $wrapper = $('#doc-iframe-wrapper');
+            const $wrapper = $('#doc-iframe-wrapper');
             const $oldContainer = $wrapper.find('.current');
             const $newContainer = $(`<div class="doc-iframe-container"><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
             if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20); } 
             else if (direction === 'prev') { $newContainer.addClass('prev'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-prev').removeClass('current'); $newContainer.addClass('current incoming-prev').removeClass('prev'); }, 20); } 
             else { $newContainer.addClass('current'); $wrapper.html($newContainer); }
             setTimeout(() => $oldContainer.remove(), 800);
-            
-            // Start PDF.js rendering (all platforms)
-            (function(){
-                const pdfContainer = $newContainer.find('.pdfjs-container')[0];
-                if (pdfContainer) { renderPDFWithPDFJS(url, pdfContainer); }
-            })();
-if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
+            if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
             $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
             $('#next-doc').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
         }
@@ -1898,14 +1831,7 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
             $('#prev-doc').on('click', function() { if (!$(this).is(':disabled') && currentViewerIndex > 0) { openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1, 'prev'); }});
             startInactivityTimer();
         }
-        function resetScrollHandlers() { $('#doc-view, #next-doc, #prev-doc').off('mousemove touchstart touchend click'); clearTimeout(inactivityTimer); 
-    try{
-      if (window.__docTapCapture) {
-        document.removeEventListener('touchstart', window.__docTapCapture, {capture:true});
-        document.removeEventListener('pointerdown', window.__docTapCapture, {capture:true});
-      }
-    }catch(e){}
-}
+        function resetScrollHandlers() { $('#doc-view, #next-doc, #prev-doc').off('mousemove touchstart touchend click'); clearTimeout(inactivityTimer); }
         function showNavButtons() { $('#doc-nav-buttons').removeClass('hidden'); startInactivityTimer(); }
         function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000); }
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
@@ -2091,170 +2017,6 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
 
 </script>
 
-
-<script>
-function loadPDFJSLib() {
-  return new Promise((resolve, reject) => {
-    if (window.pdfjsLib) { resolve(window.pdfjsLib); return; }
-    const s = document.createElement('script');
-    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-    s.onload = () => {
-      try {
-        if (window['pdfjsLib']) {
-          window['pdfjsLib'].GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-          resolve(window['pdfjsLib']);
-        } else reject(new Error('pdfjsLib not found'));
-      } catch(e){ reject(e); }
-    };
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
-}
-async function renderPDFWithPDFJS(url, containerEl) {
-  try {
-    // Blob fetch to bypass CORS; fallback to direct URL
-    let dataURL = url, revoke = null;
-    try {
-      const resp = await fetch(url, { credentials: 'include' });
-      if (resp.ok) {
-        const blob = await resp.blob();
-        dataURL = URL.createObjectURL(blob);
-        revoke = dataURL;
-      }
-    } catch(_e){}
-    const pdfjsLib = await loadPDFJSLib();
-    const pdf = await pdfjsLib.getDocument(dataURL).promise;
-    containerEl.innerHTML = '';
-    const dpr = window.devicePixelRatio || 1;
-    for (let p=1; p<=pdf.numPages; p++) {
-      const page = await pdf.getPage(p);
-      const base = page.getViewport({ scale: 1 });
-      const fitWidth = containerEl.clientWidth || base.width;
-      let scale = fitWidth / base.width;
-      scale = Math.max(0.8, Math.min(2.0, scale));
-      const viewport = page.getViewport({ scale });
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d', { alpha:false });
-      canvas.width = Math.floor(viewport.width * dpr);
-      canvas.height = Math.floor(viewport.height * dpr);
-      canvas.style.width = viewport.width + 'px';
-      canvas.style.height = viewport.height + 'px';
-      const holder = document.createElement('div');
-      holder.className = 'pdfjs-page';
-      holder.appendChild(canvas);
-      containerEl.appendChild(holder);
-      const renderContext = { canvasContext: ctx, viewport, transform: [dpr,0,0,dpr,0,0] };
-      await page.render(renderContext).promise;
-    }
-    if (revoke) setTimeout(() => URL.revokeObjectURL(revoke), 30000);
-    // Tap/pointerdown should reveal nav buttons
-    const showBar = () => { try { if (window.showNavButtons) window.showNavButtons(); } catch(e){} };
-    containerEl.addEventListener('touchstart', showBar, {passive:true});
-    containerEl.addEventListener('pointerdown', showBar, {passive:true});
-  } catch (err) {
-    console.error('PDF.js render error:', err);
-    try { window.open(url, '_blank'); } catch(e){}
-  }
-}
-</script>
-
-<script>
-(function(){
-  window.__docTapListenerInstalled = true;
-  function cap(ev){
-    try{
-      var dv = document.getElementById('doc-view');
-      if (!dv || dv.classList.contains('hidden')) return;
-      if (dv.contains(ev.target) && window.showNavButtons) window.showNavButtons();
-    }catch(e){}
-  }
-  window.__docTapCapture = cap;
-  document.addEventListener('touchstart', cap, {passive:true, capture:true});
-  document.addEventListener('pointerdown', cap, {passive:true, capture:true});
-})();
-</script>
-
-<script>
-function loadPDFJSLib() {
-  return new Promise((resolve, reject) => {
-    if (window.pdfjsLib) return resolve(window.pdfjsLib);
-    const s = document.createElement('script');
-    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-    s.onload = () => {
-      try {
-        if (!window.pdfjsLib) return reject(new Error('pdfjsLib missing'));
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-        resolve(window.pdfjsLib);
-      } catch(e){ reject(e); }
-    };
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
-}
-async function renderPDFInto(containerEl, url) {
-  let src = url, revoke = null;
-  try {
-    const r = await fetch(url, { credentials: 'include' });
-    if (r.ok) { const b = await r.blob(); src = URL.createObjectURL(b); revoke = src; }
-  } catch(e) {}
-  const lib = await loadPDFJSLib();
-  const pdf = await lib.getDocument(src).promise;
-  containerEl.innerHTML = '';
-  const dpr = window.devicePixelRatio || 1;
-  for (let i=1; i<=pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const base = page.getViewport({ scale: 1 });
-    const fit = containerEl.clientWidth || base.width;
-    let scale = Math.max(0.8, Math.min(2.0, fit / base.width));
-    const viewport = page.getViewport({ scale });
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d', { alpha:false });
-    canvas.width  = Math.floor(viewport.width  * dpr);
-    canvas.height = Math.floor(viewport.height * dpr);
-    canvas.style.width  = viewport.width  + 'px';
-    canvas.style.height = viewport.height + 'px';
-    const holder = document.createElement('div');
-    holder.className = 'pdfjs-page';
-    holder.appendChild(canvas);
-    containerEl.appendChild(holder);
-    await page.render({ canvasContext: ctx, viewport, transform:[dpr,0,0,dpr,0,0] }).promise;
-  }
-  if (revoke) setTimeout(() => URL.revokeObjectURL(revoke), 30000);
-}
-</script>
-
-<script>
-function ensurePdfOverlay() {
-  let ov = document.getElementById('pdf-overlay');
-  if (!ov) {
-    ov = document.createElement('div');
-    ov.id = 'pdf-overlay';
-    ov.innerHTML = '<div id="pdf-overlay-scroll" class="pdfjs-scroll"></div>';
-    document.body.appendChild(ov);
-  }
-  return ov;
-}
-function showPdfOverlay() {
-  document.documentElement.classList.add('pdf-overlay-active');
-  document.body.classList.add('pdf-overlay-active');
-  const ov = ensurePdfOverlay();
-  ov.style.display = 'block';
-  const scroller = document.getElementById('pdf-overlay-scroll');
-  const showBar = () => { try { if (window.showNavButtons) window.showNavButtons(); } catch(e){} };
-  scroller.addEventListener('touchstart', showBar, {passive:true});
-  scroller.addEventListener('pointerdown', showBar, {passive:true});
-  return scroller;
-}
-function destroyPdfOverlay() {
-  document.documentElement.classList.remove('pdf-overlay-active');
-  document.body.classList.remove('pdf-overlay-active');
-  const ov = document.getElementById('pdf-overlay');
-  if (ov) ov.style.display = 'none';
-  const sc = document.getElementById('pdf-overlay-scroll');
-  if (sc) sc.innerHTML = '';
-}
-</script>
 </body>
 
 </html>
