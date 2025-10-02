@@ -1225,24 +1225,8 @@
             transition: margin 0.4s cubic-bezier(0.4, 0.0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
         }
         /* === Sidebar slide cover for smooth open/close === */
-        #sidebar-cover {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            width: 0; /* animated */
-            z-index: 60; /* above sidebar, below doc nav buttons */
-            background: #f3f4f6; /* matches bg-gray-100 */
-            box-shadow: 2px 0 12px rgba(0,0,0,0.15);
-            border-top-right-radius: 14px;
-            border-bottom-right-radius: 14px;
-            transition: width 0.65s cubic-bezier(0.4, 0.0, 0.2, 1);
-            pointer-events: none;
-        }
-        .dark #sidebar-cover {
-            background: #111827; /* matches dark bg-gray-900 */
-            box-shadow: 2px 0 16px rgba(0,0,0,0.45);
-        }
+        #sidebar-cover { width:0 !important; pointer-events:none !important; }
+        .dark #sidebar-cover { width:0 !important; pointer-events:none !important; }
         /* Slow the sidebar's own width/padding transitions for fluidity */
         .left-col {
             transition: width 0.65s cubic-bezier(0.4, 0.0, 0.2, 1), padding 0.65s cubic-bezier(0.4, 0.0, 0.2, 1);
@@ -1256,6 +1240,14 @@
             filter: blur(1px);
             opacity: 0.0;
         }
+        /* === Transform-based sidebar overlay animation (faster, no flash) === */
+        :root { --sidebar-w: 256px; } /* Tailwind w-64 */
+        .left-col { z-index: 40; }
+        main { position: relative; z-index: 80; will-change: transform; }
+        .main-slide { transition: transform 0.45s cubic-bezier(0.4, 0.0, 0.2, 1); }
+        .no-transition { transition: none !important; }
+        /* Make sidebar width/padding changes quick so the layout snap happens offscreen under <main> */
+        .left-col { transition: width 0.2s ease, padding 0.2s ease; }
 
     </style>
 </head>
@@ -1652,21 +1644,50 @@
         $('#add-genre').click(function(){const n=$('#genre-name').val().trim(),c=$('#genre-color').val();if(!n)return alert('Enter a genre name');if(genres.some(g=>g.name.toLowerCase()===n.toLowerCase()))return alert('Genre already exists');genres.push({name:n,color:c});$('#genre-name').val('');renderGenres(ds);$('#genre-color-display').css({'background-image':'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)','background-color':''});save()});
         $('#add-venue').click(function(){const n=$('#venue-name').val().trim();if(!n)return alert('Enter a venue name');if(venues.some(v=>v.name.toLowerCase()===n.toLowerCase()))return alert('Venue already exists');venues.push({name:n});$('#venue-name').val('');renderVenues(ds);save()});
         
-$('#sidebar-toggle').click(function(){
-    const s = $('.left-col');
+
+$('#sidebar-toggle').off('click').on('click', function(){
+    const $sidebar = $('.left-col');
     const $main = $('main');
-    const $cover = $('#sidebar-cover');
-    const isCollapsed = s.hasClass('collapsed');
-    const targetW = 256; // Tailwind w-64 sidebar width in px
+    const isCollapsed = $sidebar.hasClass('collapsed');
+    const W = 256; // px
 
     if (!isCollapsed) {
-        // Closing sequence: sweep a cover over the sidebar, then collapse
-        s.addClass('closing');
-        $cover.removeClass('hidden').css('width', '0px');
-        // Give the browser a tick to register initial width
+        // CLOSE: slide the page left to cover the open sidebar
+        $main.addClass('main-slide').css('transform', 'translateX(' + (-W) + 'px)');
+        // After the slide finishes, collapse the sidebar under the covered area and reset transform without visual jump
+        setTimeout(() => {
+            $main.addClass('no-transition').css('transform', 'translateX(0)');
+            $sidebar.addClass('collapsed');
+            // allow reflow then cleanup flags
+            setTimeout(() => {
+                $main.removeClass('no-transition main-slide');
+            }, 30);
+        }, 470);
+    } else {
+        // OPEN: first expand the sidebar instantly under the page,
+        // keep the page covering it (shifted left), then slide the page right to reveal
+        $sidebar.addClass('no-transition').removeClass('collapsed');
+        // ensure the scroll resets to top on open (your earlier requirement)
+        $sidebar.find('.left-col-main-content').scrollTop(0);
+        // keep main covering the sidebar for one frame
+        $main.addClass('no-transition').css('transform', 'translateX(' + (-W) + 'px)');
+        // next frame: enable smooth slide and reveal
         requestAnimationFrame(() => {
-            $cover.css('width', targetW + 'px');
+            $sidebar.removeClass('no-transition');
+            $main.removeClass('no-transition').addClass('main-slide').css('transform', 'translateX(0)');
+            setTimeout(() => {
+                $main.removeClass('main-slide');
+            }, 470);
         });
+    }
+
+    // Update icon to reflect the incoming state
+    const iconPath = isCollapsed
+        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />'
+        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />';
+    $(this).find('svg').html(iconPath);
+});
+
         // After the sweep completes, actually collapse the sidebar
         setTimeout(() => {
             s.addClass('collapsed');
