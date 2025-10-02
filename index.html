@@ -1332,6 +1332,22 @@
 }
 #pdf-overlay .pdfjs-scroll { position: relative; inset: auto; flex: 1 1 auto; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px; }
 
+
+        /* === Overlay scroller hardening === */
+        #pdf-overlay .pdfjs-scroll {
+            touch-action: pan-y;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+    
+
+        /* === Overlay base hardening === */
+        #pdf-overlay {
+            width: 100%;
+            height: 100%;
+            pointer-events: auto;
+        }
+    
 </style>
 </head>
 
