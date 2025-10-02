@@ -10,6 +10,25 @@
         tailwind.config = {
             darkMode: 'class',
         }
+        // === Long-press (1s) before dragging files ===
+        let dragTimer = null;
+        $(document).on('mousedown touchstart', 'li.draggable', function(e) {
+            const item = $(this);
+            dragTimer = setTimeout(() => {
+                item.draggable('enable');
+            }, 1000); // 1 second hold
+            // disable dragging immediately until timer completes
+            item.draggable('disable');
+        }).on('mouseup mouseleave touchend touchcancel', 'li.draggable', function(e) {
+            clearTimeout(dragTimer);
+            // re-disable dragging so it requires hold again next time
+            $(this).draggable('disable');
+        });
+        // Initially disable all draggables until long-press
+        $(function() {
+            $('li.draggable').draggable('disable');
+        });
+
     </script>
     <script>
         (function() {
