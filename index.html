@@ -1364,6 +1364,24 @@
         html.ios #doc-iframe-wrapper, 
         html.ios .doc-iframe-container { transform: none !important; }
 
+
+        /* === Viewer session: allow page to scroll (iPad fix) === */
+        html.doc-viewer-active, body.doc-viewer-active {
+            position: static !important;
+            overflow: auto !important;
+            height: 100% !important;
+        }
+        .doc-viewer-active #doc-iframe-wrapper {
+            overflow: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+        html.ios.doc-viewer-active #doc-view, 
+        html.ios.doc-viewer-active #doc-view * {
+            transform: none !important;
+            perspective: none !important;
+            backface-visibility: visible !important;
+        }
+
 </style>
 </head>
 
@@ -1800,7 +1818,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#setlist-sort-filter-dropdown').on('change',renderSetlist);
             $(document).on('click',function(e){if(!$(e.target).closest('#genre-filter-container').length)$('#genre-filter-dropdown').addClass('hidden');if(!$(e.target).closest('.relative').has('#share-setlist-btn').length)$('#share-options').addClass('hidden')});
             $('#reset-plays').click(()=>{if(confirm('Reset all plays?')){playCounts={};masterSongs.forEach(s=>s.lastPlayed=null);renderPlays();updateTopLeast();save()}});
-            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
+            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
@@ -1877,7 +1895,7 @@ const $wrapper = $('#doc-iframe-wrapper');
                     renderPDFWithPDFJS(url, pdfContainer);
                 }
             }
-if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
+if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
             $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
             $('#next-doc').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
         }
@@ -1885,6 +1903,8 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('#doc-vie
         function setupScrollHandlers() {
             resetScrollHandlers();
             $('#doc-view').on('mousemove', showNavButtons);
+            $('#doc-view').on('touchstart', function(){ showNavButtons(); });
+            $('#doc-view').on('pointerdown', function(){ showNavButtons(); });
             let touchstartX = 0;
             $('#doc-view').on('touchstart', e => { touchstartX = e.originalEvent.touches[0].screenX; });
             $('#doc-view').on('touchend', e => {
