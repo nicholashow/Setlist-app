@@ -4,10 +4,10 @@
 <head>
     <script data-ios-detect-early>
     (function(){
-        try{
-            var isiOS = /AppleWebKit/.test(navigator.userAgent||'') && (navigator.maxTouchPoints||0) > 1;
-            if (isiOS) { document.documentElement.classList.add('ios'); }
-        }catch(e){}
+      try{
+        var isiOS = /AppleWebKit/.test(navigator.userAgent||'') && (navigator.maxTouchPoints||0) > 1;
+        if (isiOS) document.documentElement.classList.add('ios');
+      }catch(e){}
     })();
     </script>
 
@@ -356,7 +356,11 @@
         }
         
         /* --- Page Turn Animation --- */
-        
+        #doc-iframe-wrapper {
+            width: 100%;
+            height: 100%;
+            perspective: 2500px; /* Enable 3D space for a more dramatic effect */
+        }
         .doc-iframe-container {
             position: absolute;
             top: 0;
@@ -1068,7 +1072,7 @@
         }
     
         /* === iOS PDF scrolling fix: disable 3D transforms around iframe/object so all pages scroll === */
-        html.ios 
+        html.ios #doc-iframe-wrapper { perspective: none !important; }
         html.ios .doc-iframe-container { 
             transform: none !important;
             transition: none !important;
@@ -1304,129 +1308,20 @@
 /* Keep siblings from shifting during edit */
 .song-name.renaming { position: relative; }
 
-        /* === iPad PDF fix: prefer iframe on iOS, keep <object> on desktop === */
-        .doc-iframe { display: none; width: 100%; height: 100%; border: 0; }
-        html.ios .doc-iframe { display: block !important; }
-        html.ios #doc-object { display: none !important; }
-        /* Allow body to scroll while viewer is open (overrides initial fixed/hidden) */
-        body.doc-viewer-active {
-            position: static !important;
-            overflow: auto !important;
-            height: 100% !important;
-            -webkit-overflow-scrolling: touch;
-        }
-        /* Ensure viewer section takes full viewport and is the only scroll container */
-        #doc-view { 
-            position: fixed; inset: 0; 
-            overflow: hidden; 
-            background: var(--tw-colors-gray-900, #000);
-        }
-        
-
-
-        /* Ensure <html> isn't locking scroll while the doc viewer is open (iPad/Safari needs this) */
-        html.doc-viewer-active {
-            position: static !important;
-            overflow: auto !important;
-            height: 100% !important;
-        }
-        html.ios.doc-viewer-active #doc-iframe-wrapper,
-        html.ios.doc-viewer-active .doc-iframe-container {
-            transform: none !important;
-            transition: none !important;
-            backface-visibility: visible !important;
-        }
-        /* As a hard stop, kill any transform in the viewer subtree on iOS */
-        html.ios.doc-viewer-active #doc-iframe-wrapper, html.ios.doc-viewer-active #doc-iframe-wrapper * { transform: none !important; }
-
-
-        
-        #doc-nav-buttons .doc-nav-button {
-            pointer-events: auto;
-        }
-
-
-        /* --- PDF.js iPad rendering (iOS only) --- */
-        .pdfjs-container {
-            position: absolute;
-            inset: 0;
-            overflow: auto;
-            -webkit-overflow-scrolling: touch;
-            padding: 12px;
-        }
-        .pdfjs-page {
-            margin: 0 auto 12px auto;
-            width: 100%;
-            max-width: 1200px;
-        }
-        .pdfjs-page canvas {
-            width: 100% !important;
-            height: auto !important;
-            display: block;
-            background: #fff;
-            border-radius: 6px;
-        }
-
-
-        /* Ensure no transform stacking context interferes with touch/scroll in the viewer on iOS */
-        html.ios #doc-view, 
-        html.ios #doc-iframe-wrapper, 
-        html.ios .doc-iframe-container { transform: none !important; }
-
-
-        /* === Viewer session: allow page to scroll (iPad fix) === */
+        /* === iPad multipage viewer (Option B) === */
         html.doc-viewer-active, body.doc-viewer-active {
             position: static !important;
             overflow: auto !important;
             height: 100% !important;
         }
+        /* Make the document wrapper the scroller while viewer is open */
         .doc-viewer-active #doc-iframe-wrapper {
             overflow: auto !important;
             -webkit-overflow-scrolling: touch !important;
         }
-        html.ios.doc-viewer-active #doc-view, 
-        html.ios.doc-viewer-active #doc-view * {
-            transform: none !important;
-            perspective: none !important;
-            backface-visibility: visible !important;
-        }
-
-
-        /* === iPad viewer hardening === */
-        html.doc-viewer-active, body.doc-viewer-active {
-            position: static !important;
-            overflow: auto !important;
-            height: 100% !important;
-        }
-        .doc-viewer-active #doc-iframe-wrapper {
-            overflow: auto !important;
-            -webkit-overflow-scrolling: touch !important;
-        }
+        /* Remove transforms/perspective in viewer ancestry on iOS (prevents single-page snapshot) */
         html.ios.doc-viewer-active #doc-view,
         html.ios.doc-viewer-active #doc-iframe-wrapper,
-        html.ios.doc-viewer-active .doc-iframe-container {
-            transform: none !important;
-            perspective: none !important;
-            backface-visibility: visible !important;
-            will-change: auto !important;
-            filter: none !important;
-        }
-
-
-        /* === Option B iPad viewer hardened === */
-        html.doc-viewer-active, body.doc-viewer-active {
-            position: static !important;
-            overflow: auto !important;
-            height: 100% !important;
-        }
-        /* The viewer scroller on iOS */
-        .doc-viewer-active #doc-iframe-wrapper {
-            overflow: auto !important;
-            -webkit-overflow-scrolling: touch !important;
-        }
-        /* Kill transforms in the viewer ancestry on iOS while open */
-        html.ios.doc-viewer-active #doc-view,
-        html.ios.doc-viewer-active #doc-view *,
         html.ios.doc-viewer-active .doc-iframe-container,
         html.ios.doc-viewer-active .incoming-next,
         html.ios.doc-viewer-active .incoming-prev,
@@ -1438,16 +1333,8 @@
             will-change: auto !important;
             filter: none !important;
         }
-        /* PDF.js container */
+        /* PDF.js container styles */
         .pdfjs-container { position:absolute; inset:0; overflow:auto; -webkit-overflow-scrolling:touch; padding: 8px; }
-        .pdfjs-page { margin: 0 auto 10px auto; }
-        .pdfjs-page canvas { display:block; width:100% !important; height:auto !important; background:#fff; border-radius:6px; }
-
-
-        /* === Universal PDF.js viewer (multi-page scroll) === */
-        #doc-view { position: fixed; inset: 0; overflow: hidden; }
-        #doc-iframe-wrapper { position: absolute; inset: 0; overflow: hidden; }
-        .pdfjs-container { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: auto; -webkit-overflow-scrolling: touch; padding: 8px; }
         .pdfjs-page { margin: 0 auto 10px auto; }
         .pdfjs-page canvas { display:block; width:100% !important; height:auto !important; background:#fff; border-radius:6px; }
 
@@ -1887,7 +1774,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#setlist-sort-filter-dropdown').on('change',renderSetlist);
             $(document).on('click',function(e){if(!$(e.target).closest('#genre-filter-container').length)$('#genre-filter-dropdown').addClass('hidden');if(!$(e.target).closest('.relative').has('#share-setlist-btn').length)$('#share-options').addClass('hidden')});
             $('#reset-plays').click(()=>{if(confirm('Reset all plays?')){playCounts={};masterSongs.forEach(s=>s.lastPlayed=null);renderPlays();updateTopLeast();save()}});
-            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
+            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
@@ -1935,42 +1822,20 @@ const s=$('.left-col');s.toggleClass('collapsed');
             currentViewerIndex = (index === -1) ? currentViewerList.findIndex(s => s.id === songId) : index;
             if (context === 'setlist') { viewedSongsInSetlist.add(songId); $(`#setlist-list li[id="${songId}"] .index-number`).addClass('viewed-index'); }
             const url = getFileURL(song); if (!url) { alert('File not available for this song.'); return; }
-            
-            // iOS hard fallback: open natively if inline viewer misbehaves
-            if (document.documentElement.classList.contains('ios')) {
-                // If we're not already using the iframe successfully, open natively:
-                try {
-                    // Attempt to render inline; if it fails to show multipage, user can use native viewer
-                    // We still proceed to build the container; but also open in a new tab to guarantee multipage
-                    // Comment the next line if you prefer inline-only behavior on iPad
-                    // window.open(url, '_blank');
-                } catch (e) {
-                    window.open(url, '_blank');
-                    return;
-                }
-            }
-const $wrapper = $('#doc-iframe-wrapper');
+            const $wrapper = $('#doc-iframe-wrapper');
             const $oldContainer = $wrapper.find('.current');
-            const $newContainer = $(`<div class="doc-iframe-container"><iframe class="doc-iframe" src="${url}"></iframe><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
+            const $newContainer = $(`<div class="doc-iframe-container"><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
             if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20); } 
             else if (direction === 'prev') { $newContainer.addClass('prev'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-prev').removeClass('current'); $newContainer.addClass('current incoming-prev').removeClass('prev'); }, 20); } 
             else { $newContainer.addClass('current'); $wrapper.html($newContainer); }
             setTimeout(() => $oldContainer.remove(), 800);
             
-            
-            // Start PDF.js rendering for this document
+            // Start PDF.js rendering (all platforms)
             (function(){
                 const pdfContainer = $newContainer.find('.pdfjs-container')[0];
                 if (pdfContainer) { renderPDFWithPDFJS(url, pdfContainer); }
             })();
-// Trigger PDF.js rendering after insertion (iOS only)
-            if (document.documentElement.classList.contains('ios')) {
-                const pdfContainer = $newContainer.find('.pdfjs-container')[0];
-                if (pdfContainer) {
-                    renderPDFWithPDFJS(url, pdfContainer);
-                }
-            }
-if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
+if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
             $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
             $('#next-doc').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
         }
@@ -1978,8 +1843,6 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
         function setupScrollHandlers() {
             resetScrollHandlers();
             $('#doc-view').on('mousemove', showNavButtons);
-            $('#doc-view').on('touchstart', function(){ showNavButtons(); });
-            $('#doc-view').on('pointerdown', function(){ showNavButtons(); });
             let touchstartX = 0;
             $('#doc-view').on('touchstart', e => { touchstartX = e.originalEvent.touches[0].screenX; });
             $('#doc-view').on('touchend', e => {
@@ -1993,10 +1856,10 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
         }
         function resetScrollHandlers() { $('#doc-view, #next-doc, #prev-doc').off('mousemove touchstart touchend click'); clearTimeout(inactivityTimer); 
     try{
-        if (window.__docTapCapture) {
-            document.removeEventListener('touchstart', window.__docTapCapture, {capture:true});
-            document.removeEventListener('pointerdown', window.__docTapCapture, {capture:true});
-        }
+      if (window.__docTapCapture) {
+        document.removeEventListener('touchstart', window.__docTapCapture, {capture:true});
+        document.removeEventListener('pointerdown', window.__docTapCapture, {capture:true});
+      }
     }catch(e){}
 }
         function showNavButtons() { $('#doc-nav-buttons').removeClass('hidden'); startInactivityTimer(); }
@@ -2186,130 +2049,84 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
 
 
 <script>
-
-// === PDF.js helper: dynamically load and render all pages into a scrollable container ===
 function loadPDFJSLib() {
-    return new Promise((resolve, reject) => {
-        if (window.pdfjsLib) { resolve(window.pdfjsLib); return; }
-        const s = document.createElement('script');
-        s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-        s.onload = () => {
-            try {
-                if (window['pdfjsLib']) {
-                    // Set worker
-                    if (!window['pdfjsLib'].GlobalWorkerOptions.workerSrc) {
-                        const w = document.createElement('script');
-                        w.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-                        w.onload = () => resolve(window['pdfjsLib']);
-                        w.onerror = reject;
-                        document.head.appendChild(w);
-                    } else {
-                        resolve(window['pdfjsLib']);
-                    }
-                } else { reject(new Error('pdfjsLib not found after load')); }
-            } catch (e) { reject(e); }
-        };
-        s.onerror = reject;
-        document.head.appendChild(s);
-    });
+  return new Promise((resolve, reject) => {
+    if (window.pdfjsLib) { resolve(window.pdfjsLib); return; }
+    const s = document.createElement('script');
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    s.onload = () => {
+      try {
+        if (window['pdfjsLib']) {
+          window['pdfjsLib'].GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+          resolve(window['pdfjsLib']);
+        } else reject(new Error('pdfjsLib not found'));
+      } catch(e){ reject(e); }
+    };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
 }
-
 async function renderPDFWithPDFJS(url, containerEl) {
+  try {
+    // Blob fetch to bypass CORS; fallback to direct URL
+    let dataURL = url, revoke = null;
     try {
-        // Fetch as Blob to avoid cross-origin issues, then feed to PDF.js
-        const resp = await fetch(url, { credentials: 'include' }).catch(()=>null);
-        if (!resp || !resp.ok) { 
-            // As a fallback, try direct URL (may fail if CORS)
-            console.warn('PDF fetch failed or blocked, trying direct URL with PDF.js');
-        }
-        let pdfDataURL = url;
-        let revokeURL = null;
-        if (resp && resp.ok) {
-            const blob = await resp.blob();
-            pdfDataURL = URL.createObjectURL(blob);
-            revokeURL = pdfDataURL;
-        }
-        const pdfjsLib = await loadPDFJSLib();
-        const loadingTask = pdfjsLib.getDocument(pdfDataURL);
-        const pdf = await loadingTask.promise;
-        containerEl.innerHTML = '';
-        const pixelRatio = window.devicePixelRatio || 1;
-        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-            const page = await pdf.getPage(pageNum);
-            const baseViewport = page.getViewport({ scale: 1 });
-            const fitWidth = containerEl.clientWidth || baseViewport.width;
-            let scale = fitWidth / baseViewport.width;
-            // Reasonable bounds
-            scale = Math.max(0.8, Math.min(2.0, scale));
-            const viewport = page.getViewport({ scale });
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d', { alpha:false });
-            canvas.width = Math.floor(viewport.width * pixelRatio);
-            canvas.height = Math.floor(viewport.height * pixelRatio);
-            canvas.style.width = viewport.width + 'px';
-            canvas.style.height = viewport.height + 'px';
-            const holder = document.createElement('div');
-            holder.className = 'pdfjs-page';
-            holder.appendChild(canvas);
-            containerEl.appendChild(holder);
-            const renderContext = { canvasContext: ctx, viewport, transform: [pixelRatio, 0, 0, pixelRatio, 0, 0] };
-            await page.render(renderContext).promise;
-        }
-        if (revokeURL) { setTimeout(() => URL.revokeObjectURL(revokeURL), 30000); }
-    } catch (err) {
-        console.error('PDF.js render error:', err);
-        try { window.open(url, '_blank'); } catch(e) {}
+      const resp = await fetch(url, { credentials: 'include' });
+      if (resp.ok) {
+        const blob = await resp.blob();
+        dataURL = URL.createObjectURL(blob);
+        revoke = dataURL;
+      }
+    } catch(_e){}
+    const pdfjsLib = await loadPDFJSLib();
+    const pdf = await pdfjsLib.getDocument(dataURL).promise;
+    containerEl.innerHTML = '';
+    const dpr = window.devicePixelRatio || 1;
+    for (let p=1; p<=pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const base = page.getViewport({ scale: 1 });
+      const fitWidth = containerEl.clientWidth || base.width;
+      let scale = fitWidth / base.width;
+      scale = Math.max(0.8, Math.min(2.0, scale));
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d', { alpha:false });
+      canvas.width = Math.floor(viewport.width * dpr);
+      canvas.height = Math.floor(viewport.height * dpr);
+      canvas.style.width = viewport.width + 'px';
+      canvas.style.height = viewport.height + 'px';
+      const holder = document.createElement('div');
+      holder.className = 'pdfjs-page';
+      holder.appendChild(canvas);
+      containerEl.appendChild(holder);
+      const renderContext = { canvasContext: ctx, viewport, transform: [dpr,0,0,dpr,0,0] };
+      await page.render(renderContext).promise;
     }
+    if (revoke) setTimeout(() => URL.revokeObjectURL(revoke), 30000);
+    // Tap/pointerdown should reveal nav buttons
+    const showBar = () => { try { if (window.showNavButtons) window.showNavButtons(); } catch(e){} };
+    containerEl.addEventListener('touchstart', showBar, {passive:true});
+    containerEl.addEventListener('pointerdown', showBar, {passive:true});
+  } catch (err) {
+    console.error('PDF.js render error:', err);
+    try { window.open(url, '_blank'); } catch(e){}
+  }
 }
-
-</script>
-<script>
-
-// === Dynamic layout: keep nav buttons clickable and PDF area sized correctly ===
-function adjustDocViewerLayout() {
-    try {
-        const nav = document.getElementById('doc-nav-buttons');
-        const wrap = document.getElementById('doc-iframe-wrapper');
-        if (!nav || !wrap) return;
-        const navH = nav.offsetHeight || 0;
-        // Leave *exactly* nav height at bottom so buttons are never covered
-        wrap.style.bottom = navH + 'px';
-        wrap.style.position = 'absolute';
-        wrap.style.top = '0';
-        wrap.style.left = '0';
-        wrap.style.right = '0';
-        // Ensure layering
-        nav.style.zIndex = '9999';
-        wrap.style.zIndex = '1';
-        // Keep viewer filling screen area
-        const docView = document.getElementById('doc-view');
-        if (docView) {
-            docView.style.position = 'fixed';
-            docView.style.inset = '0';
-            docView.style.overflow = 'hidden';
-        }
-    } catch (e) {}
-}
-window.addEventListener('resize', adjustDocViewerLayout);
-window.addEventListener('orientationchange', adjustDocViewerLayout);
-
 </script>
 
 <script>
 (function(){
-    window.__docTapListenerInstalled = true;
-    var captureHandler = function(ev){
-        try {
-            var dv = document.getElementById('doc-view');
-            if (!dv || dv.classList.contains('hidden')) return;
-            if (dv.contains(ev.target)) {
-                if (typeof window.showNavButtons === 'function') window.showNavButtons();
-            }
-        } catch(e){}
-    };
-    window.__docTapCapture = captureHandler;
-    document.addEventListener('touchstart', captureHandler, {passive:true, capture:true});
-    document.addEventListener('pointerdown', captureHandler, {passive:true, capture:true});
+  window.__docTapListenerInstalled = true;
+  function cap(ev){
+    try{
+      var dv = document.getElementById('doc-view');
+      if (!dv || dv.classList.contains('hidden')) return;
+      if (dv.contains(ev.target) && window.showNavButtons) window.showNavButtons();
+    }catch(e){}
+  }
+  window.__docTapCapture = cap;
+  document.addEventListener('touchstart', cap, {passive:true, capture:true});
+  document.addEventListener('pointerdown', cap, {passive:true, capture:true});
 })();
 </script>
 </body>
