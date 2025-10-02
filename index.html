@@ -618,23 +618,6 @@
             padding: 0.5rem;
         }
 
-/* === Scrollbar alignment for Top/Least Played (non-intrusive) === */
-:root { --sb: 12px; } /* scrollbar visual width */
-
-.stats-container {
-    /* keep the element's size IDENTICAL; just reserve space on the right for the scrollbar */
-    padding-right: calc(0.5rem + var(--sb)); /* 0.5rem existing padding + scrollbar width */
-    background-clip: content-box; /* make right padding area show the parent's background (black) */
-    overflow-y: auto; /* ensure the container scrolls */
-}
-
-/* WebKit/iPad scrollbar sizing to match --sb */
-.stats-container::-webkit-scrollbar { width: var(--sb); }
-.stats-container::-webkit-scrollbar-thumb { border-radius: 8px; }
-.stats-container::-webkit-scrollbar-track { background: transparent; }
-
-
-
         .dark .stats-container {
             background-color: #374151;
             color: #d1d5db;
@@ -1242,7 +1225,45 @@
             transition: margin 0.4s cubic-bezier(0.4, 0.0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
         }
 
-    </style>
+    
+
+/* === External scrollbar for Top/Least Played (non-intrusive box size) === */
+.stats-container {
+    /* Keep size exactly the same but hide native scrollbar */
+    scrollbar-width: none; /* Firefox */
+}
+.stats-container::-webkit-scrollbar { width: 0 !important; height: 0 !important; } /* WebKit/iPad */
+
+/* External scrollbar rail positioned on the black sidebar edge */
+#stats-external-scroll {
+    position: absolute;
+    right: 0;                /* far-right, same lane as main sidebar scrollbar */
+    width: 12px;             /* visual width */
+    background: transparent; /* no background, sits on black */
+    display: none;           /* toggled on when stats container is found */
+    z-index: 2;
+}
+
+#stats-external-scroll .track {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    border-radius: 8px;
+}
+
+#stats-thumb {
+    position: absolute;
+    left: 2px;
+    width: 8px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.5);
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+#stats-external-scroll:hover #stats-thumb { background: rgba(255,255,255,0.7); }
+
+</style>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -1299,7 +1320,9 @@
                 <h3 class="stats-title mt-3">Least Played</h3>
                 <ul class="text-xs mt-1" id="least-played"></ul>
             </div>
-        </aside>
+        
+<div id="stats-external-scroll"><div class="track"></div><div id="stats-thumb"></div></div>
+</aside>
 
         <button id="sidebar-toggle">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1759,6 +1782,109 @@ const s=$('.left-col');s.toggleClass('collapsed');
     <div id="edge-scrollbar" class="hidden" aria-hidden="true">
         <div id="edge-thumb"></div>
     </div>
+
+
+<script>
+(function(){
+  // Find the stats container
+  const stats = document.querySelector('.stats-container');
+  const aside = document.querySelector('aside.left-col');
+  const rail  = document.getElementById('stats-external-scroll');
+  const thumb = document.getElementById('stats-thumb');
+  if (!stats || !aside || !rail || !thumb) return;
+
+  // Show the rail
+  rail.style.display = 'block';
+
+  // Helpers
+  function rect(el){
+    const r = el.getBoundingClientRect();
+    return {top:r.top, left:r.left, width:r.width, height:r.height, bottom:r.bottom};
+  }
+
+  // Position rail to match stats vertical position and height, locked to the far right inside the aside
+  function layout(){
+    const a = rect(aside);
+    const s = rect(stats);
+    // Calculate offset of stats within aside
+    const top = s.top - a.top;
+    const height = s.height;
+    // Place rail
+    rail.style.top = top + 'px';
+    rail.style.height = height + 'px';
+    // Keep at far right
+    rail.style.right = '0px';
+  }
+
+  // Update thumb size & position based on scroll
+  function updateThumb(){
+    const content = stats.scrollHeight;
+    const visible = stats.clientHeight;
+    if (content <= visible + 1) {
+      thumb.style.display = 'none';
+      return;
+    }
+    thumb.style.display = 'block';
+    const railH = rail.clientHeight;
+    const ratio = visible / content;
+    const thumbH = Math.max(24, Math.round(railH * ratio));
+    const maxScroll = content - visible;
+    const scrollTop = stats.scrollTop;
+    const trackSpace = railH - thumbH;
+    const thumbTop = maxScroll > 0 ? Math.round((scrollTop / maxScroll) * trackSpace) : 0;
+    thumb.style.height = thumbH + 'px';
+    thumb.style.top = thumbTop + 'px';
+  }
+
+  // Scroll sync from stats -> thumb
+  stats.addEventListener('scroll', updateThumb, {passive:true});
+
+  // Drag handling for thumb -> stats
+  let dragging = false;
+  let dragStartY = 0;
+  let startTop = 0;
+
+  function onDown(e){
+    dragging = true;
+    dragStartY = (e.touches ? e.touches[0].clientY : e.clientY);
+    startTop = parseInt(window.getComputedStyle(thumb).top, 10) || 0;
+    e.preventDefault();
+  }
+  function onMove(e){
+    if (!dragging) return;
+    const railH = rail.clientHeight;
+    const thumbH = thumb.clientHeight;
+    const maxThumbTop = railH - thumbH;
+    const currentY = (e.touches ? e.touches[0].clientY : e.clientY);
+    let newTop = startTop + (currentY - dragStartY);
+    newTop = Math.max(0, Math.min(maxThumbTop, newTop));
+    thumb.style.top = newTop + 'px';
+    // Map back to scrollTop
+    const content = stats.scrollHeight;
+    const visible = stats.clientHeight;
+    const maxScroll = content - visible;
+    const ratio = newTop / maxThumbTop;
+    stats.scrollTop = Math.round(maxScroll * ratio);
+  }
+  function onUp(){ dragging = false; }
+
+  thumb.addEventListener('mousedown', onDown);
+  thumb.addEventListener('touchstart', onDown, {passive:false});
+  window.addEventListener('mousemove', onMove, {passive:false});
+  window.addEventListener('touchmove', onMove, {passive:false});
+  window.addEventListener('mouseup', onUp);
+  window.addEventListener('touchend', onUp);
+
+  // Re-layout on resize and when fonts/images load
+  const ro = new ResizeObserver(() => { layout(); updateThumb(); });
+  ro.observe(aside);
+  ro.observe(stats);
+  window.addEventListener('resize', () => { layout(); updateThumb(); });
+
+  // Initial layout
+  requestAnimationFrame(() => { layout(); updateThumb(); });
+})();
+</script>
 
 </body>
 
