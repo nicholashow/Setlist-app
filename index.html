@@ -228,7 +228,7 @@
             display: none; /* Hide the main app UI to prevent interaction and layout shifts */
         }
         
-        .doc-view-fullscreen {
+        #doc-view.doc-view-fullscreen {
             overflow: hidden; /* Prevent scrollbars on the main viewer, child will scroll */
         }
 
@@ -333,7 +333,7 @@
         }
 
         /* Fullscreen viewer styles */
-        .doc-view-fullscreen {
+        #doc-view.doc-view-fullscreen {
             position: fixed;
             top: 0;
             left: 0;
@@ -342,7 +342,7 @@
             z-index: 100;
             background: #333; /* Dark background for page turn effect */
         }
-        .dark .doc-view-fullscreen {
+        .dark #doc-view.doc-view-fullscreen {
             background: #111827;
         }
         
@@ -1090,7 +1090,7 @@
             height: 100% !important;
             display: block !important;
         }
-        html.ios .doc-view-fullscreen {
+        html.ios #doc-view.doc-view-fullscreen {
             overflow: hidden;
         }
         html.ios .doc-iframe-container {
@@ -1339,6 +1339,63 @@
         /* As a hard stop, kill any transform in the viewer subtree on iOS */
         html.ios.doc-viewer-active #doc-view * {
             transform: none !important;
+        }
+
+
+        /* --- Ensure PDF area doesn't cover the nav buttons; keep buttons clickable --- */
+        #doc-view {
+            position: fixed;
+            inset: 0;
+            background: var(--tw-colors-gray-900, #000);
+        }
+        #doc-iframe-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 64px; /* leave space for the bottom bar */
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            perspective: none;
+            z-index: 1;
+        }
+        #doc-nav-buttons {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            z-index: 2; /* above wrapper */
+            pointer-events: auto;
+        }
+        #doc-nav-buttons .doc-nav-button {
+            pointer-events: auto;
+        }
+
+
+        /* --- PDF.js iPad rendering (iOS only) --- */
+        .pdfjs-container {
+            position: absolute;
+            inset: 0;
+            overflow: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 12px;
+        }
+        .pdfjs-page {
+            margin: 0 auto 12px auto;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .pdfjs-page canvas {
+            width: 100% !important;
+            height: auto !important;
+            display: block;
+            background: #fff;
+            border-radius: 6px;
         }
 
 </style>
@@ -1846,7 +1903,15 @@ const $wrapper = $('#doc-iframe-wrapper');
             else if (direction === 'prev') { $newContainer.addClass('prev'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-prev').removeClass('current'); $newContainer.addClass('current incoming-prev').removeClass('prev'); }, 20); } 
             else { $newContainer.addClass('current'); $wrapper.html($newContainer); }
             setTimeout(() => $oldContainer.remove(), 800);
-            if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
+            
+            // Trigger PDF.js rendering after insertion (iOS only)
+            if (document.documentElement.classList.contains('ios')) {
+                const pdfContainer = $newContainer.find('.pdfjs-container')[0];
+                if (pdfContainer) {
+                    renderPDFWithPDFJS(url, pdfContainer);
+                }
+            }
+if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
             $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
             $('#next-doc').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
         }
@@ -2051,6 +2116,62 @@ const $wrapper = $('#doc-iframe-wrapper');
 
 </script>
 
+
+<script>
+
+// === PDF.js helper: dynamically load and render all pages into a scrollable container ===
+function loadPDFJSLib() {
+    return new Promise((resolve, reject) => {
+        if (window.pdfjsLib) { resolve(window.pdfjsLib); return; }
+        const s = document.createElement('script');
+        s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+        s.onload = () => {
+            try {
+                if (window['pdfjsLib']) {
+                    // Set worker
+                    if (!window['pdfjsLib'].GlobalWorkerOptions.workerSrc) {
+                        const w = document.createElement('script');
+                        w.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+                        w.onload = () => resolve(window['pdfjsLib']);
+                        w.onerror = reject;
+                        document.head.appendChild(w);
+                    } else {
+                        resolve(window['pdfjsLib']);
+                    }
+                } else { reject(new Error('pdfjsLib not found after load')); }
+            } catch (e) { reject(e); }
+        };
+        s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
+
+async function renderPDFWithPDFJS(url, containerEl) {
+    try {
+        const pdfjsLib = await loadPDFJSLib();
+        const pdf = await pdfjsLib.getDocument(url).promise;
+        containerEl.innerHTML = '';
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const holder = document.createElement('div');
+            holder.className = 'pdfjs-page';
+            holder.appendChild(canvas);
+            containerEl.appendChild(holder);
+            await page.render({ canvasContext: ctx, viewport }).promise;
+        }
+    } catch (err) {
+        console.error('PDF.js render error:', err);
+        // Fallback to native open as last resort
+        try { window.open(url, '_blank'); } catch(e) {}
+    }
+}
+
+</script>
 </body>
 
 </html>
