@@ -1353,7 +1353,7 @@
             top: 0;
             left: 0;
             right: 0;
-            bottom: 64px; /* leave space for the bottom bar */
+            bottom: 0; /* dynamic bottom will be applied via JS */
             overflow: auto;
             -webkit-overflow-scrolling: touch;
             perspective: none;
@@ -1369,7 +1369,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 8px 12px;
-            z-index: 2; /* above wrapper */
+            z-index: 9999; /* above wrapper */
             pointer-events: auto;
         }
         #doc-nav-buttons .doc-nav-button {
@@ -1397,6 +1397,12 @@
             background: #fff;
             border-radius: 6px;
         }
+
+
+        /* Ensure no transform stacking context interferes with touch/scroll in the viewer on iOS */
+        html.ios #doc-view, 
+        html.ios #doc-iframe-wrapper, 
+        html.ios .doc-iframe-container { transform: none !important; }
 
 </style>
 </head>
@@ -2153,7 +2159,10 @@ async function renderPDFWithPDFJS(url, containerEl) {
         containerEl.innerHTML = '';
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
             const page = await pdf.getPage(pageNum);
-            const viewport = page.getViewport({ scale: 1.5 });
+            const baseViewport = page.getViewport({ scale: 1 });
+            const cnw = containerEl.clientWidth || window.innerWidth || baseViewport.width;
+            const scale = Math.max(0.8, Math.min(2.0, cnw / baseViewport.width));
+            const viewport = page.getViewport({ scale });
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = viewport.width;
@@ -2170,6 +2179,37 @@ async function renderPDFWithPDFJS(url, containerEl) {
         try { window.open(url, '_blank'); } catch(e) {}
     }
 }
+
+</script>
+<script>
+
+// === Dynamic layout: keep nav buttons clickable and PDF area sized correctly ===
+function adjustDocViewerLayout() {
+    try {
+        const nav = document.getElementById('doc-nav-buttons');
+        const wrap = document.getElementById('doc-iframe-wrapper');
+        if (!nav || !wrap) return;
+        const navH = nav.offsetHeight || 0;
+        // Leave *exactly* nav height at bottom so buttons are never covered
+        wrap.style.bottom = navH + 'px';
+        wrap.style.position = 'absolute';
+        wrap.style.top = '0';
+        wrap.style.left = '0';
+        wrap.style.right = '0';
+        // Ensure layering
+        nav.style.zIndex = '9999';
+        wrap.style.zIndex = '1';
+        // Keep viewer filling screen area
+        const docView = document.getElementById('doc-view');
+        if (docView) {
+            docView.style.position = 'fixed';
+            docView.style.inset = '0';
+            docView.style.overflow = 'hidden';
+        }
+    } catch (e) {}
+}
+window.addEventListener('resize', adjustDocViewerLayout);
+window.addEventListener('orientationchange', adjustDocViewerLayout);
 
 </script>
 </body>
