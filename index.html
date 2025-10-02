@@ -2,6 +2,15 @@
 <html lang="en" class="dark">
 
 <head>
+    <script data-ios-detect-early>
+    (function(){
+        try{
+            var isiOS = /AppleWebKit/.test(navigator.userAgent||'') && (navigator.maxTouchPoints||0) > 1;
+            if (isiOS) { document.documentElement.classList.add('ios'); }
+        }catch(e){}
+    })();
+    </script>
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>Setlist Manager - Enhanced</title>
@@ -1382,6 +1391,27 @@
             backface-visibility: visible !important;
         }
 
+
+        /* === iPad viewer hardening === */
+        html.doc-viewer-active, body.doc-viewer-active {
+            position: static !important;
+            overflow: auto !important;
+            height: 100% !important;
+        }
+        .doc-viewer-active #doc-iframe-wrapper {
+            overflow: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+        html.ios.doc-viewer-active #doc-view,
+        html.ios.doc-viewer-active #doc-iframe-wrapper,
+        html.ios.doc-viewer-active .doc-iframe-container {
+            transform: none !important;
+            perspective: none !important;
+            backface-visibility: visible !important;
+            will-change: auto !important;
+            filter: none !important;
+        }
+
 </style>
 </head>
 
@@ -1818,7 +1848,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#setlist-sort-filter-dropdown').on('change',renderSetlist);
             $(document).on('click',function(e){if(!$(e.target).closest('#genre-filter-container').length)$('#genre-filter-dropdown').addClass('hidden');if(!$(e.target).closest('.relative').has('#share-setlist-btn').length)$('#share-options').addClass('hidden')});
             $('#reset-plays').click(()=>{if(confirm('Reset all plays?')){playCounts={};masterSongs.forEach(s=>s.lastPlayed=null);renderPlays();updateTopLeast();save()}});
-            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
+            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
@@ -1895,7 +1925,7 @@ const $wrapper = $('#doc-iframe-wrapper');
                     renderPDFWithPDFJS(url, pdfContainer);
                 }
             }
-if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
+if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
             $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
             $('#next-doc').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
         }
@@ -1916,7 +1946,14 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
             $('#prev-doc').on('click', function() { if (!$(this).is(':disabled') && currentViewerIndex > 0) { openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1, 'prev'); }});
             startInactivityTimer();
         }
-        function resetScrollHandlers() { $('#doc-view, #next-doc, #prev-doc').off('mousemove touchstart touchend click'); clearTimeout(inactivityTimer); }
+        function resetScrollHandlers() { $('#doc-view, #next-doc, #prev-doc').off('mousemove touchstart touchend click'); clearTimeout(inactivityTimer); 
+    try{
+        if (window.__docTapCapture) {
+            document.removeEventListener('touchstart', window.__docTapCapture, {capture:true});
+            document.removeEventListener('pointerdown', window.__docTapCapture, {capture:true});
+        }
+    }catch(e){}
+}
         function showNavButtons() { $('#doc-nav-buttons').removeClass('hidden'); startInactivityTimer(); }
         function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000); }
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
@@ -2211,6 +2248,24 @@ function adjustDocViewerLayout() {
 window.addEventListener('resize', adjustDocViewerLayout);
 window.addEventListener('orientationchange', adjustDocViewerLayout);
 
+</script>
+
+<script>
+(function(){
+    window.__docTapListenerInstalled = true;
+    var captureHandler = function(ev){
+        try {
+            var dv = document.getElementById('doc-view');
+            if (!dv || dv.classList.contains('hidden')) return;
+            if (dv.contains(ev.target)) {
+                if (typeof window.showNavButtons === 'function') window.showNavButtons();
+            }
+        } catch(e){}
+    };
+    window.__docTapCapture = captureHandler;
+    document.addEventListener('touchstart', captureHandler, {passive:true, capture:true});
+    document.addEventListener('pointerdown', captureHandler, {passive:true, capture:true});
+})();
 </script>
 </body>
 
