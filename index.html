@@ -1227,17 +1227,16 @@
 
     </style>
 
-/* === Patch: Align Top/Least Played scroll with main sidebar === */
+<!-- PATCH: stats-container scrollbar alignment -->
 <style>
-/* Remove independent scrolling from stats-container so it scrolls with .left-col-main-content */
+/* Align the Top/Least Played scrollbar flush with the sidebar's right edge */
 .stats-container{
-  max-height: none !important;
-  overflow: visible !important;
-}
-/* Ensure the sidebar main content is the only scrollable area */
-.left-col-main-content{
+  /* keep original behavior */
+  max-height: 200px !important;
   overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch;
+  /* pull internal scrollbar to the outer edge like .left-col-main-content does */
+  margin-right: -1rem !important;
+  padding-right: 1rem !important;
 }
 </style>
 
@@ -1678,22 +1677,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
-            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style>
-/* === Patch: Align Top/Least Played scroll with main sidebar === */
-<style>
-/* Remove independent scrolling from stats-container so it scrolls with .left-col-main-content */
-.stats-container{
-  max-height: none !important;
-  overflow: visible !important;
-}
-/* Ensure the sidebar main content is the only scrollable area */
-.left-col-main-content{
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch;
-}
-</style>
-
-</head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
+            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style></head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
             $('#share-email').on('click',e=>{e.preventDefault();shareSetlist('email')});
@@ -1774,169 +1758,145 @@ const s=$('.left-col');s.toggleClass('collapsed');
     </div>
 
 
+<!-- PATCH: long-press renaming for genres, setlists, venues, songs -->
 <script>
 (function(){
-  // --- Long-press editable utility (2s) ---
   const HOLD_MS = 2000;
   const MOVE_PX = 8;
-  function onLongPress(el, callback){
-    let timer = null, sx=0, sy=0, active=false;
+
+  function makeInput($label, initial, onCommit){
+    const $input = $('<input type="text" class="edit-input rounded-md border px-2 py-1 text-sm dark:bg-gray-700 dark:text-white">')
+      .val(initial);
+    const origClass = $label.attr('class') || '';
+    $label.replaceWith($input);
+    $input.focus().select();
+    function finish(val){
+      const value = (val !== undefined ? val : $input.val().trim());
+      const $new = $('<span>').text(value || initial).attr('class', origClass);
+      $input.replaceWith($new);
+      if (value && value !== initial){ onCommit(value); }
+    }
+    $input.on('keydown', function(e){
+      if (e.key === 'Enter'){ e.preventDefault(); finish(); }
+      if (e.key === 'Escape'){ e.preventDefault(); finish(initial); }
+    });
+    $input.on('blur', function(){ finish(); });
+  }
+
+  function bindLongPress(selector, labelSelector, onCommit){
+    let timer=null, sx=0, sy=0, fired=false, startTarget=null;
+
     function start(e){
-      active = true;
-      const p = ('touches' in e && e.touches.length) ? e.touches[0] : e;
+      if (e.type === 'mousedown' && e.button !== 0) return;
+      fired = false;
+      startTarget = e.currentTarget;
+      const p = (e.touches && e.touches[0]) ? e.touches[0] : e;
       sx = p.clientX || 0; sy = p.clientY || 0;
       clearTimeout(timer);
-      timer = setTimeout(()=>{ if(active) callback(e); }, HOLD_MS);
+      timer = setTimeout(()=>{
+        // Only trigger if pointer hasn't moved
+        fired = true;
+        // Stop other handlers (like drag long-press on li.draggable)
+        e.stopImmediatePropagation && e.stopImmediatePropagation();
+        e.stopPropagation && e.stopPropagation();
+        e.preventDefault && e.preventDefault();
+        const $item = $(startTarget);
+        // Decide the label to edit
+        let $label = labelSelector ? $item.find(labelSelector).first() : $item;
+        if (!$label.length) $label = $item;
+        const initial = ($label.text() || '').trim();
+        // Temporarily disable dragging if the parent is draggable
+        const $li = $item.closest('li.draggable');
+        try{ if ($li.length && $li.data('ui-draggable')) { $li.draggable('disable'); } }catch(_){}
+        makeInput($label, initial, (newVal)=>{
+          onCommit($item, newVal, initial);
+          // Re-enable draggable
+          try{ if ($li.length && $li.data('ui-draggable')) { $li.draggable('enable'); } }catch(_){}
+        });
+      }, HOLD_MS);
     }
     function move(e){
-      if(!active) return;
-      const p = ('touches' in e && e.touches.length) ? e.touches[0] : e;
+      if (!timer) return;
+      const p = (e.touches && e.touches[0]) ? e.touches[0] : e;
       if (Math.hypot((p.clientX||0)-sx, (p.clientY||0)-sy) > MOVE_PX){
-        cancel();
+        clearTimeout(timer); timer=null;
       }
     }
-    function cancel(){ active=false; clearTimeout(timer); timer=null; }
-    el.addEventListener('touchstart', start, {passive:true});
-    el.addEventListener('mousedown', start);
-    window.addEventListener('touchmove', move, {passive:true});
-    window.addEventListener('mousemove', move);
-    window.addEventListener('touchend', cancel);
-    window.addEventListener('mouseup', cancel);
-    window.addEventListener('blur', cancel);
-  }
-
-  function makeInlineEditor($node, initial, onCommit){
-    if ($node.find('input').length) return; // already editing
-    const w = Math.max(140, $node.outerWidth());
-    const input = $('<input type="text" class="edit-input rounded-md border px-2 py-1 text-sm dark:bg-gray-700 dark:text-white">')
-      .val(initial).css({ width: w + 'px' });
-    const oldHTML = $node.html();
-    $node.empty().append(input);
-    input.focus().select();
-    function commit(){
-      const val = input.val().trim();
-      $node.html(val || initial);
-      if (val && val !== initial){ onCommit(val); }
+    function end(){
+      if (!fired){ clearTimeout(timer); timer=null; }
     }
-    input.on('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); commit(); } if(e.key==='Escape'){ $node.html(oldHTML); } });
-    input.on('blur', commit);
+
+    // Bind to both touch and mouse
+    $(document)
+      .off('touchstart.longpress mousedown.longpress', selector)
+      .on('touchstart.longpress mousedown.longpress', selector, start)
+      .off('touchmove.longpress mousemove.longpress', selector)
+      .on('touchmove.longpress mousemove.longpress', selector, move)
+      .off('touchend.longpress mouseup.longpress', selector)
+      .on('touchend.longpress mouseup.longpress', selector, end);
   }
 
-  // ---- Genres rename ----
-  function attachGenreRename(){
-    const container = document.getElementById('genre-list');
-    if (!container) return;
-    onLongPress(container, function(e){
-      const item = e.target.closest('.genre-item');
-      if(!item) return;
-      const $item = $(item);
-      const oldName = $item.attr('data-name') || $item.text().trim();
-      const $label = $item.find('.genre-name').length ? $item.find('.genre-name') : $item;
-      makeInlineEditor($label, oldName, function(newName){
-        // update genres array
-        if (Array.isArray(window.genres)){
-          const g = window.genres.find(x => x.name === oldName);
-          if (g){ g.name = newName; }
-          // Update any filters referencing oldName
-          if (window.masterSelectedGenres){
-            window.masterSelectedGenres = window.masterSelectedGenres.map(x => x===oldName? newName : x);
-          }
-          if (typeof save === 'function') save();
-          if ($('#genre-view').is(':visible') && typeof renderGenreView === 'function'){
-            renderGenreView(newName);
-          }
-          if (typeof renderGenres === 'function') renderGenres();
-        }
-      });
-    });
-  }
-
-  // ---- Venues rename ----
-  function attachVenueRename(){
-    const container = document.getElementById('venue-list');
-    if (!container) return;
-    onLongPress(container, function(e){
-      const item = e.target.closest('.venue-item');
-      if(!item) return;
-      const $item = $(item);
-      const oldName = $item.attr('data-name') || $item.text().trim();
-      const $label = $item.find('.venue-name').length ? $item.find('.venue-name') : $item;
-      makeInlineEditor($label, oldName, function(newName){
-        if (Array.isArray(window.venues)){
-          const v = window.venues.find(x => x.name === oldName);
-          if (v){ v.name = newName; }
-          if (typeof save === 'function') save();
-          if (typeof renderVenues === 'function') renderVenues();
-        }
-      });
-    });
-  }
-
-  // ---- Setlists rename ----
-  function attachSetlistRename(){
-    const container = document.getElementById('setlists-container');
-    if (!container) return;
-    onLongPress(container, function(e){
-      const item = e.target.closest('.setlist-item');
-      if(!item) return;
-      const $item = $(item);
-      const nameEl = $item.find('.setlist-name').length ? $item.find('.setlist-name') : $item;
-      const oldName = nameEl.text().trim();
-      makeInlineEditor(nameEl, oldName, function(newName){
-        if (window.setlists && typeof window.setlists === 'object'){
-          if (window.setlists[newName]){ alert('Name exists'); return; }
-          const obj = {}; Object.keys(window.setlists).forEach(k=>{ obj[k===oldName? newName: k] = window.setlists[k]; });
-          window.setlists = obj;
-          if (window.currentSetlist === oldName) window.currentSetlist = newName;
-          if (typeof save === 'function') save();
-          if (typeof renderLeftSetlists === 'function') renderLeftSetlists();
-          if ($('#setlist-title').length) $('#setlist-title').text(newName);
-        }
-      });
-    });
-  }
-
-  // ---- Song names rename (Master & Setlist lists) ----
-  function attachSongRename(){
-    function handlerFactory(listSelector){
-      const el = document.querySelector(listSelector);
-      if (!el) return;
-      onLongPress(el, function(e){
-        // target name element
-        let nameNode = e.target.closest('.font-medium');
-        if (!nameNode){
-          // fallback to first text container inside li
-          const li = e.target.closest('li');
-          if (!li) return;
-          nameNode = li.querySelector('.font-medium') || li.querySelector('div, span');
-        }
-        const li = e.target.closest('li');
-        if (!li || !nameNode) return;
-        const songId = li.getAttribute('id');
-        const initial = nameNode.textContent.trim();
-        makeInlineEditor($(nameNode), initial, function(newName){
-          if (Array.isArray(window.masterSongs)){
-            const s = window.masterSongs.find(x => String(x.id) === String(songId) || x.name === initial);
-            if (s){ s.name = newName; }
-            if (typeof save === 'function') save();
-            if (typeof renderMaster === 'function') renderMaster();
-            if (typeof renderSetlist === 'function') renderSetlist();
-          }
-        });
-      });
+  // ---- Genres ----
+  bindLongPress('#genre-list .genre-item', '.genre-name', function($item, newName, oldName){
+    const old = $item.attr('data-name') || oldName;
+    if (Array.isArray(window.genres)){
+      const g = window.genres.find(x => x.name === old);
+      if (g){ g.name = newName; }
+      $item.attr('data-name', newName);
+      // Update visible text if there wasn't a dedicated .genre-name
+      if (!$item.find('.genre-name').length){ $item.contents().filter(function(){return this.nodeType===3;}).first().replaceWith(newName); }
+      if (typeof save === 'function') save();
     }
-    handlerFactory('#master-list');
-    handlerFactory('#setlist-list');
-    handlerFactory('#genre-song-list');
-  }
-
-  // Run after initial render
-  $(function(){
-    attachGenreRename();
-    attachVenueRename();
-    attachSetlistRename();
-    attachSongRename();
   });
+
+  // ---- Venues ----
+  bindLongPress('#venue-list .venue-item', '.venue-name', function($item, newName, oldName){
+    const old = $item.attr('data-name') || oldName;
+    if (Array.isArray(window.venues)){
+      const v = window.venues.find(x => x.name === old);
+      if (v){ v.name = newName; }
+      $item.attr('data-name', newName);
+      if (!$item.find('.venue-name').length){ $item.contents().filter(function(){return this.nodeType===3;}).first().replaceWith(newName); }
+      if (typeof save === 'function') save();
+    }
+  });
+
+  // ---- Setlists ----
+  bindLongPress('#setlists-container .setlist-item', '.setlist-name', function($item, newName, oldName){
+    const span = $item.find('.setlist-name');
+    const prev = (span.text() || '').trim();
+    const old = prev || oldName;
+    if (window.setlists && typeof window.setlists === 'object'){
+      if (window.setlists[newName]){ alert('Name exists'); return; }
+      const updated = {};
+      Object.keys(window.setlists).forEach(k=>{
+        updated[k===old? newName: k] = window.setlists[k];
+      });
+      window.setlists = updated;
+      if (window.currentSetlist === old) window.currentSetlist = newName;
+      span.text(newName);
+      $item.attr('data-name', newName);
+      $('#setlist-title').text(function(_,t){ return t && t.trim()===old ? newName : t; });
+      if (typeof save === 'function') save();
+    }
+  });
+
+  // ---- Songs (Master, Setlist, Genre view) ----
+  function bindSong(selector){
+    bindLongPress(selector + ' li.draggable .font-medium', null, function($labelNode, newName, oldName){
+      const $li = $labelNode.closest('li.draggable');
+      const id = $li.attr('id');
+      if (Array.isArray(window.masterSongs)){
+        const song = window.masterSongs.find(x => String(x.id)===String(id));
+        if (song){ song.name = newName; }
+        if (typeof save === 'function') save();
+      }
+    });
+  }
+  bindSong('#master-list');
+  bindSong('#setlist-list');
+  bindSong('#genre-song-list');
+
 })();
 </script>
 
