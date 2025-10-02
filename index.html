@@ -1277,6 +1277,20 @@
 @media (prefers-color-scheme: dark) {
   .song-name.renaming .edit-input { background: #111827; color: #e5e7eb; border-color: #2563eb; }
 }
+
+/* magic-square-edit */
+.song-name.renaming .edit-magic-square {
+  background: #ffffff;
+  color: #2563eb;
+  border: 2px solid #2563eb;
+}
+@media (prefers-color-scheme: dark) {
+  .song-name.renaming .edit-magic-square {
+    background: #0b1220; /* near-dark but still "white-like" readability in dark */
+    color: #60a5fa;      /* lighter blue text on dark */
+    border-color: #3b82f6;
+  }
+}
 </style>
 </head>
 
@@ -1903,7 +1917,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
 (function(){
     let holdTimer = null;
     let startX = 0, startY = 0;
-    const HOLD_MS = 1100;
+    const HOLD_MS = 1000;
     const THRESHOLD = 8;
 
     function getPoint(e){
