@@ -616,6 +616,11 @@
             margin-top: auto; /* Pushes to bottom */
             flex-shrink: 0; /* Prevent shrinking */
             padding: 0.5rem;
+    /* Align the internal scrollbar to the far right to match the sidebar */
+    scrollbar-gutter: stable both-edges;
+    margin-right: -8px; /* shift box right edge into the sidebar black area */
+    padding-right: calc(0.5rem + 8px); /* keep content clear of the scrollbar */
+
         }
 
         .dark .stats-container {
@@ -1284,8 +1289,8 @@
             </div>
         </aside>
 
-        <button id="sidebar-toggle" aria-label="Collapse sidebar" class="p-1.5 rounded-full shadow-sm transition duration-300 ease-out hover:shadow active:scale-95 border border-black/10 dark:border-white/10">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <button id="sidebar-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
         </button>
