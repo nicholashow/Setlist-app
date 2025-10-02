@@ -1718,7 +1718,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
         async function shareSetlist(m){if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),t=`${escapeHtml(currentSetlist)} - ${escapeHtml(s.date)} @ ${escapeHtml(s.venue)}\n${o.map((s,i)=>`${i+1}. ${escapeHtml(s.name)}`).join('\n')}`,j=`Setlist: ${currentSetlist}`;if(m==='native'&&navigator.share){const f=[];for(let s of o){if(s.fileInfo?.data){try{const b=dataURItoBlob(s.fileInfo.data);f.push(new File([b],s.name+'.pdf',{type:'application/pdf'}))}catch(e){console.error("Could not process file for sharing:",s.name,e)}}}try{await navigator.share({title:currentSetlist,text:t,files:f})}catch(err){console.error('Share failed:',err)}}else if(m==='email'){window.location.href=`mailto:?subject=${encodeURIComponent(j)}&body=${encodeURIComponent(t)}`}else if(m==='gmail'){window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(j)}&body=${encodeURIComponent(t)}`,'_blank')}else{fallbackCopy(t)}$('#share-options').addClass('hidden')}
         function fallbackCopy(t){if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>{$('#copy-feedback').css('opacity',1);setTimeout(()=>$('#copy-feedback').css('opacity',0),2000)})}}
         async function handleMasterUpload(e){const f=e.target.files;for(let file of f){const n=file.name.replace(/\.[^/.]+$/,'');if(masterSongs.some(s=>s.name.toLowerCase()===n.toLowerCase())&&!confirm(`A file named "${n}" already exists. Add anyway?`))continue;const i='s_'+Math.random().toString(36).slice(2,9);try{const fi=await storeFile(file);masterSongs.push({id:i,name:n,artist:'',genre:'',notes:'',duration:'',energy:0,favorite:!1,fileInfo:fi,lastPlayed:null});playCounts[i]=0}catch(err){console.error('Error processing file:',file.name,err);alert(`Failed to process file: ${file.name}`)}}renderAll()}
-        function createSongItem(s,i,c){const f=s.favorite?'favorited':'',t=`<div class="w-8 flex-shrink-0 flex justify-center items-center favorite-star-container ${f}" title="Toggle Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></div>`,d=`<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span></div>`,g=`<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${s.energy||0}">${energyIcons[s.energy||0]}</div>`,b=['master','favorites','genre'].includes(c)?'Delete':'Remove',n=`<div class="song-details-container"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(s.artist||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(s.notes||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(s.duration||'')}"><button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${b}</button></div>`,v=c==='setlist'&&viewedSongsInSetlist.has(s.id)?'viewed-index':'';return $(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable"><div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${v}">${i+1}</span></div>${t}${d}${g}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium">${escapeHtml(s.name)}</div>${n}</li>`)}
+        function createSongItem(s,i,c){const f=s.favorite?'favorited':'',t=`<div class="w-8 flex-shrink-0 flex justify-center items-center favorite-star-container ${f}" title="Toggle Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></div>`,d=`<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span></div>`,g=`<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${s.energy||0}">${energyIcons[s.energy||0]}</div>`,b=['master','favorites','genre'].includes(c)?'Delete':'Remove',n=`<div class="song-details-container"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(s.artist||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(s.notes||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(s.duration||'')}"><button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${b}</button></div>`,v=c==='setlist'&&viewedSongsInSetlist.has(s.id)?'viewed-index':'';return $(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable"><div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${v}">${i+1}</span></div>${t}${d}${g}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium"><span class="song-name-text" data-song-id="${s.id}">${escapeHtml(s.name)}</span></div>${n}</li>`)}
         const draggableOptions={appendTo:'body',revert:'invalid',cursorAt:{left:10,top:10},helper:'clone',start:function(e,ui){const i=$(this),c=i.parent().children('.item-selected').length,h=c>1?`Dragging ${c} items`:i.find('.song-name').text();ui.helper.empty().html(h).css({'background-color':'#3b82f6','color':'white','padding':'0.5rem 1rem','height':'auto','width':'auto','white-space':'nowrap','box-shadow':'0 5px 15px rgba(0,0,0,0.3)','z-index':9999,'border-radius':'0.5rem','font-weight':'600'})}};
         function renderMaster(){const q=$('#search').val().toLowerCase();let l=masterSongs.filter(s=>(q?(s.name.toLowerCase().includes(q)||(s.artist||'').toLowerCase().includes(q)):!0)&&(masterSelectedGenres.length>0?masterSelectedGenres.includes(s.genre):!0));const m=$('#sort-dropdown').val();l.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentMasterViewSongs=l;const u=$('#master-list').empty();if(l.length===0)u.append(`<li class="p-8 text-center text-gray-500 italic">${(q||masterSelectedGenres.length>0)?'No songs match your current filters.':'No songs yet. <br> Drag & drop PDF files onto the page or use the "Add files" button!'}</li>`);else l.forEach((s,i)=>u.append(createSongItem(s,i,'master')));$('#master-list .draggable').draggable(draggableOptions)}
         function renderAddSongsPanel(){const q=$('#setlist-search-add').val().toLowerCase();let l=masterSongs.filter(s=>q?s.name.toLowerCase().includes(q):!0);l.sort((a,b)=>a.name.localeCompare(b.name));const u=$('#setlist-add-songs-list').empty(),c=setlists[currentSetlist]?.songs||[];l.forEach(s=>{const i=c.includes(s.id),li=$(`<li class="add-song-item" data-song-id="${s.id}"><label for="add-${s.id}" class="flex items-center w-full cursor-pointer"><input type="checkbox" id="add-${s.id}" class="sr-only custom-checkbox-input" ${i?'checked':''}><div class="custom-checkbox-box"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></div><span class="ml-3 flex-grow">${escapeHtml(s.name)}</span></label></li>`);li.find('input').on('change',function(){const i=$(this).closest('.add-song-item').data('song-id');if(this.checked){if(!setlists[currentSetlist].songs.includes(i))setlists[currentSetlist].songs.push(i)}else{setlists[currentSetlist].songs=setlists[currentSetlist].songs.filter(id=>id!==i)}renderSetlist();save()});u.append(li)})}
@@ -1884,6 +1884,79 @@ const s=$('.left-col');s.toggleClass('collapsed');
   // Initial layout
   requestAnimationFrame(() => { layout(); updateThumb(); });
 })();
+
+// === Long-press (2s) to rename song titles across the app (iPad-friendly) ===
+(function(){
+    let holdTimer = null;
+    let startX = 0, startY = 0;
+    const HOLD_MS = 2000;
+    const THRESHOLD = 8;
+
+    function getPoint(e){
+        if (e.touches && e.touches.length) return {x: e.touches[0].clientX, y: e.touches[0].clientY};
+        if (e.changedTouches && e.changedTouches.length) return {x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY};
+        return {x: e.clientX || 0, y: e.clientY || 0};
+    }
+    function cancelTimer(){ if (holdTimer){ clearTimeout(holdTimer); holdTimer = null; } }
+
+    // Start hold on the visible song title content
+    $(document).on('touchstart mousedown', '.song-name [data-song-id], .song-name-text[data-song-id]', function(e){
+        const $target = $(this);
+        const p = getPoint(e); startX = p.x; startY = p.y;
+        cancelTimer();
+        holdTimer = setTimeout(()=>{
+            const songId = $target.data('song-id');
+            if (!songId) return;
+            beginInlineRename($target, songId);
+        }, HOLD_MS);
+    });
+
+    // Cancel if the finger/mouse moves significantly (scroll gesture)
+    $(document).on('touchmove mousemove', function(e){
+        if (!holdTimer) return;
+        const p = getPoint(e);
+        if (Math.abs(p.x - startX) > THRESHOLD || Math.abs(p.y - startY) > THRESHOLD){
+            cancelTimer();
+        }
+    });
+    // Cancel on release
+    $(document).on('touchend mouseup touchcancel', function(){ cancelTimer(); });
+
+    function beginInlineRename($textEl, songId){
+        // Avoid duplicate editors
+        if ($textEl.closest('.song-name').find('input.edit-input').length) return;
+
+        const current = $textEl.text();
+        const $input = $('<input type="text" class="edit-input" />').val(current);
+        // Replace only the text span (preserves layout around it)
+        $textEl.replaceWith($input);
+        $input.focus();
+        // Make typing legible in dark mode
+        $input.addClass('bg-white text-black');
+
+        function commit(save){
+            const song = masterSongs.find(s => s.id === songId);
+            if (!song){ renderAll(); return; }
+            if (save){
+                const newName = String($input.val() || '').trim();
+                if (newName && newName !== song.name){
+                    song.name = newName;
+                    save(); // persist
+                }
+            }
+            renderAll(); // re-render everywhere that references this song
+        }
+
+        $input.on('keydown', function(ev){
+            if (ev.key === 'Enter') commit(true);
+            else if (ev.key === 'Escape') commit(false);
+        });
+        $input.on('blur', function(){ commit(true); });
+        // Prevent accidental drags while editing
+        $input.on('touchstart mousedown', function(ev){ ev.stopPropagation(); });
+    }
+})();
+
 </script>
 
 </body>
