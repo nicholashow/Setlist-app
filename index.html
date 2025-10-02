@@ -1322,18 +1322,7 @@
         #pdf-overlay #close-doc { pointer-events: auto; }      
     
 
-/* === Overlay flex layout to guarantee scrolling === */
-#pdf-overlay {
-  display: flex;
-  flex-direction: column;
-}
-#pdf-overlay-nav {
-  flex: 0 0 auto;
-}
-#pdf-overlay .pdfjs-scroll { position: relative; inset: auto; flex: 1 1 auto; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px; }
-
-
-        /* === Overlay scroller hardening === */
+/* === Overlay scroller hardening === */
         #pdf-overlay .pdfjs-scroll {
             touch-action: pan-y;
             overscroll-behavior: contain;
@@ -1348,6 +1337,12 @@
             pointer-events: auto;
         }
     
+
+/* === Overlay fixed header layout (do not touch scrolling) === */
+#pdf-overlay { position: fixed; inset: 0; z-index: 999999; background: #000; }
+#pdf-overlay-nav { position: fixed; top: 0; left: 0; right: 0; height: 56px; display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(0,0,0,0.75); -webkit-backdrop-filter: saturate(180%) blur(8px); backdrop-filter: saturate(180%) blur(8px); z-index: 1000000; }
+#pdf-overlay .pdfjs-scroll { position: absolute; top: 56px; left: 0; right: 0; bottom: 0; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px; }
+
 </style>
 </head>
 
