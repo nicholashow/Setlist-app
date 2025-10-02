@@ -1298,6 +1298,31 @@
 }
 /* Keep siblings from shifting during edit */
 .song-name.renaming { position: relative; }
+
+        /* === iPad PDF fix: prefer iframe on iOS, keep <object> on desktop === */
+        .doc-iframe { display: none; width: 100%; height: 100%; border: 0; }
+        html.ios .doc-iframe { display: block !important; }
+        html.ios #doc-object { display: none !important; }
+        /* Allow body to scroll while viewer is open (overrides initial fixed/hidden) */
+        body.doc-viewer-active {
+            position: static !important;
+            overflow: auto !important;
+            height: 100% !important;
+            -webkit-overflow-scrolling: touch;
+        }
+        /* Ensure viewer section takes full viewport and is the only scroll container */
+        #doc-view { 
+            position: fixed; inset: 0; 
+            overflow: hidden; 
+            background: var(--tw-colors-gray-900, #000);
+        }
+        #doc-iframe-wrapper { 
+            position: absolute; inset: 0; 
+            overflow: auto; 
+            -webkit-overflow-scrolling: touch;
+            perspective: none;
+        }
+
 </style>
 </head>
 
@@ -1784,7 +1809,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             const url = getFileURL(song); if (!url) { alert('File not available for this song.'); return; }
             const $wrapper = $('#doc-iframe-wrapper');
             const $oldContainer = $wrapper.find('.current');
-            const $newContainer = $(`<div class="doc-iframe-container"><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
+            const $newContainer = $(`<div class="doc-iframe-container"><iframe class="doc-iframe" src="${url}"></iframe><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
             if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20); } 
             else if (direction === 'prev') { $newContainer.addClass('prev'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-prev').removeClass('current'); $newContainer.addClass('current incoming-prev').removeClass('prev'); }, 20); } 
             else { $newContainer.addClass('current'); $wrapper.html($newContainer); }
