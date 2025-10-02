@@ -1300,11 +1300,24 @@
 .song-name.renaming { position: relative; }
 </style>
 
-    <!-- PDF.js for iPad multi-page rendering -->
+    <!-- PDF.js (once) for iPad multi-page PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.min.js"></script>
     <script>
-      if (window['pdfjsLib']) {
+      if (window.pdfjsLib) {
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.worker.min.js";
+      }
+    </script>
+
+    <script>
+      // Ensure code runs after jQuery is ready even if blocks appear early
+      function __afterJQ__(fn){
+        if (window.jQuery) { jQuery(fn); }
+        else {
+          var i = 0;
+          var t = setInterval(function(){
+            if (window.jQuery || ++i > 100) { clearInterval(t); if (window.jQuery) jQuery(fn); }
+          }, 30);
+        }
       }
     </script>
 </head>
@@ -1792,7 +1805,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             const url = getFileURL(song); if (!url) { alert('File not available for this song.'); return; }
             const $wrapper = $('#doc-iframe-wrapper');
             const $oldContainer = $wrapper.find('.current');
-            const $newContainer = $(`<div class="doc-iframe-container"><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
+            let $newContainer = $(`<div class=\"doc-iframe-container\"></div>`);
             if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20); } 
             else if (direction === 'prev') { $newContainer.addClass('prev'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-prev').removeClass('current'); $newContainer.addClass('current incoming-prev').removeClass('prev'); }, 20); } 
             else { $newContainer.addClass('current'); $wrapper.html($newContainer);
@@ -1801,8 +1814,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
               try {
                 const isPdf = /\.pdf($|\?)/i.test(url||'');
                 if (__isIOS__() && isPdf) {
-                  const mount = $newContainer[0];
-                  __mountPdfIOS__(song, url, mount).catch(e => console.warn('iOS PDF render failed', e));
+                  __mountPdfIOS__(song, url, $newContainer[0]).catch(e => console.warn('iOS PDF render failed', e));
                 } else {
                   if (!$newContainer[0].querySelector('.doc-iframe-object')) {
                       const obj = document.createElement('object');
@@ -2020,7 +2032,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
 })();
 
 
-// --- iPad-only PDF multi-page (scoped to viewer) ---
+// --- iPad-only PDF multi-page (scoped, stable) ---
 function __isIOS__() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 }
@@ -2042,7 +2054,7 @@ function __pdfBytes__(song, url) {
   });
 }
 async function __mountPdfIOS__(song, url, hostEl) {
-  if (!window['pdfjsLib']) throw new Error('pdfjsLib missing');
+  if (!window.pdfjsLib) throw new Error('pdfjsLib missing');
   const bytes = await __pdfBytes__(song, url);
   hostEl.innerHTML = '';
   const scroller = document.createElement('div');
@@ -2054,7 +2066,7 @@ async function __mountPdfIOS__(song, url, hostEl) {
   hostEl.appendChild(scroller);
   const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
   const DPR = Math.min(window.devicePixelRatio||1, 2);
-  const scale = 1.15;
+  const scale = 1.1;
   for (let p=1; p<=pdf.numPages; p++) {
     const page = await pdf.getPage(p);
     const viewport = page.getViewport({ scale });
