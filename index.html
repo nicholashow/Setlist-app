@@ -3637,29 +3637,91 @@ function destroyPdfOverlay() {
 </script>
 
 
+<!-- Universal CLOSE for the PDF/file viewer — install once -->
+<script>
+(function () {
+  if (window.__UniversalClose_v1) return;
+  window.__UniversalClose_v1 = true;
+
+  function universalCloseViewer() {
+    var closed = false;
+
+    try {
+      var nativeBtn = document.getElementById('close-doc');
+      if (nativeBtn && typeof nativeBtn.click === 'function') {
+        nativeBtn.click();
+        closed = true;
+      }
+      if (window.$ && !closed) { try { $('#close-doc').trigger('click'); closed = true; } catch(_){} }
+    } catch(_) {}
+
+    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); closed = true; } } catch(_) {}
+
+    try {
+      var roots = [
+        document.getElementById('pdf-overlay'),
+        document.querySelector('.pdf-overlay'),
+        document.getElementById('pdf-viewer'),
+        document.querySelector('.viewer-overlay')
+      ].filter(Boolean);
+      roots.forEach(function (el) { el.style.display = 'none'; });
+      if (roots.length) closed = true;
+    } catch(_) {}
+
+    try { document.documentElement.classList.remove('pdf-overlay-active'); closed = true; } catch(_) {}
+    try { document.body.classList.remove('pdf-overlay-active'); closed = true; } catch(_) {}
+
+    try {
+      var bar = document.getElementById('pdf-topbar') || document.getElementById('pdf-btn-bar');
+      if (bar) bar.classList.remove('visible');
+    } catch(_) {}
+
+    return !!closed;
+  }
+
+  function onDocClick(e) {
+    var t = e.target;
+    var isClose = (t && t.id === 'pdf-close') || (t && t.closest && (t.closest('#pdf-close') || t.closest('#pdf-btn-close')));
+    if (isClose) {
+      e.stopPropagation();
+      e.preventDefault();
+      universalCloseViewer();
+    }
+  }
+  document.addEventListener('click', onDocClick, true);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' || e.keyCode === 27) {
+      if (document.documentElement.classList.contains('pdf-overlay-active')) {
+        e.stopPropagation();
+        universalCloseViewer();
+      }
+    }
+  }, true);
+
+  new MutationObserver(function () {}).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+  window.universalCloseViewer = universalCloseViewer;
+})();
+</script>
+
+
 <!-- Overlay Prev/Next — robust, works everywhere; Close untouched -->
 <script>
 (function () {
-  if (window.__OverlayNav_v3) return;
-  window.__OverlayNav_v3 = true;
+  if (window.__OverlayNav_v4) return;
+  window.__OverlayNav_v4 = true;
 
   function getDocId(item) {
     if (!item || typeof item !== 'object') return null;
     return item.id ?? item.docId ?? item.songId ?? item.fileId ?? item.pdfId ?? null;
   }
 
-  function ensureGlobalsFromContext(context, index) {
-    try {
-      if (context) window.currentViewerContext = context;
-      if (typeof index === 'number') window.currentViewerIndex = index;
-      if (context && Array.isArray(context.list)) window.currentViewerList = context.list;
-    } catch (_) {}
-  }
-
+  // Wrap open functions so globals stay accurate across pages
   ['openSongInContext', 'openDocViewer'].forEach(function (name) {
     try {
       var fn = window[name];
-      if (!fn || fn.__wrappedNav) return;
+      if (!fn || fn.__wrappedNavOnly) return;
       var orig = fn;
       window[name] = function () {
         for (var i = 0; i < arguments.length; i++) {
@@ -3672,7 +3734,7 @@ function destroyPdfOverlay() {
         }
         return orig.apply(this, arguments);
       };
-      window[name].__wrappedNav = true;
+      window[name].__wrappedNavOnly = true;
     } catch (_) {}
   });
 
@@ -3753,6 +3815,7 @@ function destroyPdfOverlay() {
     syncButtons();
   }
 
+  // Keep states synced as DOM changes
   document.addEventListener('click', function () {
     setTimeout(syncButtons, 60);
     setTimeout(syncButtons, 300);
@@ -3763,15 +3826,11 @@ function destroyPdfOverlay() {
     setTimeout(syncButtons, 0);
   }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
-  new MutationObserver(function () {
-    wire();
-  }).observe(document.body, { childList: true, subtree: true });
+  new MutationObserver(function () { wire(); }).observe(document.body, { childList: true, subtree: true });
 
   wire();
   setTimeout(syncButtons, 0);
   setTimeout(syncButtons, 400);
-
-  window.__overlayNavDebug = { readState, canPrev, canNext, goPrev, goNext };
 })();
 </script>
 
