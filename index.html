@@ -1545,6 +1545,76 @@ input#new-venue, input[name="venue"] {
   text-align: center;
 }
 
+
+/* === Overlay PDF Top Bar (non-intrusive, keeps scroll untouched) === */
+html:not(.pdf-overlay-active) #pdf-topbar,
+html:not(.pdf-overlay-active) #pdf-top-hit { display: none !important; }
+
+#pdf-top-hit {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 72px;
+  z-index: 2147483600;
+  background: transparent;
+  pointer-events: auto;
+}
+
+#pdf-topbar {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483601;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .20s ease;
+}
+#pdf-topbar.visible { opacity: 1; }
+
+#pdf-topbar .btn {
+  pointer-events: auto;
+  padding: 9px 18px;
+  border-radius: 12px;
+  font-weight: 800;
+  border: none;
+  letter-spacing: .3px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.35);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#pdf-prev, #pdf-next { background: #2563eb; color: #fff; }
+#pdf-close { background: #ef4444; color: #fff; }
+
+#pdf-topbar .btn.disabled {
+  background: #9ca3af !important;
+  color: #fff !important;
+  box-shadow: none;
+  cursor: default;
+}
+
+html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
+
+/* === Sidebar collapse: label stability only during animation === */
+html.sidebar-opening .left-col .sidebar-item,
+html.sidebar-closing .left-col .sidebar-item {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+.left-col .sidebar-item { flex-shrink: 1; }
+
+/* === Center placeholder text for Genre & Venue === */
+input#new-genre::placeholder, input[name="genre"]::placeholder,
+input#new-venue::placeholder, input[name="venue"]::placeholder { text-align: center; }
+input#new-genre, input[name="genre"],
+input#new-venue, input[name="venue"] { text-align: center; }
+
 </style>
 </head>
 
@@ -3243,6 +3313,159 @@ function destroyPdfOverlay() {
   closeB && closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
 })();
 </script>
+
+<!-- Overlay PDF Top Bar (new safe IDs) -->
+<div id="pdf-top-hit"></div>
+<div id="pdf-topbar" aria-hidden="true">
+  <button id="pdf-prev"  class="btn" type="button">PREVIOUS</button>
+  <button id="pdf-next"  class="btn" type="button">NEXT</button>
+  <button id="pdf-close" class="btn" type="button">CLOSE</button>
+</div>
+
+
+<!-- Topbar V7 wiring -->
+<script>
+/* Universal viewer wiring so buttons work on Songs, Setlists, Favorites */
+(function wrapOpenSongInContext(){
+  if (window.__wrapOpenSongInContext_v1) return; window.__wrapOpenSongInContext_v1 = true;
+  function install(){
+    if (!window.openSongInContext || window.openSongInContext.__wrapped) return;
+    var orig = window.openSongInContext;
+    function wrapped(songId, context, index, dir){
+      try {
+        if (typeof context !== 'undefined') window.currentViewerContext = context;
+        if (typeof index   === 'number')     window.currentViewerIndex   = index;
+        if (context && Array.isArray(context.list)) window.currentViewerList = context.list;
+      } catch(e){}
+      return orig.apply(this, arguments);
+    }
+    wrapped.__wrapped = true;
+    window.openSongInContext = wrapped;
+  }
+  install(); document.addEventListener('DOMContentLoaded', install); setTimeout(install, 500); setTimeout(install, 1500);
+})();
+
+/* Top bar behavior (no scroll changes) */
+(function(){
+  if (window.__TopBarV7) return; window.__TopBarV7 = true;
+  var $ = function(id){ return document.getElementById(id); };
+  var bar = $('pdf-topbar'), hit = $('pdf-top-hit');
+  var prevB = $('pdf-prev'), nextB = $('pdf-next'), closeB = $('pdf-close');
+  var hideTimer = null;
+
+  function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
+  function atTop(){ var sc = scroller(); return sc && sc.scrollTop <= 2; }
+
+  function canPrev(){ try { return (window.currentViewerIndex > 0); } catch(e){ return false; } }
+  function canNext(){ try { return (window.currentViewerList && window.currentViewerIndex < window.currentViewerList.length - 1); } catch(e){ return false; } }
+
+  function syncState(){
+    try {
+      prevB.classList.toggle('disabled', !canPrev());
+      nextB.classList.toggle('disabled', !canNext());
+      prevB.tabIndex = prevB.classList.contains('disabled') ? -1 : 0;
+      nextB.tabIndex = nextB.classList.contains('disabled') ? -1 : 0;
+    } catch(e){}
+  }
+
+  function showBar(){
+    if (!bar) return;
+    if (!atTop()) return;
+    bar.classList.add('visible');
+    syncState();
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(function(){ bar.classList.remove('visible'); }, 2000);
+  }
+  function hideBarNow(){
+    bar && bar.classList.remove('visible');
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  }
+
+  function callPrev(){
+    try {
+      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex > 0){
+        var idx = window.currentViewerIndex - 1, id = window.currentViewerList[idx].id;
+        window.openSongInContext(id, window.currentViewerContext, idx, 'prev'); return;
+      }
+    } catch(e){}
+    var el = document.getElementById('prev-doc'); if (el) { el.click(); return; }
+    if (window.$) try { $('#prev-doc').trigger('click'); } catch(e){}
+  }
+  function callNext(){
+    try {
+      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex < window.currentViewerList.length - 1){
+        var idx = window.currentViewerIndex + 1, id = window.currentViewerList[idx].id;
+        window.openSongInContext(id, window.currentViewerContext, idx, 'next'); return;
+      }
+    } catch(e){}
+    var el = document.getElementById('next-doc'); if (el) { el.click(); return; }
+    if (window.$) try { $('#next-doc').trigger('click'); } catch(e){}
+  }
+  function callClose(){
+    var ok = false;
+    var el = document.getElementById('close-doc'); if (el) { try { el.click(); ok = true; } catch(e){} }
+    if (window.$) try { $('#close-doc').trigger('click'); ok = true; } catch(e){}
+    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); ok = true; } } catch(e){}
+    try { document.documentElement.classList.remove('pdf-overlay-active'); ok = true; } catch(e){}
+    return ok;
+  }
+
+  prevB.addEventListener('click', function(e){ e.stopPropagation(); if (!prevB.classList.contains('disabled')) callPrev(); });
+  nextB.addEventListener('click', function(e){ e.stopPropagation(); if (!nextB.classList.contains('disabled')) callNext(); });
+  closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
+
+  function onTopTap(){ if (atTop()) showBar(); }
+  hit.addEventListener('touchstart', onTopTap, {passive:true});
+  hit.addEventListener('mousedown', onTopTap);
+  hit.addEventListener('pointerdown', onTopTap, {passive:true});
+
+  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
+  if (wasActive) setTimeout(showBar, 0);
+  new MutationObserver(function(){
+    var active = document.documentElement.classList.contains('pdf-overlay-active');
+    if (active && !wasActive) setTimeout(showBar, 0);
+    else if (!active && wasActive) hideBarNow();
+    wasActive = active;
+  }).observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+
+  function bindScroller(sc){
+    if (!sc || sc.__tbBound) return;
+    sc.__tbBound = true;
+    var lastTop = null, startY = null;
+
+    function onScroll(){
+      var top = sc.scrollTop <= 2;
+      if (top !== lastTop){ lastTop = top; if (top) showBar(); else hideBarNow(); }
+    }
+    sc.addEventListener('scroll', onScroll, {passive:true});
+    setTimeout(onScroll, 0);
+
+    function onTS(e){ var t = e.touches && e.touches[0]; if (t) startY = t.clientY; }
+    function onTM(e){
+      var t = e.touches && e.touches[0]; if (!t) return;
+      if (sc.scrollTop <= 2 && startY != null && (t.clientY - startY) > 40){ callClose(); startY = t.clientY; }
+    }
+    sc.addEventListener('touchstart', onTS, {passive:true});
+    sc.addEventListener('touchmove',  onTM, {passive:true});
+  }
+  bindScroller(scroller());
+  new MutationObserver(function(){ bindScroller(scroller()); })
+    .observe(document.body, {childList:true, subtree:true});
+
+  ['prev-doc','next-doc','doc-nav-buttons'].forEach(function(id){
+    var n = document.getElementById(id); if (!n) return;
+    try {
+      new MutationObserver(function(){ setTimeout(syncState, 0); setTimeout(syncState, 200); })
+        .observe(n, {attributes:true, attributeFilter:['class','style','disabled','aria-disabled']});
+    } catch(e){}
+  });
+  document.addEventListener('click', function(){ setTimeout(syncState, 60); setTimeout(syncState, 300); }, true);
+
+  setTimeout(syncState, 0);
+  setTimeout(syncState, 400);
+})();
+</script>
+
 </body>
 
 </html>
