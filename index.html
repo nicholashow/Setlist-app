@@ -1498,224 +1498,6 @@ html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
 html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 
 
-/* === Sidebar: prevent text compression/line wrapping during collapse === */
-#sidebar, .sidebar { overflow: hidden; }
-#sidebar *, .sidebar * { min-width: 0; }
-#sidebar .item, .sidebar .item,
-#sidebar .menu-item, .sidebar .menu-item,
-#sidebar .nav-item, .sidebar .nav-item {
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  flex-shrink: 0;           /* don't shrink text width while collapsing */
-}
-/* If your collapse uses transform, avoid scaling text */
-html.sidebar-opening #sidebar, html.sidebar-closing #sidebar,
-html.sidebar-opening .sidebar, html.sidebar-closing .sidebar {
-  transform: translateX(0) !important; /* use slide, not scale */
-}
-
-
-/* === Sidebar anti-compression (strong) === */
-.left-col * { white-space: nowrap; }
-.left-col .sidebar-item { flex: 0 0 auto; }
-.left-col.collapsed .left-col-main-content, .left-col.collapsed .stats-container { opacity: 0; visibility: hidden; }
-
-
-/* === Sidebar: keep labels stable only during collapse; don't affect Add button === */
-html.sidebar-opening .left-col .sidebar-item,
-html.sidebar-closing .left-col .sidebar-item {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex-shrink: 0;
-}
-/* Allow normal layout elsewhere */
-.left-col .sidebar-item { flex-shrink: 1; }
-
-
-/* === Center placeholder text for Genre and Venue inputs === */
-input#new-genre::placeholder, input[name="genre"]::placeholder,
-input#new-venue::placeholder, input[name="venue"]::placeholder {
-  text-align: center;
-}
-/* For iOS Safari */
-input#new-genre, input[name="genre"],
-input#new-venue, input[name="venue"] {
-  text-align: center;
-}
-
-
-/* === Overlay PDF Top Bar (non-intrusive, keeps scroll untouched) === */
-html:not(.pdf-overlay-active) #pdf-topbar,
-html:not(.pdf-overlay-active) #pdf-top-hit { display: none !important; }
-
-#pdf-top-hit {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 72px;
-  z-index: 2147483600;
-  background: transparent;
-  pointer-events: auto;
-}
-
-#pdf-topbar {
-  position: fixed;
-  top: 18px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2147483601;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .20s ease;
-}
-#pdf-topbar.visible { opacity: 1; }
-
-#pdf-topbar .btn {
-  pointer-events: auto;
-  padding: 9px 18px;
-  border-radius: 12px;
-  font-weight: 800;
-  border: none;
-  letter-spacing: .3px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.35);
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-#pdf-prev, #pdf-next { background: #2563eb; color: #fff; }
-#pdf-close { background: #ef4444; color: #fff; }
-
-#pdf-topbar .btn.disabled {
-  background: #9ca3af !important;
-  color: #fff !important;
-  box-shadow: none;
-  cursor: default;
-}
-
-html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
-
-/* === Sidebar collapse: label stability only during animation === */
-html.sidebar-opening .left-col .sidebar-item,
-html.sidebar-closing .left-col .sidebar-item {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex-shrink: 0;
-}
-.left-col .sidebar-item { flex-shrink: 1; }
-
-/* === Center placeholder text for Genre & Venue === */
-input#new-genre::placeholder, input[name="genre"]::placeholder,
-input#new-venue::placeholder, input[name="venue"]::placeholder { text-align: center; }
-input#new-genre, input[name="genre"],
-input#new-venue, input[name="venue"] { text-align: center; }
-
-
-/* Heuristic: keep Add Setlist button aligned on the left */
-#add-setlist, .add-setlist, .new-setlist-btn, .add-setlist-btn {
-  margin-left: 0 !important;
-  align-self: flex-start !important;
-  justify-content: flex-start !important;
-}
-
-
-/* === FINAL overlay topbar + sidebar + placeholders === */
-html:not(.pdf-overlay-active) #pdf-topbar,
-html:not(.pdf-overlay-active) #pdf-top-hit { display: none !important; }
-
-#pdf-top-hit {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 72px;
-  z-index: 2147483600;
-  background: transparent;
-  pointer-events: auto;
-}
-
-#pdf-topbar {
-  position: fixed;
-  top: 18px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2147483601;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .20s ease;
-}
-#pdf-topbar.visible { opacity: 1; }
-
-#pdf-topbar .btn {
-  pointer-events: auto;
-  padding: 9px 18px;
-  border-radius: 12px;
-  font-weight: 800;
-  border: none;
-  letter-spacing: .3px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.35);
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-#pdf-prev, #pdf-next { background: #2563eb; color: #fff; }
-#pdf-close { background: #ef4444; color: #fff; }
-#pdf-topbar .btn.disabled {
-  background: #9ca3af !important;
-  color: #fff !important;
-  box-shadow: none;
-  cursor: default;
-}
-
-/* Hide original bar while overlay active to avoid duplicates */
-html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
-
-/* Sidebar: keep labels stable ONLY during collapse, without affecting normal layout */
-html.sidebar-opening .left-col .sidebar-item,
-html.sidebar-closing .left-col .sidebar-item {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex-shrink: 0;
-}
-/* Resume normal during rest of time */
-.left-col .sidebar-item { flex-shrink: 1; }
-
-/* Add Setlist alignment: keep add button left-aligned */
-#add-setlist, .add-setlist, .new-setlist-btn, .add-setlist-btn {
-  margin-left: 0 !important;
-  align-self: flex-start !important;
-  justify-content: flex-start !important;
-}
-/* If the parent row is flex and tried to space-between, force start when it contains the Add button */
-.left-col .sidebar-item:has(#add-setlist, .add-setlist, .new-setlist-btn, .add-setlist-btn),
-.left-col:has(#add-setlist, .add-setlist, .new-setlist-btn, .add-setlist-btn) {
-  justify-content: flex-start !important;
-}
-
-/* Center placeholder text for Genre & Venue */
-input#new-genre::placeholder, input[name="genre"]::placeholder,
-input#new-venue::placeholder, input[name="venue"]::placeholder { text-align: center; }
-/* iOS Safari: center the input content itself */
-input#new-genre, input[name="genre"],
-input#new-venue, input[name="venue"] { text-align: center; }
-
-
-/* === Symmetry: New Venue same as New Genre === */
-#genre-name, #venue-name { box-sizing: border-box; }
-#venue-name {
-  height: inherit;
-  min-height: 2.5rem;     /* matches typical Tailwind h-10 (40px) */
-  padding: 0.5rem 0.75rem;/* matches typical px-3 py-2 */
-  font: inherit;
-}
-
 </style>
 </head>
 
@@ -3809,6 +3591,48 @@ function destroyPdfOverlay() {
   // Initial sync
   setTimeout(syncState, 0);
   setTimeout(syncState, 400);
+})();
+</script>
+
+
+<!-- Venue size matcher -->
+<script>
+(function(){
+  if (window.__venueSizeMatch) return; window.__venueSizeMatch = true;
+  function matchVenueSize(){
+    try {
+      var genre = document.getElementById('genre-name');
+      var venue = document.getElementById('venue-name');
+      if (!genre || !venue) return;
+      var gs = window.getComputedStyle(genre);
+      // Copy width/height exactly as rendered
+      var w = genre.getBoundingClientRect().width;
+      var h = genre.getBoundingClientRect().height;
+      venue.style.width  = w + 'px';
+      venue.style.height = h + 'px';
+      // Match padding/border/font for perfect symmetry
+      venue.style.paddingLeft   = gs.paddingLeft;
+      venue.style.paddingRight  = gs.paddingRight;
+      venue.style.paddingTop    = gs.paddingTop;
+      venue.style.paddingBottom = gs.paddingBottom;
+      venue.style.borderWidth   = gs.borderWidth;
+      venue.style.borderStyle   = gs.borderStyle;
+      venue.style.borderColor   = gs.borderColor;
+      venue.style.borderRadius  = gs.borderRadius;
+      venue.style.font          = gs.font;
+      venue.style.boxSizing     = gs.boxSizing || 'border-box';
+    } catch(e){}
+  }
+  // Run on load and after small delay to catch Tailwind/layout
+  window.addEventListener('load', function(){ setTimeout(matchVenueSize, 0); setTimeout(matchVenueSize, 250); });
+  // If sidebar opens/closes, layout may change; observe size changes
+  var ro = new ResizeObserver(function(){ matchVenueSize(); });
+  window.addEventListener('DOMContentLoaded', function(){
+    var g = document.getElementById('genre-name');
+    var v = document.getElementById('venue-name');
+    if (g) ro.observe(g);
+    if (v) ro.observe(v);
+  });
 })();
 </script>
 
