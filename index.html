@@ -3706,131 +3706,117 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- Overlay Prev/Next — robust, works everywhere; Close untouched -->
+<!-- Overlay Prev/Next forwarder (minimal, uses native prev/next) + Venue size match -->
 <script>
-(function () {
-  if (window.__OverlayNav_v4) return;
-  window.__OverlayNav_v4 = true;
+(function(){
+  /* ===== A) Prev/Next: delegate overlay buttons to your native controls ===== */
+  if (!window.__OverlayNavForwarder_v1){
+    window.__OverlayNavForwarder_v1 = true;
 
-  function getDocId(item) {
-    if (!item || typeof item !== 'object') return null;
-    return item.id ?? item.docId ?? item.songId ?? item.fileId ?? item.pdfId ?? null;
+    function nativePrev(){ return document.getElementById('prev-doc'); }
+    function nativeNext(){ return document.getElementById('next-doc'); }
+
+    function isEnabled(btn){
+      if (!btn) return false;
+      var s = getComputedStyle(btn);
+      if (s.display === 'none' || s.visibility === 'hidden') return false;
+      if (btn.disabled) return false;
+      if (btn.getAttribute && (btn.getAttribute('aria-disabled') === 'true')) return false;
+      if (btn.classList && btn.classList.contains('disabled')) return false;
+      return true;
+    }
+
+    function syncOverlayState(){
+      try{
+        var oPrev = document.getElementById('pdf-prev') || document.getElementById('pdf-btn-prev');
+        var oNext = document.getElementById('pdf-next') || document.getElementById('pdf-btn-next');
+        var nPrev = nativePrev();
+        var nNext = nativeNext();
+        if (oPrev){ oPrev.classList.toggle('disabled', !isEnabled(nPrev)); oPrev.setAttribute('aria-disabled', !isEnabled(nPrev)); }
+        if (oNext){ oNext.classList.toggle('disabled', !isEnabled(nNext)); oNext.setAttribute('aria-disabled', !isEnabled(nNext)); }
+      }catch(_){}
+    }
+
+    function wireOverlay(){
+      var oPrev = document.getElementById('pdf-prev') || document.getElementById('pdf-btn-prev');
+      var oNext = document.getElementById('pdf-next') || document.getElementById('pdf-btn-next');
+      if (oPrev && !oPrev.__fwd){
+        oPrev.__fwd = true;
+        oPrev.addEventListener('click', function(e){
+          e.stopPropagation();
+          var n = nativePrev();
+          if (n && isEnabled(n)) { try { n.click(); } catch(_){ } }
+          setTimeout(syncOverlayState, 0);
+          setTimeout(syncOverlayState, 200);
+        });
+      }
+      if (oNext && !oNext.__fwd){
+        oNext.__fwd = true;
+        oNext.addEventListener('click', function(e){
+          e.stopPropagation();
+          var n = nativeNext();
+          if (n && isEnabled(n)) { try { n.click(); } catch(_){ } }
+          setTimeout(syncOverlayState, 0);
+          setTimeout(syncOverlayState, 200);
+        });
+      }
+      syncOverlayState();
+    }
+
+    document.addEventListener('click', function(){
+      setTimeout(syncOverlayState, 60);
+      setTimeout(syncOverlayState, 300);
+    }, true);
+    new MutationObserver(function(){ wireOverlay(); setTimeout(syncOverlayState, 0); })
+      .observe(document.body, {childList:true, subtree:true});
+    new MutationObserver(function(){ setTimeout(syncOverlayState, 0); })
+      .observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+
+    wireOverlay();
+    setTimeout(syncOverlayState, 0);
+    setTimeout(syncOverlayState, 400);
   }
 
-  // Wrap open functions so globals stay accurate across pages
-  ['openSongInContext', 'openDocViewer'].forEach(function (name) {
-    try {
-      var fn = window[name];
-      if (!fn || fn.__wrappedNavOnly) return;
-      var orig = fn;
-      window[name] = function () {
-        for (var i = 0; i < arguments.length; i++) {
-          var a = arguments[i];
-          if (a && typeof a === 'object' && (a.list || a.context || a.type)) {
-            window.currentViewerContext = a;
-            if (a.list && Array.isArray(a.list)) window.currentViewerList = a.list;
-          }
-          if (typeof a === 'number') window.currentViewerIndex = a;
+  /* ===== B) Venue size = Genre size (client box only; no margins; alignment unchanged) ===== */
+  if (!window.__VenueSizeMatch_v3){
+    window.__VenueSizeMatch_v3 = true;
+
+    function matchVenueSize(){
+      try{
+        var g = document.getElementById('genre-name');
+        var v = document.getElementById('venue-name');
+        if (!g || !v) return;
+        var gw = g.clientWidth, gh = g.clientHeight;
+        if (gw > 0) v.style.width  = gw + 'px';
+        if (gh > 0) v.style.height = gh + 'px';
+        var gs = getComputedStyle(g);
+        v.style.boxSizing = gs.boxSizing || 'border-box';
+      }catch(_){}
+    }
+
+    function schedule(){
+      setTimeout(matchVenueSize, 0);
+      setTimeout(matchVenueSize, 250);
+      setTimeout(matchVenueSize, 800);
+    }
+    window.addEventListener('load', schedule);
+    window.addEventListener('resize', function(){ setTimeout(matchVenueSize, 0); });
+
+    if (window.ResizeObserver){
+      try{
+        var g = document.getElementById('genre-name');
+        var v = document.getElementById('venue-name');
+        if (g){
+          var ro = new ResizeObserver(function(){ matchVenueSize(); });
+          ro.observe(g);
         }
-        return orig.apply(this, arguments);
-      };
-      window[name].__wrappedNavOnly = true;
-    } catch (_) {}
-  });
-
-  function readState() {
-    var list = (window.currentViewerContext && window.currentViewerContext.list) || window.currentViewerList || [];
-    var index = Number(window.currentViewerIndex || 0);
-    return { list: list, index: index, context: window.currentViewerContext };
-  }
-
-  function go(delta) {
-    var s = readState();
-    if (!s.list || !s.list.length) return;
-
-    var nextIndex = s.index + delta;
-    if (nextIndex < 0 || nextIndex > s.list.length - 1) return;
-
-    var item = s.list[nextIndex];
-    var id = getDocId(item);
-    if (id == null) return;
-
-    window.currentViewerIndex = nextIndex;
-
-    if (typeof window.openSongInContext === 'function') {
-      window.openSongInContext(id, s.context, nextIndex, delta < 0 ? 'prev' : 'next');
-    } else if (typeof window.openDocViewer === 'function') {
-      window.openDocViewer(id, s.context, nextIndex, delta < 0 ? 'prev' : 'next');
-    } else {
-      var btnId = delta < 0 ? 'prev-doc' : 'next-doc';
-      document.getElementById(btnId)?.click();
-      if (window.$) try { $('#' + btnId).trigger('click'); } catch (_) {}
+        if (v){
+          var ro2 = new ResizeObserver(function(){ matchVenueSize(); });
+          ro2.observe(v);
+        }
+      }catch(_){}
     }
-
-    setTimeout(syncButtons, 0);
-    setTimeout(syncButtons, 250);
   }
-
-  function goPrev() { go(-1); }
-  function goNext() { go(1); }
-
-  function canPrev() {
-    var s = readState();
-    return s.index > 0;
-  }
-  function canNext() {
-    var s = readState();
-    return s.list && s.index < s.list.length - 1;
-  }
-  function setDisabled(btn, disabled) {
-    if (!btn) return;
-    btn.classList.toggle('disabled', !!disabled);
-    btn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
-    btn.tabIndex = disabled ? -1 : 0;
-  }
-  function syncButtons() {
-    var prevBtn = document.getElementById('pdf-prev') || document.getElementById('pdf-btn-prev');
-    var nextBtn = document.getElementById('pdf-next') || document.getElementById('pdf-btn-next');
-    setDisabled(prevBtn, !canPrev());
-    setDisabled(nextBtn, !canNext());
-  }
-
-  function wire() {
-    var prevBtn = document.getElementById('pdf-prev') || document.getElementById('pdf-btn-prev');
-    var nextBtn = document.getElementById('pdf-next') || document.getElementById('pdf-btn-next');
-    if (prevBtn && !prevBtn.__navWired) {
-      prevBtn.__navWired = true;
-      prevBtn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (!prevBtn.classList.contains('disabled')) goPrev();
-      });
-    }
-    if (nextBtn && !nextBtn.__navWired) {
-      nextBtn.__navWired = true;
-      nextBtn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (!nextBtn.classList.contains('disabled')) goNext();
-      });
-    }
-    syncButtons();
-  }
-
-  // Keep states synced as DOM changes
-  document.addEventListener('click', function () {
-    setTimeout(syncButtons, 60);
-    setTimeout(syncButtons, 300);
-  }, true);
-
-  new MutationObserver(function () {
-    wire();
-    setTimeout(syncButtons, 0);
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-
-  new MutationObserver(function () { wire(); }).observe(document.body, { childList: true, subtree: true });
-
-  wire();
-  setTimeout(syncButtons, 0);
-  setTimeout(syncButtons, 400);
 })();
 </script>
 
