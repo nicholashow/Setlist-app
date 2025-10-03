@@ -1393,6 +1393,44 @@ html.pdf-overlay-active #doc-nav-buttons {
 /* Make sure overlay stays below */
 #pdf-overlay { z-index: 2147482000 !important; }
 
+
+/* === PDF Top Buttons Overlay (non-intrusive) === */
+#pdf-btn-hit {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 56px;
+  z-index: 2147483600;
+  background: transparent;
+  pointer-events: auto;
+}
+#pdf-btn-bar {
+  position: fixed;
+  top: 6px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483601;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+#pdf-btn-bar.visible { opacity: 1; }
+#pdf-btn-bar .btn {
+  pointer-events: auto;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,.35);
+  user-select: none;
+}
+#pdf-btn-prev, #pdf-btn-next { background: #2563eb; color: #fff; }
+#pdf-btn-close { background: #ef4444; color: #fff; }
+html:not(.pdf-overlay-active) #pdf-btn-hit,
+html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
+
 </style>
 </head>
 
@@ -2279,6 +2317,78 @@ function destroyPdfOverlay() {
   const sc = document.getElementById('pdf-overlay-scroll');
   if (sc) sc.innerHTML = '';
 }
+</script>
+
+<!-- Non-intrusive PDF top buttons -->
+<div id="pdf-btn-hit"></div>
+<div id="pdf-btn-bar" aria-hidden="true">
+  <button id="pdf-btn-prev" class="btn" type="button">PREVIOUS</button>
+  <button id="pdf-btn-next" class="btn" type="button">NEXT</button>
+  <button id="pdf-btn-close" class="btn" type="button">CLOSE</button>
+</div>
+
+<script>
+(function(){
+  if (window.__pdfBtnsInstalled) return;
+  window.__pdfBtnsInstalled = true;
+
+  var bar   = document.getElementById('pdf-btn-bar');
+  var hit   = document.getElementById('pdf-btn-hit');
+  var prevB = document.getElementById('pdf-btn-prev');
+  var nextB = document.getElementById('pdf-btn-next');
+  var closeB= document.getElementById('pdf-btn-close');
+  var hideTimer = null;
+
+  function forwardClick(id){
+    try {
+      var el = document.getElementById(id);
+      if (el) el.click();
+    } catch(e){ console.warn('Forward click failed for', id, e); }
+  }
+
+  prevB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('prev-doc'); });
+  nextB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('next-doc'); });
+  closeB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('close-doc'); });
+
+  function showBar(){
+    if (!bar) return;
+    bar.classList.add('visible');
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    hideTimer = setTimeout(function(){ bar.classList.remove('visible'); }, 2000);
+  }
+  function hideBarNow(){
+    if (!bar) return;
+    bar.classList.remove('visible');
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  }
+
+  function onTopTap(e){ showBar(); }
+  hit.addEventListener('touchstart', onTopTap, {passive:true});
+  hit.addEventListener('mousedown', onTopTap);
+  hit.addEventListener('pointerdown', onTopTap, {passive:true});
+
+  var lastActive = document.documentElement.classList.contains('pdf-overlay-active');
+  if (lastActive) { setTimeout(showBar, 0); }
+  var mo = new MutationObserver(function(){
+    var active = document.documentElement.classList.contains('pdf-overlay-active');
+    if (active && !lastActive) {
+      setTimeout(showBar, 0);
+    } else if (!active && lastActive) {
+      hideBarNow();
+    }
+    lastActive = active;
+  });
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+  document.addEventListener('touchstart', function(ev){
+    try {
+      var t = ev.touches && ev.touches[0];
+      if (!t) return;
+      if (t.clientY <= 56 && document.documentElement.classList.contains('pdf-overlay-active')) showBar();
+    } catch(e){}
+  }, {passive:true});
+
+})();
 </script>
 </body>
 
