@@ -1521,6 +1521,30 @@ html.sidebar-opening .sidebar, html.sidebar-closing .sidebar {
 .left-col .sidebar-item { flex: 0 0 auto; }
 .left-col.collapsed .left-col-main-content, .left-col.collapsed .stats-container { opacity: 0; visibility: hidden; }
 
+
+/* === Sidebar: keep labels stable only during collapse; don't affect Add button === */
+html.sidebar-opening .left-col .sidebar-item,
+html.sidebar-closing .left-col .sidebar-item {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+/* Allow normal layout elsewhere */
+.left-col .sidebar-item { flex-shrink: 1; }
+
+
+/* === Center placeholder text for Genre and Venue inputs === */
+input#new-genre::placeholder, input[name="genre"]::placeholder,
+input#new-venue::placeholder, input[name="venue"]::placeholder {
+  text-align: center;
+}
+/* For iOS Safari */
+input#new-genre, input[name="genre"],
+input#new-venue, input[name="venue"] {
+  text-align: center;
+}
+
 </style>
 </head>
 
@@ -3092,6 +3116,131 @@ function destroyPdfOverlay() {
 
   setTimeout(syncState, 0);
   setTimeout(syncState, 400);
+})();
+</script>
+
+<script>
+(function(){
+  if (window.__wrapOpenSongInContext_v1) return;
+  window.__wrapOpenSongInContext_v1 = true;
+
+  function installWrapper(){
+    if (!window.openSongInContext) return false;
+    if (window.openSongInContext.__wrapped) return true;
+
+    var original = window.openSongInContext;
+    function wrappedOpenSongInContext(songId, context, index, dir){
+      try {
+        // Ensure globals are always up to date for overlay nav across the app
+        if (typeof context !== 'undefined') window.currentViewerContext = context;
+        if (typeof index === 'number') window.currentViewerIndex = index;
+        // If list exists on context, mirror it to the expected global shape
+        try {
+          if (context && context.list && Array.isArray(context.list)) {
+            window.currentViewerList = context.list;
+          }
+        } catch(e){}
+      } catch(e){}
+      return original.apply(this, arguments);
+    }
+    wrappedOpenSongInContext.__wrapped = true;
+    window.openSongInContext = wrappedOpenSongInContext;
+    return true;
+  }
+
+  // Try immediately, then again after load, and once when user first opens something
+  if (!installWrapper()){
+    document.addEventListener('DOMContentLoaded', installWrapper);
+    setTimeout(installWrapper, 500);
+    setTimeout(installWrapper, 1500);
+  }
+})();
+</script>
+
+<script>
+(function(){
+  if (window.__bindPdfScroller_v2) return;
+  window.__bindPdfScroller_v2 = true;
+
+  function bind(){
+    var sc = document.getElementById('pdf-overlay-scroll');
+    if (!sc) return false;
+    if (sc.__overlayBound) return true;
+    sc.__overlayBound = true;
+
+    // Reuse existing bar logic if present
+    var bar = document.getElementById('pdf-btn-bar');
+    function showBar(){
+      if (!bar) return;
+      if (sc.scrollTop > 2) return;
+      bar.classList.add('visible');
+      setTimeout(function(){ bar.classList.remove('visible'); }, 2000);
+    }
+    function onScroll(){
+      if (sc.scrollTop <= 2) showBar(); else bar && bar.classList.remove('visible');
+    }
+    sc.addEventListener('scroll', onScroll, {passive:true});
+    setTimeout(onScroll, 0);
+    return true;
+  }
+
+  // Bind now and observe DOM changes to bind later too
+  var ok = bind();
+  var mo = new MutationObserver(function(){
+    if (!bind()) return;
+  });
+  mo.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+
+<script>
+(function(){
+  if (window.__pdfBtnWire_v6) return;
+  window.__pdfBtnWire_v6 = true;
+
+  function $(id){ return document.getElementById(id); }
+  var prevB = $('pdf-btn-prev');
+  var nextB = $('pdf-btn-next');
+  var closeB= $('pdf-btn-close');
+
+  function callPrev(){
+    try {
+      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex > 0) {
+        var idx = window.currentViewerIndex - 1;
+        var id  = window.currentViewerList[idx].id;
+        window.openSongInContext(id, window.currentViewerContext, idx, 'prev');
+        return true;
+      }
+    } catch(e){}
+    try { var el = $('prev-doc'); if (el) { el.click(); return true; } } catch(e){}
+    try { if (window.$) { $('#prev-doc').trigger('click'); return true; } } catch(e){}
+    return false;
+  }
+  function callNext(){
+    try {
+      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex < window.currentViewerList.length - 1) {
+        var idx = window.currentViewerIndex + 1;
+        var id  = window.currentViewerList[idx].id;
+        window.openSongInContext(id, window.currentViewerContext, idx, 'next');
+        return true;
+      }
+    } catch(e){}
+    try { var el = $('next-doc'); if (el) { el.click(); return true; } } catch(e){}
+    try { if (window.$) { $('#next-doc').trigger('click'); return true; } } catch(e){}
+    return false;
+  }
+  function callClose(){
+    var ok = false;
+    try { var el = $('close-doc'); if (el) { el.click(); ok = true; } } catch(e){}
+    try { if (window.$) { $('#close-doc').trigger('click'); ok = true; } } catch(e){}
+    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); ok = true; } } catch(e){}
+    try { document.documentElement.classList.remove('pdf-overlay-active'); ok = true; } catch(e){}
+    return ok;
+  }
+
+  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); callPrev(); });
+  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); callNext(); });
+  closeB && closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
 })();
 </script>
 </body>
