@@ -1707,37 +1707,13 @@ input#new-genre, input[name="genre"],
 input#new-venue, input[name="venue"] { text-align: center; }
 
 
-
-/* === FocusFix v2: Minimal & safe alignment/centering === */
-/* Keep the Add Setlist button inline and visible next to the 'New setlist name' input */
-#add-setlist-btn {
-  display: inline-block !important;
-  width: auto !important;        /* undo w-full if applied */
-  margin: 0 0 0 8px !important;  /* small gap to the right of the input */
-  vertical-align: middle !important;
-  visibility: visible !important;
-}
-
-/* Ensure the input doesn't wrap to a new line due to full-width utility classes */
-#new-setlist-name {
-  display: inline-block !important;
-  vertical-align: middle !important;
-  max-width: calc(100% - 140px) !important; /* leave room for the button */
-}
-
-/* Center placeholders and text for Genre & Venue inputs */
-#genre-name::placeholder, #venue-name::placeholder { text-align: center; }
-#genre-name, #venue-name { text-align: center; }
-
-/* Make New Venue box visually symmetrical to New Genre */
+/* === Symmetry: New Venue same as New Genre === */
+#genre-name, #venue-name { box-sizing: border-box; }
 #venue-name {
-  height:  var(--genre-input-h, 40px) !important;
-  padding: var(--genre-input-p, 8px 12px) !important;
-  box-sizing: border-box !important;
-}
-#genre-name {
-  --genre-input-h: 40px;
-  --genre-input-p: 8px 12px;
+  height: inherit;
+  min-height: 2.5rem;     /* matches typical Tailwind h-10 (40px) */
+  padding: 0.5rem 0.75rem;/* matches typical px-3 py-2 */
+  font: inherit;
 }
 
 </style>
@@ -1758,8 +1734,9 @@ input#new-venue, input[name="venue"] { text-align: center; }
                         <button class="text-sm px-2 py-1 rounded-md bg-gray-600" id="toggle-setlists">▾</button>
                     </div>
                     <div class="mt-2" id="setlists-container"></div>
-                    <div class="mt-2 setlist-inline-row">
-  <input id="new-setlist-name" class="setlist-inline-input"Add Setlist</button>
+                    <div class="mt-2">
+                        <input class="w-full p-1 text-sm rounded-md bg-gray-700" id="new-setlist-name" placeholder="New setlist name" />
+                        <button class="w-full mt-1 p-1 text-sm rounded-md btn-add" id="add-setlist-btn">Add Setlist</button>
                     </div>
                 </div>
                 <div class="sidebar-item" id="nav-favorites">Favorites</div>
