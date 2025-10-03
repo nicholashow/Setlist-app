@@ -3706,74 +3706,6 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- Pull-to-close v3 (release required, stronger gesture, supports up OR down from top) -->
-<script>
-(function(){
-  if (window.__PullToClose_v3) return; window.__PullToClose_v3 = true;
-
-  function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
-
-  var startY = null;
-  var maxPullDown = 0;   // positive dy (finger moves down)
-  var maxPushUp  = 0;    // negative dy magnitude (finger moves up)
-  var active = false;
-  var THRESHOLD_DOWN = 120; // require strong pull-down
-  var THRESHOLD_UP   = 140; // require strong push-up (in case user's gesture is upward at top)
-
-  function onTouchStart(e){
-    var t = e.touches && e.touches[0];
-    var sc = scroller();
-    if (!t || !sc) return;
-    active = (sc.scrollTop <= 2);
-    startY = t.clientY;
-    maxPullDown = 0;
-    maxPushUp = 0;
-  }
-  function onTouchMove(e){
-    if (!active) return;
-    var t = e.touches && e.touches[0];
-    var sc = scroller();
-    if (!t || !sc) return;
-    var dy = t.clientY - (startY == null ? t.clientY : startY);
-    if (dy > maxPullDown) maxPullDown = dy;
-    if (-dy > maxPushUp) maxPushUp = -dy;
-  }
-  function onTouchEnd(){
-    try {
-      if (!active) return;
-      var sc = scroller(); if (!sc) return;
-      if (sc.scrollTop <= 2 && (maxPullDown > THRESHOLD_DOWN || maxPushUp > THRESHOLD_UP)) {
-        if (typeof window.universalCloseViewer === 'function') {
-          window.universalCloseViewer();
-        } else {
-          var btn = document.getElementById('close-doc');
-          if (btn && typeof btn.click === 'function') btn.click();
-          if (window.$) try { $('#close-doc').trigger('click'); } catch(_){}
-        }
-      }
-    } finally {
-      active = false;
-      startY = null;
-      maxPullDown = 0;
-      maxPushUp = 0;
-    }
-  }
-
-  function bind(){
-    var sc = scroller();
-    if (!sc || sc.__pullCloseV3Bound) return;
-    sc.__pullCloseV3Bound = true;
-    sc.addEventListener('touchstart', onTouchStart, {passive:true});
-    sc.addEventListener('touchmove',  onTouchMove,  {passive:true});
-    sc.addEventListener('touchend',   onTouchEnd,   {passive:true});
-  }
-
-  bind();
-  new MutationObserver(function(){ bind(); })
-    .observe(document.body, {childList:true, subtree:true});
-})();
-</script>
-
 <!-- Genre/Venue exact symmetry + centered placeholders (robust) -->
 <style>
 #genre-name::placeholder, #venue-name::placeholder { text-align: center; }
@@ -3836,6 +3768,144 @@ function destroyPdfOverlay() {
       ro.observe(gObsTarget);
     }
   } catch(_){}
+})();
+</script>
+
+
+<!-- Venue/Genre left-edge alignment + Pull-to-close v4 -->
+<script>
+(function(){
+  /* =====  A) Perfect horizontal alignment for Genre/Venue rows  =====
+     We don't change widths/heights (already matched). We just align left-x
+     of the Venue input and Venue Add button to equal the Genre row's left-x.
+  */
+  if (!window.__AlignGenreVenue_v1){
+    window.__AlignGenreVenue_v1 = true;
+
+    function alignVenueRow(){
+      try {
+        var gInput = document.getElementById('genre-name');
+        var vInput = document.getElementById('venue-name');
+        // Attempt to find the "Add" buttons near each input; adjust selectors to your markup if needed
+        var gAdd   = document.getElementById('add-genre-btn')  || document.querySelector('[data-add="genre"], #add-genre, .add-genre-btn');
+        var vAdd   = document.getElementById('add-venue-btn')  || document.querySelector('[data-add="venue"], #add-venue, .add-venue-btn');
+
+        if (!gInput || !vInput) return;
+
+        // compute current left positions
+        var gx = gInput.getBoundingClientRect().left;
+        var vx = vInput.getBoundingClientRect().left;
+
+        // We adjust only the venue input's margin-left to match genre's left edge
+        var deltaInput = gx - vx;
+        if (Math.abs(deltaInput) > 0.5) {
+          // apply margin-left delta without affecting layout above it
+          var current = parseFloat(getComputedStyle(vInput).marginLeft) || 0;
+          vInput.style.marginLeft = (current + deltaInput) + "px";
+        }
+
+        // If we have genre/venue add buttons, align them too
+        if (gAdd && vAdd) {
+          var gxB = gAdd.getBoundingClientRect().left;
+          var vxB = vAdd.getBoundingClientRect().left;
+          var deltaBtn = gxB - vxB;
+          if (Math.abs(deltaBtn) > 0.5) {
+            var currentBtn = parseFloat(getComputedStyle(vAdd).marginLeft) || 0;
+            vAdd.style.marginLeft = (currentBtn + deltaBtn) + "px";
+          }
+        }
+      } catch(_){}
+    }
+
+    // Run after layout + a few retries for dynamic UI
+    function schedule(){
+      setTimeout(alignVenueRow, 0);
+      setTimeout(alignVenueRow, 200);
+      setTimeout(alignVenueRow, 600);
+      setTimeout(alignVenueRow, 1200);
+    }
+    window.addEventListener('load', schedule);
+    window.addEventListener('resize', function(){ setTimeout(alignVenueRow, 0); });
+    // Observe venue/genre nodes for size/position changes and re-align
+    var obsTargets = ['genre-name','venue-name'];
+    if (window.ResizeObserver){
+      obsTargets.forEach(function(id){
+        var el = document.getElementById(id);
+        if (el){
+          try {
+            var ro = new ResizeObserver(function(){ alignVenueRow(); });
+            ro.observe(el);
+          } catch(_){}
+        }
+      });
+    }
+    // If sidebar open/close toggles classes on html/body, re-run
+    new MutationObserver(function(){ alignVenueRow(); })
+      .observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+  }
+
+  /* =====  B) Pull-to-close v4: downward pull only, stronger threshold, must release  ===== */
+  if (!window.__PullToClose_v4){
+    window.__PullToClose_v4 = true;
+
+    function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
+    var startY = null;
+    var maxPullDown = 0;
+    var active = false;
+    var THRESHOLD_DOWN = 150;  // stronger than v3 (prevents accidental close on slight gestures)
+
+    function onTouchStart(e){
+      var t = e.touches && e.touches[0];
+      var sc = scroller();
+      if (!t || !sc) return;
+      // only arm at absolute top
+      active = (sc.scrollTop <= 2);
+      startY = t.clientY;
+      maxPullDown = 0;
+    }
+    function onTouchMove(e){
+      if (!active) return;
+      var t = e.touches && e.touches[0];
+      var sc = scroller();
+      if (!t || !sc) return;
+      var dy = t.clientY - (startY == null ? t.clientY : startY);
+      // Only count downward pulls
+      if (dy > maxPullDown) maxPullDown = dy;
+    }
+    function onTouchEnd(){
+      try {
+        if (!active) return;
+        var sc = scroller(); if (!sc) return;
+        // Close ONLY if at top and downward pull exceeded strong threshold
+        if (sc.scrollTop <= 2 && maxPullDown > THRESHOLD_DOWN) {
+          if (typeof window.universalCloseViewer === 'function') {
+            window.universalCloseViewer();
+          } else {
+            var btn = document.getElementById('close-doc');
+            if (btn && typeof btn.click === 'function') btn.click();
+            if (window.$) try { $('#close-doc').trigger('click'); } catch(_){}
+          }
+        }
+      } finally {
+        active = false;
+        startY = null;
+        maxPullDown = 0;
+      }
+    }
+
+    function bind(){
+      var sc = scroller();
+      if (!sc || sc.__pullCloseV4Bound) return;
+      sc.__pullCloseV4Bound = true;
+      sc.addEventListener('touchstart', onTouchStart, {passive:true});
+      sc.addEventListener('touchmove',  onTouchMove,  {passive:true});
+      sc.addEventListener('touchend',   onTouchEnd,   {passive:true});
+    }
+
+    bind();
+    new MutationObserver(function(){ bind(); })
+      .observe(document.body, {childList:true, subtree:true});
+  }
 })();
 </script>
 
