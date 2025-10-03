@@ -3705,6 +3705,136 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<!-- Pull-to-close v2 (release to close) -->
+<script>
+(function(){
+  if (window.__PullToClose_v2) return; window.__PullToClose_v2 = true;
+
+  function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
+
+  var startY = null;
+  var pulled = 0;
+  var active = false;
+  var THRESHOLD = 120; // require a stronger pull than before (~120px)
+
+  function onTouchStart(e){
+    var t = e.touches && e.touches[0];
+    var sc = scroller();
+    if (!t || !sc) return;
+    // Only arm when at the very top
+    active = (sc.scrollTop <= 2);
+    startY = t.clientY;
+    pulled = 0;
+  }
+  function onTouchMove(e){
+    if (!active) return;
+    var t = e.touches && e.touches[0];
+    var sc = scroller();
+    if (!t || !sc) return;
+    var dy = t.clientY - (startY == null ? t.clientY : startY);
+    // Track the max distance pulled downward
+    if (dy > pulled) pulled = dy;
+  }
+  function onTouchEnd(){
+    try {
+      if (!active) return;
+      var sc = scroller(); if (!sc) return;
+      // Close ONLY if we're still at the top and the user released after a strong pull
+      if (sc.scrollTop <= 2 && pulled > THRESHOLD) {
+        if (typeof window.universalCloseViewer === 'function') {
+          window.universalCloseViewer();
+        } else {
+          // Safe fallbacks
+          var btn = document.getElementById('close-doc');
+          if (btn && typeof btn.click === 'function') btn.click();
+          if (window.$) try { $('#close-doc').trigger('click'); } catch(_){}
+        }
+      }
+    } finally {
+      // Reset state
+      active = false;
+      startY = null;
+      pulled = 0;
+    }
+  }
+
+  function bind(){
+    var sc = scroller();
+    if (!sc || sc.__pullCloseV2Bound) return;
+    sc.__pullCloseV2Bound = true;
+    sc.addEventListener('touchstart', onTouchStart, {passive:true});
+    sc.addEventListener('touchmove',  onTouchMove,  {passive:true});
+    sc.addEventListener('touchend',   onTouchEnd,   {passive:true});
+  }
+
+  // Bind now and re-bind if overlay DOM is recreated
+  bind();
+  new MutationObserver(function(){ bind(); })
+    .observe(document.body, {childList:true, subtree:true});
+})();
+</script>
+
+
+<!-- Genre/Venue input symmetry + centered placeholders -->
+<style>
+/* Center placeholders and input text (iOS needs both) */
+#genre-name::placeholder, #venue-name::placeholder { text-align: center; }
+#genre-name, #venue-name { text-align: center; }
+</style>
+<script>
+(function(){
+  if (window.__GenreVenueSync_v1) return; window.__GenreVenueSync_v1 = true;
+
+  function syncVenueToGenre(){
+    try {
+      var g = document.getElementById('genre-name');
+      var v = document.getElementById('venue-name');
+      if (!g || !v) return;
+
+      // Read computed dimensions from Genre and apply to Venue for pixel-perfect match
+      var rect = g.getBoundingClientRect();
+      var gs = getComputedStyle(g);
+
+      // Apply same box model to Venue
+      v.style.boxSizing    = gs.boxSizing || 'border-box';
+      v.style.paddingLeft  = gs.paddingLeft;
+      v.style.paddingRight = gs.paddingRight;
+      v.style.paddingTop   = gs.paddingTop;
+      v.style.paddingBottom= gs.paddingBottom;
+      v.style.borderWidth  = gs.borderWidth;
+      v.style.borderStyle  = gs.borderStyle;
+      v.style.borderColor  = gs.borderColor;
+      v.style.borderRadius = gs.borderRadius;
+      v.style.font         = gs.font;
+
+      // Width & height: use computed width/height from Genre
+      v.style.width  = rect.width + 'px';
+      v.style.height = rect.height + 'px';
+    } catch(_){}
+  }
+
+  // Run on load, after layout settles, and when sidebar resizes
+  window.addEventListener('load', function(){
+    setTimeout(syncVenueToGenre, 0);
+    setTimeout(syncVenueToGenre, 250);
+    setTimeout(syncVenueToGenre, 1000);
+  });
+
+  // Also re-run on window resize or sidebar toggles
+  window.addEventListener('resize', function(){ setTimeout(syncVenueToGenre, 0); });
+
+  // Observe genre size changes (e.g., CSS/theme changes)
+  try {
+    var g = document.getElementById('genre-name');
+    if (g && window.ResizeObserver) {
+      var ro = new ResizeObserver(function(){ syncVenueToGenre(); });
+      ro.observe(g);
+    }
+  } catch(_){}
+})();
+</script>
+
 </body>
 
 </html>
