@@ -1707,44 +1707,37 @@ input#new-genre, input[name="genre"],
 input#new-venue, input[name="venue"] { text-align: center; }
 
 
-/* === FocusFix: Setlist Add alignment + placeholder centering === */
-/* Put Add button inline with the 'New setlist name' input, inside the grey Setlists box */
-#new-setlist-name { display: inline-block; vertical-align: middle; }
+
+/* === FocusFix v2: Minimal & safe alignment/centering === */
+/* Keep the Add Setlist button inline and visible next to the 'New setlist name' input */
 #add-setlist-btn {
-  width: auto !important;          /* override w-full */
-  display: inline-block;
-  vertical-align: middle;
-  margin-top: 0 !important;        /* override mt-1 */
-  margin-left: 8px;                /* small gap to the right of input */
+  display: inline-block !important;
+  width: auto !important;        /* undo w-full if applied */
+  margin: 0 0 0 8px !important;  /* small gap to the right of the input */
+  vertical-align: middle !important;
+  visibility: visible !important;
 }
-/* Make their immediate container a flex row so they sit on one line */
-#new-setlist-name, #add-setlist-btn { }
-#new-setlist-name { max-width: calc(100% - 120px); } /* leave room for the Add button */
-#new-setlist-name:focus { outline: none; }
 
-/* If parent container is plain div.mt-2, turn it into a flex row without affecting others */
-#new-setlist-name + #add-setlist-btn { }
-#new-setlist-name { }
-#new-setlist-name { }
-#new-setlist-name { }
+/* Ensure the input doesn't wrap to a new line due to full-width utility classes */
+#new-setlist-name {
+  display: inline-block !important;
+  vertical-align: middle !important;
+  max-width: calc(100% - 140px) !important; /* leave room for the button */
+}
 
-/* Center placeholders and input text for Genre & Venue */
+/* Center placeholders and text for Genre & Venue inputs */
 #genre-name::placeholder, #venue-name::placeholder { text-align: center; }
 #genre-name, #venue-name { text-align: center; }
 
-
-/* Make the container a flex row only for the New Setlist row (pattern-based) */
-div.mt-2:has(> #new-setlist-name):has(> #add-setlist-btn) {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+/* Make New Venue box visually symmetrical to New Genre */
+#venue-name {
+  height:  var(--genre-input-h, 40px) !important;
+  padding: var(--genre-input-p, 8px 12px) !important;
+  box-sizing: border-box !important;
 }
-/* Ensure input can shrink a bit to accommodate button without wrapping out of the grey box */
-div.mt-2:has(> #new-setlist-name):has(> #add-setlist-btn) #new-setlist-name {
-  flex: 1 1 auto;
-}
-div.mt-2:has(> #new-setlist-name):has(> #add-setlist-btn) #add-setlist-btn {
-  flex: 0 0 auto;
+#genre-name {
+  --genre-input-h: 40px;
+  --genre-input-p: 8px 12px;
 }
 
 </style>
