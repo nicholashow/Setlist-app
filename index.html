@@ -2728,6 +2728,185 @@ function destroyPdfOverlay() {
   setTimeout(syncState, 400);
 })();
 </script>
+
+<script>
+(function(){
+  if (window.__pdfBtnsInstalled_v4) return;
+  window.__pdfBtnsInstalled_v4 = true;
+
+  var $ = function(id){ return document.getElementById(id); };
+  var bar   = $('pdf-btn-bar');
+  var hit   = $('pdf-btn-hit');
+  var prevB = $('pdf-btn-prev');
+  var nextB = $('pdf-btn-next');
+  var closeB= $('pdf-btn-close');
+  var hideTimer = null;
+
+  function scroller(){ return $('pdf-overlay-scroll'); }
+
+  // Robust forward + fallback + overlay teardown for close
+  function forward(id, fallbacks, alsoTeardown){
+    try {
+      var el = $(id);
+      if (el) { el.click(); }
+      else if (fallbacks && fallbacks.length){
+        for (var i=0;i<fallbacks.length;i++){
+          var fn = fallbacks[i];
+          try { if (typeof window[fn] === 'function') { window[fn](); break; } } catch(e){}
+        }
+      }
+    } catch(e){}
+    if (alsoTeardown){
+      try { if (typeof window.destroyPdfOverlay === 'function') window.destroyPdfOverlay(); } catch(e){}
+      try { document.documentElement.classList.remove('pdf-overlay-active'); } catch(e){}
+    }
+  }
+
+  function isInactive(el){
+    if (!el) return true;
+    try {
+      var s = window.getComputedStyle(el);
+      var cls = (el.className||'').toLowerCase();
+      return !!( el.hasAttribute('disabled')
+              || el.getAttribute('aria-disabled') === 'true'
+              || /disabled|inactive|hidden/.test(cls)
+              || s.display === 'none'
+              || s.visibility === 'hidden'
+              || s.pointerEvents === 'none');
+    } catch(e){ return false; }
+  }
+
+  function syncState(){
+    try {
+      var prevOrig = $('prev-doc');
+      var nextOrig = $('next-doc');
+      var prevDis = isInactive(prevOrig);
+      var nextDis = isInactive(nextOrig);
+      prevB.classList.toggle('disabled', prevDis);
+      nextB.classList.toggle('disabled', nextDis);
+      prevB.tabIndex = prevDis ? -1 : 0;
+      nextB.tabIndex = nextDis ? -1 : 0;
+    } catch(e){}
+  }
+
+  function showBar(){
+    if (!bar) return;
+    // Only show when at top of the document
+    var sc = scroller();
+    if (sc && sc.scrollTop > 2) return;
+    bar.classList.add('visible');
+    syncState();
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(function(){ bar.classList.remove('visible'); }, 2000);
+  }
+  function hideBarNow(){
+    if (!bar) return;
+    bar.classList.remove('visible');
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  }
+
+  // Button clicks with guards
+  prevB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (prevB.classList.contains('disabled')) return;
+    forward('prev-doc', ['goPrev','prevSong','previousSong'], false);
+  });
+  nextB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (nextB.classList.contains('disabled')) return;
+    forward('next-doc', ['goNext','nextSong'], false);
+  });
+  closeB.addEventListener('click', function(e){
+    e.stopPropagation();
+    // Close should always work: forward + explicit teardown
+    forward('close-doc', ['closeDocViewer','hideOverlay','closeViewer'], true);
+  });
+
+  // Reappear when tapping top ONLY if scroller is at top
+  function onTopTap(){
+    var sc = scroller();
+    if (!sc || sc.scrollTop <= 2) showBar();
+  }
+  if (hit){
+    hit.addEventListener('touchstart', onTopTap, {passive:true});
+    hit.addEventListener('mousedown', onTopTap);
+    hit.addEventListener('pointerdown', onTopTap, {passive:true});
+  }
+
+  // Show when overlay first activates
+  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
+  if (wasActive) setTimeout(showBar, 0);
+  var moRoot = new MutationObserver(function(){
+    var active = document.documentElement.classList.contains('pdf-overlay-active');
+    if (active && !wasActive) setTimeout(showBar, 0);
+    else if (!active && wasActive) hideBarNow();
+    wasActive = active;
+  });
+  moRoot.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+
+  // Auto-show when scrolled to top; hide when leaving the top
+  var lastTopState = null;
+  function onScroll(){
+    var sc = scroller();
+    if (!sc) return;
+    var atTop = sc.scrollTop <= 2;
+    if (atTop !== lastTopState){
+      lastTopState = atTop;
+      if (atTop) showBar();
+      else hideBarNow();
+    }
+  }
+  var sc = scroller();
+  if (sc){
+    sc.addEventListener('scroll', onScroll, {passive:true});
+    // Initial top check
+    setTimeout(onScroll, 0);
+  }
+
+  // At top: pull down (scroll up gesture) closes the file
+  var startY = null;
+  function onTouchStart(e){
+    var t = e.touches && e.touches[0];
+    if (!t) return;
+    startY = t.clientY;
+  }
+  function onTouchMove(e){
+    var t = e.touches && e.touches[0];
+    if (!t) return;
+    var sc = scroller();
+    if (!sc) return;
+    var atTop = sc.scrollTop <= 2;
+    var dy = t.clientY - (startY==null? t.clientY : startY);
+    // if at top and user pulls down > 40px, close
+    if (atTop && dy > 40){
+      forward('close-doc', ['closeDocViewer','hideOverlay','closeViewer'], true);
+      startY = t.clientY; // reset to avoid repeat
+    }
+  }
+  if (sc){
+    sc.addEventListener('touchstart', onTouchStart, {passive:true});
+    sc.addEventListener('touchmove', onTouchMove, {passive:true});
+  }
+
+  // Keep state in sync
+  var prevOrig = $('prev-doc'), nextOrig = $('next-doc'), origNav = $('doc-nav-buttons');
+  [prevOrig, nextOrig, origNav].forEach(function(node){
+    if (!node) return;
+    try {
+      var mo = new MutationObserver(function(){ setTimeout(syncState, 0); setTimeout(syncState, 200); });
+      mo.observe(node, { attributes: true, attributeFilter: ['class', 'style', 'disabled', 'aria-disabled'], childList: false, subtree: false });
+    } catch(e){}
+  });
+  document.addEventListener('click', function(){
+    setTimeout(syncState, 60);
+    setTimeout(syncState, 300);
+  }, true);
+
+  // Initial sync
+  setTimeout(syncState, 0);
+  setTimeout(syncState, 400);
+})();
+</script>
 </body>
 
 </html>
