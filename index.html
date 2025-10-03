@@ -3637,275 +3637,141 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- Universal CLOSE for the PDF/file viewer — install once -->
+<!-- Overlay Prev/Next — robust, works everywhere; Close untouched -->
 <script>
 (function () {
-  if (window.__UniversalClose_v1) return;
-  window.__UniversalClose_v1 = true;
+  if (window.__OverlayNav_v3) return;
+  window.__OverlayNav_v3 = true;
 
-  function universalCloseViewer() {
-    var closed = false;
+  function getDocId(item) {
+    if (!item || typeof item !== 'object') return null;
+    return item.id ?? item.docId ?? item.songId ?? item.fileId ?? item.pdfId ?? null;
+  }
 
+  function ensureGlobalsFromContext(context, index) {
     try {
-      var nativeBtn = document.getElementById('close-doc');
-      if (nativeBtn && typeof nativeBtn.click === 'function') {
-        nativeBtn.click();
-        closed = true;
-      }
-      if (window.$ && !closed) { try { $('#close-doc').trigger('click'); closed = true; } catch(_){} }
-    } catch(_) {}
+      if (context) window.currentViewerContext = context;
+      if (typeof index === 'number') window.currentViewerIndex = index;
+      if (context && Array.isArray(context.list)) window.currentViewerList = context.list;
+    } catch (_) {}
+  }
 
-    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); closed = true; } } catch(_) {}
-
+  ['openSongInContext', 'openDocViewer'].forEach(function (name) {
     try {
-      var roots = [
-        document.getElementById('pdf-overlay'),
-        document.querySelector('.pdf-overlay'),
-        document.getElementById('pdf-viewer'),
-        document.querySelector('.viewer-overlay')
-      ].filter(Boolean);
-      roots.forEach(function (el) { el.style.display = 'none'; });
-      if (roots.length) closed = true;
-    } catch(_) {}
-
-    try { document.documentElement.classList.remove('pdf-overlay-active'); closed = true; } catch(_) {}
-    try { document.body.classList.remove('pdf-overlay-active'); closed = true; } catch(_) {}
-
-    try {
-      var bar = document.getElementById('pdf-topbar') || document.getElementById('pdf-btn-bar');
-      if (bar) bar.classList.remove('visible');
-    } catch(_) {}
-
-    return !!closed;
-  }
-
-  function onDocClick(e) {
-    var t = e.target;
-    var isClose = (t && t.id === 'pdf-close') || (t && t.closest && (t.closest('#pdf-close') || t.closest('#pdf-btn-close')));
-    if (isClose) {
-      e.stopPropagation();
-      e.preventDefault();
-      universalCloseViewer();
-    }
-  }
-  document.addEventListener('click', onDocClick, true);
-
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' || e.keyCode === 27) {
-      if (document.documentElement.classList.contains('pdf-overlay-active')) {
-        e.stopPropagation();
-        universalCloseViewer();
-      }
-    }
-  }, true);
-
-  new MutationObserver(function () {}).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-
-  window.universalCloseViewer = universalCloseViewer;
-})();
-</script>
-
-
-<!-- Genre/Venue exact symmetry + centered placeholders (robust) -->
-<style>
-#genre-name::placeholder, #venue-name::placeholder { text-align: center; }
-#genre-name, #venue-name { text-align: center; } /* helps iOS Safari */
-</style>
-<script>
-(function(){
-  if (window.__GenreVenueSync_v2) return; window.__GenreVenueSync_v2 = true;
-
-  function setImportant(el, prop, value){
-    try { el.style.setProperty(prop, value, 'important'); } catch(_){}
-  }
-
-  function syncVenueToGenre(){
-    try {
-      var g = document.getElementById('genre-name');
-      var v = document.getElementById('venue-name');
-      if (!g || !v) return;
-
-      var rect = g.getBoundingClientRect();
-      var gs = getComputedStyle(g);
-
-      // Match box model and typography
-      setImportant(v, 'box-sizing', gs.boxSizing || 'border-box');
-      setImportant(v, 'padding-left', gs.paddingLeft);
-      setImportant(v, 'padding-right', gs.paddingRight);
-      setImportant(v, 'padding-top', gs.paddingTop);
-      setImportant(v, 'padding-bottom', gs.paddingBottom);
-      setImportant(v, 'border-width', gs.borderWidth);
-      setImportant(v, 'border-style', gs.borderStyle);
-      setImportant(v, 'border-color', gs.borderColor);
-      setImportant(v, 'border-radius', gs.borderRadius);
-      setImportant(v, 'font', gs.font);
-
-      // Ensure layout constraints don't override width
-      setImportant(v, 'display', gs.display || 'block');
-      setImportant(v, 'flex', '0 0 auto');
-      setImportant(v, 'max-width', rect.width + 'px');
-      setImportant(v, 'min-width', rect.width + 'px');
-      setImportant(v, 'width', rect.width + 'px');
-      setImportant(v, 'height', rect.height + 'px');
-    } catch(_){}
-  }
-
-  function schedule(){
-    setTimeout(syncVenueToGenre, 0);
-    setTimeout(syncVenueToGenre, 250);
-    setTimeout(syncVenueToGenre, 800);
-    setTimeout(syncVenueToGenre, 1500);
-  }
-
-  window.addEventListener('load', schedule);
-  window.addEventListener('resize', function(){ setTimeout(syncVenueToGenre, 0); });
-
-  // Observe genre size changes (e.g., theme/sidebar width changes)
-  try {
-    var gObsTarget = document.getElementById('genre-name');
-    if (gObsTarget && window.ResizeObserver) {
-      var ro = new ResizeObserver(function(){ syncVenueToGenre(); });
-      ro.observe(gObsTarget);
-    }
-  } catch(_){}
-})();
-</script>
-
-
-<!-- Venue/Genre left-edge alignment + Pull-to-close v4 -->
-<script>
-(function(){
-  /* =====  A) Perfect horizontal alignment for Genre/Venue rows  =====
-     We don't change widths/heights (already matched). We just align left-x
-     of the Venue input and Venue Add button to equal the Genre row's left-x.
-  */
-  if (!window.__AlignGenreVenue_v1){
-    window.__AlignGenreVenue_v1 = true;
-
-    function alignVenueRow(){
-      try {
-        var gInput = document.getElementById('genre-name');
-        var vInput = document.getElementById('venue-name');
-        // Attempt to find the "Add" buttons near each input; adjust selectors to your markup if needed
-        var gAdd   = document.getElementById('add-genre-btn')  || document.querySelector('[data-add="genre"], #add-genre, .add-genre-btn');
-        var vAdd   = document.getElementById('add-venue-btn')  || document.querySelector('[data-add="venue"], #add-venue, .add-venue-btn');
-
-        if (!gInput || !vInput) return;
-
-        // compute current left positions
-        var gx = gInput.getBoundingClientRect().left;
-        var vx = vInput.getBoundingClientRect().left;
-
-        // We adjust only the venue input's margin-left to match genre's left edge
-        var deltaInput = gx - vx;
-        if (Math.abs(deltaInput) > 0.5) {
-          // apply margin-left delta without affecting layout above it
-          var current = parseFloat(getComputedStyle(vInput).marginLeft) || 0;
-          vInput.style.marginLeft = (current + deltaInput) + "px";
-        }
-
-        // If we have genre/venue add buttons, align them too
-        if (gAdd && vAdd) {
-          var gxB = gAdd.getBoundingClientRect().left;
-          var vxB = vAdd.getBoundingClientRect().left;
-          var deltaBtn = gxB - vxB;
-          if (Math.abs(deltaBtn) > 0.5) {
-            var currentBtn = parseFloat(getComputedStyle(vAdd).marginLeft) || 0;
-            vAdd.style.marginLeft = (currentBtn + deltaBtn) + "px";
+      var fn = window[name];
+      if (!fn || fn.__wrappedNav) return;
+      var orig = fn;
+      window[name] = function () {
+        for (var i = 0; i < arguments.length; i++) {
+          var a = arguments[i];
+          if (a && typeof a === 'object' && (a.list || a.context || a.type)) {
+            window.currentViewerContext = a;
+            if (a.list && Array.isArray(a.list)) window.currentViewerList = a.list;
           }
+          if (typeof a === 'number') window.currentViewerIndex = a;
         }
-      } catch(_){}
+        return orig.apply(this, arguments);
+      };
+      window[name].__wrappedNav = true;
+    } catch (_) {}
+  });
+
+  function readState() {
+    var list = (window.currentViewerContext && window.currentViewerContext.list) || window.currentViewerList || [];
+    var index = Number(window.currentViewerIndex || 0);
+    return { list: list, index: index, context: window.currentViewerContext };
+  }
+
+  function go(delta) {
+    var s = readState();
+    if (!s.list || !s.list.length) return;
+
+    var nextIndex = s.index + delta;
+    if (nextIndex < 0 || nextIndex > s.list.length - 1) return;
+
+    var item = s.list[nextIndex];
+    var id = getDocId(item);
+    if (id == null) return;
+
+    window.currentViewerIndex = nextIndex;
+
+    if (typeof window.openSongInContext === 'function') {
+      window.openSongInContext(id, s.context, nextIndex, delta < 0 ? 'prev' : 'next');
+    } else if (typeof window.openDocViewer === 'function') {
+      window.openDocViewer(id, s.context, nextIndex, delta < 0 ? 'prev' : 'next');
+    } else {
+      var btnId = delta < 0 ? 'prev-doc' : 'next-doc';
+      document.getElementById(btnId)?.click();
+      if (window.$) try { $('#' + btnId).trigger('click'); } catch (_) {}
     }
 
-    // Run after layout + a few retries for dynamic UI
-    function schedule(){
-      setTimeout(alignVenueRow, 0);
-      setTimeout(alignVenueRow, 200);
-      setTimeout(alignVenueRow, 600);
-      setTimeout(alignVenueRow, 1200);
-    }
-    window.addEventListener('load', schedule);
-    window.addEventListener('resize', function(){ setTimeout(alignVenueRow, 0); });
-    // Observe venue/genre nodes for size/position changes and re-align
-    var obsTargets = ['genre-name','venue-name'];
-    if (window.ResizeObserver){
-      obsTargets.forEach(function(id){
-        var el = document.getElementById(id);
-        if (el){
-          try {
-            var ro = new ResizeObserver(function(){ alignVenueRow(); });
-            ro.observe(el);
-          } catch(_){}
-        }
+    setTimeout(syncButtons, 0);
+    setTimeout(syncButtons, 250);
+  }
+
+  function goPrev() { go(-1); }
+  function goNext() { go(1); }
+
+  function canPrev() {
+    var s = readState();
+    return s.index > 0;
+  }
+  function canNext() {
+    var s = readState();
+    return s.list && s.index < s.list.length - 1;
+  }
+  function setDisabled(btn, disabled) {
+    if (!btn) return;
+    btn.classList.toggle('disabled', !!disabled);
+    btn.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+    btn.tabIndex = disabled ? -1 : 0;
+  }
+  function syncButtons() {
+    var prevBtn = document.getElementById('pdf-prev') || document.getElementById('pdf-btn-prev');
+    var nextBtn = document.getElementById('pdf-next') || document.getElementById('pdf-btn-next');
+    setDisabled(prevBtn, !canPrev());
+    setDisabled(nextBtn, !canNext());
+  }
+
+  function wire() {
+    var prevBtn = document.getElementById('pdf-prev') || document.getElementById('pdf-btn-prev');
+    var nextBtn = document.getElementById('pdf-next') || document.getElementById('pdf-btn-next');
+    if (prevBtn && !prevBtn.__navWired) {
+      prevBtn.__navWired = true;
+      prevBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!prevBtn.classList.contains('disabled')) goPrev();
       });
     }
-    // If sidebar open/close toggles classes on html/body, re-run
-    new MutationObserver(function(){ alignVenueRow(); })
-      .observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+    if (nextBtn && !nextBtn.__navWired) {
+      nextBtn.__navWired = true;
+      nextBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (!nextBtn.classList.contains('disabled')) goNext();
+      });
+    }
+    syncButtons();
   }
 
-  /* =====  B) Pull-to-close v4: downward pull only, stronger threshold, must release  ===== */
-  if (!window.__PullToClose_v4){
-    window.__PullToClose_v4 = true;
+  document.addEventListener('click', function () {
+    setTimeout(syncButtons, 60);
+    setTimeout(syncButtons, 300);
+  }, true);
 
-    function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
-    var startY = null;
-    var maxPullDown = 0;
-    var active = false;
-    var THRESHOLD_DOWN = 150;  // stronger than v3 (prevents accidental close on slight gestures)
+  new MutationObserver(function () {
+    wire();
+    setTimeout(syncButtons, 0);
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
-    function onTouchStart(e){
-      var t = e.touches && e.touches[0];
-      var sc = scroller();
-      if (!t || !sc) return;
-      // only arm at absolute top
-      active = (sc.scrollTop <= 2);
-      startY = t.clientY;
-      maxPullDown = 0;
-    }
-    function onTouchMove(e){
-      if (!active) return;
-      var t = e.touches && e.touches[0];
-      var sc = scroller();
-      if (!t || !sc) return;
-      var dy = t.clientY - (startY == null ? t.clientY : startY);
-      // Only count downward pulls
-      if (dy > maxPullDown) maxPullDown = dy;
-    }
-    function onTouchEnd(){
-      try {
-        if (!active) return;
-        var sc = scroller(); if (!sc) return;
-        // Close ONLY if at top and downward pull exceeded strong threshold
-        if (sc.scrollTop <= 2 && maxPullDown > THRESHOLD_DOWN) {
-          if (typeof window.universalCloseViewer === 'function') {
-            window.universalCloseViewer();
-          } else {
-            var btn = document.getElementById('close-doc');
-            if (btn && typeof btn.click === 'function') btn.click();
-            if (window.$) try { $('#close-doc').trigger('click'); } catch(_){}
-          }
-        }
-      } finally {
-        active = false;
-        startY = null;
-        maxPullDown = 0;
-      }
-    }
+  new MutationObserver(function () {
+    wire();
+  }).observe(document.body, { childList: true, subtree: true });
 
-    function bind(){
-      var sc = scroller();
-      if (!sc || sc.__pullCloseV4Bound) return;
-      sc.__pullCloseV4Bound = true;
-      sc.addEventListener('touchstart', onTouchStart, {passive:true});
-      sc.addEventListener('touchmove',  onTouchMove,  {passive:true});
-      sc.addEventListener('touchend',   onTouchEnd,   {passive:true});
-    }
+  wire();
+  setTimeout(syncButtons, 0);
+  setTimeout(syncButtons, 400);
 
-    bind();
-    new MutationObserver(function(){ bind(); })
-      .observe(document.body, {childList:true, subtree:true});
-  }
+  window.__overlayNavDebug = { readState, canPrev, canNext, goPrev, goNext };
 })();
 </script>
 
