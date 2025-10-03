@@ -3706,116 +3706,205 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- Overlay Prev/Next forwarder (minimal, uses native prev/next) + Venue size match -->
+<!-- Genre/Venue exact symmetry + centered placeholders (robust) -->
+<style>
+#genre-name::placeholder, #venue-name::placeholder { text-align: center; }
+#genre-name, #venue-name { text-align: center; } /* helps iOS Safari */
+</style>
 <script>
 (function(){
-  /* ===== A) Prev/Next: delegate overlay buttons to your native controls ===== */
-  if (!window.__OverlayNavForwarder_v1){
-    window.__OverlayNavForwarder_v1 = true;
+  if (window.__GenreVenueSync_v2) return; window.__GenreVenueSync_v2 = true;
 
-    function nativePrev(){ return document.getElementById('prev-doc'); }
-    function nativeNext(){ return document.getElementById('next-doc'); }
-
-    function isEnabled(btn){
-      if (!btn) return false;
-      var s = getComputedStyle(btn);
-      if (s.display === 'none' || s.visibility === 'hidden') return false;
-      if (btn.disabled) return false;
-      if (btn.getAttribute && (btn.getAttribute('aria-disabled') === 'true')) return false;
-      if (btn.classList && btn.classList.contains('disabled')) return false;
-      return true;
-    }
-
-    function syncOverlayState(){
-      try{
-        var oPrev = document.getElementById('pdf-prev') || document.getElementById('pdf-btn-prev');
-        var oNext = document.getElementById('pdf-next') || document.getElementById('pdf-btn-next');
-        var nPrev = nativePrev();
-        var nNext = nativeNext();
-        if (oPrev){ oPrev.classList.toggle('disabled', !isEnabled(nPrev)); oPrev.setAttribute('aria-disabled', !isEnabled(nPrev)); }
-        if (oNext){ oNext.classList.toggle('disabled', !isEnabled(nNext)); oNext.setAttribute('aria-disabled', !isEnabled(nNext)); }
-      }catch(_){}
-    }
-
-    function wireOverlay(){
-      var oPrev = document.getElementById('pdf-prev') || document.getElementById('pdf-btn-prev');
-      var oNext = document.getElementById('pdf-next') || document.getElementById('pdf-btn-next');
-      if (oPrev && !oPrev.__fwd){
-        oPrev.__fwd = true;
-        oPrev.addEventListener('click', function(e){
-          e.stopPropagation();
-          var n = nativePrev();
-          if (n && isEnabled(n)) { try { n.click(); } catch(_){ } }
-          setTimeout(syncOverlayState, 0);
-          setTimeout(syncOverlayState, 200);
-        });
-      }
-      if (oNext && !oNext.__fwd){
-        oNext.__fwd = true;
-        oNext.addEventListener('click', function(e){
-          e.stopPropagation();
-          var n = nativeNext();
-          if (n && isEnabled(n)) { try { n.click(); } catch(_){ } }
-          setTimeout(syncOverlayState, 0);
-          setTimeout(syncOverlayState, 200);
-        });
-      }
-      syncOverlayState();
-    }
-
-    document.addEventListener('click', function(){
-      setTimeout(syncOverlayState, 60);
-      setTimeout(syncOverlayState, 300);
-    }, true);
-    new MutationObserver(function(){ wireOverlay(); setTimeout(syncOverlayState, 0); })
-      .observe(document.body, {childList:true, subtree:true});
-    new MutationObserver(function(){ setTimeout(syncOverlayState, 0); })
-      .observe(document.documentElement, {attributes:true, attributeFilter:['class']});
-
-    wireOverlay();
-    setTimeout(syncOverlayState, 0);
-    setTimeout(syncOverlayState, 400);
+  function setImportant(el, prop, value){
+    try { el.style.setProperty(prop, value, 'important'); } catch(_){}
   }
 
-  /* ===== B) Venue size = Genre size (client box only; no margins; alignment unchanged) ===== */
-  if (!window.__VenueSizeMatch_v3){
-    window.__VenueSizeMatch_v3 = true;
+  function syncVenueToGenre(){
+    try {
+      var g = document.getElementById('genre-name');
+      var v = document.getElementById('venue-name');
+      if (!g || !v) return;
 
-    function matchVenueSize(){
-      try{
-        var g = document.getElementById('genre-name');
-        var v = document.getElementById('venue-name');
-        if (!g || !v) return;
-        var gw = g.clientWidth, gh = g.clientHeight;
-        if (gw > 0) v.style.width  = gw + 'px';
-        if (gh > 0) v.style.height = gh + 'px';
-        var gs = getComputedStyle(g);
-        v.style.boxSizing = gs.boxSizing || 'border-box';
-      }catch(_){}
+      var rect = g.getBoundingClientRect();
+      var gs = getComputedStyle(g);
+
+      // Match box model and typography
+      setImportant(v, 'box-sizing', gs.boxSizing || 'border-box');
+      setImportant(v, 'padding-left', gs.paddingLeft);
+      setImportant(v, 'padding-right', gs.paddingRight);
+      setImportant(v, 'padding-top', gs.paddingTop);
+      setImportant(v, 'padding-bottom', gs.paddingBottom);
+      setImportant(v, 'border-width', gs.borderWidth);
+      setImportant(v, 'border-style', gs.borderStyle);
+      setImportant(v, 'border-color', gs.borderColor);
+      setImportant(v, 'border-radius', gs.borderRadius);
+      setImportant(v, 'font', gs.font);
+
+      // Ensure layout constraints don't override width
+      setImportant(v, 'display', gs.display || 'block');
+      setImportant(v, 'flex', '0 0 auto');
+      setImportant(v, 'max-width', rect.width + 'px');
+      setImportant(v, 'min-width', rect.width + 'px');
+      setImportant(v, 'width', rect.width + 'px');
+      setImportant(v, 'height', rect.height + 'px');
+    } catch(_){}
+  }
+
+  function schedule(){
+    setTimeout(syncVenueToGenre, 0);
+    setTimeout(syncVenueToGenre, 250);
+    setTimeout(syncVenueToGenre, 800);
+    setTimeout(syncVenueToGenre, 1500);
+  }
+
+  window.addEventListener('load', schedule);
+  window.addEventListener('resize', function(){ setTimeout(syncVenueToGenre, 0); });
+
+  // Observe genre size changes (e.g., theme/sidebar width changes)
+  try {
+    var gObsTarget = document.getElementById('genre-name');
+    if (gObsTarget && window.ResizeObserver) {
+      var ro = new ResizeObserver(function(){ syncVenueToGenre(); });
+      ro.observe(gObsTarget);
+    }
+  } catch(_){}
+})();
+</script>
+
+
+<!-- Venue/Genre left-edge alignment + Pull-to-close v4 -->
+<script>
+(function(){
+  /* =====  A) Perfect horizontal alignment for Genre/Venue rows  =====
+     We don't change widths/heights (already matched). We just align left-x
+     of the Venue input and Venue Add button to equal the Genre row's left-x.
+  */
+  if (!window.__AlignGenreVenue_v1){
+    window.__AlignGenreVenue_v1 = true;
+
+    function alignVenueRow(){
+      try {
+        var gInput = document.getElementById('genre-name');
+        var vInput = document.getElementById('venue-name');
+        // Attempt to find the "Add" buttons near each input; adjust selectors to your markup if needed
+        var gAdd   = document.getElementById('add-genre-btn')  || document.querySelector('[data-add="genre"], #add-genre, .add-genre-btn');
+        var vAdd   = document.getElementById('add-venue-btn')  || document.querySelector('[data-add="venue"], #add-venue, .add-venue-btn');
+
+        if (!gInput || !vInput) return;
+
+        // compute current left positions
+        var gx = gInput.getBoundingClientRect().left;
+        var vx = vInput.getBoundingClientRect().left;
+
+        // We adjust only the venue input's margin-left to match genre's left edge
+        var deltaInput = gx - vx;
+        if (Math.abs(deltaInput) > 0.5) {
+          // apply margin-left delta without affecting layout above it
+          var current = parseFloat(getComputedStyle(vInput).marginLeft) || 0;
+          vInput.style.marginLeft = (current + deltaInput) + "px";
+        }
+
+        // If we have genre/venue add buttons, align them too
+        if (gAdd && vAdd) {
+          var gxB = gAdd.getBoundingClientRect().left;
+          var vxB = vAdd.getBoundingClientRect().left;
+          var deltaBtn = gxB - vxB;
+          if (Math.abs(deltaBtn) > 0.5) {
+            var currentBtn = parseFloat(getComputedStyle(vAdd).marginLeft) || 0;
+            vAdd.style.marginLeft = (currentBtn + deltaBtn) + "px";
+          }
+        }
+      } catch(_){}
     }
 
+    // Run after layout + a few retries for dynamic UI
     function schedule(){
-      setTimeout(matchVenueSize, 0);
-      setTimeout(matchVenueSize, 250);
-      setTimeout(matchVenueSize, 800);
+      setTimeout(alignVenueRow, 0);
+      setTimeout(alignVenueRow, 200);
+      setTimeout(alignVenueRow, 600);
+      setTimeout(alignVenueRow, 1200);
     }
     window.addEventListener('load', schedule);
-    window.addEventListener('resize', function(){ setTimeout(matchVenueSize, 0); });
-
+    window.addEventListener('resize', function(){ setTimeout(alignVenueRow, 0); });
+    // Observe venue/genre nodes for size/position changes and re-align
+    var obsTargets = ['genre-name','venue-name'];
     if (window.ResizeObserver){
-      try{
-        var g = document.getElementById('genre-name');
-        var v = document.getElementById('venue-name');
-        if (g){
-          var ro = new ResizeObserver(function(){ matchVenueSize(); });
-          ro.observe(g);
+      obsTargets.forEach(function(id){
+        var el = document.getElementById(id);
+        if (el){
+          try {
+            var ro = new ResizeObserver(function(){ alignVenueRow(); });
+            ro.observe(el);
+          } catch(_){}
         }
-        if (v){
-          var ro2 = new ResizeObserver(function(){ matchVenueSize(); });
-          ro2.observe(v);
-        }
-      }catch(_){}
+      });
     }
+    // If sidebar open/close toggles classes on html/body, re-run
+    new MutationObserver(function(){ alignVenueRow(); })
+      .observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+  }
+
+  /* =====  B) Pull-to-close v4: downward pull only, stronger threshold, must release  ===== */
+  if (!window.__PullToClose_v4){
+    window.__PullToClose_v4 = true;
+
+    function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
+    var startY = null;
+    var maxPullDown = 0;
+    var active = false;
+    var THRESHOLD_DOWN = 150;  // stronger than v3 (prevents accidental close on slight gestures)
+
+    function onTouchStart(e){
+      var t = e.touches && e.touches[0];
+      var sc = scroller();
+      if (!t || !sc) return;
+      // only arm at absolute top
+      active = (sc.scrollTop <= 2);
+      startY = t.clientY;
+      maxPullDown = 0;
+    }
+    function onTouchMove(e){
+      if (!active) return;
+      var t = e.touches && e.touches[0];
+      var sc = scroller();
+      if (!t || !sc) return;
+      var dy = t.clientY - (startY == null ? t.clientY : startY);
+      // Only count downward pulls
+      if (dy > maxPullDown) maxPullDown = dy;
+    }
+    function onTouchEnd(){
+      try {
+        if (!active) return;
+        var sc = scroller(); if (!sc) return;
+        // Close ONLY if at top and downward pull exceeded strong threshold
+        if (sc.scrollTop <= 2 && maxPullDown > THRESHOLD_DOWN) {
+          if (typeof window.universalCloseViewer === 'function') {
+            window.universalCloseViewer();
+          } else {
+            var btn = document.getElementById('close-doc');
+            if (btn && typeof btn.click === 'function') btn.click();
+            if (window.$) try { $('#close-doc').trigger('click'); } catch(_){}
+          }
+        }
+      } finally {
+        active = false;
+        startY = null;
+        maxPullDown = 0;
+      }
+    }
+
+    function bind(){
+      var sc = scroller();
+      if (!sc || sc.__pullCloseV4Bound) return;
+      sc.__pullCloseV4Bound = true;
+      sc.addEventListener('touchstart', onTouchStart, {passive:true});
+      sc.addEventListener('touchmove',  onTouchMove,  {passive:true});
+      sc.addEventListener('touchend',   onTouchEnd,   {passive:true});
+    }
+
+    bind();
+    new MutationObserver(function(){ bind(); })
+      .observe(document.body, {childList:true, subtree:true});
   }
 })();
 </script>
