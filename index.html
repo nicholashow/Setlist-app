@@ -1431,6 +1431,16 @@ html.pdf-overlay-active #doc-nav-buttons {
 html:not(.pdf-overlay-active) #pdf-btn-hit,
 html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
 
+
+/* === Ensure single button set & disabled visuals === */
+html.pdf-overlay-active #doc-nav-buttons { display: none !important; } /* avoid double bars */
+#pdf-btn-bar .btn.disabled {
+  opacity: 0.45;
+  filter: grayscale(40%);
+  cursor: default;
+  box-shadow: none;
+}
+
 </style>
 </head>
 
@@ -2388,6 +2398,122 @@ function destroyPdfOverlay() {
     } catch(e){}
   }, {passive:true});
 
+})();
+</script>
+
+<script>
+(function(){
+  if (window.__pdfBtnsEnh2) return;
+  window.__pdfBtnsEnh2 = true;
+
+  function $(id){ return document.getElementById(id); }
+  var bar   = $('pdf-btn-bar');
+  var hit   = $('pdf-btn-hit');
+  var prevB = $('pdf-btn-prev');
+  var nextB = $('pdf-btn-next');
+  var closeB= $('pdf-btn-close');
+  var hideTimer = null;
+
+  function forwardClick(id){
+    try {
+      var el = $(id);
+      if (el) el.click();
+    } catch(e){ console.warn('Forward click failed for', id, e); }
+  }
+
+  function isDisabled(el){
+    if (!el) return true;
+    var s = window.getComputedStyle(el);
+    var cls = (el.className||'').toLowerCase();
+    return !!( el.hasAttribute('disabled')
+            || el.getAttribute('aria-disabled') === 'true'
+            || /disabled|inactive|hidden/.test(cls)
+            || s.display === 'none'
+            || s.visibility === 'hidden'
+            || s.pointerEvents === 'none');
+  }
+
+  function syncOverlayButtons(){
+    try {
+      var prevOrig = $('prev-doc');
+      var nextOrig = $('next-doc');
+      // Grey & disable PREVIOUS if original indicates no previous
+      var prevDisabled = isDisabled(prevOrig);
+      prevB.classList.toggle('disabled', prevDisabled);
+      prevB.tabIndex = prevDisabled ? -1 : 0;
+
+      // Grey & disable NEXT if original indicates no next
+      var nextDisabled = isDisabled(nextOrig);
+      nextB.classList.toggle('disabled', nextDisabled);
+      nextB.tabIndex = nextDisabled ? -1 : 0;
+    } catch(e){}
+  }
+
+  function showBar(){
+    if (!bar) return;
+    bar.classList.add('visible');
+    syncOverlayButtons(); // keep state fresh when showing
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    hideTimer = setTimeout(function(){
+      bar.classList.remove('visible');
+    }, 2000);
+  }
+  function hideBarNow(){
+    if (!bar) return;
+    bar.classList.remove('visible');
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  }
+
+  // Prevent clicks when disabled
+  function guard(evt, id, isDisabledFn){
+    evt.stopPropagation();
+    if (isDisabledFn && isDisabledFn()) return;
+    forwardClick(id);
+  }
+  prevB.addEventListener('click', function(e){ guard(e, 'prev-doc', function(){ return prevB.classList.contains('disabled'); }); });
+  nextB.addEventListener('click', function(e){ guard(e, 'next-doc', function(){ return nextB.classList.contains('disabled'); }); });
+  closeB.addEventListener('click', function(e){ guard(e, 'close-doc', null); });
+
+  // Reveal on top tap
+  function onTopTap(){ showBar(); }
+  if (hit){
+    hit.addEventListener('touchstart', onTopTap, {passive:true});
+    hit.addEventListener('mousedown', onTopTap);
+    hit.addEventListener('pointerdown', onTopTap, {passive:true});
+  }
+
+  // Respond to overlay activation/deactivation
+  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
+  if (wasActive) { setTimeout(showBar, 0); }
+  var mo = new MutationObserver(function(){
+    var active = document.documentElement.classList.contains('pdf-overlay-active');
+    if (active && !wasActive) {
+      setTimeout(showBar, 0);
+    } else if (!active && wasActive) {
+      hideBarNow();
+    }
+    wasActive = active;
+  });
+  mo.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+
+  // Keep state in sync when original buttons change (e.g., after navigating songs)
+  var watchTargets = [ $('prev-doc'), $('next-doc'), $('doc-nav-buttons') ].filter(Boolean);
+  watchTargets.forEach(function(t){
+    try {
+      var mo2 = new MutationObserver(syncOverlayButtons);
+      mo2.observe(t, { attributes: true, attributeFilter: ['class', 'style', 'disabled', 'aria-disabled'], childList: false, subtree: false });
+    } catch(e){}
+  });
+
+  // Also resync on clicks and after small delay (in case app updates after handler)
+  document.addEventListener('click', function(){
+    setTimeout(syncOverlayButtons, 100);
+    setTimeout(syncOverlayButtons, 400);
+  }, true);
+
+  // Initial sync
+  setTimeout(syncOverlayButtons, 0);
+  setTimeout(syncOverlayButtons, 500);
 })();
 </script>
 </body>
