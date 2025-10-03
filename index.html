@@ -1515,6 +1515,12 @@ html.sidebar-opening .sidebar, html.sidebar-closing .sidebar {
   transform: translateX(0) !important; /* use slide, not scale */
 }
 
+
+/* === Sidebar anti-compression (strong) === */
+.left-col * { white-space: nowrap; }
+.left-col .sidebar-item { flex: 0 0 auto; }
+.left-col.collapsed .left-col-main-content, .left-col.collapsed .stats-container { opacity: 0; visibility: hidden; }
+
 </style>
 </head>
 
@@ -2903,6 +2909,187 @@ function destroyPdfOverlay() {
   }, true);
 
   // Initial sync
+  setTimeout(syncState, 0);
+  setTimeout(syncState, 400);
+})();
+</script>
+
+<script>
+(function(){
+  if (window.__pdfBtnsInstalled_v5) return;
+  window.__pdfBtnsInstalled_v5 = true;
+
+  var $ = function(id){ return document.getElementById(id); };
+  var bar   = $('pdf-btn-bar');
+  var hit   = $('pdf-btn-hit');
+  var prevB = $('pdf-btn-prev');
+  var nextB = $('pdf-btn-next');
+  var closeB= $('pdf-btn-close');
+  var hideTimer = null;
+
+  function scroller(){ return $('pdf-overlay-scroll'); }
+
+  function canPrev(){ try { return (window.currentViewerIndex > 0); } catch(e){ return false; } }
+  function canNext(){ try { return (window.currentViewerList && window.currentViewerIndex < window.currentViewerList.length - 1); } catch(e){ return false; } }
+
+  function callPrev() {
+    try {
+      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex > 0) {
+        var idx = window.currentViewerIndex - 1;
+        var id = window.currentViewerList[idx].id;
+        window.openSongInContext(id, window.currentViewerContext, idx, 'prev');
+        return true;
+      }
+    } catch(e){}
+    // fallback: click original
+    try { var el = $('prev-doc'); if (el) { el.click(); return true; } } catch(e){}
+    // fallback: jQuery trigger
+    try { if (window.$) { $('#prev-doc').trigger('click'); return true; } } catch(e){}
+    return false;
+  }
+  function callNext() {
+    try {
+      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex < window.currentViewerList.length - 1) {
+        var idx = window.currentViewerIndex + 1;
+        var id = window.currentViewerList[idx].id;
+        window.openSongInContext(id, window.currentViewerContext, idx, 'next');
+        return true;
+      }
+    } catch(e){}
+    try { var el = $('next-doc'); if (el) { el.click(); return true; } } catch(e){}
+    try { if (window.$) { $('#next-doc').trigger('click'); return true; } } catch(e){}
+    return false;
+  }
+  function callClose() {
+    var ok = false;
+    try { var el = $('close-doc'); if (el) { el.click(); ok = true; } } catch(e){}
+    try { if (window.$) { $('#close-doc').trigger('click'); ok = true; } } catch(e){}
+    // force overlay teardown
+    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); ok = true; } } catch(e){}
+    try { document.documentElement.classList.remove('pdf-overlay-active'); ok = true; } catch(e){}
+    return ok;
+  }
+
+  function isInactive(el){
+    if (!el) return true;
+    try {
+      var s = window.getComputedStyle(el);
+      var cls = (el.className||'').toLowerCase();
+      return !!( el.hasAttribute('disabled')
+              || el.getAttribute('aria-disabled') === 'true'
+              || /disabled|inactive|hidden/.test(cls)
+              || s.display === 'none'
+              || s.visibility === 'hidden'
+              || s.pointerEvents === 'none');
+    } catch(e){ return false; }
+  }
+
+  function syncState(){
+    try {
+      var prevDis = !canPrev() || isInactive($('prev-doc'));
+      var nextDis = !canNext() || isInactive($('next-doc'));
+      prevB.classList.toggle('disabled', prevDis);
+      nextB.classList.toggle('disabled', nextDis);
+      prevB.tabIndex = prevDis ? -1 : 0;
+      nextB.tabIndex = nextDis ? -1 : 0;
+    } catch(e){}
+  }
+
+  function showBar(){
+    var sc = scroller();
+    if (sc && sc.scrollTop > 2) return; // only at top
+    bar && bar.classList.add('visible');
+    syncState();
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(function(){ bar && bar.classList.remove('visible'); }, 2000);
+  }
+  function hideBarNow(){
+    bar && bar.classList.remove('visible');
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  }
+
+  prevB && prevB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (prevB.classList.contains('disabled')) return;
+    callPrev();
+  });
+  nextB && nextB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (nextB.classList.contains('disabled')) return;
+    callNext();
+  });
+  closeB && closeB.addEventListener('click', function(e){
+    e.stopPropagation();
+    callClose();
+  });
+
+  function onTopTap(){
+    var sc = scroller();
+    if (!sc || sc.scrollTop <= 2) showBar();
+  }
+  var hit = $('pdf-btn-hit');
+  if (hit){
+    hit.addEventListener('touchstart', onTopTap, {passive:true});
+    hit.addEventListener('mousedown', onTopTap);
+    hit.addEventListener('pointerdown', onTopTap, {passive:true});
+  }
+
+  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
+  if (wasActive) setTimeout(showBar, 0);
+  var moRoot = new MutationObserver(function(){
+    var active = document.documentElement.classList.contains('pdf-overlay-active');
+    if (active && !wasActive) setTimeout(showBar, 0);
+    else if (!active && wasActive) hideBarNow();
+    wasActive = active;
+  });
+  moRoot.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+
+  var lastTopState = null;
+  function onScroll(){
+    var sc = scroller();
+    if (!sc) return;
+    var atTop = sc.scrollTop <= 2;
+    if (atTop !== lastTopState){
+      lastTopState = atTop;
+      if (atTop) showBar(); else hideBarNow();
+    }
+  }
+  var sc = scroller();
+  if (sc){
+    sc.addEventListener('scroll', onScroll, {passive:true});
+    setTimeout(onScroll, 0);
+  }
+
+  // Pull-down to close at top
+  var startY = null;
+  function onTouchStart(e){ var t = e.touches && e.touches[0]; if (t) startY = t.clientY; }
+  function onTouchMove(e){
+    var t = e.touches && e.touches[0];
+    if (!t) return;
+    var sc = scroller();
+    if (!sc) return;
+    var atTop = sc.scrollTop <= 2;
+    var dy = t.clientY - (startY==null? t.clientY : startY);
+    if (atTop && dy > 40){ callClose(); startY = t.clientY; }
+  }
+  if (sc){
+    sc.addEventListener('touchstart', onTouchStart, {passive:true});
+    sc.addEventListener('touchmove', onTouchMove, {passive:true});
+  }
+
+  // Keep state in sync after internal updates
+  ['prev-doc','next-doc','doc-nav-buttons'].forEach(function(id){
+    var node = $(id); if (!node) return;
+    try {
+      var mo = new MutationObserver(function(){ setTimeout(syncState, 0); setTimeout(syncState, 200); });
+      mo.observe(node, { attributes: true, attributeFilter: ['class', 'style', 'disabled', 'aria-disabled'] });
+    } catch(e){}
+  });
+  document.addEventListener('click', function(){
+    setTimeout(syncState, 60);
+    setTimeout(syncState, 300);
+  }, true);
+
   setTimeout(syncState, 0);
   setTimeout(syncState, 400);
 })();
