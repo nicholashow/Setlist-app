@@ -4004,5 +4004,128 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<script>
+// === Long-press to rename: Setlists, Genres, Venues (2s hold) ===
+(function(){
+  var holdMs = 2000;
+  var timer = null, target = null;
+
+  function attachLongPressRename(){
+    // Delegate for sidebar name elements
+    $(document).off('touchstart.rename mousedown.rename', '#setlists-container .setlist-name, #genre-list .genre-name, #venue-list .venue-name');
+    $(document).on('touchstart.rename mousedown.rename', '#setlists-container .setlist-name, #genre-list .genre-name, #venue-list .venue-name', function(e){
+      // Ignore if already editing
+      if ($(this).closest('li').find('input.edit-input').length) return;
+      target = this;
+      clearTimeout(timer);
+      timer = setTimeout(function(){
+        beginRename($(target));
+      }, holdMs);
+    });
+
+    $(document).off('touchend.rename mouseup.rename touchcancel.rename mouseleave.rename', '#setlists-container .setlist-name, #genre-list .genre-name, #venue-list .venue-name');
+    $(document).on('touchend.rename mouseup.rename touchcancel.rename mouseleave.rename', '#setlists-container .setlist-name, #genre-list .genre-name, #venue-list .venue-name', function(){
+      clearTimeout(timer); timer = null; target = null;
+    });
+  }
+
+  function beginRename($nameEl){
+    try{
+      var $li = $nameEl.closest('li');
+      var isSetlist = $nameEl.closest('#setlists-container').length > 0;
+      var isGenre = $nameEl.closest('#genre-list').length > 0;
+      var isVenue = $nameEl.closest('#venue-list').length > 0;
+      var oldName = $nameEl.text().trim();
+
+      // Build input
+      var $input = $('<input type="text" class="edit-input" />').val(oldName);
+      $nameEl.replaceWith($input);
+      $input.focus().addClass('bg-white text-black');
+
+      function commit(newName){
+        newName = (newName||'').trim();
+        if (!newName || newName === oldName) { rerender(); return; }
+
+        if (isSetlist){
+          if (setlists[newName]) { alert('A setlist with that name already exists.'); rerender(); return; }
+          // Rename key in setlists object
+          setlists[newName] = setlists[oldName];
+          delete setlists[oldName];
+          if (currentSetlist === oldName) currentSetlist = newName;
+          // Update references in recordings, if they store setlist name
+          if (Array.isArray(recordings)) {
+            recordings.forEach(function(r){ if (r.setlist === oldName) r.setlist = newName; });
+          }
+          save();
+          renderSetlists(); // re-render the list of setlists in sidebar
+          if ($('#setlist-view').is(':visible')) { $('#setlist-title').text(newName); renderSetlist(); }
+        } else if (isGenre){
+          // Update genres array
+          var g = genres.find(function(x){ return x.name === oldName; });
+          if (g) g.name = newName;
+          // Update songs tagged to this genre
+          masterSongs.forEach(function(s){ if ((s.genre||'') === oldName) s.genre = newName; });
+          save();
+          if (typeof renderGenres === 'function') renderGenres();
+          if ($('#genre-view').is(':visible')) { currentGenre = newName; renderGenreView(newName); }
+        } else if (isVenue){
+          // Update venues array
+          var v = venues.find(function(x){ return x.name === oldName; });
+          if (v) v.name = newName;
+          // Update setlists and recordings that reference this venue
+          Object.keys(setlists).forEach(function(k){
+            if (setlists[k] && setlists[k].venue === oldName) setlists[k].venue = newName;
+          });
+          if (Array.isArray(recordings)) {
+            recordings.forEach(function(r){ if (r.venue === oldName) r.venue = newName; });
+          }
+          save();
+          if (typeof renderVenues === 'function') renderVenues();
+          if ($('#venue-setlists-view').is(':visible')) { renderVenueSetlists(newName); }
+        } else {
+          rerender();
+        }
+      }
+
+      function rerender(){
+        try {
+          if ($('#setlists-container').length && typeof renderSetlists === 'function') renderSetlists();
+          if ($('#genre-list').length && typeof renderGenres === 'function') renderGenres();
+          if ($('#venue-list').length && typeof renderVenues === 'function') renderVenues();
+        } catch(e){}
+      }
+
+      $input.on('keydown', function(ev){
+        if (ev.key === 'Enter'){
+          commit($input.val());
+        } else if (ev.key === 'Escape'){
+          rerender();
+        }
+      });
+      $input.on('blur', function(){ commit($input.val()); });
+
+    }catch(err){
+      console.error('Rename error', err);
+    }
+  }
+
+  $(function(){
+    attachLongPressRename();
+    // Rebind after sidebars re-render
+    $(document).on('app:renderSetlists app:renderGenres app:renderVenues app:navigate', function(){
+      attachLongPressRename();
+    });
+    // Observe lists in case they re-render without events
+    ['setlists-container','genre-list','venue-list'].forEach(function(id){
+      var node = document.getElementById(id);
+      if (!node || !window.MutationObserver) return;
+      var obs = new MutationObserver(function(){ attachLongPressRename(); });
+      obs.observe(node, { childList:true, subtree:true });
+    });
+  });
+})();
+</script>
+
 </body>
 </html>
