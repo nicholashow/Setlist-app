@@ -1591,26 +1591,34 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 }
 
 
-/* === Sidebar Cover Animation (keeps original collapse, just hides its motion) === */
+/* === Sidebar: page-covers-it animation (keeps your collapse, hides inner motion) === */
 .left-col { position: relative; overflow: hidden; }
+
+/* Curtain that sweeps across the sidebar */
 .left-col::after {
   content: "";
   position: absolute;
-  inset: 0;                    /* top:0; right:0; bottom:0; left:0 */
+  inset: 0;
   width: 0%;
-  background: var(--cover-bg, #ffffff);
-  z-index: 5;                  /* sits above sidebar content */
-  pointer-events: none;
+  background: #111827;               /* dark sidebar tone */
   transition: width 0.35s ease;
+  z-index: 2;                         /* above sidebar content */
+  pointer-events: none;
 }
-.dark .left-col::after { background: #111827; } /* Tailwind gray-900 */
+.dark .left-col::after { background: #000; }
 
-/* During CLOSE: grow cover to 100% so it looks like the page is sliding over it */
-body.covering-close .left-col::after { width: 100%; }
+/* Freeze inner content during animation so it never visibly moves */
+.left-col.__cover-freeze > .left-col-main-content,
+.left-col.__cover-freeze > .stats-container {
+  visibility: hidden !important;
+}
 
-/* During OPEN: start fully covered, then animate width back to 0% */
-body.covering-open .left-col::after { width: 100%; }
-body.covering-open.covering-open-active .left-col::after { width: 0%; }
+/* Closing: grow the curtain to fully cover as the sidebar collapses behind it */
+.left-col.__covering-close::after { width: 100%; }
+
+/* Opening: start fully covered, then reveal by shrinking the curtain */
+.left-col.__covering-open::after { width: 100%; }
+.left-col.__covering-open.__reveal::after { width: 0%; }
 
 </style>
 </head>
@@ -4197,41 +4205,46 @@ function destroyPdfOverlay() {
 
 
 <script>
-// === Sidebar Cover Animation Controller ===
-// Runs alongside your existing toggle logic. It does NOT change collapse behavior;
-// it only adds a visual cover panel that hides the sidebar's internal movement.
+// === Page-covers-sidebar animation controller (non-destructive) ===
+// Works alongside your existing collapse logic. We only add a visual curtain
+// and temporarily hide inner content so you don't see it moving.
 (function(){
-  var DURATION = 350; // must match CSS transition time
+  var DUR = 350; // must match CSS transition (ms)
 
   function isCollapsed(){
     var side = document.querySelector('.left-col');
     return !!(side && side.classList.contains('collapsed'));
   }
 
-  function onToggleClicked(){
-    // If currently expanded, we're about to CLOSE -> grow cover to 100%
-    if (!isCollapsed()){
-      document.body.classList.add('covering-close');
-      setTimeout(function(){
-        document.body.classList.remove('covering-close');
-      }, DURATION + 50);
-    } else {
-      // If currently collapsed, we're OPENING -> start covered, then reveal
-      document.body.classList.add('covering-open');
-      requestAnimationFrame(function(){
-        document.body.classList.add('covering-open-active');
-        setTimeout(function(){
-          document.body.classList.remove('covering-open','covering-open-active');
-        }, DURATION + 50);
-      });
-    }
+  function startClosing(){
+    var side = document.querySelector('.left-col');
+    if (!side) return;
+    side.classList.add('__cover-freeze','__covering-close');
+    // Let your existing code toggle .collapsed & main layout as usual
+    setTimeout(function(){
+      side.classList.remove('__covering-close','__cover-freeze');
+    }, DUR + 40);
   }
 
+  function startOpening(){
+    var side = document.querySelector('.left-col');
+    if (!side) return;
+    side.classList.add('__cover-freeze','__covering-open');
+    requestAnimationFrame(function(){
+      side.classList.add('__reveal'); // shrink curtain back to 0%
+      setTimeout(function(){
+        side.classList.remove('__covering-open','__reveal','__cover-freeze');
+      }, DUR + 40);
+    });
+  }
+
+  // Hook the existing toggle button in capture phase so our curtain starts first
   document.addEventListener('DOMContentLoaded', function(){
     var btn = document.getElementById('sidebar-toggle');
     if (!btn) return;
-    // Use capture so our cover starts before the original collapse animation kicks in
-    btn.addEventListener('click', onToggleClicked, true);
+    btn.addEventListener('click', function(){
+      if (!isCollapsed()) startClosing(); else startOpening();
+    }, true);
   });
 })();
 </script>
