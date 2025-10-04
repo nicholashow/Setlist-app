@@ -4005,123 +4005,218 @@ function destroyPdfOverlay() {
 </script>
 
 
+<style>
+  /* Inline rename overlay */
+  .inline-rename-overlay {
+    position: fixed;
+    z-index: 999999;
+    background: white;
+    color: black;
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 8px;
+    padding: 6px 8px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+    font-size: 14px;
+  }
+  .inline-rename-overlay input {
+    outline: none;
+    border: none;
+    background: transparent;
+    color: black;
+    width: 100%;
+  }
+</style>
 <script>
-// === Long-press to rename: Setlists, Genres, Venues (2s hold) ===
+// ======= Long-press rename (overlay input) for Setlists, Genres, Venues =======
 (function(){
-  var holdMs = 2000;
-  var timer = null, target = null;
+  var HOLD_MS = 2000; // 2 seconds
+  var holdTimer = null;
+  var startPos = null;
+  var activeTarget = null;
+  var overlay = null;
+  var isEditingName = false;
 
-  function attachLongPressRename(){
-    // Delegate for sidebar name elements
-    $(document).off('touchstart.rename mousedown.rename', '#setlists-container .setlist-name, #genre-list .genre-name, #venue-list .venue-name');
-    $(document).on('touchstart.rename mousedown.rename', '#setlists-container .setlist-name, #genre-list .genre-name, #venue-list .venue-name', function(e){
-      // Ignore if already editing
-      if ($(this).closest('li').find('input.edit-input').length) return;
-      target = this;
-      clearTimeout(timer);
-      timer = setTimeout(function(){
-        beginRename($(target));
-      }, holdMs);
-    });
+  function cancelHoldTimer(){ if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; } }
 
-    $(document).off('touchend.rename mouseup.rename touchcancel.rename mouseleave.rename', '#setlists-container .setlist-name, #genre-list .genre-name, #venue-list .venue-name');
-    $(document).on('touchend.rename mouseup.rename touchcancel.rename mouseleave.rename', '#setlists-container .setlist-name, #genre-list .genre-name, #venue-list .venue-name', function(){
-      clearTimeout(timer); timer = null; target = null;
-    });
+  function movementExceeded(e){
+    // Cancel long press if user moves finger/mouse a lot (prevents accidental triggers)
+    var ev = e.touches ? e.touches[0] : e;
+    if (!startPos || !ev) return false;
+    var dx = Math.abs(ev.clientX - startPos.x);
+    var dy = Math.abs(ev.clientY - startPos.y);
+    return (dx + dy) > 10;
   }
 
-  function beginRename($nameEl){
+  function nameSpanFor($el){
+    // Try to find an element that contains only the name text.
+    // Setlists
+    var $name = $el.is('.setlist-name, .genre-name, .venue-name') ? $el : $el.find('.setlist-name, .genre-name, .venue-name').first();
+    if ($name.length) return $name;
+
+    // Fallbacks: some templates may not have those classes — look for obvious text spans
+    $name = $el.find('.truncate, .item-name, .name, span').filter(function(){
+      // Heuristic: prefer spans with short inner text and without nested elements
+      return this.childElementCount === 0 && (this.textContent||'').trim().length > 0;
+    }).first();
+    if ($name.length) return $name;
+
+    // As a last resort, use the element itself
+    return $el;
+  }
+
+  function getKindAndKey($nameEl){
+    // Determine which list we're in and return kind + current name
+    var $li = $nameEl.closest('li');
+    var inSetlists = $nameEl.closest('#setlists-container').length > 0;
+    var inGenres   = $nameEl.closest('#genre-list').length > 0;
+    var inVenues   = $nameEl.closest('#venue-list').length > 0;
+    var current = ($nameEl.text() || '').trim();
+    return { inSetlists, inGenres, inVenues, current, $li: $li };
+  }
+
+  function showOverlayEditor($nameEl){
     try{
-      var $li = $nameEl.closest('li');
-      var isSetlist = $nameEl.closest('#setlists-container').length > 0;
-      var isGenre = $nameEl.closest('#genre-list').length > 0;
-      var isVenue = $nameEl.closest('#venue-list').length > 0;
-      var oldName = $nameEl.text().trim();
+      var rect = $nameEl[0].getBoundingClientRect();
+      // Build overlay
+      overlay = document.createElement('div');
+      overlay.className = 'inline-rename-overlay';
+      overlay.style.left = (rect.left) + 'px';
+      overlay.style.top  = (rect.top) + 'px';
+      overlay.style.width = Math.max(140, rect.width + 20) + 'px';
+      overlay.style.height = (rect.height + 6) + 'px';
 
-      // Build input
-      var $input = $('<input type="text" class="edit-input" />').val(oldName);
-      $nameEl.replaceWith($input);
-      $input.focus().addClass('bg-white text-black');
+      var input = document.createElement('input');
+      input.type = 'text';
+      var initial = ($nameEl.text() || '').trim();
+      input.value = initial;
+      overlay.appendChild(input);
+      document.body.appendChild(overlay);
+      input.focus();
+      input.setSelectionRange(0, input.value.length);
 
-      function commit(newName){
-        newName = (newName||'').trim();
-        if (!newName || newName === oldName) { rerender(); return; }
-
-        if (isSetlist){
-          if (setlists[newName]) { alert('A setlist with that name already exists.'); rerender(); return; }
-          // Rename key in setlists object
-          setlists[newName] = setlists[oldName];
-          delete setlists[oldName];
-          if (currentSetlist === oldName) currentSetlist = newName;
-          // Update references in recordings, if they store setlist name
-          if (Array.isArray(recordings)) {
-            recordings.forEach(function(r){ if (r.setlist === oldName) r.setlist = newName; });
-          }
-          save();
-          renderSetlists(); // re-render the list of setlists in sidebar
-          if ($('#setlist-view').is(':visible')) { $('#setlist-title').text(newName); renderSetlist(); }
-        } else if (isGenre){
-          // Update genres array
-          var g = genres.find(function(x){ return x.name === oldName; });
-          if (g) g.name = newName;
-          // Update songs tagged to this genre
-          masterSongs.forEach(function(s){ if ((s.genre||'') === oldName) s.genre = newName; });
-          save();
-          if (typeof renderGenres === 'function') renderGenres();
-          if ($('#genre-view').is(':visible')) { currentGenre = newName; renderGenreView(newName); }
-        } else if (isVenue){
-          // Update venues array
-          var v = venues.find(function(x){ return x.name === oldName; });
-          if (v) v.name = newName;
-          // Update setlists and recordings that reference this venue
-          Object.keys(setlists).forEach(function(k){
-            if (setlists[k] && setlists[k].venue === oldName) setlists[k].venue = newName;
-          });
-          if (Array.isArray(recordings)) {
-            recordings.forEach(function(r){ if (r.venue === oldName) r.venue = newName; });
-          }
-          save();
-          if (typeof renderVenues === 'function') renderVenues();
-          if ($('#venue-setlists-view').is(':visible')) { renderVenueSetlists(newName); }
-        } else {
-          rerender();
-        }
+      function done(commit){
+        if (!overlay) return;
+        var val = (input.value || '').trim();
+        overlay.remove();
+        overlay = null;
+        isEditingName = false;
+        if (!commit) { return rerenderSidebars(); }
+        applyRename($nameEl, initial, val);
       }
 
-      function rerender(){
-        try {
-          if ($('#setlists-container').length && typeof renderSetlists === 'function') renderSetlists();
-          if ($('#genre-list').length && typeof renderGenres === 'function') renderGenres();
-          if ($('#venue-list').length && typeof renderVenues === 'function') renderVenues();
-        } catch(e){}
-      }
-
-      $input.on('keydown', function(ev){
-        if (ev.key === 'Enter'){
-          commit($input.val());
-        } else if (ev.key === 'Escape'){
-          rerender();
-        }
+      input.addEventListener('keydown', function(ev){
+        if (ev.key === 'Enter') done(true);
+        else if (ev.key === 'Escape') done(false);
       });
-      $input.on('blur', function(){ commit($input.val()); });
-
-    }catch(err){
-      console.error('Rename error', err);
-    }
+      input.addEventListener('blur', function(){ done(true); });
+    }catch(e){ console.error('overlay error', e); isEditingName = false; }
   }
+
+  function rerenderSidebars(){
+    try{
+      if (typeof renderSetlists === 'function') renderSetlists();
+    }catch(e){}
+    try{
+      if (typeof renderGenres === 'function') renderGenres();
+    }catch(e){}
+    try{
+      if (typeof renderVenues === 'function') renderVenues();
+    }catch(e){}
+  }
+
+  function applyRename($nameEl, oldName, newName){
+    if (!newName || newName === oldName) { rerenderSidebars(); return; }
+    var ctx = getKindAndKey($nameEl);
+    // Prevent duplicates where relevant
+    if (ctx.inSetlists && setlists[newName]){ alert('A setlist with that name already exists.'); rerenderSidebars(); return; }
+    if (ctx.inGenres && (genres||[]).some(g => g.name === newName)){ alert('A genre with that name already exists.'); rerenderSidebars(); return; }
+    if (ctx.inVenues && (venues||[]).some(v => v.name === newName)){ alert('A venue with that name already exists.'); rerenderSidebars(); return; }
+
+    if (ctx.inSetlists){
+      // Rename key in setlists object
+      setlists[newName] = setlists[oldName];
+      delete setlists[oldName];
+      if (typeof currentSetlist!=='undefined' && currentSetlist === oldName) currentSetlist = newName;
+      // Update recordings or other refs
+      if (Array.isArray(recordings)) recordings.forEach(r => { if (r.setlist === oldName) r.setlist = newName; });
+      if (typeof save === 'function') save();
+      if (typeof renderSetlists === 'function') renderSetlists();
+      if ($('#setlist-view').is(':visible')) { $('#setlist-title').text(newName); if (typeof renderSetlist==='function') renderSetlist(); }
+      return;
+    }
+    if (ctx.inGenres){
+      var g = (genres||[]).find(x => x.name === oldName);
+      if (g) g.name = newName;
+      (masterSongs||[]).forEach(s => { if ((s.genre||'') === oldName) s.genre = newName; });
+      if (typeof save === 'function') save();
+      if (typeof renderGenres === 'function') renderGenres();
+      if ($('#genre-view').is(':visible')){ window.currentGenre = newName; if (typeof renderGenreView==='function') renderGenreView(newName); }
+      return;
+    }
+    if (ctx.inVenues){
+      var v = (venues||[]).find(x => x.name === oldName);
+      if (v) v.name = newName;
+      // Update setlists & recordings referencing venue
+      Object.keys(setlists||{}).forEach(k => { if (setlists[k] && setlists[k].venue === oldName) setlists[k].venue = newName; });
+      if (Array.isArray(recordings)) recordings.forEach(r => { if (r.venue === oldName) r.venue = newName; });
+      if (typeof save === 'function') save();
+      if (typeof renderVenues === 'function') renderVenues();
+      return;
+    }
+    rerenderSidebars();
+  }
+
+  // Bind long-press on the *text* of list items
+  function bindLongPressEvents(){
+    var selector = '#setlists-container li, #genre-list li, #venue-list li';
+    $(document).off('.lpRename', selector);
+    $(document).on('touchstart.lpRename mousedown.lpRename', selector, function(e){
+      if (isEditingName) return;
+      // Only start if press is on/near a text area; locate a name span
+      var $name = nameSpanFor($(e.target).closest('li'));
+      if (!$name.length) return;
+
+      activeTarget = $name;
+      var ev = e.touches ? e.touches[0] : e;
+      startPos = { x: ev.clientX, y: ev.clientY };
+      cancelHoldTimer();
+      holdTimer = setTimeout(function(){
+        isEditingName = true;
+        showOverlayEditor($name);
+      }, HOLD_MS);
+    });
+
+    $(document).on('touchmove.lpRename mousemove.lpRename', function(e){
+      if (!holdTimer) return;
+      if (movementExceeded(e)) cancelHoldTimer();
+    });
+
+    $(document).on('touchend.lpRename mouseup.lpRename touchcancel.lpRename', function(){
+      cancelHoldTimer();
+      startPos = null;
+      activeTarget = null;
+    });
+  }
+
+  // Prevent draggables/sortables from hijacking when editing
+  $(document).on('mousedown dragstart touchstart', function(e){
+    if (isEditingName){
+      e.stopImmediatePropagation();
+    }
+  });
 
   $(function(){
-    attachLongPressRename();
-    // Rebind after sidebars re-render
+    bindLongPressEvents();
+    // Rebind after navigation/rerender
     $(document).on('app:renderSetlists app:renderGenres app:renderVenues app:navigate', function(){
-      attachLongPressRename();
+      bindLongPressEvents();
     });
-    // Observe lists in case they re-render without events
+    // Observe sidebars for dynamic changes
     ['setlists-container','genre-list','venue-list'].forEach(function(id){
       var node = document.getElementById(id);
       if (!node || !window.MutationObserver) return;
-      var obs = new MutationObserver(function(){ attachLongPressRename(); });
-      obs.observe(node, { childList:true, subtree:true });
+      var obs = new MutationObserver(function(){ bindLongPressEvents(); });
+      obs.observe(node, { childList: true, subtree: true });
     });
   });
 })();
