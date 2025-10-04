@@ -3910,25 +3910,25 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- BEGIN: Minimal fix for NEXT/PREV on the overlay (no other changes) -->
+<!-- BEGIN: Delegated overlay NEXT/PREV fix (handles duplicate IDs safely) -->
 <script>
 (function(){
-  if (window.__patchedOverlayNav) return;
-  window.__patchedOverlayNav = true;
+  if (window.__delegatedPdfNavFix) return;
+  window.__delegatedPdfNavFix = true;
 
   function doNext(){
-    // Prefer underlying working handler if present
+    // 1) Prefer the existing app handler
     var nextBase = document.getElementById('next-doc');
     if (nextBase) { nextBase.click(); return; }
+    // 2) Fallback to callNext
     if (typeof window.callNext === 'function') { window.callNext(); return; }
-    // fallback using in-memory list/index if available
+    // 3) Last resort: compute from in-memory list
     var list = Array.isArray(window.currentViewerList) ? window.currentViewerList : null;
     var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
     if (list && i >= 0 && i < list.length - 1 && typeof window.openSongInContext === 'function') {
       window.openSongInContext(list[i+1].id, window.currentViewerContext, i+1, 'next');
     }
   }
-
   function doPrev(){
     var prevBase = document.getElementById('prev-doc');
     if (prevBase) { prevBase.click(); return; }
@@ -3940,36 +3940,23 @@ function destroyPdfOverlay() {
     }
   }
 
-  function wire(){
-    var prevB = document.getElementById('pdf-prev');
-    var nextB = document.getElementById('pdf-next');
-    if (prevB && !prevB.__navWired){
-      prevB.addEventListener('click', function(e){
-        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation && e.stopImmediatePropagation();
-        doPrev();
-      }, true);
-      prevB.__navWired = true;
+  // Use delegated listeners to catch clicks even if there are multiple copies / re-renders.
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    // match the button or any child inside it
+    var prevBtn = t.closest && t.closest('#pdf-prev');
+    var nextBtn = t.closest && t.closest('#pdf-next');
+    if (prevBtn){
+      e.preventDefault(); e.stopPropagation();
+      doPrev();
+    } else if (nextBtn){
+      e.preventDefault(); e.stopPropagation();
+      doNext();
     }
-    if (nextB && !nextB.__navWired){
-      nextB.addEventListener('click', function(e){
-        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation && e.stopImmediatePropagation();
-        doNext();
-      }, true);
-      nextB.__navWired = true;
-    }
-  }
-
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', wire);
-  } else {
-    wire();
-  }
-
-  // If your app re-renders the overlay, try re-wiring again
-  document.addEventListener('rebuild-pdf-overlay', wire);
+  }, true); // capture to win against other handlers
 })();
 </script>
-<!-- END: Minimal fix for NEXT/PREV on the overlay (no other changes) -->
+<!-- END: Delegated overlay NEXT/PREV fix (handles duplicate IDs safely) -->
 
 </body>
 
