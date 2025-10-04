@@ -1703,6 +1703,34 @@ html, body, #setlist-details-content {
 /* Keep native select text hidden when placeholder is active */
 .select-hide-text { color: transparent !important; text-shadow: none !important; }
 
+
+/* === Exact font pin + rendering harmonization === */
+:root {
+  --details-height: 40px;
+  --details-font-size-px: 16px;
+  --details-font-weight: 600;
+  --details-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+}
+
+#setlist-details-content input,
+#setlist-details-content select,
+#date-placeholder,
+#order-overlay {
+  font-family: var(--details-font-family) !important;
+  font-size: var(--details-font-size-px) !important;
+  font-weight: var(--details-font-weight) !important;
+  line-height: var(--details-height) !important;
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+  font-kerning: normal !important;
+  font-variant-ligatures: normal !important;
+  font-feature-settings: "kern" 1, "liga" 1 !important;
+  letter-spacing: 0 !important;
+}
+
 </style>
 </head>
 
@@ -4527,6 +4555,96 @@ function destroyPdfOverlay() {
     var t = e.target;
     var toggle = document.getElementById('setlist-details-toggle');
     if (toggle && (t===toggle || (t.closest && t.closest('#setlist-details-toggle')))) setTimeout(syncAll, 0);
+  }, true);
+})();
+</script>
+
+
+<script>
+(function(){
+  function centerOverlayNoTransform(targetEl, overlayEl, containerEl){
+    if (!targetEl || !overlayEl || !containerEl) return;
+    // measure
+    var tr = targetEl.getBoundingClientRect();
+    var cr = containerEl.getBoundingClientRect();
+    // Temporarily show overlay to measure its width/height
+    var prevDisplay = overlayEl.style.display;
+    overlayEl.style.display = 'block';
+    // Compute desired top/left (no transforms)
+    var w = overlayEl.offsetWidth;
+    var h = overlayEl.offsetHeight;
+    var left = (tr.left - cr.left) + (tr.width - w) / 2;
+    var top  = (tr.top  - cr.top ) + (tr.height - h) / 2;
+    overlayEl.style.left = left + 'px';
+    overlayEl.style.top  = top  + 'px';
+    overlayEl.style.transform = ''; // ensure no transform
+    overlayEl.style.width = w + 'px'; // lock width used for centering visuals
+    // restore display if needed
+    overlayEl.style.display = prevDisplay || 'block';
+  }
+
+  function syncDate(){
+    var cont = document.getElementById('setlist-date-container');
+    var input = document.getElementById('setlist-date');
+    var ph = document.getElementById('date-placeholder');
+    if (!cont || !input || !ph) return;
+    // toggle
+    ph.style.display = input.value ? 'none' : 'block';
+    if (!input.value){
+      // Ensure placeholder text uses the pinned typography
+      ph.style.fontFamily = getComputedStyle(document.getElementById('setlist-venue')).fontFamily;
+      centerOverlayNoTransform(input, ph, cont);
+    }
+  }
+
+  function syncOrder(){
+    var rel = document.querySelector('#setlist-details-content .relative');
+    var sel = document.getElementById('setlist-sort-filter-dropdown');
+    if (!rel || !sel) return;
+    var ov = document.getElementById('order-overlay');
+    if (!ov){
+      ov = document.createElement('span');
+      ov.id = 'order-overlay';
+      ov.textContent = 'Custom Order';
+      ov.style.position = 'absolute';
+      ov.style.pointerEvents = 'none';
+      ov.style.whiteSpace = 'nowrap';
+      rel.appendChild(ov);
+    }
+    var selectedText = (sel.options[sel.selectedIndex] || {}).text || '';
+    var isPlaceholder = selectedText.trim().toLowerCase() === 'custom order';
+    sel.classList.toggle('select-hide-text', isPlaceholder);
+    ov.style.display = isPlaceholder ? 'block' : 'none';
+    if (isPlaceholder){
+      // Pin typography to match venue (single source of truth)
+      var cs = getComputedStyle(document.getElementById('setlist-venue'));
+      ov.style.fontFamily = cs.fontFamily;
+      ov.style.fontSize = cs.fontSize;
+      ov.style.fontWeight = cs.fontWeight;
+      ov.style.lineHeight = cs.lineHeight;
+      centerOverlayNoTransform(sel, ov, rel);
+    }
+  }
+
+  function syncAll(){
+    syncDate();
+    syncOrder();
+  }
+
+  window.addEventListener('resize', syncAll);
+  window.addEventListener('orientationchange', syncAll);
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(syncAll, 0); });
+  document.addEventListener('change', function(e){
+    if (e.target && (e.target.id === 'setlist-date' || e.target.id === 'setlist-sort-filter-dropdown')){
+      setTimeout(syncAll, 0);
+    }
+  });
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    var toggle = document.getElementById('setlist-details-toggle');
+    if (toggle && (t === toggle || (t.closest && t.closest('#setlist-details-toggle')))) {
+      setTimeout(syncAll, 0);
+    }
   }, true);
 })();
 </script>
