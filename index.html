@@ -1590,6 +1590,40 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
   color: #ffffff !important;
 }
 
+
+/* === Sidebar Toggle Redesign === */
+/* Button: black background, half width, aligned with 'ALL SONGS' right edge */
+#sidebar-toggle {
+  background-color: #000000 !important;   /* black */
+  color: #ffffff !important;              /* ensure icon inherits white */
+  width: 24px !important;                 /* half the previous 48px */
+  height: 60px;                           /* keep height */
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Pull the button left by the sidebar's padding so its left edge
+     aligns with the inner edge (right side) of the ALL SONGS card. */
+  margin-left: -1rem;
+  transition: background-color .2s ease, transform .2s ease, margin-left .2s ease;
+}
+/* When collapsed, sidebar padding is 0: return button to normal so it doesn't shift offscreen */
+.left-col.collapsed + #sidebar-toggle {
+  margin-left: 0;
+}
+/* Arrow icon: force white and smooth flip */
+#sidebar-toggle svg {
+  stroke: #ffffff !important;
+  color: #ffffff !important;
+  transition: transform .25s ease;
+}
+/* Flip the chevron when the sidebar is collapsed (points right to indicate opening) */
+.left-col.collapsed + #sidebar-toggle svg {
+  transform: rotate(180deg);
+}
+/* Hover tint (subtle) */
+#sidebar-toggle:hover { background-color: #111111 !important; }
+
 </style>
 </head>
 
