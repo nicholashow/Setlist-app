@@ -1591,75 +1591,26 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 }
 
 
-/* ========================= Sidebar Cover Animation (non-destructive) ========================= */
-/* Freeze the sidebar layout: fixed, constant width, nothing inside moves */
-.left-col {
-  position: fixed !important;
-  left: 0; top: 0; bottom: 0;
-  width: 16rem !important;      /* w-64 */
-  padding: 1rem !important;
-  z-index: 10;
-  will-change: auto;
-}
-
-/* Neutralize any "collapsed" visuals so content doesn't fade/move */
-.left-col.collapsed { 
-  width: 16rem !important; 
-  padding: 1rem !important;
-  overflow: hidden;             /* hide any overflow just in case */
-}
-.left-col.collapsed .left-col-main-content,
-.left.col.collapsed .stats-container,
-.left-col.collapsed .left-col-main-content,
-.left-col.collapsed .stats-container {
-  opacity: 1 !important;
-  visibility: visible !important;
-  filter: none !important;
-}
-
-/* MAIN: slides over the fixed sidebar to close; slides right to reveal */
-main {
-  position: relative;
-  z-index: 20;                  /* ensure main can sit above sidebar when closed */
-  transition: margin-left 0.35s ease, transform 0.35s ease;
-  will-change: margin-left, transform;
-}
-
-/* When open, main lives to the right of the sidebar */
-body.sidebar-open main { margin-left: 16rem; transform: translateX(0); }
-/* When closed, main covers the sidebar (no sidebar movement) */
-body.sidebar-closed main { margin-left: 0; transform: translateX(0); }
-
-/* Optional soft shadow edge so it feels like a sheet covering the sidebar */
-body.sidebar-closed main::before {
+/* === Sidebar Cover Animation (keeps original collapse, just hides its motion) === */
+.left-col { position: relative; overflow: hidden; }
+.left-col::after {
   content: "";
   position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 10px;
-  background: linear-gradient(to right, rgba(0,0,0,0.28), rgba(0,0,0,0));
+  inset: 0;                    /* top:0; right:0; bottom:0; left:0 */
+  width: 0%;
+  background: var(--cover-bg, #ffffff);
+  z-index: 5;                  /* sits above sidebar content */
   pointer-events: none;
+  transition: width 0.35s ease;
 }
-.dark body.sidebar-closed main::before {
-  background: linear-gradient(to right, rgba(255,255,255,0.15), rgba(255,255,255,0));
-}
+.dark .left-col::after { background: #111827; } /* Tailwind gray-900 */
 
-/* Sidebar remains interactive when open; disable pointer events beneath cover when closed */
-body.sidebar-closed .left-col { pointer-events: none; }
-body.sidebar-open   .left-col { pointer-events: auto; }
+/* During CLOSE: grow cover to 100% so it looks like the page is sliding over it */
+body.covering-close .left-col::after { width: 100%; }
 
-/* Tweak the toggle button so it stays aligned visually with the cover effect */
-#sidebar-toggle {
-  position: fixed;
-  left: 16rem;                  /* hugs the edge of the sidebar */
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 30;
-  transition: left 0.35s ease;
-}
-body.sidebar-closed #sidebar-toggle { left: 0; }
-
-/* Make sure the app container doesn't shift due to fixed sidebar */
-#app { padding-left: 0 !important; }
+/* During OPEN: start fully covered, then animate width back to 0% */
+body.covering-open .left-col::after { width: 100%; }
+body.covering-open.covering-open-active .left-col::after { width: 0%; }
 
 </style>
 </head>
@@ -4246,27 +4197,41 @@ function destroyPdfOverlay() {
 
 
 <script>
-// ========================= Sidebar Cover Animation Controller =========================
+// === Sidebar Cover Animation Controller ===
+// Runs alongside your existing toggle logic. It does NOT change collapse behavior;
+// it only adds a visual cover panel that hides the sidebar's internal movement.
 (function(){
-  function setSidebar(open){
-    document.body.classList.toggle('sidebar-open',  !!open);
-    document.body.classList.toggle('sidebar-closed', !open);
+  var DURATION = 350; // must match CSS transition time
+
+  function isCollapsed(){
+    var side = document.querySelector('.left-col');
+    return !!(side && side.classList.contains('collapsed'));
   }
-  function isOpen(){ return document.body.classList.contains('sidebar-open'); }
+
+  function onToggleClicked(){
+    // If currently expanded, we're about to CLOSE -> grow cover to 100%
+    if (!isCollapsed()){
+      document.body.classList.add('covering-close');
+      setTimeout(function(){
+        document.body.classList.remove('covering-close');
+      }, DURATION + 50);
+    } else {
+      // If currently collapsed, we're OPENING -> start covered, then reveal
+      document.body.classList.add('covering-open');
+      requestAnimationFrame(function(){
+        document.body.classList.add('covering-open-active');
+        setTimeout(function(){
+          document.body.classList.remove('covering-open','covering-open-active');
+        }, DURATION + 50);
+      });
+    }
+  }
 
   document.addEventListener('DOMContentLoaded', function(){
-    // Initialize (default to open unless already set)
-    if (!document.body.classList.contains('sidebar-open') && 
-        !document.body.classList.contains('sidebar-closed')) {
-      setSidebar(true);
-    }
-    // Toggle handler (namespaced so we don't clash)
     var btn = document.getElementById('sidebar-toggle');
-    if (btn){
-      btn.addEventListener('click', function(){
-        setSidebar(!isOpen());
-      }, { passive: true });
-    }
+    if (!btn) return;
+    // Use capture so our cover starts before the original collapse animation kicks in
+    btn.addEventListener('click', onToggleClicked, true);
   });
 })();
 </script>
