@@ -3910,109 +3910,128 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- BEGIN: Cohesive NEXT/PREV overlay fix (delegated + robust + touch) -->
-<script>
-(function(){
-  if (window.__cohesiveNavFix) return; window.__cohesiveNavFix = true;
-
-  function $id(id){ return document.getElementById(id); }
-  function getList(){
-    if (Array.isArray(window.currentViewerList) && window.currentViewerList.length) return window.currentViewerList;
-    // fallbacks (non-invasive)
-    var cands = [window.currentSetlistSongs, window.currentSongs, window.masterSongs, window.currentGenreViewSongs, window.currentFavViewSongs];
-    for (var i=0;i<cands.length;i++){ var a=cands[i]; if (Array.isArray(a) && a.length) return a; }
-    return [];
-  }
-  function getId(item){ return item && (item.id || item.songId || item.fileId || item.path || item.name || (typeof item==='string'?item:null)); }
-  function getIndex(list){
-    var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
-    if (i>=0 && i<list.length) return i;
-    var cid = window.currentOpenSongId || (window.__viewerState && window.__viewerState.lastId) || null;
-    if (cid){ for (var k=0;k<list.length;k++) if (getId(list[k])===cid) return k; }
-    return -1;
-  }
-  function nav(dir){
-    var baseId = (dir==='next') ? 'next-doc' : 'prev-doc';
-    var base = $id(baseId);
-    // Prefer the proven base handler if it exists
-    if (base){ try{ base.click(); return true; }catch(_){ /* fall through */ } }
-    // Otherwise compute robustly
-    var list = getList(); if (!list.length) return false;
-    var i = getIndex(list); if (i<0) i = 0;
-    var target = (dir==='next') ? i+1 : i-1;
-    if (target < 0 || target >= list.length) return false;
-    var id = getId(list[target]); if (!id || typeof window.openSongInContext !== 'function') return false;
-    window.openSongInContext(id, window.currentViewerContext, target, dir);
-    // keep globals coherent without changing other code
-    window.currentViewerList = list;
-    window.currentViewerIndex = target;
-    window.currentOpenSongId = id;
-    // sync visuals on next frame
-    requestAnimationFrame(syncVisual);
-    return true;
-  }
-
-  function can(dir){
-    var list = getList();
-    var i = getIndex(list);
-    if (!list.length) return false;
-    if (i<0) i = 0;
-    return dir==='next' ? (i < list.length - 1) : (i > 0);
-  }
-
-  function syncVisual(){
-    var prevB = $id('pdf-prev'); var nextB = $id('pdf-next');
-    if (prevB){ var cp = can('prev'); prevB.classList.toggle('disabled', !cp); prevB.setAttribute('aria-disabled', (!cp).toString()); }
-    if (nextB){ var cn = can('next'); nextB.classList.toggle('disabled', !cn); nextB.setAttribute('aria-disabled', (!cn).toString()); }
-  }
-
-  // Delegated handlers catch taps even if the bar is re-rendered / duplicated
-  function handleTap(e, dir){
-    // Visual "press" feedback without changing your design palette
-    var btn = e.target.closest && e.target.closest(dir==='next' ? '#pdf-next' : '#pdf-prev');
-    if (!btn) return;
-    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation && e.stopImmediatePropagation();
-    btn.classList.add('pressed');
-    setTimeout(function(){ btn.classList.remove('pressed'); }, 120);
-    nav(dir);
-  }
-
-  // Global capture listeners (work across duplicates, safe for iPad overlays)
-  document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#pdf-next')) handleTap(e,'next'); }, true);
-  document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#pdf-prev')) handleTap(e,'prev'); }, true);
-  document.addEventListener('touchend', function(e){ if (e.target.closest && e.target.closest('#pdf-next')) handleTap(e,'next'); }, {passive:false, capture:true});
-  document.addEventListener('touchend', function(e){ if (e.target.closest && e.target.closest('#pdf-prev')) handleTap(e,'prev'); }, {passive:false, capture:true});
-
-  // Keep visuals in sync whenever a doc opens or DOM changes
-  (function patchOpen(){
-    if (window.__cohesiveOpenPatched || typeof window.openSongInContext !== 'function') return;
-    var orig = window.openSongInContext;
-    window.openSongInContext = function(){
-      var arg = arguments[0];
-      var id = (arg && (arg.id || arg.songId || arg.fileId || arg.path || arg.name)) || (typeof arg==='string'?arg:null);
-      var res = orig.apply(this, arguments);
-      if (id) window.currentOpenSongId = id;
-      try { requestAnimationFrame(syncVisual); } catch(_){}
-      return res;
-    };
-    window.__cohesiveOpenPatched = true;
-  })();
-
-  // Observe DOM/class changes so we re-sync after overlay appears
-  var mo = new MutationObserver(function(){ syncVisual(); });
-  mo.observe(document.body, { childList:true, subtree:true });
-  mo.observe(document.documentElement, { attributes:true, attributeFilter:['class'] });
-
-  // Initial sync
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', syncVisual);
-  } else { syncVisual(); }
-})();
-</script>
+<!-- BEGIN: FINAL NAV PATCH — direct, iPad-safe NEXT/PREV (no other features touched) -->
 <style>
   #pdf-prev.pressed, #pdf-next.pressed { filter: brightness(0.9); transform: translateY(0.5px); }
 </style>
-<!-- END: Cohesive NEXT/PREV overlay fix -->
+<script>
+(function(){
+  if (window.__finalNavPatch) return; window.__finalNavPatch = true;
+
+  function $id(id){ return document.getElementById(id); }
+  function toArr(nl){ return Array.prototype.slice.call(nl||[]); }
+  function val(x){ return x && (x.id || x.songId || x.fileId || x.path || x.name || (typeof x==='string'?x:null)) || null; }
+
+  // Build the active list as robustly as possible
+  function deriveList(){
+    if (Array.isArray(window.currentViewerList) && window.currentViewerList.length) return window.currentViewerList.slice();
+    var cands = [
+      window.currentSetlistSongs,
+      window.currentMasterViewSongs,
+      window.currentSongs,
+      window.masterSongs,
+      window.currentGenreViewSongs,
+      window.currentFavViewSongs
+    ];
+    for (var i=0;i<cands.length;i++){
+      var a = cands[i];
+      if (Array.isArray(a) && a.length) return a.slice();
+    }
+    // DOM fallback — look for visible song items with IDs
+    var ids = [];
+    try{
+      var containers = toArr(document.querySelectorAll('.setlist-songs, .song-list, [data-role="setlist"], [data-role="master"]'));
+      if (!containers.length) containers = [document.body];
+      for (var k=0;k<containers.length;k++){
+        var nodes = toArr(containers[k].querySelectorAll('[data-song-id], [data-id], [data-file-id]'));
+        nodes.forEach(function(n){
+          var id = n.getAttribute('data-song-id') || n.getAttribute('data-id') || n.getAttribute('data-file-id');
+          if (id) ids.push({id:id});
+        });
+        if (ids.length) break;
+      }
+    }catch(_){}
+    return ids;
+  }
+
+  function findIndex(list){
+    var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
+    if (i>=0 && i<list.length) return i;
+    var cid = window.currentOpenSongId || (window.__viewerState && window.__viewerState.lastId) || null;
+    if (cid){
+      for (var k=0;k<list.length;k++) if (val(list[k])===cid) return k;
+    }
+    return -1;
+  }
+
+  function go(dir){
+    try{
+      var list = deriveList();
+      if (!list || !list.length) return false;
+      var i = findIndex(list);
+      if (i < 0) i = 0;
+      var t = dir==='next' ? i+1 : i-1;
+      if (t < 0 || t >= list.length) return false;
+      var id = val(list[t]);
+      if (!id || typeof window.openSongInContext !== 'function') return false;
+      window.openSongInContext(id, window.currentViewerContext, t, dir);
+      // Persist nav state for subsequent steps
+      window.currentViewerList = list; window.currentViewerIndex = t; window.currentOpenSongId = id;
+      return true;
+    }catch(_){ return false; }
+  }
+
+  function pressFx(btn){
+    if (!btn) return;
+    btn.classList.add('pressed');
+    setTimeout(function(){ btn.classList.remove('pressed'); }, 120);
+  }
+
+  function bind(btn, dir){
+    if (!btn || btn.__finalBound) return;
+    var handler = function(ev){
+      ev.preventDefault(); ev.stopPropagation(); ev.stopImmediatePropagation && ev.stopImmediatePropagation();
+      pressFx(btn);
+      go(dir);
+    };
+    btn.addEventListener('touchend', handler, {passive:false, capture:true});
+    btn.addEventListener('pointerup', handler, true);
+    btn.addEventListener('click', handler, true);
+    btn.__finalBound = true;
+  }
+
+  function bindAll(){
+    bind($id('pdf-prev'), 'prev');
+    bind($id('pdf-next'), 'next');
+  }
+
+  // Patch openSongInContext to keep our index and last id aligned
+  (function patchOpen(){
+    if (window.__finalOpenPatched || typeof window.openSongInContext !== 'function') return;
+    var orig = window.openSongInContext;
+    window.openSongInContext = function(){
+      var arg = arguments[0];
+      var id  = (arg && (arg.id || arg.songId || arg.fileId || arg.path || arg.name)) || (typeof arg==='string'?arg:null);
+      var r = orig.apply(this, arguments);
+      if (id) window.currentOpenSongId = id;
+      return r;
+    };
+    window.__finalOpenPatched = true;
+  })();
+
+  // Keep bindings alive across DOM changes
+  var mo = new MutationObserver(function(){ bindAll(); });
+  mo.observe(document.body, { childList:true, subtree:true });
+  mo.observe(document.documentElement, { attributes:true, attributeFilter:['class'] });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindAll);
+  } else {
+    bindAll();
+  }
+})();
+</script>
+<!-- END: FINAL NAV PATCH -->
 
 </body>
 
