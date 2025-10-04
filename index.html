@@ -2417,25 +2417,7 @@ function destroyPdfOverlay() {
   nextB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('next-doc'); });
   closeB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('close-doc'); });
 
-  
-  // NEW: wire the visible topbar buttons too
-  (function(){
-    var vPrev = document.getElementById('pdf-prev');
-    var vNext = document.getElementById('pdf-next');
-    if (vPrev && !vPrev.__wired){
-      vPrev.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('prev-doc'); }, true);
-      vPrev.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); forwardClick('prev-doc'); }, {passive:false, capture:true});
-      vPrev.__wired = true;
-    }
-    if (vNext && !vNext.__wired){
-      vNext.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('next-doc'); }, true);
-      vNext.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); forwardClick('next-doc'); }, {passive:false, capture:true});
-      vNext.__wired = true;
-    }
-    // Ensure they are interactive even if visually disabled
-    [vPrev, vNext].forEach(function(b){ if (!b) return; b.removeAttribute('disabled'); b.style.pointerEvents='auto'; b.style.touchAction='manipulation'; });
-  })();
-function showBar(){
+  function showBar(){
     if (!bar) return;
     bar.classList.add('visible');
     if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
@@ -3926,6 +3908,112 @@ function showBar(){
   }
 })();
 </script>
+
+
+<!-- ====== Integrated Fix: Tap-Guard + Upward Pull-to-Close (conflict-proof) ====== -->
+<style>
+  /* Prevent immediate accidental taps on buttons right after reveal */
+  #pdf-btn-bar.arming .btn { pointer-events: none !important; }
+</style>
+<script>
+(function(){
+  // ---------- Guard: avoid double installs ----------
+  if (window.__NickFix_v2) return;
+  window.__NickFix_v2 = true;
+
+  // ---------- 1) Tap-to-reveal should not click a button underneath ----------
+  var btnBar = document.getElementById('pdf-btn-bar');
+  var hitA   = document.getElementById('pdf-btn-hit') || document.getElementById('pdf-top-hit');
+  var armUntil = 0;
+  var ARM_MS   = 420;
+
+  function armButtons(){
+    if (!btnBar) return;
+    armUntil = Date.now() + ARM_MS;
+    btnBar.classList.add('arming');
+    setTimeout(function(){ btnBar && btnBar.classList.remove('arming'); }, ARM_MS + 20);
+  }
+
+  function onRevealTap(e){
+    // This is the tap that shows the bar; don't let it also click a button.
+    armButtons();
+    // use capture to beat any other handlers
+    e.preventDefault && e.preventDefault();
+    e.stopPropagation && e.stopPropagation();
+    return false;
+  }
+
+  if (hitA){
+    hitA.addEventListener('touchstart', onRevealTap, {passive:false, capture:true});
+    hitA.addEventListener('pointerdown', onRevealTap, {passive:false, capture:true});
+    hitA.addEventListener('mousedown',  onRevealTap, {capture:true});
+  }
+
+  function guardEarly(e){
+    if (Date.now() < armUntil){
+      e.preventDefault && e.preventDefault();
+      e.stopImmediatePropagation && e.stopImmediatePropagation();
+      e.stopPropagation && e.stopPropagation();
+      return false;
+    }
+  }
+  // Guard clicks on the three buttons during the arming window
+  ['pdf-btn-prev','pdf-btn-next','pdf-btn-close'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el){
+      el.addEventListener('click', guardEarly, true);
+      el.addEventListener('touchend', guardEarly, {passive:false});
+      el.addEventListener('pointerup', guardEarly, true);
+    }
+  });
+
+  // ---------- 2) Pull-UP to close (not pull-down), with deliberate threshold ----------
+  // Disable legacy "pull-down to close" by sandboxing callClose behind a gate.
+  var originalCallClose = window.callClose;
+  window.__ALLOW_PROGRAMMATIC_CLOSE = false;
+  window.callClose = function(){
+    if (window.__ALLOW_PROGRAMMATIC_CLOSE){
+      try { return originalCallClose ? originalCallClose() : false; }
+      finally { window.__ALLOW_PROGRAMMATIC_CLOSE = false; }
+    }
+    // otherwise, ignore spurious/legacy triggers
+    return false;
+  };
+
+  // Our own upward gesture on the true scroll element:
+  var scroller = document.getElementById('pdf-overlay-scroll');
+  var closeBtn = document.getElementById('pdf-btn-close');
+  if (scroller && closeBtn){
+    var startY = 0, startT = 0, tracking = false;
+    function onStart(ev){
+      var t = (ev.touches && ev.touches[0]) ? ev.touches[0] : ev;
+      startY = t.clientY || 0;
+      startT = Date.now();
+      var vh = window.innerHeight || document.documentElement.clientHeight || 0;
+      // only arm if starting in the bottom 35% of viewport; avoids conflict with normal scrolling
+      tracking = (startY >= vh * 0.65);
+    }
+    function onEnd(ev){
+      if (!tracking) return;
+      var t = (ev.changedTouches && ev.changedTouches[0]) ? ev.changedTouches[0] : ev;
+      var endY = t.clientY || 0;
+      var dt   = Date.now() - startT;
+      var dy   = endY - startY; // negative = up
+      var REQUIRED_UP_PX = 240; // slightly stronger than earlier; tweakable
+      var MIN_DT_MS      = 140; // ignore microflicks
+      if (dt >= MIN_DT_MS && dy <= -REQUIRED_UP_PX){
+        window.__ALLOW_PROGRAMMATIC_CLOSE = true;
+        try { closeBtn.click(); } catch(_){}
+      }
+      tracking = false;
+    }
+    scroller.addEventListener('touchstart', onStart, {passive:true});
+    scroller.addEventListener('touchend',   onEnd,   {passive:true});
+    scroller.addEventListener('touchcancel',function(){ tracking=false; }, {passive:true});
+  }
+})();
+</script>
+<!-- ====== /Integrated Fix ====== -->
 
 </body>
 
