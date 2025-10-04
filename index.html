@@ -3968,5 +3968,41 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<script>
+// === Override: ensure Genre view shows songs dropped into that genre ===
+(function(){
+  function safeEscape(t){ try { return (typeof escapeHtml==='function') ? escapeHtml(t) : String(t||'').replace(/[&<>"']/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[s])); } catch(e){ return String(t||''); } }
+  window.renderGenreView = function(n){
+    try{
+      currentGenre = n;
+      $('#genre-view-title').text(n);
+      var list = $('#genre-song-list').empty();
+      var songs = (masterSongs||[]).filter(function(s){ return (s.genre||'').toLowerCase() === String(n||'').toLowerCase(); });
+      // Build compact, consistent list items that remain draggable + clickable
+      songs.forEach(function(s, i){
+        var g = (typeof genres!=='undefined') ? genres.find(function(x){ return x.name === n; }) : null;
+        var color = g ? g.color : (s.color||'');
+        var dot = '<span class="genre-dot inline-block w-2.5 h-2.5 rounded-full mr-2 align-middle" style="background:'+ (color||'transparent') +';"></span>';
+        var fav = s.favorite ? '<span class="favorite-star-container ml-2">★</span>' : '<span class="favorite-star-container ml-2">☆</span>';
+        var $li = $('<li/>', {
+          id: String(s.id),
+          class: 'draggable flex items-center px-2 py-1 hover:bg-gray-50 dark:hover:bg-gray-800 rounded'
+        }).append(dot)
+          .append('<span class="truncate flex-1">'+ safeEscape(s.name||'Untitled') +'</span>')
+          .append(fav);
+        list.append($li);
+      });
+      // Re-enable dragging with your existing options
+      if (typeof draggableOptions !== 'undefined') {
+        $('#genre-song-list .draggable').draggable(draggableOptions);
+      }
+      // Make sure the view is visible
+      if (typeof show === 'function') show('genre');
+    }catch(e){ console.error('renderGenreView override error', e); }
+  };
+})();
+</script>
+
 </body>
 </html>
