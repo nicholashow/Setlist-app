@@ -3909,6 +3909,57 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<!-- BEGIN: Minimal iPad NEXT/PREV/CLOSE fix (non-invasive) -->
+<script>
+(function () {
+  function wireAllPdfTopButtons() {
+    // Bind to *all* duplicated IDs safely
+    var nextBtns = document.querySelectorAll('[id="pdf-btn-next"]');
+    var prevBtns = document.querySelectorAll('[id="pdf-btn-prev"]');
+    var closeBtns = document.querySelectorAll('[id="pdf-btn-close"]');
+
+    function safeBind(nodeList, handler) {
+      if (!nodeList) return;
+      nodeList.forEach(function(btn) {
+        if (!btn || btn.__pdfNavWired) return;
+        btn.addEventListener('click', function(e){
+          try {
+            // Make sure our handler wins even if other listeners exist
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation && e.stopImmediatePropagation();
+            handler();
+          } catch (err) {
+            console && console.warn && console.warn('Top-bar button handler error:', err);
+          }
+        }, true); // capture to ensure we intercept first
+        btn.__pdfNavWired = true;
+      });
+    }
+
+    // Handlers call your existing in-memory navigator; no forwarding to hidden buttons
+    function doNext() { if (typeof callNext === 'function') { callNext(); } }
+    function doPrev() { if (typeof callPrev === 'function') { callPrev(); } }
+    function doClose(){ if (typeof callClose=== 'function') { callClose(); } }
+
+    safeBind(nextBtns, doNext);
+    safeBind(prevBtns, doPrev);
+    safeBind(closeBtns, doClose);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireAllPdfTopButtons);
+  } else {
+    wireAllPdfTopButtons();
+  }
+
+  // Also re-wire after dynamic overlay re-renders, if your app mutates the DOM
+  document.addEventListener('rebuild-pdf-overlay', function(){ wireAllPdfTopButtons(); });
+})();
+</script>
+<!-- END: Minimal iPad NEXT/PREV/CLOSE fix (non-invasive) -->
+
 </body>
 
 </html>
