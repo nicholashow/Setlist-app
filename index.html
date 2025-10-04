@@ -1559,6 +1559,37 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 }
 
 
+
+/* === Precise centering updates === */
+#setlist-details-content input,
+#setlist-details-content select {
+  height: 36px;                /* uniform control height */
+  line-height: 36px;           /* vertical centering for text & placeholders */
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+
+#date-placeholder {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff !important;
+  /* left/top set dynamically to the INPUT center */
+}
+
+#-webkit-date-text { color: #ffffff; } /* noop fallback */
+.dark #setlist-venue::placeholder { color: #ffffff !important; }
+# setlist-venue::placeholder { color: #ffffff !important; } /* ensure white in light mode too */
+
+#setlist-sort-filter-dropdown {
+  text-align: center;
+  text-align-last: center;
+  color: #ffffff !important;
+}
+
 </style>
 </head>
 
@@ -4082,6 +4113,63 @@ function destroyPdfOverlay() {
     setTimeout(updateDatePlaceholder, 0);
   });
   $(function(){ updateDatePlaceholder(); });
+})();
+</script>
+
+
+<script>
+(function(){
+  function positionDatePlaceholder(){
+    var cont = document.getElementById('setlist-date-container');
+    var input = document.getElementById('setlist-date');
+    var ph = document.getElementById('date-placeholder');
+    if (!cont || !input || !ph) return;
+    var r = input.getBoundingClientRect();
+    var c = cont.getBoundingClientRect();
+    // Compute center of INPUT relative to container
+    var cx = (r.left - c.left) + (r.width / 2);
+    var cy = (r.top - c.top) + (r.height / 2);
+    ph.style.left = cx + 'px';
+    ph.style.top  = cy + 'px';
+    ph.style.transform = 'translate(-50%, -50%)';
+    // Match width to input so long strings stay centered visually
+    ph.style.width = r.width + 'px';
+    ph.style.textAlign = 'center';
+  }
+
+  function toggleDatePlaceholder(){
+    var input = document.getElementById('setlist-date');
+    var ph = document.getElementById('date-placeholder');
+    if (!input || !ph) return;
+    ph.style.display = input.value ? 'none' : 'block';
+  }
+
+  function syncAll(){
+    toggleDatePlaceholder();
+    positionDatePlaceholder();
+  }
+
+  // Reposition on resize, orientation change, open/close of details
+  window.addEventListener('resize', positionDatePlaceholder);
+  window.addEventListener('orientationchange', positionDatePlaceholder);
+  document.addEventListener('click', function(e){
+    if (e.target && (e.target.id === 'setlist-details-toggle' || e.target.closest && e.target.closest('#setlist-details-toggle'))) {
+      setTimeout(syncAll, 0);
+    }
+  }, true);
+  document.addEventListener('input', function(e){
+    if (e.target && e.target.id === 'setlist-date') toggleDatePlaceholder();
+  });
+  document.addEventListener('change', function(e){
+    if (e.target && e.target.id === 'setlist-date') toggleDatePlaceholder();
+  });
+
+  // Initial
+  document.addEventListener('DOMContentLoaded', function(){
+    syncAll();
+    // Also run once more after layout settles
+    setTimeout(syncAll, 0);
+  });
 })();
 </script>
 
