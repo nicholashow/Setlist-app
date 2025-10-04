@@ -1660,6 +1660,21 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
   padding-bottom: 0;
 }
 
+
+/* Lock text-size-adjust to avoid iOS auto-scaling differences */
+html, body, #setlist-details-content {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Force the same font-family across the three controls */
+#setlist-details-content input,
+#setlist-details-content select,
+#date-placeholder,
+#order-overlay {
+  font-family: inherit;
+}
+
 </style>
 </head>
 
@@ -4320,6 +4335,71 @@ function destroyPdfOverlay() {
     // Run after layout
     setTimeout(syncAll, 0);
   });
+})();
+</script>
+
+
+<script>
+(function(){
+  // Make overlay typography exactly match the Venue input's computed styles.
+  function syncTypography(){
+    var venue = document.getElementById('setlist-venue');
+    var datePh = document.getElementById('date-placeholder');
+    var orderOv = document.getElementById('order-overlay');
+    var dateIn = document.getElementById('setlist-date');
+    var sel = document.getElementById('setlist-sort-filter-dropdown');
+    if (!venue) return;
+
+    try{
+      var cs = window.getComputedStyle(venue);
+      var props = ['font-size','font-weight','font-family','letter-spacing','line-height'];
+      [datePh, orderOv].forEach(function(el){
+        if (!el) return;
+        props.forEach(function(p){ el.style[p] = cs.getPropertyValue(p) || ''; });
+        // Normalize line-height to the control height if Safari returns "normal"
+        var h = parseFloat(getComputedStyle(venue).height)||40;
+        el.style.lineHeight = (isNaN(h) ? '40px' : (h+'px'));
+      });
+      // Ensure the select control uses the same font-size as venue input to avoid visual mismatch under the overlay
+      if (sel) {
+        sel.style.fontSize = cs.getPropertyValue('font-size') || '16px';
+        sel.style.fontWeight = cs.getPropertyValue('font-weight') || '600';
+        sel.style.fontFamily = cs.getPropertyValue('font-family') || 'inherit';
+        sel.style.letterSpacing = cs.getPropertyValue('letter-spacing') || '0';
+        sel.style.lineHeight = cs.getPropertyValue('line-height') || (parseFloat(getComputedStyle(venue).height)||40)+'px';
+      }
+      if (dateIn) {
+        dateIn.style.fontSize = cs.getPropertyValue('font-size') || '16px';
+        dateIn.style.fontWeight = cs.getPropertyValue('font-weight') || '600';
+        dateIn.style.fontFamily = cs.getPropertyValue('font-family') || 'inherit';
+        dateIn.style.letterSpacing = cs.getPropertyValue('letter-spacing') || '0';
+        dateIn.style.lineHeight = cs.getPropertyValue('line-height') || (parseFloat(getComputedStyle(venue).height)||40)+'px';
+      }
+    }catch(e){}
+  }
+
+  function resyncAll(){
+    if (typeof centerDatePlaceholder === 'function') centerDatePlaceholder();
+    if (typeof ensureOrderOverlay === 'function') ensureOrderOverlay();
+    syncTypography();
+  }
+
+  window.addEventListener('resize', resyncAll);
+  window.addEventListener('orientationchange', resyncAll);
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(resyncAll, 0); });
+  document.addEventListener('change', function(e){
+    if (e.target && (e.target.id === 'setlist-sort-filter-dropdown' || e.target.id === 'setlist-date')){
+      setTimeout(resyncAll, 0);
+    }
+  });
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    if (!t) return;
+    var toggle = document.getElementById('setlist-details-toggle');
+    if (t === toggle || (t.closest && toggle && t.closest('#setlist-details-toggle'))) {
+      setTimeout(resyncAll, 0);
+    }
+  }, true);
 })();
 </script>
 
