@@ -2413,8 +2413,8 @@ function destroyPdfOverlay() {
     } catch(e){ console.warn('Forward click failed for', id, e); }
   }
 
-  prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true);
-  nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true);
+  prevB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('prev-doc'); });
+  nextB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('next-doc'); });
   closeB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('close-doc'); });
 
   function showBar(){
@@ -2527,8 +2527,8 @@ function destroyPdfOverlay() {
     if (isDisabledFn && isDisabledFn()) return;
     forwardClick(id);
   }
-  prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true); });
-  nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true); });
+  prevB.addEventListener('click', function(e){ guard(e, 'prev-doc', function(){ return prevB.classList.contains('disabled'); }); });
+  nextB.addEventListener('click', function(e){ guard(e, 'next-doc', function(){ return nextB.classList.contains('disabled'); }); });
   closeB.addEventListener('click', function(e){ guard(e, 'close-doc', null); });
 
   // Reveal on top tap
@@ -2655,8 +2655,16 @@ function destroyPdfOverlay() {
   }
 
   // Clicks (guard against disabled)
-  prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true);
-  nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true);
+  prevB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (prevB.classList.contains('disabled')) return;
+    forward('prev-doc', ['goPrev','prevSong','previousSong']);
+  });
+  nextB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (nextB.classList.contains('disabled')) return;
+    forward('next-doc', ['goNext','nextSong']);
+  });
   closeB.addEventListener('click', function(e){
     e.stopPropagation();
     forward('close-doc', ['closeDocViewer','hideOverlay','closeViewer']);
@@ -2781,8 +2789,16 @@ function destroyPdfOverlay() {
   }
 
   // Button clicks with guards
-  prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true);
-  nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true);
+  prevB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (prevB.classList.contains('disabled')) return;
+    forward('prev-doc', ['goPrev','prevSong','previousSong'], false);
+  });
+  nextB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (nextB.classList.contains('disabled')) return;
+    forward('next-doc', ['goNext','nextSong'], false);
+  });
   closeB.addEventListener('click', function(e){
     e.stopPropagation();
     // Close should always work: forward + explicit teardown
@@ -2969,8 +2985,16 @@ function destroyPdfOverlay() {
     if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
   }
 
-  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true);
-  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true);
+  prevB && prevB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (prevB.classList.contains('disabled')) return;
+    callPrev();
+  });
+  nextB && nextB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (nextB.classList.contains('disabled')) return;
+    callNext();
+  });
   closeB && closeB.addEventListener('click', function(e){
     e.stopPropagation();
     callClose();
@@ -3167,8 +3191,8 @@ function destroyPdfOverlay() {
     return ok;
   }
 
-  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true);
-  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true);
+  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); callPrev(); });
+  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); callNext(); });
   closeB && closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
 })();
 </script>
@@ -3283,8 +3307,8 @@ function destroyPdfOverlay() {
     return ok;
   }
 
-  prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true);
-  nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true);
+  prevB.addEventListener('click', function(e){ e.stopPropagation(); if (!prevB.classList.contains('disabled')) callPrev(); });
+  nextB.addEventListener('click', function(e){ e.stopPropagation(); if (!nextB.classList.contains('disabled')) callNext(); });
   closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
 
   function onTopTap(){ if (atTop()) showBar(); }
@@ -3518,8 +3542,8 @@ function destroyPdfOverlay() {
     return ok;
   }
 
-  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true);
-  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true);
+  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); if (!prevB.classList.contains('disabled')) callPrev(); });
+  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); if (!nextB.classList.contains('disabled')) callNext(); });
   closeB && closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
 
   function onTopTap(){ if (atTop()) showBar(); }
@@ -3884,6 +3908,107 @@ function destroyPdfOverlay() {
   }
 })();
 </script>
+
+
+<!-- BEGIN: Minimal NEXT/PREV wiring + visual state sync (no other changes) -->
+<script>
+(function(){
+  if (window.__pdfTopbarFixApplied) return;
+  window.__pdfTopbarFixApplied = true;
+
+  function $id(id){ return document.getElementById(id); }
+  function getState(){
+    var list = Array.isArray(window.currentViewerList) ? window.currentViewerList : null;
+    var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
+    return {
+      hasList: !!list,
+      i: i,
+      len: list ? list.length : 0,
+      canPrev: !!(list && i > 0),
+      canNext: !!(list && i >= 0 && i < list.length - 1),
+      list: list
+    };
+  }
+
+  // Only toggle the "disabled" class and aria attribute — nothing else visual
+  function syncVisual(){
+    var prevB = $id('pdf-prev');
+    var nextB = $id('pdf-next');
+    if (!prevB && !nextB) return;
+    var st = getState();
+    if (prevB){
+      prevB.classList.toggle('disabled', !st.canPrev);
+      prevB.setAttribute('aria-disabled', (!st.canPrev).toString());
+    }
+    if (nextB){
+      nextB.classList.toggle('disabled', !st.canNext);
+      nextB.setAttribute('aria-disabled', (!st.canNext).toString());
+    }
+  }
+
+  // Forward taps to the existing working handlers, without relying on disabled gates
+  function wireForwarders(){
+    var prevB = $id('pdf-prev');
+    var nextB = $id('pdf-next');
+    if (prevB && !prevB.__wired){
+      prevB.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation && e.stopImmediatePropagation();
+        var base = $id('prev-doc');
+        if (base) base.click();
+        else if (typeof window.callPrev === 'function') window.callPrev();
+        else {
+          var st = getState();
+          if (st.canPrev && typeof window.openSongInContext === 'function'){
+            window.openSongInContext(st.list[st.i - 1].id, window.currentViewerContext, st.i - 1, 'prev');
+          }
+        }
+        setTimeout(syncVisual, 0);
+      }, true);
+      prevB.__wired = true;
+    }
+    if (nextB && !nextB.__wired){
+      nextB.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation && e.stopImmediatePropagation();
+        var base = $id('next-doc');
+        if (base) base.click();
+        else if (typeof window.callNext === 'function') window.callNext();
+        else {
+          var st = getState();
+          if (st.canNext && typeof window.openSongInContext === 'function'){
+            window.openSongInContext(st.list[st.i + 1].id, window.currentViewerContext, st.i + 1, 'next');
+          }
+        }
+        setTimeout(syncVisual, 0);
+      }, true);
+      nextB.__wired = true;
+    }
+  }
+
+  // Ensure we recompute buttons after any file open
+  (function patchOpen(){
+    if (window.__openPatched || typeof window.openSongInContext !== 'function') return;
+    var orig = window.openSongInContext;
+    window.openSongInContext = function(){
+      var r = orig.apply(this, arguments);
+      try { wireForwarders(); syncVisual(); } catch(_) {}
+      return r;
+    };
+    window.__openPatched = true;
+  })();
+
+  // Re-bind and re-sync whenever the overlay or its topbar appears
+  var mo = new MutationObserver(function(){
+    wireForwarders(); syncVisual();
+  });
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  mo.observe(document.body, { childList: true, subtree: true });
+
+  // Initial pass
+  wireForwarders();
+  syncVisual();
+})();
+</script>
+<!-- END: Minimal NEXT/PREV wiring + visual state sync -->
 
 </body>
 
