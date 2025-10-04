@@ -3910,48 +3910,66 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- BEGIN: Surgical NEXT/PREV transplant (from working older app) -->
+<!-- BEGIN: Minimal fix for NEXT/PREV on the overlay (no other changes) -->
 <script>
 (function(){
-  if (window.__nextPrevTransplant) return;
-  window.__nextPrevTransplant = true;
+  if (window.__patchedOverlayNav) return;
+  window.__patchedOverlayNav = true;
 
-  function bindNav(){
-    if (typeof window.jQuery !== 'function') return; // this transplant assumes jQuery exists like the rest of the app
-    var $ = window.jQuery;
-
-    try { $('#next-doc').off('click'); } catch(e){}
-    try { $('#prev-doc').off('click'); } catch(e){}
-
-    $('#next-doc').on('click', function(){
-      var $btn = $(this);
-      var list = Array.isArray(window.currentViewerList) ? window.currentViewerList : null;
-      var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
-      if ($btn.is(':disabled') || !list || i < 0 || i >= list.length - 1) return;
-      if (typeof window.openSongInContext === 'function') {
-        window.openSongInContext(list[i + 1].id, window.currentViewerContext, i + 1, 'next');
-      }
-    });
-
-    $('#prev-doc').on('click', function(){
-      var $btn = $(this);
-      var list = Array.isArray(window.currentViewerList) ? window.currentViewerList : null;
-      var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
-      if ($btn.is(':disabled') || !list || i <= 0) return;
-      if (typeof window.openSongInContext === 'function') {
-        window.openSongInContext(list[i - 1].id, window.currentViewerContext, i - 1, 'prev');
-      }
-    });
+  function doNext(){
+    // Prefer underlying working handler if present
+    var nextBase = document.getElementById('next-doc');
+    if (nextBase) { nextBase.click(); return; }
+    if (typeof window.callNext === 'function') { window.callNext(); return; }
+    // fallback using in-memory list/index if available
+    var list = Array.isArray(window.currentViewerList) ? window.currentViewerList : null;
+    var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
+    if (list && i >= 0 && i < list.length - 1 && typeof window.openSongInContext === 'function') {
+      window.openSongInContext(list[i+1].id, window.currentViewerContext, i+1, 'next');
+    }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindNav);
+  function doPrev(){
+    var prevBase = document.getElementById('prev-doc');
+    if (prevBase) { prevBase.click(); return; }
+    if (typeof window.callPrev === 'function') { window.callPrev(); return; }
+    var list = Array.isArray(window.currentViewerList) ? window.currentViewerList : null;
+    var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
+    if (list && i > 0 && typeof window.openSongInContext === 'function') {
+      window.openSongInContext(list[i-1].id, window.currentViewerContext, i-1, 'prev');
+    }
+  }
+
+  function wire(){
+    var prevB = document.getElementById('pdf-prev');
+    var nextB = document.getElementById('pdf-next');
+    if (prevB && !prevB.__navWired){
+      prevB.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation && e.stopImmediatePropagation();
+        doPrev();
+      }, true);
+      prevB.__navWired = true;
+    }
+    if (nextB && !nextB.__navWired){
+      nextB.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation && e.stopImmediatePropagation();
+        doNext();
+      }, true);
+      nextB.__navWired = true;
+    }
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', wire);
   } else {
-    bindNav();
+    wire();
   }
+
+  // If your app re-renders the overlay, try re-wiring again
+  document.addEventListener('rebuild-pdf-overlay', wire);
 })();
 </script>
-<!-- END: Surgical NEXT/PREV transplant -->
+<!-- END: Minimal fix for NEXT/PREV on the overlay (no other changes) -->
 
 </body>
 
