@@ -4004,5 +4004,65 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<script>
+// === Enhance Setlist items: drag to sidebar (Genres/Favorites/Setlists) with name-only helper when leaving the item box ===
+(function(){
+  function makeSetlistItemsExternallyDraggable(){
+    var $lis = $('#setlist-list .draggable');
+    if (!$lis.length) return;
+    $lis.each(function(){
+      var $li = $(this);
+      if ($li.data('externalDragReady')) return;
+      $li.data('externalDragReady', true);
+      // Augment existing draggable with a custom helper that shows name-only
+      try {
+        $li.draggable('option', 'helper', function(){
+          // When dragging out, show a compact label like homepage drag
+          var name = $li.find('.song-name, [data-song-name], .truncate').first().text().trim() || $li.text().trim();
+          var $h = $('<div class="drag-helper-name-only px-3 py-2 rounded shadow-md bg-white dark:bg-gray-800 border font-semibold"></div>').text(name);
+          return $h;
+        });
+        $li.draggable('option', 'appendTo', 'body');
+        $li.draggable('option', 'revert', 'invalid');
+        $li.draggable('option', 'zIndex', 9999);
+        // Ensure sortable still works inside setlist-list
+        $li.draggable('option', 'start', function(e, ui){
+          // Add a class so CSS can minimize the original during drag if needed
+          $li.addClass('external-dragging');
+        });
+        $li.draggable('option', 'stop', function(e, ui){
+          $li.removeClass('external-dragging');
+        });
+      } catch(e){
+        // If draggable isn't initialized yet, initialize with shared options
+        $li.draggable({
+          appendTo: 'body',
+          revert: 'invalid',
+          zIndex: 9999,
+          helper: function(){
+            var name = $li.find('.song-name, [data-song-name], .truncate').first().text().trim() || $li.text().trim();
+            var $h = $('<div class="drag-helper-name-only px-3 py-2 rounded shadow-md bg-white dark:bg-gray-800 border font-semibold"></div>').text(name);
+            return $h;
+          }
+        });
+      }
+    });
+  }
+
+  // Re-apply after setlist renders
+  $(function(){
+    makeSetlistItemsExternallyDraggable();
+    $(document).on('app:renderSetlist app:navigate', function(){ makeSetlistItemsExternallyDraggable(); });
+    // Also hook into DOM changes under #setlist-list
+    var el = document.getElementById('setlist-list');
+    if (el && window.MutationObserver) {
+      var obs = new MutationObserver(function(){ makeSetlistItemsExternallyDraggable(); });
+      obs.observe(el, {childList:true, subtree:true});
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
