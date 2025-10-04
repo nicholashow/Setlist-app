@@ -3960,6 +3960,103 @@ function destroyPdfOverlay() {
 </script>
 <!-- END: Minimal iPad NEXT/PREV/CLOSE fix (non-invasive) -->
 
+
+<!-- BEGIN: Robust iPad overlay NEXT/PREV fix (state from viewer index) -->
+<script>
+(function(){
+  if (window.__pdfNavRobustPatch) return;
+  window.__pdfNavRobustPatch = true;
+
+  function $(id){ return document.getElementById(id); }
+
+  function computeOverlayNavState(){
+    try {
+      var prevB = $('pdf-btn-prev');
+      var nextB = $('pdf-btn-next');
+      if (!prevB || !nextB) return;
+
+      var list = Array.isArray(window.currentViewerList) ? window.currentViewerList : null;
+      var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
+      var len = list ? list.length : 0;
+
+      var prevDisabled = !list || i <= 0;
+      var nextDisabled = !list || i >= len - 1;
+
+      prevB.classList.toggle('disabled', prevDisabled);
+      nextB.classList.toggle('disabled', nextDisabled);
+      prevB.tabIndex = prevDisabled ? -1 : 0;
+      nextB.tabIndex = nextDisabled ? -1 : 0;
+    } catch(e){ /* noop */ }
+  }
+
+  function bindOverlayButtons(){
+    var prevB = $('pdf-btn-prev');
+    var nextB = $('pdf-btn-next');
+    var closeB= $('pdf-btn-close');
+    if (!prevB || !nextB || prevB.__robustBound) return;
+
+    var wrap = function(handler){
+      return function(ev){
+        try {
+          ev.preventDefault();
+          ev.stopPropagation();
+          ev.stopImmediatePropagation && ev.stopImmediatePropagation();
+        } catch(e){}
+        try { handler(); } catch(e){}
+        // Recompute after action (in case overlay stays open)
+        setTimeout(computeOverlayNavState, 0);
+      };
+    };
+
+    // Direct, context-aware nav (no forwarding to hidden buttons)
+    if (typeof window.callPrev === 'function') prevB.addEventListener('click', wrap(function(){ if (!prevB.classList.contains('disabled')) window.callPrev(); }), true);
+    if (typeof window.callNext === 'function') nextB.addEventListener('click', wrap(function(){ if (!nextB.classList.contains('disabled')) window.callNext(); }), true);
+    if (typeof window.callClose === 'function' && closeB) closeB.addEventListener('click', wrap(function(){ window.callClose(); }), true);
+
+    prevB.__robustBound = true;
+    nextB.__robustBound = true;
+    if (closeB) closeB.__robustBound = true;
+
+    computeOverlayNavState();
+  }
+
+  // Patch openSongInContext to recompute when a new song opens
+  (function patchOpenSongInContext(){
+    if (typeof window.openSongInContext !== 'function' || window.__openSongInContextPatched) return;
+    var _orig = window.openSongInContext;
+    window.openSongInContext = function(){
+      var res = _orig.apply(this, arguments);
+      try { computeOverlayNavState(); } catch(e){}
+      return res;
+    };
+    window.__openSongInContextPatched = true;
+  })();
+
+  // Observe overlay activation and DOM changes to (re)bind and recompute
+  var mo = new MutationObserver(function(){
+    if (document.documentElement.classList.contains('pdf-overlay-active')) {
+      bindOverlayButtons();
+      computeOverlayNavState();
+    }
+  });
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+  // In case buttons are injected later inside the overlay
+  var overlay = document.getElementById('pdf-overlay') || document.body;
+  var mo2 = new MutationObserver(function(){ bindOverlayButtons(); computeOverlayNavState(); });
+  mo2.observe(overlay, { childList: true, subtree: true });
+
+  if (document.documentElement.classList.contains('pdf-overlay-active')) {
+    bindOverlayButtons();
+    computeOverlayNavState();
+  } else {
+    // Still ensure bindings in case overlay shows immediately after this executes
+    setTimeout(function(){ bindOverlayButtons(); computeOverlayNavState(); }, 0);
+  }
+})();
+</script>
+<!-- END: Robust iPad overlay NEXT/PREV fix (state from viewer index) -->
+
 </body>
 
 </html>
