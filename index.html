@@ -2,6 +2,15 @@
 <html lang="en" class="dark">
 
 <head>
+    <script data-ios-detect-early>
+    (function(){
+      try{
+        var isiOS = /AppleWebKit/.test(navigator.userAgent||'') && (navigator.maxTouchPoints||0) > 1;
+        if (isiOS) document.documentElement.classList.add('ios');
+      }catch(e){}
+    })();
+    </script>
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>Setlist Manager - Enhanced</title>
@@ -33,7 +42,7 @@
             let dragTimer = null;
             let startX = 0, startY = 0;
             const THRESHOLD = 8; // px
-            const HOLD_MS = 1000;
+            const HOLD_MS = 1100;
             function getPoint(e){
                 if (e.touches && e.touches.length) return {x: e.touches[0].clientX, y: e.touches[0].clientY};
                 if (e.changedTouches && e.changedTouches.length) return {x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY};
@@ -1278,19 +1287,217 @@
   .song-name.renaming .edit-input { background: #111827; color: #e5e7eb; border-color: #2563eb; }
 }
 
-/* magic-square-edit */
+/* magic-square exact-fit */
 .song-name.renaming .edit-magic-square {
-  background: #ffffff;
-  color: #2563eb;
-  border: 2px solid #2563eb;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  background: #ffffff !important;
+  color: #2563eb !important;
+  border: 2px solid #2563eb !important;
 }
-@media (prefers-color-scheme: dark) {
-  .song-name.renaming .edit-magic-square {
-    background: #0b1220; /* near-dark but still "white-like" readability in dark */
-    color: #60a5fa;      /* lighter blue text on dark */
-    border-color: #3b82f6;
-  }
+
+/* magic-square contenteditable */
+.song-name.renaming .edit-magic-square {
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  background: #ffffff !important;
+  color: #2563eb !important;
+  border: 2px solid #2563eb !important;
+  outline: none !important;
 }
+/* Keep siblings from shifting during edit */
+.song-name.renaming { position: relative; }
+
+        /* === iPad multipage viewer (Option B) === */
+        html.doc-viewer-active, body.doc-viewer-active {
+            position: static !important;
+            overflow: auto !important;
+            height: 100% !important;
+        }
+        /* Make the document wrapper the scroller while viewer is open */
+        .doc-viewer-active #doc-iframe-wrapper {
+            overflow: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+        /* Remove transforms/perspective in viewer ancestry on iOS (prevents single-page snapshot) */
+        html.ios.doc-viewer-active #doc-view,
+        html.ios.doc-viewer-active #doc-iframe-wrapper,
+        html.ios.doc-viewer-active .doc-iframe-container,
+        html.ios.doc-viewer-active .incoming-next,
+        html.ios.doc-viewer-active .incoming-prev,
+        html.ios.doc-viewer-active .turning-next,
+        html.ios.doc-viewer-active .turning-prev {
+            transform: none !important;
+            perspective: none !important;
+            backface-visibility: visible !important;
+            will-change: auto !important;
+            filter: none !important;
+        }
+        /* PDF.js container styles */
+        .pdfjs-container { position:absolute; inset:0; overflow:auto; -webkit-overflow-scrolling:touch; padding: 8px; }
+        .pdfjs-page { margin: 0 auto 10px auto; }
+        .pdfjs-page canvas { display:block; width:100% !important; height:auto !important; background:#fff; border-radius:6px; }
+
+
+        /* === Top-level PDF overlay (outside all transforms) === */
+        #pdf-overlay {
+          position: fixed; inset: 0; z-index: 999999;
+          background: #000;
+          display: none;
+        }
+        html.pdf-overlay-active, body.pdf-overlay-active {
+          position: static !important;
+          overflow: auto !important;
+          height: 100% !important;
+        }
+        html.ios #pdf-overlay, html.ios #pdf-overlay * {
+          transform: none !important;
+          perspective: none !important;
+          backface-visibility: visible !important;
+          will-change: auto !important;
+          filter: none !important;
+        }
+        #pdf-overlay .pdfjs-scroll {
+          position: absolute; inset: 0;
+          overflow: auto; -webkit-overflow-scrolling: touch;
+          padding: 12px 12px 72px;
+        }
+        #pdf-overlay .pdfjs-page { margin: 0 auto 12px; }
+        #pdf-overlay .pdfjs-page canvas {
+          display: block; width: 100% !important; height: auto !important;
+          background: #fff; border-radius: 6px;
+        }
+
+
+/* === Overlay-integrated original nav (non-intrusive) === */
+html.pdf-overlay-active #doc-view { display: block !important; } /* unhide the section so nav exists */
+html.pdf-overlay-active #doc-iframe-wrapper { display: none !important; } /* keep old wrapper hidden to avoid any layout/scroll changes */
+html.pdf-overlay-active #doc-nav-buttons {
+  position: fixed !important;
+  top: 0; left: 0; right: 0;
+  z-index: 1000001 !important; /* above #pdf-overlay (999999) */
+  pointer-events: auto;
+}
+/* Do not modify overlay scroll area at all */
+
+
+/* === Ensure original nav is above overlay and not trapped in a transform context === */
+html.pdf-overlay-active #doc-view { display: block !important; transform: none !important; }
+html.pdf-overlay-active #doc-view * { transform: none !important; }
+html.pdf-overlay-active #doc-nav-buttons {
+  position: fixed !important;
+  top: 0; left: 0; right: 0;
+  z-index: 2147483000 !important; /* way above any overlay */
+  pointer-events: auto !important;
+}
+/* Make sure overlay stays below */
+#pdf-overlay { z-index: 2147482000 !important; }
+
+
+/* === PDF Top Buttons Overlay (non-intrusive) === */
+#pdf-btn-hit {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 56px;
+  z-index: 2147483600;
+  background: transparent;
+  pointer-events: auto;
+}
+#pdf-btn-bar {
+  position: fixed;
+  top: 6px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483601;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+#pdf-btn-bar.visible { opacity: 1; }
+#pdf-btn-bar .btn {
+  pointer-events: auto;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,.35);
+  user-select: none;
+}
+#pdf-btn-prev, #pdf-btn-next { background: #2563eb; color: #fff; }
+#pdf-btn-close { background: #ef4444; color: #fff; }
+html:not(.pdf-overlay-active) #pdf-btn-hit,
+html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
+
+
+/* === Ensure single button set & disabled visuals === */
+html.pdf-overlay-active #doc-nav-buttons { display: none !important; } /* avoid double bars */
+#pdf-btn-bar .btn.disabled {
+  opacity: 0.45;
+  filter: grayscale(40%);
+  cursor: default;
+  box-shadow: none;
+}
+
+
+/* === Overlay PDF Button Bar (top-center, non-intrusive) === */
+#pdf-btn-hit {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 72px;                 /* slightly taller tap zone for reliability */
+  z-index: 2147483600;
+  background: transparent;
+  pointer-events: auto;
+}
+#pdf-btn-bar {
+  position: fixed;
+  top: 18px;                    /* moved down a bit as requested */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483601;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;         /* container doesn't block scroll */
+  opacity: 0;
+  transition: opacity .20s ease;
+}
+#pdf-btn-bar.visible { opacity: 1; }
+#pdf-btn-bar .btn {
+  pointer-events: auto;
+  padding: 9px 18px;
+  border-radius: 12px;
+  font-weight: 800;
+  border: none;
+  letter-spacing: .3px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.35);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#pdf-btn-prev, #pdf-btn-next { background: #2563eb; color: #fff; }
+#pdf-btn-close { background: #ef4444; color: #fff; }
+
+/* Disabled look for grey state */
+#pdf-btn-bar .btn.disabled {
+  background: #9ca3af !important; /* grey */
+  color: #fff !important;
+  opacity: 1;
+  filter: none;
+  cursor: default;
+  box-shadow: none;
+}
+
+/* Show only when overlay is active */
+html:not(.pdf-overlay-active) #pdf-btn-hit,
+html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
+
+/* Hide the original bar while overlay is active so there is only one set */
+html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
+
+
 </style>
 </head>
 
@@ -1727,7 +1934,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#setlist-sort-filter-dropdown').on('change',renderSetlist);
             $(document).on('click',function(e){if(!$(e.target).closest('#genre-filter-container').length)$('#genre-filter-dropdown').addClass('hidden');if(!$(e.target).closest('.relative').has('#share-setlist-btn').length)$('#share-options').addClass('hidden')});
             $('#reset-plays').click(()=>{if(confirm('Reset all plays?')){playCounts={};masterSongs.forEach(s=>s.lastPlayed=null);renderPlays();updateTopLeast();save()}});
-            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
+            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
@@ -1775,14 +1982,34 @@ const s=$('.left-col');s.toggleClass('collapsed');
             currentViewerIndex = (index === -1) ? currentViewerList.findIndex(s => s.id === songId) : index;
             if (context === 'setlist') { viewedSongsInSetlist.add(songId); $(`#setlist-list li[id="${songId}"] .index-number`).addClass('viewed-index'); }
             const url = getFileURL(song); if (!url) { alert('File not available for this song.'); return; }
-            const $wrapper = $('#doc-iframe-wrapper');
+            
+        (function(){
+            const scroller = showPdfOverlay();
+            (async () => {
+                try {
+                    await renderPDFInto(scroller, url);
+                    if (window.showNavButtons) window.showNavButtons();
+                } catch (e) {
+                    console.error('PDF render failed, opening natively', e);
+                    destroyPdfOverlay();
+                    try { window.open(url, '_blank'); } catch(_) {}
+                }
+            })();
+        })();
+        const $wrapper = $('#doc-iframe-wrapper');
             const $oldContainer = $wrapper.find('.current');
             const $newContainer = $(`<div class="doc-iframe-container"><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
             if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20); } 
             else if (direction === 'prev') { $newContainer.addClass('prev'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-prev').removeClass('current'); $newContainer.addClass('current incoming-prev').removeClass('prev'); }, 20); } 
             else { $newContainer.addClass('current'); $wrapper.html($newContainer); }
             setTimeout(() => $oldContainer.remove(), 800);
-            if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
+            
+            // Start PDF.js rendering (all platforms)
+            (function(){
+                const pdfContainer = $newContainer.find('.pdfjs-container')[0];
+                if (pdfContainer) { renderPDFWithPDFJS(url, pdfContainer); }
+            })();
+if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
             $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
             $('#next-doc').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
         }
@@ -1801,7 +2028,14 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#prev-doc').on('click', function() { if (!$(this).is(':disabled') && currentViewerIndex > 0) { openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1, 'prev'); }});
             startInactivityTimer();
         }
-        function resetScrollHandlers() { $('#doc-view, #next-doc, #prev-doc').off('mousemove touchstart touchend click'); clearTimeout(inactivityTimer); }
+        function resetScrollHandlers() { $('#doc-view, #next-doc, #prev-doc').off('mousemove touchstart touchend click'); clearTimeout(inactivityTimer); 
+    try{
+      if (window.__docTapCapture) {
+        document.removeEventListener('touchstart', window.__docTapCapture, {capture:true});
+        document.removeEventListener('pointerdown', window.__docTapCapture, {capture:true});
+      }
+    }catch(e){}
+}
         function showNavButtons() { $('#doc-nav-buttons').removeClass('hidden'); startInactivityTimer(); }
         function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000); }
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
@@ -1917,7 +2151,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
 (function(){
     let holdTimer = null;
     let startX = 0, startY = 0;
-    const HOLD_MS = 1000;
+    const HOLD_MS = 1100;
     const THRESHOLD = 8;
 
     function getPoint(e){
@@ -1986,6 +2220,2074 @@ const s=$('.left-col');s.toggleClass('collapsed');
 })();
 
 </script>
+
+
+<script>
+function loadPDFJSLib() {
+  return new Promise((resolve, reject) => {
+    if (window.pdfjsLib) { resolve(window.pdfjsLib); return; }
+    const s = document.createElement('script');
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    s.onload = () => {
+      try {
+        if (window['pdfjsLib']) {
+          window['pdfjsLib'].GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+          resolve(window['pdfjsLib']);
+        } else reject(new Error('pdfjsLib not found'));
+      } catch(e){ reject(e); }
+    };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+async function renderPDFWithPDFJS(url, containerEl) {
+  try {
+    // Blob fetch to bypass CORS; fallback to direct URL
+    let dataURL = url, revoke = null;
+    try {
+      const resp = await fetch(url, { credentials: 'include' });
+      if (resp.ok) {
+        const blob = await resp.blob();
+        dataURL = URL.createObjectURL(blob);
+        revoke = dataURL;
+      }
+    } catch(_e){}
+    const pdfjsLib = await loadPDFJSLib();
+    const pdf = await pdfjsLib.getDocument(dataURL).promise;
+    containerEl.innerHTML = '';
+    const dpr = window.devicePixelRatio || 1;
+    for (let p=1; p<=pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const base = page.getViewport({ scale: 1 });
+      const fitWidth = containerEl.clientWidth || base.width;
+      let scale = fitWidth / base.width;
+      scale = Math.max(0.8, Math.min(2.0, scale));
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d', { alpha:false });
+      canvas.width = Math.floor(viewport.width * dpr);
+      canvas.height = Math.floor(viewport.height * dpr);
+      canvas.style.width = viewport.width + 'px';
+      canvas.style.height = viewport.height + 'px';
+      const holder = document.createElement('div');
+      holder.className = 'pdfjs-page';
+      holder.appendChild(canvas);
+      containerEl.appendChild(holder);
+      const renderContext = { canvasContext: ctx, viewport, transform: [dpr,0,0,dpr,0,0] };
+      await page.render(renderContext).promise;
+    }
+    if (revoke) setTimeout(() => URL.revokeObjectURL(revoke), 30000);
+    // Tap/pointerdown should reveal nav buttons
+    const showBar = () => { try { if (window.showNavButtons) window.showNavButtons(); } catch(e){} };
+    containerEl.addEventListener('touchstart', showBar, {passive:true});
+    containerEl.addEventListener('pointerdown', showBar, {passive:true});
+  } catch (err) {
+    console.error('PDF.js render error:', err);
+    try { window.open(url, '_blank'); } catch(e){}
+  }
+}
+</script>
+
+<script>
+(function(){
+  window.__docTapListenerInstalled = true;
+  function cap(ev){
+    try{
+      var dv = document.getElementById('doc-view');
+      if (!dv || dv.classList.contains('hidden')) return;
+      if (dv.contains(ev.target) && window.showNavButtons) window.showNavButtons();
+    }catch(e){}
+  }
+  window.__docTapCapture = cap;
+  document.addEventListener('touchstart', cap, {passive:true, capture:true});
+  document.addEventListener('pointerdown', cap, {passive:true, capture:true});
+})();
+</script>
+
+<script>
+function loadPDFJSLib() {
+  return new Promise((resolve, reject) => {
+    if (window.pdfjsLib) return resolve(window.pdfjsLib);
+    const s = document.createElement('script');
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    s.onload = () => {
+      try {
+        if (!window.pdfjsLib) return reject(new Error('pdfjsLib missing'));
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        resolve(window.pdfjsLib);
+      } catch(e){ reject(e); }
+    };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+async function renderPDFInto(containerEl, url) {
+  let src = url, revoke = null;
+  try {
+    const r = await fetch(url, { credentials: 'include' });
+    if (r.ok) { const b = await r.blob(); src = URL.createObjectURL(b); revoke = src; }
+  } catch(e) {}
+  const lib = await loadPDFJSLib();
+  const pdf = await lib.getDocument(src).promise;
+  containerEl.innerHTML = '';
+  const dpr = window.devicePixelRatio || 1;
+  for (let i=1; i<=pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const base = page.getViewport({ scale: 1 });
+    const fit = containerEl.clientWidth || base.width;
+    let scale = Math.max(0.8, Math.min(2.0, fit / base.width));
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { alpha:false });
+    canvas.width  = Math.floor(viewport.width  * dpr);
+    canvas.height = Math.floor(viewport.height * dpr);
+    canvas.style.width  = viewport.width  + 'px';
+    canvas.style.height = viewport.height + 'px';
+    const holder = document.createElement('div');
+    holder.className = 'pdfjs-page';
+    holder.appendChild(canvas);
+    containerEl.appendChild(holder);
+    await page.render({ canvasContext: ctx, viewport, transform:[dpr,0,0,dpr,0,0] }).promise;
+  }
+  if (revoke) setTimeout(() => URL.revokeObjectURL(revoke), 30000);
+}
+</script>
+
+<script>
+function ensurePdfOverlay() {
+  let ov = document.getElementById('pdf-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'pdf-overlay';
+    ov.innerHTML = '<div id="pdf-overlay-scroll" class="pdfjs-scroll"></div>';
+    document.body.appendChild(ov);
+  }
+  return ov;
+}
+function showPdfOverlay() {
+  document.documentElement.classList.add('pdf-overlay-active');
+  document.body.classList.add('pdf-overlay-active');
+  const ov = ensurePdfOverlay();
+  ov.style.display = 'block';
+  const scroller = document.getElementById('pdf-overlay-scroll');
+  const showBar = () => { try { if (window.showNavButtons) window.showNavButtons(); } catch(e){} };
+  scroller.addEventListener('touchstart', showBar, {passive:true});
+  scroller.addEventListener('pointerdown', showBar, {passive:true});
+  return scroller;
+}
+function destroyPdfOverlay() {
+  document.documentElement.classList.remove('pdf-overlay-active');
+  document.body.classList.remove('pdf-overlay-active');
+  const ov = document.getElementById('pdf-overlay');
+  if (ov) ov.style.display = 'none';
+  const sc = document.getElementById('pdf-overlay-scroll');
+  if (sc) sc.innerHTML = '';
+}
+</script>
+
+<!-- Non-intrusive PDF top buttons -->
+<div id="pdf-btn-hit"></div>
+<div id="pdf-btn-bar" aria-hidden="true">
+  <button id="pdf-btn-prev" class="btn" type="button">PREVIOUS</button>
+  <button id="pdf-btn-next" class="btn" type="button">NEXT</button>
+  <button id="pdf-btn-close" class="btn" type="button">CLOSE</button>
+</div>
+
+<script>
+(function(){
+  if (window.__pdfBtnsInstalled) return;
+  window.__pdfBtnsInstalled = true;
+
+  var bar   = document.getElementById('pdf-btn-bar');
+  var hit   = document.getElementById('pdf-btn-hit');
+  var prevB = document.getElementById('pdf-btn-prev');
+  var nextB = document.getElementById('pdf-btn-next');
+  var closeB= document.getElementById('pdf-btn-close');
+  var hideTimer = null;
+
+  function forwardClick(id){
+    try {
+      var el = document.getElementById(id);
+      if (el) el.click();
+    } catch(e){ console.warn('Forward click failed for', id, e); }
+  }
+
+  prevB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('prev-doc'); });
+  nextB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('next-doc'); });
+  closeB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('close-doc'); });
+
+  function showBar(){
+    if (!bar) return;
+    bar.classList.add('visible');
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    hideTimer = setTimeout(function(){ bar.classList.remove('visible'); }, 2000);
+  }
+  function hideBarNow(){
+    if (!bar) return;
+    bar.classList.remove('visible');
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  }
+
+  function onTopTap(e){ showBar(); }
+  hit.addEventListener('touchstart', onTopTap, {passive:true});
+  hit.addEventListener('mousedown', onTopTap);
+  hit.addEventListener('pointerdown', onTopTap, {passive:true});
+
+  var lastActive = document.documentElement.classList.contains('pdf-overlay-active');
+  if (lastActive) { setTimeout(showBar, 0); }
+  var mo = new MutationObserver(function(){
+    var active = document.documentElement.classList.contains('pdf-overlay-active');
+    if (active && !lastActive) {
+      setTimeout(showBar, 0);
+    } else if (!active && lastActive) {
+      hideBarNow();
+    }
+    lastActive = active;
+  });
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+  document.addEventListener('touchstart', function(ev){
+    try {
+      var t = ev.touches && ev.touches[0];
+      if (!t) return;
+      if (t.clientY <= 56 && document.documentElement.classList.contains('pdf-overlay-active')) showBar();
+    } catch(e){}
+  }, {passive:true});
+
+})();
+</script>
+
+<script>
+(function(){
+  if (window.__pdfBtnsEnh2) return;
+  window.__pdfBtnsEnh2 = true;
+
+  function $(id){ return document.getElementById(id); }
+  var bar   = $('pdf-btn-bar');
+  var hit   = $('pdf-btn-hit');
+  var prevB = $('pdf-btn-prev');
+  var nextB = $('pdf-btn-next');
+  var closeB= $('pdf-btn-close');
+  var hideTimer = null;
+
+  function forwardClick(id){
+    try {
+      var el = $(id);
+      if (el) el.click();
+    } catch(e){ console.warn('Forward click failed for', id, e); }
+  }
+
+  function isDisabled(el){
+    if (!el) return true;
+    var s = window.getComputedStyle(el);
+    var cls = (el.className||'').toLowerCase();
+    return !!( el.hasAttribute('disabled')
+            || el.getAttribute('aria-disabled') === 'true'
+            || /disabled|inactive|hidden/.test(cls)
+            || s.display === 'none'
+            || s.visibility === 'hidden'
+            || s.pointerEvents === 'none');
+  }
+
+  function syncOverlayButtons(){
+    try {
+      var prevOrig = $('prev-doc');
+      var nextOrig = $('next-doc');
+      // Grey & disable PREVIOUS if original indicates no previous
+      var prevDisabled = isDisabled(prevOrig);
+      prevB.classList.toggle('disabled', prevDisabled);
+      prevB.tabIndex = prevDisabled ? -1 : 0;
+
+      // Grey & disable NEXT if original indicates no next
+      var nextDisabled = isDisabled(nextOrig);
+      nextB.classList.toggle('disabled', nextDisabled);
+      nextB.tabIndex = nextDisabled ? -1 : 0;
+    } catch(e){}
+  }
+
+  function showBar(){
+    if (!bar) return;
+    bar.classList.add('visible');
+    syncOverlayButtons(); // keep state fresh when showing
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    hideTimer = setTimeout(function(){
+      bar.classList.remove('visible');
+    }, 2000);
+  }
+  function hideBarNow(){
+    if (!bar) return;
+    bar.classList.remove('visible');
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  }
+
+  // Prevent clicks when disabled
+  function guard(evt, id, isDisabledFn){
+    evt.stopPropagation();
+    if (isDisabledFn && isDisabledFn()) return;
+    forwardClick(id);
+  }
+  prevB.addEventListener('click', function(e){ guard(e, 'prev-doc', function(){ return prevB.classList.contains('disabled'); }); });
+  nextB.addEventListener('click', function(e){ guard(e, 'next-doc', function(){ return nextB.classList.contains('disabled'); }); });
+  closeB.addEventListener('click', function(e){ guard(e, 'close-doc', null); });
+
+  // Reveal on top tap
+  function onTopTap(){ showBar(); }
+  if (hit){
+    hit.addEventListener('touchstart', onTopTap, {passive:true});
+    hit.addEventListener('mousedown', onTopTap);
+    hit.addEventListener('pointerdown', onTopTap, {passive:true});
+  }
+
+  // Respond to overlay activation/deactivation
+  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
+  if (wasActive) { setTimeout(showBar, 0); }
+  var mo = new MutationObserver(function(){
+    var active = document.documentElement.classList.contains('pdf-overlay-active');
+    if (active && !wasActive) {
+      setTimeout(showBar, 0);
+    } else if (!active && wasActive) {
+      hideBarNow();
+    }
+    wasActive = active;
+  });
+  mo.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+
+  // Keep state in sync when original buttons change (e.g., after navigating songs)
+  var watchTargets = [ $('prev-doc'), $('next-doc'), $('doc-nav-buttons') ].filter(Boolean);
+  watchTargets.forEach(function(t){
+    try {
+      var mo2 = new MutationObserver(syncOverlayButtons);
+      mo2.observe(t, { attributes: true, attributeFilter: ['class', 'style', 'disabled', 'aria-disabled'], childList: false, subtree: false });
+    } catch(e){}
+  });
+
+  // Also resync on clicks and after small delay (in case app updates after handler)
+  document.addEventListener('click', function(){
+    setTimeout(syncOverlayButtons, 100);
+    setTimeout(syncOverlayButtons, 400);
+  }, true);
+
+  // Initial sync
+  setTimeout(syncOverlayButtons, 0);
+  setTimeout(syncOverlayButtons, 500);
+})();
+</script>
+
+<!-- Overlay PDF Button Bar -->
+<div id="pdf-btn-hit"></div>
+<div id="pdf-btn-bar" aria-hidden="true">
+  <button id="pdf-btn-prev" class="btn" type="button">PREVIOUS</button>
+  <button id="pdf-btn-next" class="btn" type="button">NEXT</button>
+  <button id="pdf-btn-close" class="btn" type="button">CLOSE</button>
+</div>
+
+<script>
+(function(){
+  if (window.__pdfBtnsInstalled_v3) return;
+  window.__pdfBtnsInstalled_v3 = true;
+
+  var $ = function(id){ return document.getElementById(id); };
+  var bar   = $('pdf-btn-bar');
+  var hit   = $('pdf-btn-hit');
+  var prevB = $('pdf-btn-prev');
+  var nextB = $('pdf-btn-next');
+  var closeB= $('pdf-btn-close');
+  var hideTimer = null;
+
+  // Helper: try multiple ways to navigate for reliability
+  function forward(id, fallbacks){
+    try {
+      var el = $(id);
+      if (el) { el.click(); return; }
+    } catch(e){}
+    if (fallbacks && fallbacks.length){
+      for (var i=0;i<fallbacks.length;i++){
+        var fn = fallbacks[i];
+        try {
+          if (typeof window[fn] === 'function') { window[fn](); return; }
+        } catch(e){}
+      }
+    }
+  }
+
+  // Disabled state detection
+  function isInactive(el){
+    if (!el) return true;
+    try {
+      var s = window.getComputedStyle(el);
+      var cls = (el.className||'').toLowerCase();
+      return !!( el.hasAttribute('disabled')
+              || el.getAttribute('aria-disabled') === 'true'
+              || /disabled|inactive|hidden/.test(cls)
+              || s.display === 'none'
+              || s.visibility === 'hidden'
+              || s.pointerEvents === 'none');
+    } catch(e){ return false; }
+  }
+
+  function syncState(){
+    try {
+      var prevOrig = $('prev-doc');
+      var nextOrig = $('next-doc');
+      var prevDis = isInactive(prevOrig);
+      var nextDis = isInactive(nextOrig);
+      prevB.classList.toggle('disabled', prevDis);
+      nextB.classList.toggle('disabled', nextDis);
+      prevB.tabIndex = prevDis ? -1 : 0;
+      nextB.tabIndex = nextDis ? -1 : 0;
+    } catch(e){}
+  }
+
+  function showBar(){
+    if (!bar) return;
+    bar.classList.add('visible');
+    syncState();
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(function(){
+      bar.classList.remove('visible');
+    }, 2000);
+  }
+  function hideBarNow(){
+    if (!bar) return;
+    bar.classList.remove('visible');
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  }
+
+  // Clicks (guard against disabled)
+  prevB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (prevB.classList.contains('disabled')) return;
+    forward('prev-doc', ['goPrev','prevSong','previousSong']);
+  });
+  nextB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (nextB.classList.contains('disabled')) return;
+    forward('next-doc', ['goNext','nextSong']);
+  });
+  closeB.addEventListener('click', function(e){
+    e.stopPropagation();
+    forward('close-doc', ['closeDocViewer','hideOverlay','closeViewer']);
+  });
+
+  // Reveal when tapping the very top strip
+  function onTopTap(){ showBar(); }
+  if (hit){
+    hit.addEventListener('touchstart', onTopTap, {passive:true});
+    hit.addEventListener('mousedown', onTopTap);
+    hit.addEventListener('pointerdown', onTopTap, {passive:true});
+  }
+
+  // Auto-show when overlay activates; hide when it deactivates
+  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
+  if (wasActive) setTimeout(showBar, 0);
+
+  var moRoot = new MutationObserver(function(){
+    var active = document.documentElement.classList.contains('pdf-overlay-active');
+    if (active && !wasActive) setTimeout(showBar, 0);
+    else if (!active && wasActive) hideBarNow();
+    wasActive = active;
+  });
+  moRoot.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+
+  // Keep state synced if the app toggles original buttons after navigation
+  var prevOrig = $('prev-doc'), nextOrig = $('next-doc'), origNav = $('doc-nav-buttons');
+  [prevOrig, nextOrig, origNav].forEach(function(node){
+    if (!node) return;
+    try {
+      var mo = new MutationObserver(function(){ setTimeout(syncState, 0); setTimeout(syncState, 200); });
+      mo.observe(node, { attributes: true, attributeFilter: ['class', 'style', 'disabled', 'aria-disabled'], childList: false, subtree: false });
+    } catch(e){}
+  });
+
+  // Also resync on any click (after handlers run)
+  document.addEventListener('click', function(){
+    setTimeout(syncState, 60);
+    setTimeout(syncState, 300);
+  }, true);
+
+  // Initial states
+  setTimeout(syncState, 0);
+  setTimeout(syncState, 400);
+})();
+</script>
+
+<script>
+(function(){
+  if (window.__pdfBtnsInstalled_v4) return;
+  window.__pdfBtnsInstalled_v4 = true;
+
+  var $ = function(id){ return document.getElementById(id); };
+  var bar   = $('pdf-btn-bar');
+  var hit   = $('pdf-btn-hit');
+  var prevB = $('pdf-btn-prev');
+  var nextB = $('pdf-btn-next');
+  var closeB= $('pdf-btn-close');
+  var hideTimer = null;
+
+  function scroller(){ return $('pdf-overlay-scroll'); }
+
+  // Robust forward + fallback + overlay teardown for close
+  function forward(id, fallbacks, alsoTeardown){
+    try {
+      var el = $(id);
+      if (el) { el.click(); }
+      else if (fallbacks && fallbacks.length){
+        for (var i=0;i<fallbacks.length;i++){
+          var fn = fallbacks[i];
+          try { if (typeof window[fn] === 'function') { window[fn](); break; } } catch(e){}
+        }
+      }
+    } catch(e){}
+    if (alsoTeardown){
+      try { if (typeof window.destroyPdfOverlay === 'function') window.destroyPdfOverlay(); } catch(e){}
+      try { document.documentElement.classList.remove('pdf-overlay-active'); } catch(e){}
+    }
+  }
+
+  function isInactive(el){
+    if (!el) return true;
+    try {
+      var s = window.getComputedStyle(el);
+      var cls = (el.className||'').toLowerCase();
+      return !!( el.hasAttribute('disabled')
+              || el.getAttribute('aria-disabled') === 'true'
+              || /disabled|inactive|hidden/.test(cls)
+              || s.display === 'none'
+              || s.visibility === 'hidden'
+              || s.pointerEvents === 'none');
+    } catch(e){ return false; }
+  }
+
+  function syncState(){
+    try {
+      var prevOrig = $('prev-doc');
+      var nextOrig = $('next-doc');
+      var prevDis = isInactive(prevOrig);
+      var nextDis = isInactive(nextOrig);
+      prevB.classList.toggle('disabled', prevDis);
+      nextB.classList.toggle('disabled', nextDis);
+      prevB.tabIndex = prevDis ? -1 : 0;
+      nextB.tabIndex = nextDis ? -1 : 0;
+    } catch(e){}
+  }
+
+  function showBar(){
+    if (!bar) return;
+    // Only show when at top of the document
+    var sc = scroller();
+    if (sc && sc.scrollTop > 2) return;
+    bar.classList.add('visible');
+    syncState();
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(function(){ bar.classList.remove('visible'); }, 2000);
+  }
+  function hideBarNow(){
+    if (!bar) return;
+    bar.classList.remove('visible');
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  }
+
+  // Button clicks with guards
+  prevB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (prevB.classList.contains('disabled')) return;
+    forward('prev-doc', ['goPrev','prevSong','previousSong'], false);
+  });
+  nextB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (nextB.classList.contains('disabled')) return;
+    forward('next-doc', ['goNext','nextSong'], false);
+  });
+  closeB.addEventListener('click', function(e){
+    e.stopPropagation();
+    // Close should always work: forward + explicit teardown
+    forward('close-doc', ['closeDocViewer','hideOverlay','closeViewer'], true);
+  });
+
+  // Reappear when tapping top ONLY if scroller is at top
+  function onTopTap(){
+    var sc = scroller();
+    if (!sc || sc.scrollTop <= 2) showBar();
+  }
+  if (hit){
+    hit.addEventListener('touchstart', onTopTap, {passive:true});
+    hit.addEventListener('mousedown', onTopTap);
+    hit.addEventListener('pointerdown', onTopTap, {passive:true});
+  }
+
+  // Show when overlay first activates
+  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
+  if (wasActive) setTimeout(showBar, 0);
+  var moRoot = new MutationObserver(function(){
+    var active = document.documentElement.classList.contains('pdf-overlay-active');
+    if (active && !wasActive) setTimeout(showBar, 0);
+    else if (!active && wasActive) hideBarNow();
+    wasActive = active;
+  });
+  moRoot.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+
+  // Auto-show when scrolled to top; hide when leaving the top
+  var lastTopState = null;
+  function onScroll(){
+    var sc = scroller();
+    if (!sc) return;
+    var atTop = sc.scrollTop <= 2;
+    if (atTop !== lastTopState){
+      lastTopState = atTop;
+      if (atTop) showBar();
+      else hideBarNow();
+    }
+  }
+  var sc = scroller();
+  if (sc){
+    sc.addEventListener('scroll', onScroll, {passive:true});
+    // Initial top check
+    setTimeout(onScroll, 0);
+  }
+
+  // At top: pull down (scroll up gesture) closes the file
+  var startY = null;
+  function onTouchStart(e){
+    var t = e.touches && e.touches[0];
+    if (!t) return;
+    startY = t.clientY;
+  }
+  function onTouchMove(e){
+    var t = e.touches && e.touches[0];
+    if (!t) return;
+    var sc = scroller();
+    if (!sc) return;
+    var atTop = sc.scrollTop <= 2;
+    var dy = t.clientY - (startY==null? t.clientY : startY);
+    // if at top and user pulls down > 40px, close
+    if (atTop && dy > 40){
+      forward('close-doc', ['closeDocViewer','hideOverlay','closeViewer'], true);
+      startY = t.clientY; // reset to avoid repeat
+    }
+  }
+  if (sc){
+    sc.addEventListener('touchstart', onTouchStart, {passive:true});
+    sc.addEventListener('touchmove', onTouchMove, {passive:true});
+  }
+
+  // Keep state in sync
+  var prevOrig = $('prev-doc'), nextOrig = $('next-doc'), origNav = $('doc-nav-buttons');
+  [prevOrig, nextOrig, origNav].forEach(function(node){
+    if (!node) return;
+    try {
+      var mo = new MutationObserver(function(){ setTimeout(syncState, 0); setTimeout(syncState, 200); });
+      mo.observe(node, { attributes: true, attributeFilter: ['class', 'style', 'disabled', 'aria-disabled'], childList: false, subtree: false });
+    } catch(e){}
+  });
+  document.addEventListener('click', function(){
+    setTimeout(syncState, 60);
+    setTimeout(syncState, 300);
+  }, true);
+
+  // Initial sync
+  setTimeout(syncState, 0);
+  setTimeout(syncState, 400);
+})();
+</script>
+
+<script>
+(function(){
+  if (window.__pdfBtnsInstalled_v5) return;
+  window.__pdfBtnsInstalled_v5 = true;
+
+  var $ = function(id){ return document.getElementById(id); };
+  var bar   = $('pdf-btn-bar');
+  var hit   = $('pdf-btn-hit');
+  var prevB = $('pdf-btn-prev');
+  var nextB = $('pdf-btn-next');
+  var closeB= $('pdf-btn-close');
+  var hideTimer = null;
+
+  function scroller(){ return $('pdf-overlay-scroll'); }
+
+  function canPrev(){ try { return (window.currentViewerIndex > 0); } catch(e){ return false; } }
+  function canNext(){ try { return (window.currentViewerList && window.currentViewerIndex < window.currentViewerList.length - 1); } catch(e){ return false; } }
+
+  function callPrev() {
+    try {
+      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex > 0) {
+        var idx = window.currentViewerIndex - 1;
+        var id = window.currentViewerList[idx].id;
+        window.openSongInContext(id, window.currentViewerContext, idx, 'prev');
+        return true;
+      }
+    } catch(e){}
+    // fallback: click original
+    try { var el = $('prev-doc'); if (el) { el.click(); return true; } } catch(e){}
+    // fallback: jQuery trigger
+    try { if (window.$) { $('#prev-doc').trigger('click'); return true; } } catch(e){}
+    return false;
+  }
+  function callNext() {
+    try {
+      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex < window.currentViewerList.length - 1) {
+        var idx = window.currentViewerIndex + 1;
+        var id = window.currentViewerList[idx].id;
+        window.openSongInContext(id, window.currentViewerContext, idx, 'next');
+        return true;
+      }
+    } catch(e){}
+    try { var el = $('next-doc'); if (el) { el.click(); return true; } } catch(e){}
+    try { if (window.$) { $('#next-doc').trigger('click'); return true; } } catch(e){}
+    return false;
+  }
+  function callClose() {
+    var ok = false;
+    try { var el = $('close-doc'); if (el) { el.click(); ok = true; } } catch(e){}
+    try { if (window.$) { $('#close-doc').trigger('click'); ok = true; } } catch(e){}
+    // force overlay teardown
+    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); ok = true; } } catch(e){}
+    try { document.documentElement.classList.remove('pdf-overlay-active'); ok = true; } catch(e){}
+    return ok;
+  }
+
+  function isInactive(el){
+    if (!el) return true;
+    try {
+      var s = window.getComputedStyle(el);
+      var cls = (el.className||'').toLowerCase();
+      return !!( el.hasAttribute('disabled')
+              || el.getAttribute('aria-disabled') === 'true'
+              || /disabled|inactive|hidden/.test(cls)
+              || s.display === 'none'
+              || s.visibility === 'hidden'
+              || s.pointerEvents === 'none');
+    } catch(e){ return false; }
+  }
+
+  function syncState(){
+    try {
+      var prevDis = !canPrev() || isInactive($('prev-doc'));
+      var nextDis = !canNext() || isInactive($('next-doc'));
+      prevB.classList.toggle('disabled', prevDis);
+      nextB.classList.toggle('disabled', nextDis);
+      prevB.tabIndex = prevDis ? -1 : 0;
+      nextB.tabIndex = nextDis ? -1 : 0;
+    } catch(e){}
+  }
+
+  function showBar(){
+    var sc = scroller();
+    if (sc && sc.scrollTop > 2) return; // only at top
+    bar && bar.classList.add('visible');
+    syncState();
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(function(){ bar && bar.classList.remove('visible'); }, 2000);
+  }
+  function hideBarNow(){
+    bar && bar.classList.remove('visible');
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  }
+
+  prevB && prevB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (prevB.classList.contains('disabled')) return;
+    callPrev();
+  });
+  nextB && nextB.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (nextB.classList.contains('disabled')) return;
+    callNext();
+  });
+  closeB && closeB.addEventListener('click', function(e){
+    e.stopPropagation();
+    callClose();
+  });
+
+  function onTopTap(){
+    var sc = scroller();
+    if (!sc || sc.scrollTop <= 2) showBar();
+  }
+  var hit = $('pdf-btn-hit');
+  if (hit){
+    hit.addEventListener('touchstart', onTopTap, {passive:true});
+    hit.addEventListener('mousedown', onTopTap);
+    hit.addEventListener('pointerdown', onTopTap, {passive:true});
+  }
+
+  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
+  if (wasActive) setTimeout(showBar, 0);
+  var moRoot = new MutationObserver(function(){
+    var active = document.documentElement.classList.contains('pdf-overlay-active');
+    if (active && !wasActive) setTimeout(showBar, 0);
+    else if (!active && wasActive) hideBarNow();
+    wasActive = active;
+  });
+  moRoot.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+
+  var lastTopState = null;
+  function onScroll(){
+    var sc = scroller();
+    if (!sc) return;
+    var atTop = sc.scrollTop <= 2;
+    if (atTop !== lastTopState){
+      lastTopState = atTop;
+      if (atTop) showBar(); else hideBarNow();
+    }
+  }
+  var sc = scroller();
+  if (sc){
+    sc.addEventListener('scroll', onScroll, {passive:true});
+    setTimeout(onScroll, 0);
+  }
+
+  // Pull-down to close at top
+  var startY = null;
+  function onTouchStart(e){ var t = e.touches && e.touches[0]; if (t) startY = t.clientY; }
+  function onTouchMove(e){
+    var t = e.touches && e.touches[0];
+    if (!t) return;
+    var sc = scroller();
+    if (!sc) return;
+    var atTop = sc.scrollTop <= 2;
+    var dy = t.clientY - (startY==null? t.clientY : startY);
+    if (atTop && dy > 40){ callClose(); startY = t.clientY; }
+  }
+  if (sc){
+    sc.addEventListener('touchstart', onTouchStart, {passive:true});
+    sc.addEventListener('touchmove', onTouchMove, {passive:true});
+  }
+
+  // Keep state in sync after internal updates
+  ['prev-doc','next-doc','doc-nav-buttons'].forEach(function(id){
+    var node = $(id); if (!node) return;
+    try {
+      var mo = new MutationObserver(function(){ setTimeout(syncState, 0); setTimeout(syncState, 200); });
+      mo.observe(node, { attributes: true, attributeFilter: ['class', 'style', 'disabled', 'aria-disabled'] });
+    } catch(e){}
+  });
+  document.addEventListener('click', function(){
+    setTimeout(syncState, 60);
+    setTimeout(syncState, 300);
+  }, true);
+
+  setTimeout(syncState, 0);
+  setTimeout(syncState, 400);
+})();
+</script>
+
+<script>
+(function(){
+  if (window.__wrapOpenSongInContext_v1) return;
+  window.__wrapOpenSongInContext_v1 = true;
+
+  function installWrapper(){
+    if (!window.openSongInContext) return false;
+    if (window.openSongInContext.__wrapped) return true;
+
+    var original = window.openSongInContext;
+    function wrappedOpenSongInContext(songId, context, index, dir){
+      try {
+        // Ensure globals are always up to date for overlay nav across the app
+        if (typeof context !== 'undefined') window.currentViewerContext = context;
+        if (typeof index === 'number') window.currentViewerIndex = index;
+        // If list exists on context, mirror it to the expected global shape
+        try {
+          if (context && context.list && Array.isArray(context.list)) {
+            window.currentViewerList = context.list;
+          }
+        } catch(e){}
+      } catch(e){}
+      return original.apply(this, arguments);
+    }
+    wrappedOpenSongInContext.__wrapped = true;
+    window.openSongInContext = wrappedOpenSongInContext;
+    return true;
+  }
+
+  // Try immediately, then again after load, and once when user first opens something
+  if (!installWrapper()){
+    document.addEventListener('DOMContentLoaded', installWrapper);
+    setTimeout(installWrapper, 500);
+    setTimeout(installWrapper, 1500);
+  }
+})();
+</script>
+
+<script>
+(function(){
+  if (window.__bindPdfScroller_v2) return;
+  window.__bindPdfScroller_v2 = true;
+
+  function bind(){
+    var sc = document.getElementById('pdf-overlay-scroll');
+    if (!sc) return false;
+    if (sc.__overlayBound) return true;
+    sc.__overlayBound = true;
+
+    // Reuse existing bar logic if present
+    var bar = document.getElementById('pdf-btn-bar');
+    function showBar(){
+      if (!bar) return;
+      if (sc.scrollTop > 2) return;
+      bar.classList.add('visible');
+      setTimeout(function(){ bar.classList.remove('visible'); }, 2000);
+    }
+    function onScroll(){
+      if (sc.scrollTop <= 2) showBar(); else bar && bar.classList.remove('visible');
+    }
+    sc.addEventListener('scroll', onScroll, {passive:true});
+    setTimeout(onScroll, 0);
+    return true;
+  }
+
+  // Bind now and observe DOM changes to bind later too
+  var ok = bind();
+  var mo = new MutationObserver(function(){
+    if (!bind()) return;
+  });
+  mo.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+
+<script>
+(function(){
+  if (window.__pdfBtnWire_v6) return;
+  window.__pdfBtnWire_v6 = true;
+
+  function $(id){ return document.getElementById(id); }
+  var prevB = $('pdf-btn-prev');
+  var nextB = $('pdf-btn-next');
+  var closeB= $('pdf-btn-close');
+
+  function callPrev(){
+    try {
+      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex > 0) {
+        var idx = window.currentViewerIndex - 1;
+        var id  = window.currentViewerList[idx].id;
+        window.openSongInContext(id, window.currentViewerContext, idx, 'prev');
+        return true;
+      }
+    } catch(e){}
+    try { var el = $('prev-doc'); if (el) { el.click(); return true; } } catch(e){}
+    try { if (window.$) { $('#prev-doc').trigger('click'); return true; } } catch(e){}
+    return false;
+  }
+  function callNext(){
+    try {
+      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex < window.currentViewerList.length - 1) {
+        var idx = window.currentViewerIndex + 1;
+        var id  = window.currentViewerList[idx].id;
+        window.openSongInContext(id, window.currentViewerContext, idx, 'next');
+        return true;
+      }
+    } catch(e){}
+    try { var el = $('next-doc'); if (el) { el.click(); return true; } } catch(e){}
+    try { if (window.$) { $('#next-doc').trigger('click'); return true; } } catch(e){}
+    return false;
+  }
+  function callClose(){
+    var ok = false;
+    try { var el = $('close-doc'); if (el) { el.click(); ok = true; } } catch(e){}
+    try { if (window.$) { $('#close-doc').trigger('click'); ok = true; } } catch(e){}
+    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); ok = true; } } catch(e){}
+    try { document.documentElement.classList.remove('pdf-overlay-active'); ok = true; } catch(e){}
+    return ok;
+  }
+
+  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); callPrev(); });
+  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); callNext(); });
+  closeB && closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
+})();
+</script>
+
+<!-- Overlay PDF Top Bar (new safe IDs) -->
+<div id="pdf-top-hit"></div>
+<div id="pdf-topbar" aria-hidden="true">
+  <button id="pdf-prev"  class="btn" type="button">PREVIOUS</button>
+  <button id="pdf-next"  class="btn" type="button">NEXT</button>
+  <button id="pdf-close" class="btn" type="button">CLOSE</button>
+</div>
+
+
+<!-- Topbar V7 wiring -->
+<script>
+/* Universal viewer wiring so buttons work on Songs, Setlists, Favorites */
+(function wrapOpenSongInContext(){
+  if (window.__wrapOpenSongInContext_v1) return; window.__wrapOpenSongInContext_v1 = true;
+  function install(){
+    if (!window.openSongInContext || window.openSongInContext.__wrapped) return;
+    var orig = window.openSongInContext;
+    function wrapped(songId, context, index, dir){
+      try {
+        if (typeof context !== 'undefined') window.currentViewerContext = context;
+        if (typeof index   === 'number')     window.currentViewerIndex   = index;
+        if (context && Array.isArray(context.list)) window.currentViewerList = context.list;
+      } catch(e){}
+      return orig.apply(this, arguments);
+    }
+    wrapped.__wrapped = true;
+    window.openSongInContext = wrapped;
+  }
+  install(); document.addEventListener('DOMContentLoaded', install); setTimeout(install, 500); setTimeout(install, 1500);
+})();
+
+/* Top bar behavior (no scroll changes) */
+(function(){
+  if (window.__TopBarV7) return; window.__TopBarV7 = true;
+  var $ = function(id){ return document.getElementById(id); };
+  var bar = $('pdf-topbar'), hit = $('pdf-top-hit');
+  var prevB = $('pdf-prev'), nextB = $('pdf-next'), closeB = $('pdf-close');
+  var hideTimer = null;
+
+  function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
+  function atTop(){ var sc = scroller(); return sc && sc.scrollTop <= 2; }
+
+  function canPrev(){
+    try {
+      if (typeof window.currentViewerIndex === 'number' && window.currentViewerIndex > 0) return true;
+      var el = document.getElementById('prev-doc');
+      if (el){ var s = getComputedStyle(el); if (s.display!=='none' && s.visibility!=='hidden' && !el.disabled) return true; }
+    } catch(e){}
+    return false;
+  } catch(e){ return false; } }
+  function canNext(){
+    try {
+      if (window.currentViewerList && typeof window.currentViewerIndex === 'number' && window.currentViewerIndex < window.currentViewerList.length - 1) return true;
+      var el = document.getElementById('next-doc');
+      if (el){ var s = getComputedStyle(el); if (s.display!=='none' && s.visibility!=='hidden' && !el.disabled) return true; }
+    } catch(e){}
+    return false;
+  } catch(e){ return false; } }
+
+  function syncState(){
+    try {
+      prevB.classList.toggle('disabled', !canPrev());
+      nextB.classList.toggle('disabled', !canNext());
+      prevB.tabIndex = prevB.classList.contains('disabled') ? -1 : 0;
+      nextB.tabIndex = nextB.classList.contains('disabled') ? -1 : 0;
+    } catch(e){}
+  }
+
+  function showBar(){
+    if (!bar) return;
+    if (!atTop()) return;
+    bar.classList.add('visible');
+    syncState();
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(function(){ bar.classList.remove('visible'); }, 2000);
+  }
+  function hideBarNow(){
+    bar && bar.classList.remove('visible');
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  }
+
+  function callPrev(){
+    try {
+      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex > 0){
+        var idx = window.currentViewerIndex - 1, id = window.currentViewerList[idx].id;
+        window.openSongInContext(id, window.currentViewerContext, idx, 'prev'); return;
+      }
+    } catch(e){}
+    var el = document.getElementById('prev-doc'); if (el) { el.click(); return; }
+    if (window.$) try { $('#prev-doc').trigger('click'); } catch(e){}
+  }
+  function callNext(){
+    try {
+      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex < window.currentViewerList.length - 1){
+        var idx = window.currentViewerIndex + 1, id = window.currentViewerList[idx].id;
+        window.openSongInContext(id, window.currentViewerContext, idx, 'next'); return;
+      }
+    } catch(e){}
+    var el = document.getElementById('next-doc'); if (el) { el.click(); return; }
+    if (window.$) try { $('#next-doc').trigger('click'); } catch(e){}
+  }
+  function callClose(){
+    var ok = false;
+    var el = document.getElementById('close-doc'); if (el) { try { el.click(); ok = true; } catch(e){} }
+    if (window.$) try { $('#close-doc').trigger('click'); ok = true; } catch(e){}
+    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); ok = true; } } catch(e){}
+    try { document.documentElement.classList.remove('pdf-overlay-active'); ok = true; } catch(e){}
+    return ok;
+  }
+
+  prevB.addEventListener('click', function(e){ e.stopPropagation(); if (!prevB.classList.contains('disabled')) callPrev(); });
+  nextB.addEventListener('click', function(e){ e.stopPropagation(); if (!nextB.classList.contains('disabled')) callNext(); });
+  closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
+
+  function onTopTap(){ if (atTop()) showBar(); }
+  hit.addEventListener('touchstart', onTopTap, {passive:true});
+  hit.addEventListener('mousedown', onTopTap);
+  hit.addEventListener('pointerdown', onTopTap, {passive:true});
+
+  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
+  if (wasActive) setTimeout(showBar, 0);
+  new MutationObserver(function(){
+    var active = document.documentElement.classList.contains('pdf-overlay-active');
+    if (active && !wasActive) setTimeout(showBar, 0);
+    else if (!active && wasActive) hideBarNow();
+    wasActive = active;
+  }).observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+
+  function bindScroller(sc){
+    if (!sc || sc.__tbBound) return;
+    sc.__tbBound = true;
+    var lastTop = null, startY = null;
+
+    function onScroll(){
+      var top = sc.scrollTop <= 2;
+      if (top !== lastTop){ lastTop = top; if (top) showBar(); else hideBarNow(); }
+    }
+    sc.addEventListener('scroll', onScroll, {passive:true});
+    setTimeout(onScroll, 0);
+
+    function onTS(e){ var t = e.touches && e.touches[0]; if (t) startY = t.clientY; }
+    function onTM(e){
+      var t = e.touches && e.touches[0]; if (!t) return;
+      if (sc.scrollTop <= 2 && startY != null && (t.clientY - startY) > 90){ callClose(); startY = t.clientY; }
+    }
+    sc.addEventListener('touchstart', onTS, {passive:true});
+    sc.addEventListener('touchmove',  onTM, {passive:true});
+  }
+  bindScroller(scroller());
+  new MutationObserver(function(){ bindScroller(scroller()); })
+    .observe(document.body, {childList:true, subtree:true});
+
+  ['prev-doc','next-doc','doc-nav-buttons'].forEach(function(id){
+    var n = document.getElementById(id); if (!n) return;
+    try {
+      new MutationObserver(function(){ setTimeout(syncState, 0); setTimeout(syncState, 200); })
+        .observe(n, {attributes:true, attributeFilter:['class','style','disabled','aria-disabled']});
+    } catch(e){}
+  });
+  document.addEventListener('click', function(){ setTimeout(syncState, 60); setTimeout(syncState, 300); }, true);
+
+  setTimeout(syncState, 0);
+  setTimeout(syncState, 400);
+})();
+
+  window.addEventListener('pdfTopbarSync', function(){ try { syncState(); } catch(e){} });
+</script>
+
+
+<!-- wrap openDocViewer v1 -->
+<script>
+(function(){
+  if (window.__wrapOpenDocViewer_v1) return; window.__wrapOpenDocViewer_v1 = true;
+  function install(){
+    if (!window.openDocViewer || window.openDocViewer.__wrapped) return;
+    var orig = window.openDocViewer;
+    function wrapped(/* songId or docId, maybe context */){
+      try {
+        var args = Array.prototype.slice.call(arguments);
+        var ctx = (args.length > 1 && typeof args[1] === 'object') ? args[1] : (window.currentViewerContext || null);
+        if (ctx) window.currentViewerContext = ctx;
+        try { if (ctx && ctx.list && Array.isArray(ctx.list)) window.currentViewerList = ctx.list; } catch(e){}
+        for (var i=0;i<args.length;i++){ if (typeof args[i] === 'number') { window.currentViewerIndex = args[i]; break; } }
+      } catch(e){}
+      return orig.apply(this, arguments);
+    }
+    wrapped.__wrapped = true;
+    window.openDocViewer = wrapped;
+  }
+  install(); document.addEventListener('DOMContentLoaded', install); setTimeout(install, 500); setTimeout(install, 1500);
+})();
+</script>
+
+<!-- pdfTopbarSync init -->
+<script>
+(function(){
+  try {
+    if (document.documentElement.classList.contains('pdf-overlay-active')) {
+      var e=new Event('pdfTopbarSync'); window.dispatchEvent(e);
+    }
+  } catch(e){}
+})();
+</script>
+
+<!-- FINAL overlay topbar -->
+<div id="pdf-top-hit"></div>
+<div id="pdf-topbar" aria-hidden="true">
+  <button id="pdf-prev"  class="btn" type="button">PREVIOUS</button>
+  <button id="pdf-next"  class="btn" type="button">NEXT</button>
+  <button id="pdf-close" class="btn" type="button">CLOSE</button>
+</div>
+
+
+<!-- FINAL topbar wiring -->
+<script>
+/* Keep viewer globals in sync across all open paths */
+(function(){
+  if (window.__wrapViewers_final) return; window.__wrapViewers_final = true;
+
+  function wrapOpen(name){
+    try {
+      var fn = window[name];
+      if (!fn || fn.__wrapped_final) return;
+      var orig = fn;
+      function wrapped(/* dynamic args */){
+        try {
+          var args = Array.prototype.slice.call(arguments);
+          // try to find context object & index in args
+          for (var i=0;i<args.length;i++){
+            var a = args[i];
+            if (a && typeof a === 'object' && (a.list || a.context || a.type)) { window.currentViewerContext = a; break; }
+          }
+          for (var j=0;j<args.length;j++){
+            var b = args[j];
+            if (typeof b === 'number') { window.currentViewerIndex = b; break; }
+          }
+          // if context has a list, mirror to global
+          try { if (window.currentViewerContext && Array.isArray(window.currentViewerContext.list)) window.currentViewerList = window.currentViewerContext.list; } catch(_){}
+        } catch(_){}
+        return orig.apply(this, arguments);
+      }
+      wrapped.__wrapped_final = true;
+      window[name] = wrapped;
+    } catch(_){}
+  }
+
+  ['openSongInContext', 'openDocViewer'].forEach(wrapOpen);
+  // Retry after load in case functions are defined later
+  document.addEventListener('DOMContentLoaded', function(){ ['openSongInContext','openDocViewer'].forEach(wrapOpen); });
+  setTimeout(function(){ ['openSongInContext','openDocViewer'].forEach(wrapOpen); }, 500);
+  setTimeout(function(){ ['openSongInContext','openDocViewer'].forEach(wrapOpen); }, 1500);
+})();
+
+/* Top bar behavior (no scroll modifications) */
+(function(){
+  if (window.__TopBar_final) return; window.__TopBar_final = true;
+  var $ = function(id){ return document.getElementById(id); };
+  var bar = $('pdf-topbar'), hit = $('pdf-top-hit');
+  var prevB = $('pdf-prev'), nextB = $('pdf-next'), closeB = $('pdf-close');
+  var hideTimer = null;
+
+  function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
+  function atTop(){ var sc = scroller(); return sc && sc.scrollTop <= 2; }
+
+  // Robust ID normalization for list items across app sections
+  function getDocId(item){
+    if (!item || typeof item !== 'object') return null;
+    return item.id ?? item.docId ?? item.songId ?? item.fileId ?? item.pdfId ?? null;
+  }
+
+  function canPrev(){
+    try {
+      if (typeof window.currentViewerIndex === 'number' && window.currentViewerIndex > 0) return true;
+      var el = document.getElementById('prev-doc');
+      if (el){ var s = getComputedStyle(el); if (s.display!=='none' && s.visibility!=='hidden' && !el.disabled) return true; }
+    } catch(_){}
+    return false;
+  }
+  function canNext(){
+    try {
+      if (window.currentViewerList && typeof window.currentViewerIndex === 'number' && window.currentViewerIndex < window.currentViewerList.length - 1) return true;
+      var el = document.getElementById('next-doc');
+      if (el){ var s = getComputedStyle(el); if (s.display!=='none' && s.visibility!=='hidden' && !el.disabled) return true; }
+    } catch(_){}
+    return false;
+  }
+  function syncState(){
+    try {
+      prevB.classList.toggle('disabled', !canPrev());
+      nextB.classList.toggle('disabled', !canNext());
+      prevB.tabIndex = prevB.classList.contains('disabled') ? -1 : 0;
+      nextB.tabIndex = nextB.classList.contains('disabled') ? -1 : 0;
+    } catch(_){}
+  }
+
+  function showBar(){
+    if (!bar) return;
+    if (!atTop()) return;
+    bar.classList.add('visible');
+    syncState();
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(function(){ bar.classList.remove('visible'); }, 2000);
+  }
+  function hideBarNow(){
+    bar && bar.classList.remove('visible');
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+  }
+
+  function callPrev(){
+    try {
+      var list = window.currentViewerList || [];
+      var i = Number(window.currentViewerIndex || 0);
+      var item = list[i - 1];
+      var id = getDocId(item);
+      if (id != null && typeof window.openSongInContext === 'function'){
+        window.currentViewerIndex = i - 1;
+        return window.openSongInContext(id, window.currentViewerContext, i - 1, 'prev');
+      }
+    } catch(_){}
+    var el = document.getElementById('prev-doc'); if (el) { try { el.click(); return; } catch(_){ } }
+    if (window.$) try { $('#prev-doc').trigger('click'); } catch(_){}
+  }
+  function callNext(){
+    try {
+      var list = window.currentViewerList || [];
+      var i = Number(window.currentViewerIndex || 0);
+      var item = list[i + 1];
+      var id = getDocId(item);
+      if (id != null && typeof window.openSongInContext === 'function'){
+        window.currentViewerIndex = i + 1;
+        return window.openSongInContext(id, window.currentViewerContext, i + 1, 'next');
+      }
+    } catch(_){}
+    var el = document.getElementById('next-doc'); if (el) { try { el.click(); return; } catch(_){ } }
+    if (window.$) try { $('#next-doc').trigger('click'); } catch(_){}
+  }
+  function callClose(){
+    var ok = false;
+    var el = document.getElementById('close-doc'); if (el) { try { el.click(); ok = true; } catch(_){} }
+    if (window.$) try { $('#close-doc').trigger('click'); ok = true; } catch(_){}
+    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); ok = true; } } catch(_){}
+    try { document.documentElement.classList.remove('pdf-overlay-active'); ok = true; } catch(_){}
+    return ok;
+  }
+
+  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); if (!prevB.classList.contains('disabled')) callPrev(); });
+  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); if (!nextB.classList.contains('disabled')) callNext(); });
+  closeB && closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
+
+  function onTopTap(){ if (atTop()) showBar(); }
+  hit.addEventListener('touchstart', onTopTap, {passive:true});
+  hit.addEventListener('mousedown', onTopTap);
+  hit.addEventListener('pointerdown', onTopTap, {passive:true});
+
+  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
+  if (wasActive) setTimeout(showBar, 0);
+  new MutationObserver(function(){
+    var active = document.documentElement.classList.contains('pdf-overlay-active');
+    if (active && !wasActive) setTimeout(showBar, 0);
+    else if (!active && wasActive) hideBarNow();
+    wasActive = active;
+  }).observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+
+  function bindScroller(sc){
+    if (!sc || sc.__tbBoundFinal) return;
+    sc.__tbBoundFinal = true;
+    var lastTop = null, startY = null;
+
+    function onScroll(){
+      var top = sc.scrollTop <= 2;
+      if (top !== lastTop){ lastTop = top; if (top) showBar(); else hideBarNow(); }
+    }
+    sc.addEventListener('scroll', onScroll, {passive:true});
+    setTimeout(onScroll, 0);
+
+    function onTS(e){ var t = e.touches && e.touches[0]; if (t) startY = t.clientY; }
+    function onTM(e){
+      var t = e.touches && e.touches[0]; if (!t) return;
+      // Require intentional pull: 90px
+      if (sc.scrollTop <= 2 && startY != null && (t.clientY - startY) > 90){ callClose(); startY = t.clientY; }
+    }
+    sc.addEventListener('touchstart', onTS, {passive:true});
+    sc.addEventListener('touchmove',  onTM, {passive:true});
+  }
+  bindScroller(scroller());
+  new MutationObserver(function(){ bindScroller(scroller()); })
+    .observe(document.body, {childList:true, subtree:true});
+
+  // Allow other parts of app to force a state refresh if needed
+  window.addEventListener('pdfTopbarSync', function(){ try { syncState(); } catch(_){ } });
+
+  // Initial sync
+  setTimeout(syncState, 0);
+  setTimeout(syncState, 400);
+})();
+</script>
+
+
+<!-- Venue size matcher -->
+<script>
+(function(){
+  if (window.__venueSizeMatch) return; window.__venueSizeMatch = true;
+  function matchVenueSize(){
+    try {
+      var genre = document.getElementById('genre-name');
+      var venue = document.getElementById('venue-name');
+      if (!genre || !venue) return;
+      var gs = window.getComputedStyle(genre);
+      // Copy width/height exactly as rendered
+      var w = genre.getBoundingClientRect().width;
+      var h = genre.getBoundingClientRect().height;
+      venue.style.width  = w + 'px';
+      venue.style.height = h + 'px';
+      // Match padding/border/font for perfect symmetry
+      venue.style.paddingLeft   = gs.paddingLeft;
+      venue.style.paddingRight  = gs.paddingRight;
+      venue.style.paddingTop    = gs.paddingTop;
+      venue.style.paddingBottom = gs.paddingBottom;
+      venue.style.borderWidth   = gs.borderWidth;
+      venue.style.borderStyle   = gs.borderStyle;
+      venue.style.borderColor   = gs.borderColor;
+      venue.style.borderRadius  = gs.borderRadius;
+      venue.style.font          = gs.font;
+      venue.style.boxSizing     = gs.boxSizing || 'border-box';
+    } catch(e){}
+  }
+  // Run on load and after small delay to catch Tailwind/layout
+  window.addEventListener('load', function(){ setTimeout(matchVenueSize, 0); setTimeout(matchVenueSize, 250); });
+  // If sidebar opens/closes, layout may change; observe size changes
+  var ro = new ResizeObserver(function(){ matchVenueSize(); });
+  window.addEventListener('DOMContentLoaded', function(){
+    var g = document.getElementById('genre-name');
+    var v = document.getElementById('venue-name');
+    if (g) ro.observe(g);
+    if (v) ro.observe(v);
+  });
+})();
+</script>
+
+
+<!-- Universal CLOSE for the PDF/file viewer — install once -->
+<script>
+(function () {
+  if (window.__UniversalClose_v1) return;
+  window.__UniversalClose_v1 = true;
+
+  function universalCloseViewer() {
+    var closed = false;
+
+    try {
+      var nativeBtn = document.getElementById('close-doc');
+      if (nativeBtn && typeof nativeBtn.click === 'function') {
+        nativeBtn.click();
+        closed = true;
+      }
+      if (window.$ && !closed) { try { $('#close-doc').trigger('click'); closed = true; } catch(_){} }
+    } catch(_) {}
+
+    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); closed = true; } } catch(_) {}
+
+    try {
+      var roots = [
+        document.getElementById('pdf-overlay'),
+        document.querySelector('.pdf-overlay'),
+        document.getElementById('pdf-viewer'),
+        document.querySelector('.viewer-overlay')
+      ].filter(Boolean);
+      roots.forEach(function (el) { el.style.display = 'none'; });
+      if (roots.length) closed = true;
+    } catch(_) {}
+
+    try { document.documentElement.classList.remove('pdf-overlay-active'); closed = true; } catch(_) {}
+    try { document.body.classList.remove('pdf-overlay-active'); closed = true; } catch(_) {}
+
+    try {
+      var bar = document.getElementById('pdf-topbar') || document.getElementById('pdf-btn-bar');
+      if (bar) bar.classList.remove('visible');
+    } catch(_) {}
+
+    return !!closed;
+  }
+
+  function onDocClick(e) {
+    var t = e.target;
+    var isClose = (t && t.id === 'pdf-close') || (t && t.closest && (t.closest('#pdf-close') || t.closest('#pdf-btn-close')));
+    if (isClose) {
+      e.stopPropagation();
+      e.preventDefault();
+      universalCloseViewer();
+    }
+  }
+  document.addEventListener('click', onDocClick, true);
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' || e.keyCode === 27) {
+      if (document.documentElement.classList.contains('pdf-overlay-active')) {
+        e.stopPropagation();
+        universalCloseViewer();
+      }
+    }
+  }, true);
+
+  new MutationObserver(function () {}).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+  window.universalCloseViewer = universalCloseViewer;
+})();
+</script>
+
+
+<!-- Genre/Venue exact symmetry + centered placeholders (robust) -->
+<style>
+#genre-name::placeholder, #venue-name::placeholder { text-align: center; }
+#genre-name, #venue-name { text-align: center; } /* helps iOS Safari */
+</style>
+<script>
+(function(){
+  if (window.__GenreVenueSync_v2) return; window.__GenreVenueSync_v2 = true;
+
+  function setImportant(el, prop, value){
+    try { el.style.setProperty(prop, value, 'important'); } catch(_){}
+  }
+
+  function syncVenueToGenre(){
+    try {
+      var g = document.getElementById('genre-name');
+      var v = document.getElementById('venue-name');
+      if (!g || !v) return;
+
+      var rect = g.getBoundingClientRect();
+      var gs = getComputedStyle(g);
+
+      // Match box model and typography
+      setImportant(v, 'box-sizing', gs.boxSizing || 'border-box');
+      setImportant(v, 'padding-left', gs.paddingLeft);
+      setImportant(v, 'padding-right', gs.paddingRight);
+      setImportant(v, 'padding-top', gs.paddingTop);
+      setImportant(v, 'padding-bottom', gs.paddingBottom);
+      setImportant(v, 'border-width', gs.borderWidth);
+      setImportant(v, 'border-style', gs.borderStyle);
+      setImportant(v, 'border-color', gs.borderColor);
+      setImportant(v, 'border-radius', gs.borderRadius);
+      setImportant(v, 'font', gs.font);
+
+      // Ensure layout constraints don't override width
+      setImportant(v, 'display', gs.display || 'block');
+      setImportant(v, 'flex', '0 0 auto');
+      setImportant(v, 'max-width', rect.width + 'px');
+      setImportant(v, 'min-width', rect.width + 'px');
+      setImportant(v, 'width', rect.width + 'px');
+      setImportant(v, 'height', rect.height + 'px');
+    } catch(_){}
+  }
+
+  function schedule(){
+    setTimeout(syncVenueToGenre, 0);
+    setTimeout(syncVenueToGenre, 250);
+    setTimeout(syncVenueToGenre, 800);
+    setTimeout(syncVenueToGenre, 1500);
+  }
+
+  window.addEventListener('load', schedule);
+  window.addEventListener('resize', function(){ setTimeout(syncVenueToGenre, 0); });
+
+  // Observe genre size changes (e.g., theme/sidebar width changes)
+  try {
+    var gObsTarget = document.getElementById('genre-name');
+    if (gObsTarget && window.ResizeObserver) {
+      var ro = new ResizeObserver(function(){ syncVenueToGenre(); });
+      ro.observe(gObsTarget);
+    }
+  } catch(_){}
+})();
+</script>
+
+
+<!-- Venue/Genre left-edge alignment + Pull-to-close v4 -->
+<script>
+(function(){
+  /* =====  A) Perfect horizontal alignment for Genre/Venue rows  =====
+     We don't change widths/heights (already matched). We just align left-x
+     of the Venue input and Venue Add button to equal the Genre row's left-x.
+  */
+  if (!window.__AlignGenreVenue_v1){
+    window.__AlignGenreVenue_v1 = true;
+
+    function alignVenueRow(){
+      try {
+        var gInput = document.getElementById('genre-name');
+        var vInput = document.getElementById('venue-name');
+        // Attempt to find the "Add" buttons near each input; adjust selectors to your markup if needed
+        var gAdd   = document.getElementById('add-genre-btn')  || document.querySelector('[data-add="genre"], #add-genre, .add-genre-btn');
+        var vAdd   = document.getElementById('add-venue-btn')  || document.querySelector('[data-add="venue"], #add-venue, .add-venue-btn');
+
+        if (!gInput || !vInput) return;
+
+        // compute current left positions
+        var gx = gInput.getBoundingClientRect().left;
+        var vx = vInput.getBoundingClientRect().left;
+
+        // We adjust only the venue input's margin-left to match genre's left edge
+        var deltaInput = gx - vx;
+        if (Math.abs(deltaInput) > 0.5) {
+          // apply margin-left delta without affecting layout above it
+          var current = parseFloat(getComputedStyle(vInput).marginLeft) || 0;
+          vInput.style.marginLeft = (current + deltaInput) + "px";
+        }
+
+        // If we have genre/venue add buttons, align them too
+        if (gAdd && vAdd) {
+          var gxB = gAdd.getBoundingClientRect().left;
+          var vxB = vAdd.getBoundingClientRect().left;
+          var deltaBtn = gxB - vxB;
+          if (Math.abs(deltaBtn) > 0.5) {
+            var currentBtn = parseFloat(getComputedStyle(vAdd).marginLeft) || 0;
+            vAdd.style.marginLeft = (currentBtn + deltaBtn) + "px";
+          }
+        }
+      } catch(_){}
+    }
+
+    // Run after layout + a few retries for dynamic UI
+    function schedule(){
+      setTimeout(alignVenueRow, 0);
+      setTimeout(alignVenueRow, 200);
+      setTimeout(alignVenueRow, 600);
+      setTimeout(alignVenueRow, 1200);
+    }
+    window.addEventListener('load', schedule);
+    window.addEventListener('resize', function(){ setTimeout(alignVenueRow, 0); });
+    // Observe venue/genre nodes for size/position changes and re-align
+    var obsTargets = ['genre-name','venue-name'];
+    if (window.ResizeObserver){
+      obsTargets.forEach(function(id){
+        var el = document.getElementById(id);
+        if (el){
+          try {
+            var ro = new ResizeObserver(function(){ alignVenueRow(); });
+            ro.observe(el);
+          } catch(_){}
+        }
+      });
+    }
+    // If sidebar open/close toggles classes on html/body, re-run
+    new MutationObserver(function(){ alignVenueRow(); })
+      .observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+  }
+
+  /* =====  B) Pull-to-close v4: downward pull only, stronger threshold, must release  ===== */
+  if (!window.__PullToClose_v4){
+    window.__PullToClose_v4 = true;
+
+    function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
+    var startY = null;
+    var maxPullDown = 0;
+    var active = false;
+    var THRESHOLD_DOWN = 150;  // stronger than v3 (prevents accidental close on slight gestures)
+
+    function onTouchStart(e){
+      var t = e.touches && e.touches[0];
+      var sc = scroller();
+      if (!t || !sc) return;
+      // only arm at absolute top
+      active = (sc.scrollTop <= 2);
+      startY = t.clientY;
+      maxPullDown = 0;
+    }
+    function onTouchMove(e){
+      if (!active) return;
+      var t = e.touches && e.touches[0];
+      var sc = scroller();
+      if (!t || !sc) return;
+      var dy = t.clientY - (startY == null ? t.clientY : startY);
+      // Only count downward pulls
+      if (dy > maxPullDown) maxPullDown = dy;
+    }
+    function onTouchEnd(){
+      try {
+        if (!active) return;
+        var sc = scroller(); if (!sc) return;
+        // Close ONLY if at top and downward pull exceeded strong threshold
+        if (sc.scrollTop <= 2 && maxPullDown > THRESHOLD_DOWN) {
+          if (typeof window.universalCloseViewer === 'function') {
+            window.universalCloseViewer();
+          } else {
+            var btn = document.getElementById('close-doc');
+            if (btn && typeof btn.click === 'function') btn.click();
+            if (window.$) try { $('#close-doc').trigger('click'); } catch(_){}
+          }
+        }
+      } finally {
+        active = false;
+        startY = null;
+        maxPullDown = 0;
+      }
+    }
+
+    function bind(){
+      var sc = scroller();
+      if (!sc || sc.__pullCloseV4Bound) return;
+      sc.__pullCloseV4Bound = true;
+      sc.addEventListener('touchstart', onTouchStart, {passive:true});
+      sc.addEventListener('touchmove',  onTouchMove,  {passive:true});
+      sc.addEventListener('touchend',   onTouchEnd,   {passive:true});
+    }
+
+    bind();
+    new MutationObserver(function(){ bind(); })
+      .observe(document.body, {childList:true, subtree:true});
+  }
+})();
+</script>
+
+
+<!-- BEGIN: Minimal iPad NEXT/PREV/CLOSE fix (non-invasive) -->
+<script>
+(function () {
+  function wireAllPdfTopButtons() {
+    // Bind to *all* duplicated IDs safely
+    var nextBtns = document.querySelectorAll('[id="pdf-btn-next"]');
+    var prevBtns = document.querySelectorAll('[id="pdf-btn-prev"]');
+    var closeBtns = document.querySelectorAll('[id="pdf-btn-close"]');
+
+    function safeBind(nodeList, handler) {
+      if (!nodeList) return;
+      nodeList.forEach(function(btn) {
+        if (!btn || btn.__pdfNavWired) return;
+        btn.addEventListener('click', function(e){
+          try {
+            // Make sure our handler wins even if other listeners exist
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation && e.stopImmediatePropagation();
+            handler();
+          } catch (err) {
+            console && console.warn && console.warn('Top-bar button handler error:', err);
+          }
+        }, true); // capture to ensure we intercept first
+        btn.__pdfNavWired = true;
+      });
+    }
+
+    // Handlers call your existing in-memory navigator; no forwarding to hidden buttons
+    function doNext() { if (typeof callNext === 'function') { callNext(); } }
+    function doPrev() { if (typeof callPrev === 'function') { callPrev(); } }
+    function doClose(){ if (typeof callClose=== 'function') { callClose(); } }
+
+    safeBind(nextBtns, doNext);
+    safeBind(prevBtns, doPrev);
+    safeBind(closeBtns, doClose);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wireAllPdfTopButtons);
+  } else {
+    wireAllPdfTopButtons();
+  }
+
+  // Also re-wire after dynamic overlay re-renders, if your app mutates the DOM
+  document.addEventListener('rebuild-pdf-overlay', function(){ wireAllPdfTopButtons(); });
+})();
+</script>
+<!-- END: Minimal iPad NEXT/PREV/CLOSE fix (non-invasive) -->
+
+
+<!-- BEGIN: Robust iPad overlay NEXT/PREV fix (state from viewer index) -->
+<script>
+(function(){
+  if (window.__pdfNavRobustPatch) return;
+  window.__pdfNavRobustPatch = true;
+
+  function $(id){ return document.getElementById(id); }
+
+  function computeOverlayNavState(){
+    try {
+      var prevB = $('pdf-btn-prev');
+      var nextB = $('pdf-btn-next');
+      if (!prevB || !nextB) return;
+
+      var list = Array.isArray(window.currentViewerList) ? window.currentViewerList : null;
+      var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
+      var len = list ? list.length : 0;
+
+      var prevDisabled = !list || i <= 0;
+      var nextDisabled = !list || i >= len - 1;
+
+      prevB.classList.toggle('disabled', prevDisabled);
+      nextB.classList.toggle('disabled', nextDisabled);
+      prevB.tabIndex = prevDisabled ? -1 : 0;
+      nextB.tabIndex = nextDisabled ? -1 : 0;
+    } catch(e){ /* noop */ }
+  }
+
+  function bindOverlayButtons(){
+    var prevB = $('pdf-btn-prev');
+    var nextB = $('pdf-btn-next');
+    var closeB= $('pdf-btn-close');
+    if (!prevB || !nextB || prevB.__robustBound) return;
+
+    var wrap = function(handler){
+      return function(ev){
+        try {
+          ev.preventDefault();
+          ev.stopPropagation();
+          ev.stopImmediatePropagation && ev.stopImmediatePropagation();
+        } catch(e){}
+        try { handler(); } catch(e){}
+        // Recompute after action (in case overlay stays open)
+        setTimeout(computeOverlayNavState, 0);
+      };
+    };
+
+    // Direct, context-aware nav (no forwarding to hidden buttons)
+    if (typeof window.callPrev === 'function') prevB.addEventListener('click', wrap(function(){ if (!prevB.classList.contains('disabled')) window.callPrev(); }), true);
+    if (typeof window.callNext === 'function') nextB.addEventListener('click', wrap(function(){ if (!nextB.classList.contains('disabled')) window.callNext(); }), true);
+    if (typeof window.callClose === 'function' && closeB) closeB.addEventListener('click', wrap(function(){ window.callClose(); }), true);
+
+    prevB.__robustBound = true;
+    nextB.__robustBound = true;
+    if (closeB) closeB.__robustBound = true;
+
+    computeOverlayNavState();
+  }
+
+  // Patch openSongInContext to recompute when a new song opens
+  (function patchOpenSongInContext(){
+    if (typeof window.openSongInContext !== 'function' || window.__openSongInContextPatched) return;
+    var _orig = window.openSongInContext;
+    window.openSongInContext = function(){
+      var res = _orig.apply(this, arguments);
+      try { computeOverlayNavState(); } catch(e){}
+      return res;
+    };
+    window.__openSongInContextPatched = true;
+  })();
+
+  // Observe overlay activation and DOM changes to (re)bind and recompute
+  var mo = new MutationObserver(function(){
+    if (document.documentElement.classList.contains('pdf-overlay-active')) {
+      bindOverlayButtons();
+      computeOverlayNavState();
+    }
+  });
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+  // In case buttons are injected later inside the overlay
+  var overlay = document.getElementById('pdf-overlay') || document.body;
+  var mo2 = new MutationObserver(function(){ bindOverlayButtons(); computeOverlayNavState(); });
+  mo2.observe(overlay, { childList: true, subtree: true });
+
+  if (document.documentElement.classList.contains('pdf-overlay-active')) {
+    bindOverlayButtons();
+    computeOverlayNavState();
+  } else {
+    // Still ensure bindings in case overlay shows immediately after this executes
+    setTimeout(function(){ bindOverlayButtons(); computeOverlayNavState(); }, 0);
+  }
+})();
+</script>
+<!-- END: Robust iPad overlay NEXT/PREV fix (state from viewer index) -->
+
+
+<!-- BEGIN: Ultra-robust iPad NEXT/PREV overlay fix -->
+<script>
+(function(){
+  if (window.__ultraRobustPdfNav) return;
+  window.__ultraRobustPdfNav = true;
+
+  // --- Utilities ---
+  function byId(id){ return document.getElementById(id); }
+  function toArray(nl){ return Array.prototype.slice.call(nl || []); }
+  function visible(el){
+    if (!el) return false;
+    var r = el.getBoundingClientRect();
+    var style = window.getComputedStyle(el);
+    return style && style.display !== 'none' && style.visibility !== 'hidden' && r.width > 0 && r.height > 0;
+  }
+  function uniq(arr){
+    var seen = Object.create(null);
+    var out = [];
+    (arr||[]).forEach(function(x){
+      if (x == null) return;
+      var k = String(x);
+      if (!seen[k]) { seen[k] = true; out.push(x); }
+    });
+    return out;
+  }
+
+  // --- Global state fallbacks ---
+  window.__viewerState = window.__viewerState || {
+    list: null,          // array of ids/paths
+    index: -1,           // current index
+    lastId: null         // last opened id
+  };
+
+  // Heuristic: extract an identifier from a node
+  function nodeId(el){
+    if (!el) return null;
+    return el.getAttribute('data-song-id') ||
+           el.getAttribute('data-id') ||
+           el.getAttribute('data-file-id') ||
+           el.getAttribute('data-path') ||
+           el.getAttribute('data-name') ||
+           el.getAttribute('data-key') ||
+           (el.dataset ? (el.dataset.songId || el.dataset.id || el.dataset.fileId || el.dataset.path || el.dataset.name || el.dataset.key) : null) ||
+           (el.id && !/^pdf-btn/.test(el.id) ? el.id : null) ||
+           el.textContent && el.textContent.trim();
+  }
+
+  // Find a visible "current list" of file elements in the active pane
+  function findVisibleFileNodes(){
+    var containers = toArray(document.querySelectorAll(
+      // try common pane/list containers in this app
+      '.setlist, .setlist-pane, .setlist-items, .setlist-songs, .master-list, .master-pane, .songs, .song-list, [data-role="setlist"], [data-role="master"]'
+    )).filter(visible);
+
+    // fallback: any visible scrollable list
+    if (!containers.length) {
+      containers = toArray(document.querySelectorAll('ul, ol, div')).filter(function(c){
+        if (!visible(c)) return false;
+        var style = getComputedStyle(c);
+        return (c.scrollHeight > c.clientHeight + 10) || (style.overflowY && style.overflowY !== 'visible');
+      });
+    }
+
+    var nodes = [];
+    containers.forEach(function(c){
+      var candidates = toArray(c.querySelectorAll('[data-song-id], [data-id], [data-file-id], [data-path], [data-name], [data-key], .song, .song-row, li, a, button'));
+      candidates.forEach(function(n){
+        if (!visible(n)) return;
+        var id = nodeId(n);
+        if (!id) return;
+        // avoid overlay controls
+        if (n.closest && n.closest('#pdf-overlay, #pdf-btn-bar')) return;
+        nodes.push({el:n, id:id});
+      });
+    });
+
+    // group by id and order by DOM order
+    var ids = uniq(nodes.map(function(x){ return x.id; }));
+    return { nodes:nodes, ids: ids };
+  }
+
+  // Try to programmatically open a file by id using common patterns
+  function openById(id){
+    if (!id) return false;
+    // Prefer native function if available
+    if (typeof window.openSongInContext === 'function') {
+      try { window.openSongInContext(id); return true; } catch(e){}
+    }
+    // Otherwise click the corresponding node
+    var match = toArray(document.querySelectorAll('[data-song-id="'+CSS.escape(id)+'"], [data-id="'+CSS.escape(id)+'"], [data-file-id="'+CSS.escape(id)+'"]'));
+    if (!match.length) {
+      // try text match (last resort)
+      match = toArray(document.querySelectorAll('.song, .song-row, li, a, button')).filter(function(n){
+        return visible(n) && n.textContent && n.textContent.trim() === String(id);
+      });
+    }
+    if (match.length) { match[0].click(); return true; }
+    return false;
+  }
+
+  // Build/refresh the viewer list + index around a known current id
+  function rebuildViewerState(knownId){
+    var found = findVisibleFileNodes();
+    var ids = found.ids;
+    if (!ids.length) return;
+
+    var currentId = knownId || window.__viewerState.lastId;
+    var idx = ids.indexOf(currentId);
+    if (idx < 0) {
+      // If we don't know, just assume the first match is current (better than nothing)
+      idx = Math.max(0, Math.min(window.__viewerState.index, ids.length - 1));
+      currentId = ids[idx];
+    }
+    window.__viewerState.list = ids;
+    window.__viewerState.index = idx;
+    window.__viewerState.lastId = currentId;
+  }
+
+  // Fallback next/prev if native not present
+  function fallbackNext(){
+    if (!window.__viewerState.list) rebuildViewerState();
+    var list = window.__viewerState.list || [];
+    var i = window.__viewerState.index;
+    if (i < 0 || i >= list.length - 1) return;
+    var nextId = list[i+1];
+    if (openById(nextId)) {
+      window.__viewerState.index = i+1;
+      window.__viewerState.lastId = nextId;
+    }
+  }
+  function fallbackPrev(){
+    if (!window.__viewerState.list) rebuildViewerState();
+    var list = window.__viewerState.list || [];
+    var i = window.__viewerState.index;
+    if (i <= 0) return;
+    var prevId = list[i-1];
+    if (openById(prevId)) {
+      window.__viewerState.index = i-1;
+      window.__viewerState.lastId = prevId;
+    }
+  }
+
+  // Wire overlay buttons (prefer native, else fallback)
+  function bindOverlayButtons(){
+    var prevB = byId('pdf-btn-prev');
+    var nextB = byId('pdf-btn-next');
+    var closeB= byId('pdf-btn-close');
+    if (!nextB || nextB.__ultraBound) return;
+
+    var onNext = function(e){
+      e && (e.preventDefault(), e.stopPropagation(), e.stopImmediatePropagation && e.stopImmediatePropagation());
+      if (typeof window.callNext === 'function') { window.callNext(); return; }
+      fallbackNext();
+    };
+    var onPrev = function(e){
+      e && (e.preventDefault(), e.stopPropagation(), e.stopImmediatePropagation && e.stopImmediatePropagation());
+      if (typeof window.callPrev === 'function') { window.callPrev(); return; }
+      fallbackPrev();
+    };
+    var onClose = function(e){
+      e && (e.preventDefault(), e.stopPropagation(), e.stopImmediatePropagation && e.stopImmediatePropagation());
+      if (typeof window.callClose === 'function') { window.callClose(); return; }
+      // Fallback: remove overlay if we can
+      var o = document.getElementById('pdf-overlay');
+      if (o) o.remove();
+      document.documentElement.classList.remove('pdf-overlay-active');
+    };
+
+    // capture-phase to beat other listeners
+    if (prevB) prevB.addEventListener('click', onPrev, true);
+    if (nextB) nextB.addEventListener('click', onNext, true);
+    if (closeB) closeB.addEventListener('click', onClose, true);
+
+    if (prevB) prevB.__ultraBound = true;
+    if (nextB) nextB.__ultraBound = true;
+    if (closeB) closeB.__ultraBound = true;
+  }
+
+  // Patch the native opener to capture current id & rebuild list
+  (function patchOpener(){
+    if (window.__openerPatched) return;
+    var orig = window.openSongInContext;
+    // Wrap even if undefined; we'll replace later when it appears.
+    function wrap(fn){
+      return function wrappedOpen(){
+        var idLike = arguments[0] != null ? String(arguments[0]) : null;
+        try {
+          // If the first arg isn't an id, try to extract from object-like
+          if (idLike && /Object/.test(Object.prototype.toString.call(arguments[0]))){
+            var o = arguments[0];
+            idLike = o.id || o.songId || o.fileId || o.path || o.name || null;
+          }
+        } catch(e){}
+        var res;
+        try { res = fn && fn.apply(this, arguments); } catch(e){ res = undefined; }
+        if (idLike) window.__viewerState.lastId = String(idLike);
+        rebuildViewerState(idLike);
+        setTimeout(function(){ bindOverlayButtons(); }, 0);
+        return res;
+      };
+    }
+    if (typeof orig === 'function') {
+      window.openSongInContext = wrap(orig);
+    } else {
+      // If it appears later, patch then
+      Object.defineProperty(window, 'openSongInContext', {
+        configurable: true,
+        enumerable: true,
+        set: function(v){
+          Object.defineProperty(window, 'openSongInContext', { value: wrap(v), writable: false, configurable: true });
+        },
+        get: function(){ return undefined; }
+      });
+    }
+    window.__openerPatched = true;
+  })();
+
+  // Rebind on overlay visibility / DOM mutations
+  var docMo = new MutationObserver(function(){
+    bindOverlayButtons();
+  });
+  docMo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  var bodyMo = new MutationObserver(function(){ bindOverlayButtons(); });
+  bodyMo.observe(document.body, { childList: true, subtree: true });
+
+  // Initial attempt
+  bindOverlayButtons();
+})();
+</script>
+<!-- END: Ultra-robust iPad NEXT/PREV overlay fix -->
 
 </body>
 
