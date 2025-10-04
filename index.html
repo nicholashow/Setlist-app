@@ -1591,34 +1591,22 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 }
 
 
-/* === Sidebar: page-covers-it animation (keeps your collapse, hides inner motion) === */
+/* === Cover-the-sidebar animation (no black flash, no visible reflow) === */
 .left-col { position: relative; overflow: hidden; }
+.left-col.__lock { will-change: auto; } /* width/height locked inline during anim */
 
-/* Curtain that sweeps across the sidebar */
-.left-col::after {
-  content: "";
+/* The cover sheet is a real element (not ::after) so we can set dynamic bg */
+.left-col .__cover-sheet {
   position: absolute;
   inset: 0;
   width: 0%;
-  background: #111827;               /* dark sidebar tone */
-  transition: width 0.35s ease;
-  z-index: 2;                         /* above sidebar content */
+  z-index: 5;            /* above all sidebar content */
   pointer-events: none;
-}
-.dark .left-col::after { background: #000; }
-
-/* Freeze inner content during animation so it never visibly moves */
-.left-col.__cover-freeze > .left-col-main-content,
-.left-col.__cover-freeze > .stats-container {
-  visibility: hidden !important;
+  transition: width 0.32s ease;
 }
 
-/* Closing: grow the curtain to fully cover as the sidebar collapses behind it */
-.left-col.__covering-close::after { width: 100%; }
-
-/* Opening: start fully covered, then reveal by shrinking the curtain */
-.left-col.__covering-open::after { width: 100%; }
-.left-col.__covering-open.__reveal::after { width: 0%; }
+/* Freeze inner content so nothing visibly moves during anim */
+.left-col.__freeze > * { visibility: hidden !important; }
 
 </style>
 </head>
@@ -4205,46 +4193,85 @@ function destroyPdfOverlay() {
 
 
 <script>
-// === Page-covers-sidebar animation controller (non-destructive) ===
-// Works alongside your existing collapse logic. We only add a visual curtain
-// and temporarily hide inner content so you don't see it moving.
 (function(){
-  var DUR = 350; // must match CSS transition (ms)
+  var DUR = 320; // ms: keep snappy
+
+  function q(sel){ return document.querySelector(sel); }
+  function makeSheet(side, bg){
+    var sheet = document.createElement('div');
+    sheet.className = '__cover-sheet';
+    // Use MAIN's background color to avoid black flash
+    sheet.style.background = bg || '#fff';
+    side.appendChild(sheet);
+    return sheet;
+  }
+
+  function bgFromMain(){
+    var m = q('main') || q('#app') || document.body;
+    var bg = getComputedStyle(m).backgroundColor;
+    // Fallback to white if transparent
+    if (!bg || bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent') bg = '#ffffff';
+    return bg;
+  }
+
+  function lockDims(side){
+    var r = side.getBoundingClientRect();
+    side.style.width = r.width + 'px';
+    side.style.height = r.height + 'px';
+    side.classList.add('__lock');
+  }
+  function unlockDims(side){
+    side.style.width = '';
+    side.style.height = '';
+    side.classList.remove('__lock');
+  }
 
   function isCollapsed(){
-    var side = document.querySelector('.left-col');
+    var side = q('.left-col');
     return !!(side && side.classList.contains('collapsed'));
   }
 
-  function startClosing(){
-    var side = document.querySelector('.left-col');
+  // Called BEFORE your existing collapse runs (capture listener)
+  function onToggle(){
+    var side = q('.left-col');
     if (!side) return;
-    side.classList.add('__cover-freeze','__covering-close');
-    // Let your existing code toggle .collapsed & main layout as usual
-    setTimeout(function(){
-      side.classList.remove('__covering-close','__cover-freeze');
-    }, DUR + 40);
+    var mainBg = bgFromMain();
+    var sheet = makeSheet(side, mainBg);
+    lockDims(side);
+    side.classList.add('__freeze');
+
+    if (!isCollapsed()){
+      // CLOSING: grow sheet to full width while sidebar collapses behind
+      requestAnimationFrame(function(){
+        sheet.style.width = '100%';
+        setTimeout(function(){
+          cleanup();
+        }, DUR + 30);
+      });
+    } else {
+      // OPENING: start sheet full, then reveal to 0
+      sheet.style.width = '100%';
+      // Ensure the class flip that expands sidebar happens while frozen
+      requestAnimationFrame(function(){
+        sheet.style.width = '0%';
+        setTimeout(function(){
+          cleanup();
+        }, DUR + 30);
+      });
+    }
+
+    function cleanup(){
+      side.classList.remove('__freeze');
+      if (sheet && sheet.parentNode) sheet.parentNode.removeChild(sheet);
+      unlockDims(side);
+    }
   }
 
-  function startOpening(){
-    var side = document.querySelector('.left-col');
-    if (!side) return;
-    side.classList.add('__cover-freeze','__covering-open');
-    requestAnimationFrame(function(){
-      side.classList.add('__reveal'); // shrink curtain back to 0%
-      setTimeout(function(){
-        side.classList.remove('__covering-open','__reveal','__cover-freeze');
-      }, DUR + 40);
-    });
-  }
-
-  // Hook the existing toggle button in capture phase so our curtain starts first
   document.addEventListener('DOMContentLoaded', function(){
     var btn = document.getElementById('sidebar-toggle');
     if (!btn) return;
-    btn.addEventListener('click', function(){
-      if (!isCollapsed()) startClosing(); else startOpening();
-    }, true);
+    // Capture so our sheet appears before any width/visibility changes inside sidebar
+    btn.addEventListener('click', onToggle, true);
   });
 })();
 </script>
