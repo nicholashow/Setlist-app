@@ -1596,9 +1596,6 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
     <div id="app">
         <aside class="left-col w-64 bg-gray-800 text-white flex-shrink-0 dark:bg-black">
-  <!-- Curtain that visually covers the sidebar during open/close -->
-  <div id="sidebar-curtain" aria-hidden="true"></div>
-
             <div class="left-col-main-content">
                 <div class="app-header app-header-selected" id="home-btn">
                     <h1 class="text-2xl font-bold mb-2 underline">ALL SONGS</h1>
@@ -3805,39 +3802,6 @@ function destroyPdfOverlay() {
 <style>
 #genre-name::placeholder, #venue-name::placeholder { text-align: center; }
 #genre-name, #venue-name { text-align: center; } /* helps iOS Safari */
-
-
-/* === Modern sidebar “cover” animation === */
-#sidebar-curtain{
-  position:absolute; inset:0;
-  background:#1f2937;           /* match .left-col bg (light) */
-  opacity:0;
-  transform:scaleX(0);          /* invisible, shrunk to left edge */
-  transform-origin:left center;
-  will-change:transform, opacity;
-  pointer-events:none;
-  z-index:25;                   /* above sidebar content, below toggle */
-}
-.dark #sidebar-curtain{ background:#000; }
-
-.left-col.animating #sidebar-curtain{
-  transition:transform .32s cubic-bezier(.4,0,.2,1), opacity .2s ease-out;
-}
-
-/* Hide inner content subtly while the curtain passes (no layout shift) */
-.left-col.animating .left-col-main-content,
-.left-col.animating .stats-container{
-  filter:blur(0.25px);          /* micro-blur masks subpixel jiggle */
-}
-
-/* Keep your main content transition; ensure it never flashes */
-main{ backface-visibility:hidden; }
-
-/* Reduced motion: snap instantly */
-@media (prefers-reduced-motion: reduce){
-  .left-col, main, #sidebar-curtain{ transition:none !important; }
-}
-
 </style>
 <script>
 (function(){
@@ -4206,89 +4170,6 @@ main{ backface-visibility:hidden; }
     // Also run once more after layout settles
     setTimeout(syncAll, 0);
   });
-})();
-</script>
-
-
-<script>
-/* sidebar curtain toggle v1 */
-(function(){
-  const sidebar = document.querySelector('.left-col');
-  const main = document.querySelector('main');
-  const btn  = document.querySelector('#sidebar-toggle');
-  const curtain = document.querySelector('#sidebar-curtain');
-  if(!sidebar || !main || !curtain) return;
-
-  // allow operation even if toggle button is missing; expose functions globally
-  const SIDEBAR_W = (()=>{
-    const w = sidebar.getBoundingClientRect().width;
-    return (w && w > 0) ? Math.round(w) : 256; // fallback to w-64
-  })();
-  const DURATION  = 320; // ms (matches CSS)
-
-  function setMainOffset(collapsed){
-    main.style.marginLeft = collapsed ? '0px' : SIDEBAR_W + 'px';
-  }
-
-  // Initialize based on current class
-  setMainOffset(sidebar.classList.contains('collapsed'));
-
-  function closeSidebar(){
-    if (sidebar.classList.contains('collapsed')) return;
-    sidebar.classList.add('animating');
-    curtain.style.opacity = '1';
-    curtain.style.transformOrigin = 'left center';
-    curtain.style.transform = 'scaleX(0)';
-    requestAnimationFrame(()=>{
-      curtain.style.transform = 'scaleX(1)';
-      setMainOffset(true);
-    });
-    setTimeout(()=>{
-      sidebar.classList.add('collapsed');
-      sidebar.classList.remove('animating');
-      curtain.style.opacity = '0';
-      curtain.style.transform = 'scaleX(0)';
-      afterToggleCallback();
-    }, DURATION);
-  }
-
-  function openSidebar(){
-    if (!sidebar.classList.contains('collapsed')) return;
-    sidebar.classList.remove('collapsed');
-    sidebar.classList.add('animating');
-    curtain.style.opacity = '1';
-    curtain.style.transformOrigin = 'left center';
-    curtain.style.transform = 'scaleX(1)';
-    requestAnimationFrame(()=>{
-      setMainOffset(false);
-      curtain.style.transform = 'scaleX(0)';
-    });
-    setTimeout(()=>{
-      sidebar.classList.remove('animating');
-      curtain.style.opacity = '0';
-      afterToggleCallback();
-    }, DURATION);
-  }
-
-  function afterToggleCallback(){
-    const evt = new CustomEvent('sidebar:toggled', { detail:{ collapsed: sidebar.classList.contains('collapsed') } });
-    document.dispatchEvent(evt);
-  }
-
-  // Wire button if present
-  if (btn) {
-    btn.addEventListener('click', ()=>{
-      const collapsed = sidebar.classList.contains('collapsed');
-      collapsed ? openSidebar() : closeSidebar();
-    });
-  }
-
-  // Offer programmatic API
-  window.sidebarCurtain = { openSidebar, closeSidebar };
-
-  // Keep main offset synced if other code flips the class
-  const obs = new MutationObserver(()=> setMainOffset(sidebar.classList.contains('collapsed')));
-  obs.observe(sidebar, { attributes:true, attributeFilter:['class'] });
 })();
 </script>
 
