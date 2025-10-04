@@ -2413,8 +2413,8 @@ function destroyPdfOverlay() {
     } catch(e){ console.warn('Forward click failed for', id, e); }
   }
 
-  prevB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('prev-doc'); });
-  nextB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('next-doc'); });
+  prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true);
+  nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true);
   closeB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('close-doc'); });
 
   function showBar(){
@@ -2527,8 +2527,8 @@ function destroyPdfOverlay() {
     if (isDisabledFn && isDisabledFn()) return;
     forwardClick(id);
   }
-  prevB.addEventListener('click', function(e){ guard(e, 'prev-doc', function(){ return prevB.classList.contains('disabled'); }); });
-  nextB.addEventListener('click', function(e){ guard(e, 'next-doc', function(){ return nextB.classList.contains('disabled'); }); });
+  prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true); });
+  nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true); });
   closeB.addEventListener('click', function(e){ guard(e, 'close-doc', null); });
 
   // Reveal on top tap
@@ -2655,16 +2655,8 @@ function destroyPdfOverlay() {
   }
 
   // Clicks (guard against disabled)
-  prevB.addEventListener('click', function(e){
-    e.stopPropagation();
-    if (prevB.classList.contains('disabled')) return;
-    forward('prev-doc', ['goPrev','prevSong','previousSong']);
-  });
-  nextB.addEventListener('click', function(e){
-    e.stopPropagation();
-    if (nextB.classList.contains('disabled')) return;
-    forward('next-doc', ['goNext','nextSong']);
-  });
+  prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true);
+  nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true);
   closeB.addEventListener('click', function(e){
     e.stopPropagation();
     forward('close-doc', ['closeDocViewer','hideOverlay','closeViewer']);
@@ -2789,16 +2781,8 @@ function destroyPdfOverlay() {
   }
 
   // Button clicks with guards
-  prevB.addEventListener('click', function(e){
-    e.stopPropagation();
-    if (prevB.classList.contains('disabled')) return;
-    forward('prev-doc', ['goPrev','prevSong','previousSong'], false);
-  });
-  nextB.addEventListener('click', function(e){
-    e.stopPropagation();
-    if (nextB.classList.contains('disabled')) return;
-    forward('next-doc', ['goNext','nextSong'], false);
-  });
+  prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true);
+  nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true);
   closeB.addEventListener('click', function(e){
     e.stopPropagation();
     // Close should always work: forward + explicit teardown
@@ -2985,16 +2969,8 @@ function destroyPdfOverlay() {
     if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
   }
 
-  prevB && prevB.addEventListener('click', function(e){
-    e.stopPropagation();
-    if (prevB.classList.contains('disabled')) return;
-    callPrev();
-  });
-  nextB && nextB.addEventListener('click', function(e){
-    e.stopPropagation();
-    if (nextB.classList.contains('disabled')) return;
-    callNext();
-  });
+  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true);
+  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true);
   closeB && closeB.addEventListener('click', function(e){
     e.stopPropagation();
     callClose();
@@ -3191,8 +3167,8 @@ function destroyPdfOverlay() {
     return ok;
   }
 
-  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); callPrev(); });
-  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); callNext(); });
+  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true);
+  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true);
   closeB && closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
 })();
 </script>
@@ -3307,8 +3283,8 @@ function destroyPdfOverlay() {
     return ok;
   }
 
-  prevB.addEventListener('click', function(e){ e.stopPropagation(); if (!prevB.classList.contains('disabled')) callPrev(); });
-  nextB.addEventListener('click', function(e){ e.stopPropagation(); if (!nextB.classList.contains('disabled')) callNext(); });
+  prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true);
+  nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true);
   closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
 
   function onTopTap(){ if (atTop()) showBar(); }
@@ -3542,8 +3518,8 @@ function destroyPdfOverlay() {
     return ok;
   }
 
-  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); if (!prevB.classList.contains('disabled')) callPrev(); });
-  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); if (!nextB.classList.contains('disabled')) callNext(); });
+  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('prev-doc'); if(el) el.click(); } catch(_){} }, true);
+  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); try { var el=document.getElementById('next-doc'); if(el) el.click(); } catch(_){} }, true);
   closeB && closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
 
   function onTopTap(){ if (atTop()) showBar(); }
@@ -3908,55 +3884,6 @@ function destroyPdfOverlay() {
   }
 })();
 </script>
-
-
-<!-- BEGIN: Delegated overlay NEXT/PREV fix (handles duplicate IDs safely) -->
-<script>
-(function(){
-  if (window.__delegatedPdfNavFix) return;
-  window.__delegatedPdfNavFix = true;
-
-  function doNext(){
-    // 1) Prefer the existing app handler
-    var nextBase = document.getElementById('next-doc');
-    if (nextBase) { nextBase.click(); return; }
-    // 2) Fallback to callNext
-    if (typeof window.callNext === 'function') { window.callNext(); return; }
-    // 3) Last resort: compute from in-memory list
-    var list = Array.isArray(window.currentViewerList) ? window.currentViewerList : null;
-    var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
-    if (list && i >= 0 && i < list.length - 1 && typeof window.openSongInContext === 'function') {
-      window.openSongInContext(list[i+1].id, window.currentViewerContext, i+1, 'next');
-    }
-  }
-  function doPrev(){
-    var prevBase = document.getElementById('prev-doc');
-    if (prevBase) { prevBase.click(); return; }
-    if (typeof window.callPrev === 'function') { window.callPrev(); return; }
-    var list = Array.isArray(window.currentViewerList) ? window.currentViewerList : null;
-    var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
-    if (list && i > 0 && typeof window.openSongInContext === 'function') {
-      window.openSongInContext(list[i-1].id, window.currentViewerContext, i-1, 'prev');
-    }
-  }
-
-  // Use delegated listeners to catch clicks even if there are multiple copies / re-renders.
-  document.addEventListener('click', function(e){
-    var t = e.target;
-    // match the button or any child inside it
-    var prevBtn = t.closest && t.closest('#pdf-prev');
-    var nextBtn = t.closest && t.closest('#pdf-next');
-    if (prevBtn){
-      e.preventDefault(); e.stopPropagation();
-      doPrev();
-    } else if (nextBtn){
-      e.preventDefault(); e.stopPropagation();
-      doNext();
-    }
-  }, true); // capture to win against other handlers
-})();
-</script>
-<!-- END: Delegated overlay NEXT/PREV fix (handles duplicate IDs safely) -->
 
 </body>
 
