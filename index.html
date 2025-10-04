@@ -1498,6 +1498,67 @@ html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
 html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 
 
+
+/* === Setlist Details: unified centered placeholders (Date, Venue, Order) === */
+#setlist-details-content input,
+#setlist-details-content select {
+  height: 34px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;          /* center typed text */
+}
+
+/* Centered white placeholder for Venue */
+#setlist-venue::placeholder {
+  color: #ffffff !important;
+  opacity: 1;
+  text-align: center;
+}
+
+/* Date "placeholder" is a sibling span because date inputs don't support ::placeholder reliably */
+#setlist-date-container {
+  position: relative;
+}
+#date-placeholder {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff !important;   /* always white */
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Ensure date input content is centered and text is visible */
+#setlist-date {
+  text-align: center;
+  color: #ffffff;               /* typed date text white */
+}
+.dark #setlist-date {
+  color: #ffffff;
+}
+.dark #setlist-date::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* Order select: center displayed value text and keep it white */
+#setlist-sort-filter-dropdown {
+  text-align: center;
+  text-align-last: center;      /* centers selected option in most browsers */
+  color: #ffffff !important;
+}
+.dark #setlist-sort-filter-dropdown {
+  color: #ffffff !important;
+}
+/* The dropdown arrow container color (so it doesn't clash) */
+#setlist-details-content .pointer-events-none svg {
+  color: #ffffff;
+  fill: currentColor;
+}
+
+
 </style>
 </head>
 
@@ -4001,6 +4062,26 @@ function destroyPdfOverlay() {
       if (typeof show === 'function') show('genre');
     }catch(e){ console.error('renderGenreView override error', e); }
   };
+})();
+</script>
+
+
+<script>
+// === Setlist Details: keep the date placeholder span visible only when empty ===
+(function(){
+  function updateDatePlaceholder(){
+    var $date = $('#setlist-date');
+    var $ph = $('#date-placeholder');
+    if ($date.length && $ph.length){
+      if (!$date.val()) { $ph.show(); } else { $ph.hide(); }
+    }
+  }
+  $(document).on('change input', '#setlist-date', updateDatePlaceholder);
+  $(document).on('click', '#setlist-details-toggle', function(){
+    // When expanding/collapsing, re-evaluate placeholder visibility
+    setTimeout(updateDatePlaceholder, 0);
+  });
+  $(function(){ updateDatePlaceholder(); });
 })();
 </script>
 
