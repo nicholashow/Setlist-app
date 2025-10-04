@@ -2417,7 +2417,25 @@ function destroyPdfOverlay() {
   nextB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('next-doc'); });
   closeB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('close-doc'); });
 
-  function showBar(){
+  
+  // NEW: wire the visible topbar buttons too
+  (function(){
+    var vPrev = document.getElementById('pdf-prev');
+    var vNext = document.getElementById('pdf-next');
+    if (vPrev && !vPrev.__wired){
+      vPrev.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('prev-doc'); }, true);
+      vPrev.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); forwardClick('prev-doc'); }, {passive:false, capture:true});
+      vPrev.__wired = true;
+    }
+    if (vNext && !vNext.__wired){
+      vNext.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('next-doc'); }, true);
+      vNext.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); forwardClick('next-doc'); }, {passive:false, capture:true});
+      vNext.__wired = true;
+    }
+    // Ensure they are interactive even if visually disabled
+    [vPrev, vNext].forEach(function(b){ if (!b) return; b.removeAttribute('disabled'); b.style.pointerEvents='auto'; b.style.touchAction='manipulation'; });
+  })();
+function showBar(){
     if (!bar) return;
     bar.classList.add('visible');
     if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
@@ -3908,168 +3926,6 @@ function destroyPdfOverlay() {
   }
 })();
 </script>
-
-
-<!-- BEGIN: HARDENED NAV OVERRIDE (DOM-derived, ignores fragile globals) -->
-<style>
-  /* Ensure the topbar always receives input */
-  #pdf-topbar, #pdf-topbar * { pointer-events: auto !important; }
-  #pdf-prev[disabled], #pdf-next[disabled] { pointer-events: auto !important; }
-  #pdf-prev.force-press, #pdf-next.force-press { filter: brightness(0.9); transform: translateY(0.4px); }
-</style>
-<script>
-(function(){
-  if (window.__HardenedNavInstalled) return;
-  window.__HardenedNavInstalled = true;
-
-  function q(sel, root){ return (root||document).querySelector(sel); }
-  function qa(sel, root){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
-  function id(el){
-    if (!el) return null;
-    var v = el.getAttribute('data-song-id') || el.getAttribute('data-id') || el.getAttribute('data-file-id') || el.getAttribute('data-key') || el.getAttribute('data-name');
-    if (v) return v;
-    if (el.dataset){ return el.dataset.songId || el.dataset.id || el.dataset.fileId || el.dataset.key || el.dataset.name || null; }
-    return null;
-  }
-
-  function visibleContainers(){
-    // prefer explicit containers; fall back to scrollable lists
-    var containers = qa('.setlist-songs, .song-list, [data-role="setlist"], [data-role="master"], .setlist, .setlist-pane').filter(function(c){
-      var s = getComputedStyle(c); var r = c.getBoundingClientRect();
-      return s.display !== 'none' && s.visibility !== 'hidden' && r.width>0 && r.height>0;
-    });
-    if (!containers.length){
-      containers = qa('ul, ol, .list, .pane, .scroll').filter(function(c){
-        var s = getComputedStyle(c); var r = c.getBoundingClientRect();
-        return s.display !== 'none' && s.visibility !== 'hidden' && (c.scrollHeight > c.clientHeight || r.height > 120);
-      });
-    }
-    return containers;
-  }
-
-  function deriveList(){
-    var ids = [];
-    var cs = visibleContainers();
-    for (var i=0;i<cs.length;i++){
-      var nodes = qa('[data-song-id], [data-id], [data-file-id], [data-key], [data-name], .song, .song-row, li, a, button', cs[i]);
-      for (var j=0;j<nodes.length;j++){
-        var k = id(nodes[j]);
-        if (!k) continue;
-        // Avoid overlay elements
-        if (nodes[j].closest && nodes[j].closest('#pdf-overlay, #pdf-topbar')) continue;
-        if (ids.indexOf(k) === -1) ids.push(k);
-      }
-      if (ids.length) break;
-    }
-    return ids;
-  }
-
-  function currentOpenId(){
-    // 1) If we have a stored id, use it
-    if (window.currentOpenSongId) return String(window.currentOpenSongId);
-    // 2) Try to read from overlay content (common patterns: data-* on overlay or src URL)
-    var overlay = q('#pdf-overlay') || q('.pdf-overlay');
-    if (overlay){
-      var k = id(overlay);
-      if (k) return String(k);
-      var frame = q('iframe, embed, object', overlay);
-      if (frame && frame.src) return frame.src.split('/').pop();
-    }
-    // 3) Fallback: if currentViewerList/index look sane, use that
-    if (Array.isArray(window.currentViewerList) && typeof window.currentViewerIndex === 'number'){
-      var item = window.currentViewerList[window.currentViewerIndex];
-      if (item){
-        var kid = (item.id || item.songId || item.fileId || item.path || item.name || (typeof item==='string'?item:null));
-        if (kid) return String(kid);
-      }
-    }
-    return null;
-  }
-
-  function openById(songId, idx, dir){
-    if (!songId || typeof window.openSongInContext !== 'function') return false;
-    var ctx = window.currentViewerContext || null;
-    try {
-      window.openSongInContext(songId, ctx, (typeof idx==='number'?idx:null), dir||'none');
-      window.currentOpenSongId = songId;
-      if (Array.isArray(window.currentViewerList)){
-        window.currentViewerIndex = (typeof idx==='number'?idx:window.currentViewerIndex||0);
-      }
-      return true;
-    } catch(e){ return false; }
-  }
-
-  function nav(dir){
-    var list = deriveList();
-    if (!list.length) return false;
-    var cur = currentOpenId();
-    var i = cur ? list.indexOf(cur) : -1;
-    if (i < 0) {
-      // If we can't map, assume first visible is current
-      i = 0;
-    }
-    var t = (dir==='next') ? i+1 : i-1;
-    if (t < 0 || t >= list.length) return false;
-    return openById(list[t], t, dir);
-  }
-
-  function makeInteractive(btn){
-    if (!btn) return;
-    btn.removeAttribute('disabled');
-    btn.style.pointerEvents = 'auto';
-    btn.style.touchAction = 'manipulation';
-  }
-
-  function bindDelegated(){
-    // capture-phase to preempt blockers; support duplicates
-    function handler(e, dir){
-      var target = e.target.closest ? e.target.closest(dir==='next' ? '#pdf-next' : '#pdf-prev') : null;
-      if (!target) return;
-      e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-      makeInteractive(target);
-      target.classList.add('force-press'); setTimeout(function(){ target.classList.remove('force-press'); }, 120);
-      nav(dir);
-    }
-    document.addEventListener('click', function(e){ handler(e, 'next'); }, true);
-    document.addEventListener('click', function(e){ handler(e, 'prev'); }, true);
-    document.addEventListener('touchend', function(e){ handler(e, 'next'); }, {passive:false, capture:true});
-    document.addEventListener('touchend', function(e){ handler(e, 'prev'); }, {passive:false, capture:true});
-  }
-
-  function keepAlive(){
-    // Ensure buttons remain interactive after overlay transitions/re-renders
-    var mo = new MutationObserver(function(){
-      var a = q('#pdf-next'), b = q('#pdf-prev');
-      if (a) makeInteractive(a);
-      if (b) makeInteractive(b);
-    });
-    mo.observe(document.documentElement, { attributes:true, attributeFilter:['class'] });
-    mo.observe(document.body, { childList:true, subtree:true });
-  }
-
-  // Patch the open method to remember the currently opened id
-  (function patchOpen(){
-    if (window.__HN_openPatched || typeof window.openSongInContext !== 'function') return;
-    var orig = window.openSongInContext;
-    window.openSongInContext = function(){
-      var arg = arguments[0];
-      var kid = (arg && (arg.id||arg.songId||arg.fileId||arg.path||arg.name)) || (typeof arg==='string'?arg:null);
-      var r = orig.apply(this, arguments);
-      if (kid) window.currentOpenSongId = String(kid);
-      return r;
-    };
-    window.__HN_openPatched = true;
-  })();
-
-  bindDelegated();
-  keepAlive();
-  // Initial sanitize
-  var a = q('#pdf-next'), b = q('#pdf-prev');
-  if (a) makeInteractive(a);
-  if (b) makeInteractive(b);
-})();
-</script>
-<!-- END: HARDENED NAV OVERRIDE -->
 
 </body>
 
