@@ -3909,6 +3909,64 @@ function destroyPdfOverlay() {
 })();
 </script>
 
-</body>
 
+<script>
+// === Drag into Genres: blue hover + assign song to genre ===
+(function(){
+  function attachGenreDroppables(){
+    var $items = $('#genre-list .genre-item');
+    if (!$items.length) return;
+    $items.each(function(){
+      var $el = $(this);
+      if ($el.data('genreDropReady')) return;
+      $el.data('genreDropReady', true);
+      $el.droppable({
+        accept: '.draggable',
+        tolerance: 'pointer',
+        hoverClass: 'drag-hover-setlist', // blue highlight to match favorites/setlists
+        drop: function(event, ui){
+          try {
+            var songId = $(ui.draggable).attr('id');
+            var genreName = $(this).data('name');
+            if (!songId || !genreName) return;
+            // Find song and genre objects
+            var s = masterSongs.find(function(x){ return String(x.id) === String(songId); });
+            if (!s) return;
+            s.genre = genreName;
+            var g = (typeof genres!=='undefined') ? genres.find(function(x){ return x.name === genreName; }) : null;
+            if (g && !s.color) { s.color = g.color; } // keep color in sync if app uses it
+            // Persist and refresh views
+            if (typeof save === 'function') save();
+            if ($('#genre-view').is(':visible')) {
+              if (typeof currentGenre !== 'undefined' && currentGenre === genreName && typeof renderGenreView === 'function') {
+                renderGenreView(genreName);
+              }
+            }
+            if ($('#master-view').is(':visible') && typeof renderMaster === 'function') {
+              renderMaster();
+            }
+            if ($('#setlist-view').is(':visible') && typeof renderSetlist === 'function') {
+              renderSetlist();
+            }
+          } catch(e){ console.error('Genre drop error:', e); }
+        }
+      });
+    });
+  }
+
+  // Observe dynamic changes to the genre list so droppable stays attached
+  $(function(){
+    attachGenreDroppables();
+    var gl = document.getElementById('genre-list');
+    if (gl && window.MutationObserver) {
+      var obs = new MutationObserver(function(){ attachGenreDroppables(); });
+      obs.observe(gl, {childList:true});
+    }
+    // Re-attach after any known re-renders
+    $(document).on('app:renderGenres app:navigate', function(){ attachGenreDroppables(); });
+  });
+})();
+</script>
+
+</body>
 </html>
