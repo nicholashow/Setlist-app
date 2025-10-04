@@ -3910,25 +3910,31 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- BEGIN: ULTRA ROBUST NEXT/PREV for iPad (touch+click, visual press) -->
-<style>
-  /* Visual press feedback without changing your design */
-  #pdf-prev.pressed, #pdf-next.pressed { filter: brightness(0.9); transform: translateY(0.5px); }
-</style>
+<!-- BEGIN: Robust NEXT/PREV core (context-aware, bypass disabled base) -->
 <script>
 (function(){
-  if (window.__ultraNavPatched) return;
-  window.__ultraNavPatched = true;
+  if (window.__robustCoreNavInstalled) return;
+  window.__robustCoreNavInstalled = true;
 
   function $id(id){ return document.getElementById(id); }
-  function arr(x){ return Array.isArray(x) ? x : []; }
-  function getId(item){ return item && (item.id || item.songId || item.fileId || item.path || item.name || (typeof item==='string' ? item : null)); }
-
-  function resolveList(){
+  function getId(item){
+    if (!item) return null;
+    if (typeof item === 'string') return item;
+    return item.id || item.songId || item.fileId || item.path || item.name || null;
+  }
+  function resolveViewerList(ctx){
+    // Prefer explicit viewer list
     if (Array.isArray(window.currentViewerList) && window.currentViewerList.length) return window.currentViewerList;
-    var cands = [window.currentSetlistSongs, window.currentSongs, window.masterSongs, window.currentGenreViewSongs, window.currentFavViewSongs];
-    for (var i=0;i<cands.length;i++){ if (Array.isArray(cands[i]) && cands[i].length) return cands[i]; }
-    // fallback scrape
+    // Try by context
+    var c = ctx || window.currentViewerContext || null;
+    if (c === 'setlist'  && Array.isArray(window.currentSetlistSongs)     && window.currentSetlistSongs.length)     return window.currentSetlistSongs;
+    if (c === 'master'   && Array.isArray(window.currentMasterViewSongs)  && window.currentMasterViewSongs.length)  return window.currentMasterViewSongs;
+    if (c === 'favorites'&& Array.isArray(window.currentFavViewSongs)     && window.currentFavViewSongs.length)     return window.currentFavViewSongs;
+    if (c === 'genre'    && Array.isArray(window.currentGenreViewSongs)   && window.currentGenreViewSongs.length)   return window.currentGenreViewSongs;
+    // Common fallbacks
+    if (Array.isArray(window.currentSongs) && window.currentSongs.length) return window.currentSongs;
+    if (Array.isArray(window.masterSongs)  && window.masterSongs.length)  return window.masterSongs;
+    // DOM scrape fallback
     var out = [];
     try {
       var root = document.querySelector('.setlist-songs, .song-list, [data-role="setlist"], [data-role="master"]') || document;
@@ -3939,87 +3945,107 @@ function destroyPdfOverlay() {
     } catch(e){}
     return out;
   }
-  function currentIndex(list){
+  function resolveIndex(list, knownId){
     var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
     if (i >= 0 && i < list.length) return i;
-    var cid = window.currentOpenSongId || (window.__viewerState && window.__viewerState.lastId) || null;
-    if (cid){ for (var k=0;k<list.length;k++) if (getId(list[k])===cid) return k; }
+    var cid = knownId || window.currentOpenSongId || (window.__viewerState && window.__viewerState.lastId) || null;
+    if (cid){
+      for (var k=0;k<list.length;k++) if (getId(list[k]) === cid) return k;
+    }
     return -1;
   }
-  function openByIndex(list, idx, dir){
-    var item = list[idx]; var id = getId(item);
-    if (id && typeof window.openSongInContext === 'function'){
-      window.openSongInContext(id, window.currentViewerContext, idx, dir||'none');
-      window.currentViewerList = list; window.currentViewerIndex = idx; window.currentOpenSongId = id;
-      requestAnimationFrame(syncVisual);
-      return true;
+
+  // Wrap existing calls; if they return false/no-op, we do robust navigation
+  function makeRobust(originalFn, dir){
+    return function(){
+      try {
+        if (typeof originalFn === 'function'){
+          var res = originalFn.apply(this, arguments);
+          // If original succeeded (truthy), we're done
+          if (res) { return res; }
+        }
+      } catch(_){}
+      // Robust path
+      var ctx = window.currentViewerContext || null;
+      var list = resolveViewerList(ctx);
+      var idx  = resolveIndex(list);
+      if (!list || !list.length) return false;
+      if (idx < 0) idx = 0; // if unknown, assume first
+      var target = (dir === 'next') ? idx + 1 : idx - 1;
+      if (target < 0 || target >= list.length) return false;
+      var id = getId(list[target]);
+      if (id && typeof window.openSongInContext === 'function'){
+        window.openSongInContext(id, ctx, target, dir);
+        // keep globals consistent
+        window.currentViewerList = list;
+        window.currentViewerIndex = target;
+        window.currentOpenSongId = id;
+        return true;
+      }
+      return false;
+    };
+  }
+
+  // Keep a reference to originals (if any)
+  var __origCallNext = (typeof window.callNext === 'function') ? window.callNext : null;
+  var __origCallPrev = (typeof window.callPrev === 'function') ? window.callPrev : null;
+
+  // Install robust wrappers
+  window.callNext = makeRobust(__origCallNext, 'next');
+  window.callPrev = makeRobust(__origCallPrev, 'prev');
+
+  // Use our robust calls from the overlay, capture-phase and touch-friendly
+  function bindOverlay(){
+    var prevBtn = $id('pdf-prev');
+    var nextBtn = $id('pdf-next');
+    if (prevBtn && !prevBtn.__robustBound){
+      prevBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); window.callPrev(); }, true);
+      prevBtn.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); window.callPrev(); }, {passive:false, capture:true});
+      prevBtn.__robustBound = true;
     }
-    return false;
-  }
-  function canPrev(){ var L=resolveList(), i=currentIndex(L); return L.length && i>0; }
-  function canNext(){ var L=resolveList(), i=currentIndex(L); return L.length && i>=0 && i<L.length-1; }
-  function doPrev(){ var L=resolveList(), i=currentIndex(L); if (i>0) openByIndex(L, i-1, 'prev'); else forwardBase('prev-doc'); }
-  function doNext(){ var L=resolveList(), i=currentIndex(L); if (i>=0 && i<L.length-1) openByIndex(L, i+1, 'next'); else forwardBase('next-doc'); }
-  function forwardBase(id){ var el = $id(id); if (el) try{ el.click(); }catch(e){} }
-
-  function syncVisual(){
-    var p=$id('pdf-prev'), n=$id('pdf-next');
-    if (p){ var ok=canPrev(); p.classList.toggle('disabled', !ok); p.setAttribute('aria-disabled', (!ok).toString()); }
-    if (n){ var ok2=canNext(); n.classList.toggle('disabled', !ok2); n.setAttribute('aria-disabled', (!ok2).toString()); }
+    if (nextBtn && !nextBtn.__robustBound){
+      nextBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); window.callNext(); }, true);
+      nextBtn.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); window.callNext(); }, {passive:false, capture:true});
+      nextBtn.__robustBound = true;
+    }
   }
 
-  function pressOn(el){ if (el) el.classList.add('pressed'); }
-  function pressOff(el){ if (el) el.classList.remove('pressed'); }
-
-  function bindOne(btn, handler){
-    if (!btn || btn.__ultraBound) return;
-    // Touch-first for iPad (no 300ms delay)
-    btn.addEventListener('touchstart', function(e){ e.preventDefault(); e.stopPropagation(); pressOn(btn); }, {passive:false, capture:true});
-    btn.addEventListener('touchend',   function(e){ e.preventDefault(); e.stopPropagation(); pressOff(btn); handler(); }, {passive:false, capture:true});
-    btn.addEventListener('touchcancel',function(e){ pressOff(btn); }, {passive:true, capture:true});
-    // Pointer/mouse fallback
-    btn.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); pressOn(btn); }, true);
-    btn.addEventListener('pointerup',   function(e){ e.preventDefault(); e.stopPropagation(); pressOff(btn); handler(); }, true);
-    btn.addEventListener('click',       function(e){ e.preventDefault(); e.stopPropagation(); handler(); }, true);
-    btn.__ultraBound = true;
-  }
-
-  function bind(){
-    bindOne($id('pdf-prev'), doPrev);
-    bindOne($id('pdf-next'), doNext);
-    // Also normalize base buttons in case overlay forwards to them
-    var basePrev=$id('prev-doc'), baseNext=$id('next-doc');
-    if (basePrev && !basePrev.__ultraBound){ basePrev.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); doPrev(); }, true); basePrev.__ultraBound=true; }
-    if (baseNext && !baseNext.__ultraBound){ baseNext.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); doNext(); }, true); baseNext.__ultraBound=true; }
-    syncVisual();
-  }
-
-  // Keep state in sync after any open
-  (function patchOpen(){
-    if (window.__ultraOpenPatched || typeof window.openSongInContext !== 'function') return;
+  // Patch openSongInContext to keep our state aligned after any open
+  (function patchOpenSync(){
+    if (window.__robustOpenPatched || typeof window.openSongInContext !== 'function') return;
     var orig = window.openSongInContext;
     window.openSongInContext = function(){
-      var songArg = arguments[0];
-      var id = songArg && (songArg.id || songArg.songId || songArg.fileId || songArg.path || songArg.name) || (typeof songArg==='string'?songArg:null);
-      var res = orig.apply(this, arguments);
-      if (id) window.currentOpenSongId = id;
-      try { requestAnimationFrame(function(){ bind(); syncVisual(); }); } catch(_){}
-      return res;
+      var arg = arguments[0];
+      var id  = (arg && (arg.id || arg.songId || arg.fileId || arg.path || arg.name)) || (typeof arg==='string'?arg:null);
+      var r = orig.apply(this, arguments);
+      try {
+        var ctx = arguments[1] || window.currentViewerContext || null;
+        var list = resolveViewerList(ctx);
+        var idx  = resolveIndex(list, id);
+        if (list && list.length){
+          window.currentViewerList = list;
+          window.currentViewerIndex = (idx >= 0 ? idx : window.currentViewerIndex || 0);
+          if (id) window.currentOpenSongId = id;
+        }
+      } catch(_){}
+      return r;
     };
-    window.__ultraOpenPatched = true;
+    window.__robustOpenPatched = true;
   })();
 
-  // Rebind after DOM changes / overlay class toggles
-  var mo = new MutationObserver(function(){ bind(); syncVisual(); });
+  // Re-bind on DOM/overlay changes
+  var mo = new MutationObserver(function(){ bindOverlay(); });
   mo.observe(document.body, { childList:true, subtree:true });
   mo.observe(document.documentElement, { attributes:true, attributeFilter:['class'] });
 
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ bind(); syncVisual(); });
-  } else { bind(); syncVisual(); }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindOverlay);
+  } else {
+    bindOverlay();
+  }
 })();
 </script>
-<!-- END: ULTRA ROBUST NEXT/PREV for iPad -->
+<!-- END: Robust NEXT/PREV core -->
 
 </body>
 
