@@ -3711,19 +3711,15 @@ function destroyPdfOverlay() {
 #genre-name::placeholder, #venue-name::placeholder { text-align: center; }
 #genre-name, #venue-name { text-align: center; } /* helps iOS Safari */
 
-
-
-/* === Drag-to-Genre & Genre badge UI (v2, non-destructive) === */
-.genre-drop-target { transition: background .12s ease, outline-color .12s ease; }
-.genre-drop-hover { outline: 2px dashed #3b82f6; background: rgba(59,130,246,.14) !important; }
-.song-genre-badges { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:4px; }
-.song-genre-badge { width:12px; height:12px; border-radius:9999px; border:1px solid rgba(0,0,0,.25); box-shadow:0 0 0 1px rgba(255,255,255,.35) inset; }
+/* === Drag-to-Genre & Genre badge UI (non-destructive) === */
+.genre-drop-hover { outline: 2px dashed #3b82f6; background: rgba(59,130,246,.12) !important; }
+.song-genre-badges { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+.song-genre-badge { width:14px; height:14px; border-radius:9999px; border:1px solid rgba(0,0,0,.25); box-shadow:0 0 0 1px rgba(255,255,255,.35) inset; }
 .dark .song-genre-badge { border-color: rgba(255,255,255,.25); box-shadow:0 0 0 1px rgba(0,0,0,.35) inset; }
-#genre-fallback-overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:none; z-index:9999; }
-#genre-fallback-panel { position:absolute; inset:10% 8%; background:#111827; color:white; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,.4); padding:16px; overflow:auto; }
-#genre-fallback-panel h2 { font-size:20px; margin:0 0 10px 0; }
-#genre-fallback-list { list-style:none; margin:0; padding:0; }
-#genre-fallback-close { position:absolute; top:10px; right:16px; background:#374151; border-radius:10px; padding:6px 10px; cursor:pointer; }
+
+/* === Genre drag hover (matches Favorites blue) === */
+.genre-drag-hover { background-color: #3b82f6 !important; color: #ffffff !important; }
+.genre-drag-hover .genre-name { color: #ffffff !important; }
 </style>
 <script>
 (function(){
@@ -3924,73 +3920,55 @@ function destroyPdfOverlay() {
 </script>
 
 
-
-
 <script>
-/* ===== Drag files onto sidebar Genres + click-to-view by color (v2) =====
-   Improvements:
-   - Assigns genre COLOR on drop (uniform blue hover feedback like Favorites).
-   - Click a sidebar genre to see EVERY file with that color, regardless of which list it's in.
-   - More robust discovery of files and genres; works even if IDs/classes differ.
-   - Non-destructive, layered enhancement using localStorage.
-============================================================================ */
+/* ===== Drag files onto sidebar Genres + click-to-view by color =====
+   Non-destructive: hooks into DOM after app has loaded, stores per-file genre colors in localStorage.
+   Keys are derived from each song's visible title ('.song-name' preferred; fallback to first text).
+   All instances of a file (Master, Setlist, Favorites) receive the same color badges.
+==================================================================== */
 (function(){
   const STORAGE_KEY = 'genreAssignments_v2'; // { fileKey: [ '#rrggbb', ... ] }
-  // Try to locate the genre list automatically; fallback to any element with data-role="genres"
-  const GENRE_LIST_CANDIDATES = ['#genre-list', '[data-role="genres"]', '.genres-list', '#genres'];
-  // Generic selectors to find song/file items anywhere in the app
-  const FILE_ITEM_SEL = [
-    'li[data-file-key]',
-    'li[data-file-id]',
-    'li.file-item',
-    'li.song-item',
-    '#master-list > li',
-    '#setlist-list > li',
-    '#favorites-list > li',
-    '#plays-list > li',
-    'li[data-type="song"]',
-  ].join(', ');
-
-  function $(q, ctx){ return (ctx||document).querySelector(q); }
-  function $all(q, ctx){ return Array.from((ctx||document).querySelectorAll(q)); }
-
-  function findGenreList(){
-    for (const sel of GENRE_LIST_CANDIDATES){
-      const el = $(sel);
-      if (el) return {el, selector: sel};
-    }
-    return {el:null, selector:null};
-  }
+  const GENRE_LIST_SEL = '#genre-list';
+  const SONG_LIST_SELS = ['#master-list > li', '#setlist-list > li', '#favorites-list > li', '#plays-list > li', '#genre-song-list > li'];
 
   function loadMap(){
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e){ return {}; }
   }
   function saveMap(map){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(map)); } catch(e){} }
 
-  function textOf(node){
-    if (!node) return '';
-    const clone = node.cloneNode(true);
-    // remove controls
-    clone.querySelectorAll('button,input,svg,style,script').forEach(n => n.remove());
-    return (clone.textContent || '').trim();
+  function getFileKeyFromLi(li){
+    const $li = $(li);
+    // prefer explicit attribute
+    const attr = $li.attr('data-file-key'); if (attr) return attr;
+    // try structured child
+    const nm = $li.find('.song-name').first().text().trim(); if (nm) { $li.attr('data-file-key', nm); return nm; }
+    // fallback to first non-empty text
+    const txt = ($li.clone().children().remove().end().text() || '').trim().split('\n')[0].trim();
+    if (txt) { $li.attr('data-file-key', txt); return txt; }
+    // last resort: index in its list
+    const idx = $li.index(); const parentId = $li.parent().attr('id') || 'unknown';
+    const key = parentId + '::' + idx;
+    $li.attr('data-file-key', key);
+    return key;
   }
 
-  function getFileKeyFromItem(node){
-    if (!node) return null;
-    const el = node;
-    const a = el.getAttribute('data-file-key'); if (a){ return a; }
-    const b = el.getAttribute('data-file-id'); if (b){ el.setAttribute('data-file-key', b); return b; }
-    // look for explicit name element
-    const nameEl = el.querySelector('.song-name, .file-name, [data-role="song-name"]');
-    const nm = nameEl ? nameEl.textContent.trim() : null;
-    if (nm){ el.setAttribute('data-file-key', nm); return nm; }
-    // fallback to first line of text
-    const t = textOf(el).split('\n').map(s=>s.trim()).filter(Boolean)[0];
-    if (t){ el.setAttribute('data-file-key', t); return t; }
-    // last fallback: tag+index
-    const key = (el.parentElement?.id || 'list') + '::' + (Array.from(el.parentElement?.children || []).indexOf(el));
-    el.setAttribute('data-file-key', key);
-    return key;
+  function getGenreColorFromNode(node){
+    const $n = $(node);
+    // explicit data attribute wins
+    const dc = $n.attr('data-genre-color'); if (dc) return dc;
+    // look for a dot
+    const dot = $n.find('.genre-dot').get(0);
+    if (dot){
+      const cs = getComputedStyle(dot);
+      // convert rgb(a) to hex (best effort)
+      const rgb = cs.backgroundColor || cs.background;
+      const hex = rgbToHex(rgb);
+      if (hex){ $n.attr('data-genre-color', hex); return hex; }
+    }
+    // color input next to the item (some UIs put it adjacent)
+    const prevColor = $n.prevAll('input[type="color"]').first().val();
+    if (prevColor){ $n.attr('data-genre-color', prevColor); return prevColor; }
+    return null;
   }
 
   function rgbToHex(rgb){
@@ -4003,226 +3981,240 @@ function destroyPdfOverlay() {
     return '#' + r + g + b;
   }
 
-  function readGenreColorFromEl(el){
-    if (!el) return null;
-    const attr = el.getAttribute('data-genre-color');
-    if (attr) return attr;
-    // common UI patterns: colored dot or swatch
-    const dot = el.querySelector('.genre-dot, .color-dot, [data-role="genre-color"]');
-    if (dot){
-      const cs = getComputedStyle(dot);
-      const rgb = cs.backgroundColor || cs.background;
-      const hex = rgbToHex(rgb);
-      if (hex){ el.setAttribute('data-genre-color', hex); return hex; }
-      const inline = dot.style && (dot.style.backgroundColor || dot.style.background);
-      if (inline){
-        const m = inline.match(/#(?:[0-9a-f]{3}){1,2}/i);
-        if (m){ el.setAttribute('data-genre-color', m[0]); return m[0]; }
-      }
-    }
-    // try input[type=color] next to it
-    const picker = el.querySelector('input[type="color"]');
-    if (picker && picker.value){ el.setAttribute('data-genre-color', picker.value); return picker.value; }
-    return null;
+  function ensureBadgeRow($li){
+    if ($li.find('.song-genre-badges').length) return $li.find('.song-genre-badges');
+    // try to place near the name/details if present
+    let $anchor = $li.find('.song-details-container').first();
+    if (!$anchor.length) $anchor = $li.children().last();
+    const $row = $('<div class="song-genre-badges"></div>');
+    $row.insertAfter($anchor);
+    return $row;
   }
 
-  function readGenreNameFromEl(el){
-    const attr = el.getAttribute('data-genre-name'); if (attr) return attr;
-    const nmEl = el.querySelector('.genre-name, [data-role="genre-name"]');
-    const name = nmEl ? nmEl.textContent.trim() : textOf(el).split('\n')[0];
-    if (name){ el.setAttribute('data-genre-name', name); return name; }
-    return 'Genre';
-  }
-
-  function ensureBadgeRow(el){
-    let row = el.querySelector('.song-genre-badges');
-    if (row) return row;
-    // place near the bottom of the item
-    row = document.createElement('div');
-    row.className = 'song-genre-badges';
-    el.appendChild(row);
-    return row;
-  }
-
-  function renderBadges(el, colors){
-    const row = ensureBadgeRow(el);
-    row.innerHTML = '';
+  function renderBadgesForLi(li, colors){
+    const $li = $(li);
+    const $row = ensureBadgeRow($li);
+    $row.empty();
     (colors || []).forEach(c => {
       if (!c) return;
-      const b = document.createElement('span');
-      b.className = 'song-genre-badge';
-      b.title = 'Genre';
-      b.style.backgroundColor = c;
-      row.appendChild(b);
+      const $b = $('<span class="song-genre-badge" title="Genre color"></span>').css('background-color', c);
+      $row.append($b);
     });
   }
 
-  function indexAllFiles(){
-    const map = new Map(); // key -> representative element
-    // Prefer elements that already have a data-file-key; otherwise compute
-    $all(FILE_ITEM_SEL).forEach(el => {
-      const key = getFileKeyFromItem(el);
-      if (!key) return;
-      if (!map.has(key)) map.set(key, el);
+  function applyAssignmentsEverywhere(map){
+    const selector = SONG_LIST_SELS.join(', ');
+    $(selector).each(function(){
+      const key = getFileKeyFromLi(this);
+      const colors = map[key] || [];
+      renderBadgesForLi(this, colors);
     });
-    return map;
   }
 
-  function applyAssignmentsEverywhere(){
-    const assign = loadMap();
-    $all(FILE_ITEM_SEL).forEach(el => {
-      const key = getFileKeyFromItem(el);
-      const colors = assign[key] || [];
-      renderBadges(el, colors);
-    });
+  function collectAllSongLis(){
+    const selector = SONG_LIST_SELS.join(', ');
+    return $(selector).get();
   }
 
   function addAssignment(fileKey, color){
-    const m = loadMap();
-    const set = new Set(m[fileKey] || []);
+    const map = loadMap();
+    const set = new Set(map[fileKey] || []);
     set.add(color);
-    m[fileKey] = Array.from(set);
-    saveMap(m);
-    applyAssignmentsEverywhere();
+    map[fileKey] = Array.from(set);
+    saveMap(map);
+    applyAssignmentsEverywhere(map);
   }
 
-  // Build / update Genre page (robust):
-  // 1) Try to use in-app containers (#genre-song-list). 
-  // 2) If missing, show a fallback overlay with the matching items cloned.
-  function showGenreByColor(name, color){
-    const assign = loadMap();
-    const all = indexAllFiles();
-    const matches = [];
-    for (const [key, el] of all.entries()){
-      const colors = assign[key] || [];
-      if (colors.includes(color)){
-        const clone = el.cloneNode(true);
-        renderBadges(clone, colors);
-        clone.classList.add('draggable');
-        matches.push({key, clone});
-      }
-    }
-    // Option A: in-app list
-    const ul = document.querySelector('#genre-song-list');
-    const title = document.querySelector('#genre-view-title');
-    if (ul){
-      ul.innerHTML = '';
-      matches.forEach(m => ul.appendChild(m.clone));
-      if (title) title.textContent = name;
-      // If your app has a function to navigate to the Genre view, call it
-      try { if (typeof window.show === 'function') window.show('genre'); } catch(e){}
-      return;
-    }
-    // Option B: Fallback overlay
-    ensureFallbackUI();
-    document.getElementById('genre-fallback-title').textContent = name;
-    const list = document.getElementById('genre-fallback-list');
-    list.innerHTML = '';
-    matches.forEach(m => {
-      const li = document.createElement('li');
-      li.style.padding = '8px 10px'; li.style.borderBottom = '1px solid rgba(255,255,255,.1)';
-      li.appendChild(m.clone);
-      list.appendChild(li);
+  function removeAssignment(fileKey, color){
+    const map = loadMap();
+    if (!map[fileKey]) return;
+    map[fileKey] = (map[fileKey] || []).filter(c => c !== color);
+    if (!map[fileKey].length) delete map[fileKey];
+    saveMap(map);
+    applyAssignmentsEverywhere(map);
+  }
+
+  function readAllGenres(){
+    const arr = [];
+    $(GENRE_LIST_SEL).children().each(function(){
+      const color = getGenreColorFromNode(this);
+      // text
+      let name = $(this).find('.genre-name').first().text().trim();
+      if (!name) name = $(this).text().trim().split('\n')[0];
+      if (name && color) arr.push({el:this, name, color});
+      // store on node for quick access
+      if (color) $(this).attr('data-genre-color', color);
+      if (name) $(this).attr('data-genre-name', name);
     });
-    document.getElementById('genre-fallback-overlay').style.display = 'block';
+    return arr;
   }
 
-  function ensureFallbackUI(){
-    if (document.getElementById('genre-fallback-overlay')) return;
-    const overlay = document.createElement('div');
-    overlay.id = 'genre-fallback-overlay';
-    overlay.innerHTML = `
-      <div id="genre-fallback-panel">
-        <div id="genre-fallback-close">Close</div>
-        <h2 id="genre-fallback-title">Genre</h2>
-        <ul id="genre-fallback-list"></ul>
-      </div>`;
-    document.body.appendChild(overlay);
-    document.getElementById('genre-fallback-close').addEventListener('click', () => {
-      overlay.style.display = 'none';
+  // Build Genre View when clicked
+  function showGenreByColor(name, color){
+    try {
+      if (typeof window.show === 'function') { window.show('genre'); }
+    } catch(e){}
+    // Set title
+    $('#genre-view-title').text(name);
+    const $ul = $('#genre-song-list');
+    $ul.empty();
+    const map = loadMap();
+    // gather matches by scanning all known items once to harvest keys
+    const seen = new Set();
+    collectAllSongLis().forEach(li => {
+      const key = getFileKeyFromLi(li);
+      if (seen.has(key)) return;
+      const colors = map[key] || [];
+      if (colors.includes(color)){
+        // clone a "clean" representation: prefer master-list instance to clone UI
+        const $clone = $(li).clone(true, true);
+        // ensure badges render
+        renderBadgesForLi($clone, colors);
+        // make it draggable like originals if the app supports it
+        $clone.addClass('draggable');
+        $ul.append($clone);
+        seen.add(key);
+      }
     });
   }
 
   function setupGenreClicks(){
-    const {el} = findGenreList();
-    if (!el) return;
-    // ensure visual droppable target class
-    el.querySelectorAll(':scope > *').forEach(item => item.classList.add('genre-drop-target'));
-    el.addEventListener('click', (ev) => {
-      const item = ev.target.closest(':scope > *');
-      if (!item) return;
-      const name = readGenreNameFromEl(item);
-      const color = readGenreColorFromEl(item);
+    $(document).on('click', GENRE_LIST_SEL + ' > *', function(){
+      const name = $(this).attr('data-genre-name') || $(this).find('.genre-name').first().text().trim() || 'Genre';
+      const color = getGenreColorFromNode(this);
       if (!color) return;
       showGenreByColor(name, color);
     });
   }
 
-  // Make the sidebar genres true droppable targets
-  function setupDroppables(){
-    const {el} = findGenreList();
-    if (!el) return;
-    const items = Array.from(el.children);
-    items.forEach(genreEl => {
-      // jQuery UI droppable if available for true drag-from-list behavior
-      if (window.jQuery && jQuery.fn && jQuery.fn.droppable){
-        try {
-          jQuery(genreEl).droppable({
-            tolerance: 'pointer',
-            over: function(){ genreEl.classList.add('genre-drop-hover'); },
-            out: function(){ genreEl.classList.remove('genre-drop-hover'); },
-            drop: function(_e, ui){
-              genreEl.classList.remove('genre-drop-hover');
-              const color = readGenreColorFromEl(genreEl);
-              if (!color) return;
-              const dragged = ui && ui.draggable && ui.draggable.get(0);
-              if (!dragged) return;
-              const key = getFileKeyFromItem(dragged);
-              if (!key) return;
-              addAssignment(key, color);
-              // subtle pulse feedback
-              try {
-                jQuery(genreEl).stop(true,true).animate({opacity:0.7},100).animate({opacity:1},180);
-              }catch(e){}
-            }
-          });
-        } catch(e){ /* ignore */ }
-      }
-      // Always show blue hover on native HTML5 dragenter/leave for uniformity
-      genreEl.addEventListener('dragenter', () => genreEl.classList.add('genre-drop-hover'));
-      genreEl.addEventListener('dragover', (e) => { e.preventDefault(); genreEl.classList.add('genre-drop-hover'); });
-      genreEl.addEventListener('dragleave', () => genreEl.classList.remove('genre-drop-hover'));
-      genreEl.addEventListener('drop', (e) => { genreEl.classList.remove('genre-drop-hover'); });
-    });
+  function setupDragAndDropToGenres(){
+    // Any song LI is draggable (app may already handle); we only need droppables on genres
+    function acceptFn(_d){ return true; } // accept any li; we filter inside
+    function overFn(_e, ui){ $(this).addClass('genre-drop-hover'); }
+    function outFn(_e, ui){ $(this).removeClass('genre-drop-hover'); }
+    function dropFn(e, ui){
+      $(this).removeClass('genre-drop-hover');
+      const color = getGenreColorFromNode(this);
+      if (!color) return;
+      const dragged = ui && ui.draggable ? ui.draggable.get(0) : null;
+      if (!dragged) return;
+      const key = getFileKeyFromLi(dragged);
+      if (!key) return;
+      addAssignment(key, color);
+      // Small feedback pulse
+      try {
+        $(this).stop(true,true).animate({opacity:0.6},120).animate({opacity:1},180);
+      }catch(err){}
+    }
+
+    // Use jQuery UI droppable if available; else fall back to pointer handlers
+    if ($.fn.droppable){
+      const makeDroppable = function(){
+        $(GENRE_LIST_SEL).children().each(function(){
+          const $it = $(this);
+          if ($it.data('__genreDroppable')) return;
+          try {
+            $it.droppable({
+              tolerance: 'pointer',
+              accept: acceptFn,
+              over: overFn, out: outFn, drop: dropFn
+            });
+            $it.data('__genreDroppable', true);
+          } catch(e){}
+        });
+      };
+      makeDroppable();
+      // Observe added genres
+      const mo = new MutationObserver(makeDroppable);
+      mo.observe(document.querySelector(GENRE_LIST_SEL), {childList:true, subtree:false});
+    } else {
+      // Pointer Events fallback (basic)
+      let hovering = null;
+      $(document).on('dragenter dragover', function(e){
+        if (!e.target.closest) return;
+        const node = e.target.closest(GENRE_LIST_SEL + ' > *');
+        if (node && node !== hovering){ $(hovering).removeClass('genre-drop-hover'); hovering = node; $(hovering).classList?.add('genre-drop-hover'); }
+        e.preventDefault();
+      });
+      $(document).on('dragleave drop', function(e){
+        const node = e.target.closest && e.target.closest(GENRE_LIST_SEL + ' > *');
+        if (e.type === 'drop' && node){
+          const color = getGenreColorFromNode(node);
+          // Cannot reliably get source LI without DataTransfer here; leave basic
+        }
+        $(hovering).removeClass('genre-drop-hover'); hovering = null;
+      });
+    }
   }
 
-  function observeDom(){
-    // Re-index and re-render on list mutations
-    const obs = new MutationObserver(() => {
-      applyAssignmentsEverywhere();
-      // Re-mark newly added genres as targets
-      const {el} = findGenreList();
-      if (el) el.querySelectorAll(':scope > *').forEach(item => item.classList.add('genre-drop-target'));
+  function ensureSongKeysAndRenderExisting(){
+    const map = loadMap();
+    // Tag keys now
+    collectAllSongLis().forEach(li => { getFileKeyFromLi(li); });
+    // Render their badges
+    applyAssignmentsEverywhere(map);
+  }
+
+  function refreshOnDomChanges(){
+    const lists = ['#master-list', '#setlist-list', '#favorites-list', '#plays-list'];
+    const obs = new MutationObserver(() => ensureSongKeysAndRenderExisting());
+    lists.forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) obs.observe(el, {childList:true, subtree:false});
     });
-    obs.observe(document.body, {childList:true, subtree:true});
   }
 
   function init(){
-    if (window.__genreEnhanceV2Loaded) return;
-    window.__genreEnhanceV2Loaded = true;
-    // initial render after the app paints
+    // Avoid double-init
+    if (window.__genreEnhanceLoaded) return;
+    window.__genreEnhanceLoaded = true;
+    // late-init to let app build its UI
     setTimeout(() => {
-      applyAssignmentsEverywhere();
+      ensureSongKeysAndRenderExisting();
+      setupDragAndDropToGenres();
       setupGenreClicks();
-      setupDroppables();
-      observeDom();
+      refreshOnDomChanges();
     }, 0);
   }
 
-  if (document.readyState === 'loading'){
+  if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
+  }
+
+})();
+</script>
+
+<script>
+// === Genre blue hover on drag-over (non-destructive) ===
+(function(){
+  function makeDroppable(el){
+    if (!window.jQuery || !jQuery.fn || !jQuery.fn.droppable) return;
+    const $el = jQuery(el);
+    if ($el.data('__genreHoverInit')) return;
+    try{
+      $el.droppable({
+        tolerance: 'pointer',
+        over: function(){ $el.addClass('genre-drag-hover'); },
+        out: function(){ $el.removeClass('genre-drag-hover'); },
+        drop: function(){ $el.removeClass('genre-drag-hover'); }
+      });
+      $el.data('__genreHoverInit', true);
+    }catch(e){ /* no-op */ }
+  }
+  function initAll(){
+    const list = document.getElementById('genre-list');
+    if (!list) return;
+    Array.from(list.children).forEach(makeDroppable);
+    // Observe dynamic additions
+    const mo = new MutationObserver(() => Array.from(list.children).forEach(makeDroppable));
+    mo.observe(list, {childList:true});
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAll, {once:true});
+  } else {
+    initAll();
   }
 })();
 </script>
