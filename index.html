@@ -2417,7 +2417,25 @@ function destroyPdfOverlay() {
   nextB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('next-doc'); });
   closeB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('close-doc'); });
 
-  function showBar(){
+  
+  // NEW: wire the visible topbar buttons too
+  (function(){
+    var vPrev = document.getElementById('pdf-prev');
+    var vNext = document.getElementById('pdf-next');
+    if (vPrev && !vPrev.__wired){
+      vPrev.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('prev-doc'); }, true);
+      vPrev.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); forwardClick('prev-doc'); }, {passive:false, capture:true});
+      vPrev.__wired = true;
+    }
+    if (vNext && !vNext.__wired){
+      vNext.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('next-doc'); }, true);
+      vNext.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); forwardClick('next-doc'); }, {passive:false, capture:true});
+      vNext.__wired = true;
+    }
+    // Ensure they are interactive even if visually disabled
+    [vPrev, vNext].forEach(function(b){ if (!b) return; b.removeAttribute('disabled'); b.style.pointerEvents='auto'; b.style.touchAction='manipulation'; });
+  })();
+function showBar(){
     if (!bar) return;
     bar.classList.add('visible');
     if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
@@ -3908,94 +3926,6 @@ function destroyPdfOverlay() {
   }
 })();
 </script>
-
-
-<!-- ====== Setlist Manager — Overlay Hotfix (Buttons tap-guard + Pull-up-to-Close tuning) ====== -->
-<style>
-  /* Temporarily make buttons inert for ~380ms after reveal to avoid accidental clicks */
-  #pdf-btn-bar.arming .btn { pointer-events: none !important; }
-</style>
-<script>
-(function(){
-  // --------- 1) Reappear tap-guard for the overlay top buttons ---------
-  var btnBar = document.getElementById('pdf-btn-bar');
-  var hit    = document.getElementById('pdf-btn-hit');
-  if (btnBar && hit) {
-    var armUntil = 0;
-    var ARM_MS   = 380;
-
-    function armButtons() {
-      armUntil = Date.now() + ARM_MS;
-      btnBar.classList.add('arming');
-      window.setTimeout(function(){
-        btnBar.classList.remove('arming');
-      }, ARM_MS + 20);
-    }
-
-    function guardHandler(e){
-      if (Date.now() < armUntil) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        return false;
-      }
-    }
-
-    var revealHandler = function(e){
-      armButtons();
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    };
-    hit.addEventListener('touchstart', revealHandler, {passive:false});
-    hit.addEventListener('click', revealHandler, true);
-
-    ['pdf-btn-prev','pdf-btn-next','pdf-btn-close'].forEach(function(id){
-      var el = document.getElementById(id);
-      if (el) {
-        el.addEventListener('click', guardHandler, true);
-        el.addEventListener('touchend', guardHandler, {passive:false});
-      }
-    });
-  }
-
-  // --------- 2) Pull-up-to-close gesture tuning ---------
-  var overlay   = document.getElementById('pdf-overlay');
-  var scrollBox = overlay && overlay.querySelector('.pdfjs-scroll');
-  var closeBtn  = document.getElementById('pdf-btn-close');
-
-  if (overlay && scrollBox && closeBtn) {
-    var startY = 0, startT = 0, active = false;
-
-    function onStart(ev){
-      var t = (ev.touches && ev.touches[0]) ? ev.touches[0] : ev;
-      startY = t.clientY || 0;
-      startT = Date.now();
-      var vpH = window.innerHeight || document.documentElement.clientHeight || 0;
-      active = (startY >= vpH * 0.65); // start near bottom 35%
-    }
-    function onEnd(ev){
-      if (!active) return;
-      var t = (ev.changedTouches && ev.changedTouches[0]) ? ev.changedTouches[0] : ev;
-      var endY = t.clientY || 0;
-      var dt   = Date.now() - startT;
-      var dy   = endY - startY; // up = negative
-
-      var REQUIRED_UP_PX = 220;
-      var MIN_DT_MS      = 120;
-
-      if (dt >= MIN_DT_MS && dy <= -REQUIRED_UP_PX) {
-        closeBtn.click();
-      }
-      active = false;
-    }
-
-    scrollBox.addEventListener('touchstart', onStart, {passive:true});
-    scrollBox.addEventListener('touchend',   onEnd,   {passive:true});
-    scrollBox.addEventListener('touchcancel',function(){ active=false; }, {passive:true});
-  }
-})();
-</script>
-<!-- ====== /Hotfix ====== -->
 
 </body>
 
