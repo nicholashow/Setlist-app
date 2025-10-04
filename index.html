@@ -3910,142 +3910,109 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- BEGIN: Robust NEXT/PREV core (context-aware, bypass disabled base) -->
+<!-- BEGIN: Cohesive NEXT/PREV overlay fix (delegated + robust + touch) -->
 <script>
 (function(){
-  if (window.__robustCoreNavInstalled) return;
-  window.__robustCoreNavInstalled = true;
+  if (window.__cohesiveNavFix) return; window.__cohesiveNavFix = true;
 
   function $id(id){ return document.getElementById(id); }
-  function getId(item){
-    if (!item) return null;
-    if (typeof item === 'string') return item;
-    return item.id || item.songId || item.fileId || item.path || item.name || null;
-  }
-  function resolveViewerList(ctx){
-    // Prefer explicit viewer list
+  function getList(){
     if (Array.isArray(window.currentViewerList) && window.currentViewerList.length) return window.currentViewerList;
-    // Try by context
-    var c = ctx || window.currentViewerContext || null;
-    if (c === 'setlist'  && Array.isArray(window.currentSetlistSongs)     && window.currentSetlistSongs.length)     return window.currentSetlistSongs;
-    if (c === 'master'   && Array.isArray(window.currentMasterViewSongs)  && window.currentMasterViewSongs.length)  return window.currentMasterViewSongs;
-    if (c === 'favorites'&& Array.isArray(window.currentFavViewSongs)     && window.currentFavViewSongs.length)     return window.currentFavViewSongs;
-    if (c === 'genre'    && Array.isArray(window.currentGenreViewSongs)   && window.currentGenreViewSongs.length)   return window.currentGenreViewSongs;
-    // Common fallbacks
-    if (Array.isArray(window.currentSongs) && window.currentSongs.length) return window.currentSongs;
-    if (Array.isArray(window.masterSongs)  && window.masterSongs.length)  return window.masterSongs;
-    // DOM scrape fallback
-    var out = [];
-    try {
-      var root = document.querySelector('.setlist-songs, .song-list, [data-role="setlist"], [data-role="master"]') || document;
-      root.querySelectorAll('[data-song-id], [data-id], [data-file-id]').forEach(function(n){
-        var id = n.getAttribute('data-song-id') || n.getAttribute('data-id') || n.getAttribute('data-file-id');
-        if (id) out.push({id:id});
-      });
-    } catch(e){}
-    return out;
+    // fallbacks (non-invasive)
+    var cands = [window.currentSetlistSongs, window.currentSongs, window.masterSongs, window.currentGenreViewSongs, window.currentFavViewSongs];
+    for (var i=0;i<cands.length;i++){ var a=cands[i]; if (Array.isArray(a) && a.length) return a; }
+    return [];
   }
-  function resolveIndex(list, knownId){
+  function getId(item){ return item && (item.id || item.songId || item.fileId || item.path || item.name || (typeof item==='string'?item:null)); }
+  function getIndex(list){
     var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
-    if (i >= 0 && i < list.length) return i;
-    var cid = knownId || window.currentOpenSongId || (window.__viewerState && window.__viewerState.lastId) || null;
-    if (cid){
-      for (var k=0;k<list.length;k++) if (getId(list[k]) === cid) return k;
-    }
+    if (i>=0 && i<list.length) return i;
+    var cid = window.currentOpenSongId || (window.__viewerState && window.__viewerState.lastId) || null;
+    if (cid){ for (var k=0;k<list.length;k++) if (getId(list[k])===cid) return k; }
     return -1;
   }
-
-  // Wrap existing calls; if they return false/no-op, we do robust navigation
-  function makeRobust(originalFn, dir){
-    return function(){
-      try {
-        if (typeof originalFn === 'function'){
-          var res = originalFn.apply(this, arguments);
-          // If original succeeded (truthy), we're done
-          if (res) { return res; }
-        }
-      } catch(_){}
-      // Robust path
-      var ctx = window.currentViewerContext || null;
-      var list = resolveViewerList(ctx);
-      var idx  = resolveIndex(list);
-      if (!list || !list.length) return false;
-      if (idx < 0) idx = 0; // if unknown, assume first
-      var target = (dir === 'next') ? idx + 1 : idx - 1;
-      if (target < 0 || target >= list.length) return false;
-      var id = getId(list[target]);
-      if (id && typeof window.openSongInContext === 'function'){
-        window.openSongInContext(id, ctx, target, dir);
-        // keep globals consistent
-        window.currentViewerList = list;
-        window.currentViewerIndex = target;
-        window.currentOpenSongId = id;
-        return true;
-      }
-      return false;
-    };
+  function nav(dir){
+    var baseId = (dir==='next') ? 'next-doc' : 'prev-doc';
+    var base = $id(baseId);
+    // Prefer the proven base handler if it exists
+    if (base){ try{ base.click(); return true; }catch(_){ /* fall through */ } }
+    // Otherwise compute robustly
+    var list = getList(); if (!list.length) return false;
+    var i = getIndex(list); if (i<0) i = 0;
+    var target = (dir==='next') ? i+1 : i-1;
+    if (target < 0 || target >= list.length) return false;
+    var id = getId(list[target]); if (!id || typeof window.openSongInContext !== 'function') return false;
+    window.openSongInContext(id, window.currentViewerContext, target, dir);
+    // keep globals coherent without changing other code
+    window.currentViewerList = list;
+    window.currentViewerIndex = target;
+    window.currentOpenSongId = id;
+    // sync visuals on next frame
+    requestAnimationFrame(syncVisual);
+    return true;
   }
 
-  // Keep a reference to originals (if any)
-  var __origCallNext = (typeof window.callNext === 'function') ? window.callNext : null;
-  var __origCallPrev = (typeof window.callPrev === 'function') ? window.callPrev : null;
-
-  // Install robust wrappers
-  window.callNext = makeRobust(__origCallNext, 'next');
-  window.callPrev = makeRobust(__origCallPrev, 'prev');
-
-  // Use our robust calls from the overlay, capture-phase and touch-friendly
-  function bindOverlay(){
-    var prevBtn = $id('pdf-prev');
-    var nextBtn = $id('pdf-next');
-    if (prevBtn && !prevBtn.__robustBound){
-      prevBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); window.callPrev(); }, true);
-      prevBtn.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); window.callPrev(); }, {passive:false, capture:true});
-      prevBtn.__robustBound = true;
-    }
-    if (nextBtn && !nextBtn.__robustBound){
-      nextBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); window.callNext(); }, true);
-      nextBtn.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); window.callNext(); }, {passive:false, capture:true});
-      nextBtn.__robustBound = true;
-    }
+  function can(dir){
+    var list = getList();
+    var i = getIndex(list);
+    if (!list.length) return false;
+    if (i<0) i = 0;
+    return dir==='next' ? (i < list.length - 1) : (i > 0);
   }
 
-  // Patch openSongInContext to keep our state aligned after any open
-  (function patchOpenSync(){
-    if (window.__robustOpenPatched || typeof window.openSongInContext !== 'function') return;
+  function syncVisual(){
+    var prevB = $id('pdf-prev'); var nextB = $id('pdf-next');
+    if (prevB){ var cp = can('prev'); prevB.classList.toggle('disabled', !cp); prevB.setAttribute('aria-disabled', (!cp).toString()); }
+    if (nextB){ var cn = can('next'); nextB.classList.toggle('disabled', !cn); nextB.setAttribute('aria-disabled', (!cn).toString()); }
+  }
+
+  // Delegated handlers catch taps even if the bar is re-rendered / duplicated
+  function handleTap(e, dir){
+    // Visual "press" feedback without changing your design palette
+    var btn = e.target.closest && e.target.closest(dir==='next' ? '#pdf-next' : '#pdf-prev');
+    if (!btn) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation && e.stopImmediatePropagation();
+    btn.classList.add('pressed');
+    setTimeout(function(){ btn.classList.remove('pressed'); }, 120);
+    nav(dir);
+  }
+
+  // Global capture listeners (work across duplicates, safe for iPad overlays)
+  document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#pdf-next')) handleTap(e,'next'); }, true);
+  document.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('#pdf-prev')) handleTap(e,'prev'); }, true);
+  document.addEventListener('touchend', function(e){ if (e.target.closest && e.target.closest('#pdf-next')) handleTap(e,'next'); }, {passive:false, capture:true});
+  document.addEventListener('touchend', function(e){ if (e.target.closest && e.target.closest('#pdf-prev')) handleTap(e,'prev'); }, {passive:false, capture:true});
+
+  // Keep visuals in sync whenever a doc opens or DOM changes
+  (function patchOpen(){
+    if (window.__cohesiveOpenPatched || typeof window.openSongInContext !== 'function') return;
     var orig = window.openSongInContext;
     window.openSongInContext = function(){
       var arg = arguments[0];
-      var id  = (arg && (arg.id || arg.songId || arg.fileId || arg.path || arg.name)) || (typeof arg==='string'?arg:null);
-      var r = orig.apply(this, arguments);
-      try {
-        var ctx = arguments[1] || window.currentViewerContext || null;
-        var list = resolveViewerList(ctx);
-        var idx  = resolveIndex(list, id);
-        if (list && list.length){
-          window.currentViewerList = list;
-          window.currentViewerIndex = (idx >= 0 ? idx : window.currentViewerIndex || 0);
-          if (id) window.currentOpenSongId = id;
-        }
-      } catch(_){}
-      return r;
+      var id = (arg && (arg.id || arg.songId || arg.fileId || arg.path || arg.name)) || (typeof arg==='string'?arg:null);
+      var res = orig.apply(this, arguments);
+      if (id) window.currentOpenSongId = id;
+      try { requestAnimationFrame(syncVisual); } catch(_){}
+      return res;
     };
-    window.__robustOpenPatched = true;
+    window.__cohesiveOpenPatched = true;
   })();
 
-  // Re-bind on DOM/overlay changes
-  var mo = new MutationObserver(function(){ bindOverlay(); });
+  // Observe DOM/class changes so we re-sync after overlay appears
+  var mo = new MutationObserver(function(){ syncVisual(); });
   mo.observe(document.body, { childList:true, subtree:true });
   mo.observe(document.documentElement, { attributes:true, attributeFilter:['class'] });
 
+  // Initial sync
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindOverlay);
-  } else {
-    bindOverlay();
-  }
+    document.addEventListener('DOMContentLoaded', syncVisual);
+  } else { syncVisual(); }
 })();
 </script>
-<!-- END: Robust NEXT/PREV core -->
+<style>
+  #pdf-prev.pressed, #pdf-next.pressed { filter: brightness(0.9); transform: translateY(0.5px); }
+</style>
+<!-- END: Cohesive NEXT/PREV overlay fix -->
 
 </body>
 
