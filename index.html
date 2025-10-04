@@ -3194,6 +3194,20 @@ function destroyPdfOverlay() {
   prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); callPrev(); });
   nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); callNext(); });
   closeB && closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
+  // Also wire the new topbar IDs to the same navigation, so the *visible* buttons work.
+  (function(){
+    var prev2 = document.getElementById('pdf-prev');
+    var next2 = document.getElementById('pdf-next');
+    if (prev2 && !prev2.__wired){
+      prev2.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('prev-doc'); }, true);
+      prev2.__wired = true;
+    }
+    if (next2 && !next2.__wired){
+      next2.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('next-doc'); }, true);
+      next2.__wired = true;
+    }
+  })();
+
 })();
 </script>
 
@@ -3908,102 +3922,6 @@ function destroyPdfOverlay() {
   }
 })();
 </script>
-
-
-<!-- BEGIN: Overlay NEXT/PREV fix — forward + interactive even when visually disabled -->
-<script>
-(function(){
-  if (window.__overlayForwardEnable) return; window.__overlayForwardEnable = true;
-
-  function $id(id){ return document.getElementById(id); }
-  function allowInteractive(btn){
-    if (!btn) return;
-    // Make "disabled" visual-only: keep class, but allow events.
-    btn.removeAttribute('disabled');
-    try { btn.style.pointerEvents = 'auto'; } catch(_) {}
-    try { btn.style.touchAction = 'manipulation'; } catch(_) {}
-  }
-  function forwardBase(id){
-    var el = $id(id);
-    if (el) { try { el.click(); return true; } catch(_){} }
-    return false;
-  }
-  function computeAndOpen(dir){
-    var list = (Array.isArray(window.currentViewerList) && window.currentViewerList.length) ? window.currentViewerList : null;
-    var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
-    if (!list || i < 0) return false;
-    var target = dir === 'next' ? i + 1 : i - 1;
-    if (target < 0 || target >= list.length) return false;
-    var item = list[target];
-    var id = (item && (item.id || item.songId || item.fileId || item.path || item.name)) || (typeof item === 'string' ? item : null);
-    if (!id || typeof window.openSongInContext !== 'function') return false;
-    window.openSongInContext(id, window.currentViewerContext, target, dir);
-    return true;
-  }
-
-  function handle(dir, e){
-    if (e){
-      e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation();
-    }
-    // Prefer proven base handlers first
-    if (dir === 'next' && forwardBase('next-doc')) return;
-    if (dir === 'prev' && forwardBase('prev-doc')) return;
-    // Fallback to direct open using current list/index
-    computeAndOpen(dir);
-  }
-
-  // Delegated, capture-phase listeners so duplicate bars & re-renders are covered
-  function onClick(e){
-    var n = e.target.closest ? e.target.closest('#pdf-next') : null;
-    var p = e.target.closest ? e.target.closest('#pdf-prev') : null;
-    if (!n && !p) return;
-    // Ensure buttons are interactive even if visually "disabled"
-    if (n) allowInteractive(n);
-    if (p) allowInteractive(p);
-    handle(n ? 'next' : 'prev', e);
-  }
-  document.addEventListener('click', onClick, true);
-  document.addEventListener('touchend', function(e){
-    var n = e.target.closest ? e.target.closest('#pdf-next') : null;
-    var p = e.target.closest ? e.target.closest('#pdf-prev') : null;
-    if (!n && !p) return;
-    if (n) allowInteractive(n);
-    if (p) allowInteractive(p);
-    handle(n ? 'next' : 'prev', e);
-  }, {passive:false, capture:true});
-
-  // After any open, ensure future taps remain interactive (in case overlay re-renders)
-  (function patchOpen(){
-    if (window.__overlayForwardEnableOpenPatched || typeof window.openSongInContext !== 'function') return;
-    var orig = window.openSongInContext;
-    window.openSongInContext = function(){
-      var r = orig.apply(this, arguments);
-      try {
-        var a = $id('pdf-next'), b = $id('pdf-prev');
-        if (a) allowInteractive(a);
-        if (b) allowInteractive(b);
-      } catch(_) {}
-      return r;
-    };
-    window.__overlayForwardEnableOpenPatched = true;
-  })();
-
-  // Also sanitize buttons when overlay appears
-  var mo = new MutationObserver(function(){
-    var a = $id('pdf-next'), b = $id('pdf-prev');
-    if (a) allowInteractive(a);
-    if (b) allowInteractive(b);
-  });
-  mo.observe(document.documentElement, { attributes:true, attributeFilter:['class'] });
-  mo.observe(document.body, { childList:true, subtree:true });
-
-  // Initial pass
-  var a = $id('pdf-next'), b = $id('pdf-prev');
-  if (a) allowInteractive(a);
-  if (b) allowInteractive(b);
-})();
-</script>
-<!-- END: Overlay NEXT/PREV fix — forward + interactive even when visually disabled -->
 
 </body>
 
