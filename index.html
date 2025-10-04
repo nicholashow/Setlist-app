@@ -4006,22 +4006,68 @@ function destroyPdfOverlay() {
 
 
 <script>
-// === Click guards: prevent accidental file open when clicking index, star, genre dot, or lightning bolt ===
+// === Guard: clicks left of the file name do NOT open the file ===
 (function(){
-  // Any click on these elements (or their children) should NOT bubble to the li click that opens a file
-  var GUARD = '.song-index, .favorite-star-container, .genre-dot, .energy-icon, .lightning-bolt, .song-number, .song-order';
-  $(document).on('click', GUARD + ', ' + GUARD + ' *', function(e){
-    // Let their own handlers fire, but prevent opening
-    e.stopPropagation();
-  });
-
-  // Defensive: if the li-level open handler isn't already filtering, add a guard
-  $(document).on('click', 'li.draggable', function(e){
-    if ($(e.target).closest(GUARD).length) {
-      // Don't open if user clicked on guarded UI
-      return;
+  function isSongItem(el){
+    return !!(el && (el.closest && el.closest('li.draggable')));
+  }
+  function nearestSongItem(el){
+    return el.closest ? el.closest('li.draggable') : null;
+  }
+  function findSongNameEl(li){
+    if (!li) return null;
+    // Prefer explicit name spans used in the app
+    var cand = li.querySelector('.song-name, [data-song-name], .file-name, .name, .title, .truncate');
+    if (cand) return cand;
+    // Fallback: a span/div that isn't an icon and has text
+    var spans = li.querySelectorAll('span, div');
+    for (var i=0; i<spans.length; i++){
+      var s = spans[i];
+      if (s.classList.contains('favorite-star-container')) continue;
+      if (s.classList.contains('genre-dot')) continue;
+      if (s.classList.contains('energy-icon') || s.classList.contains('lightning-bolt')) continue;
+      if (s.classList.contains('song-index') || s.classList.contains('song-number') || s.classList.contains('song-order')) continue;
+      var txt = (s.textContent||'').trim();
+      if (txt && s.children.length === 0){
+        return s;
+      }
     }
-    // Existing open behavior in your code will still run after this guard if bound elsewhere
+    return null;
+  }
+  function getClientXY(ev){
+    if (ev.touches && ev.touches[0]) return {x: ev.touches[0].clientX, y: ev.touches[0].clientY};
+    if (ev.changedTouches && ev.changedTouches[0]) return {x: ev.changedTouches[0].clientX, y: ev.changedTouches[0].clientY};
+    return {x: ev.clientX, y: ev.clientY};
+  }
+
+  // Use a CAPTURE-phase native listener so we can block before other handlers run
+  function onAnyClickCapture(ev){
+    var t = ev.target;
+    var li = nearestSongItem(t);
+    if (!li) return;
+    // Ignore if user actually clicked a link or button explicitly; those should still work
+    if (t.closest && (t.closest('button, a, input, textarea, select'))) return;
+
+    var nameEl = findSongNameEl(li);
+    if (!nameEl) return; // can't decide, let it pass
+    var rect = nameEl.getBoundingClientRect();
+    var p = getClientXY(ev);
+    var tolerance = 3; // pixels of grace
+    var clickedLeftOfName = p.x < (rect.left - tolerance);
+
+    if (clickedLeftOfName){
+      // Block file open: prevent default and stop all propagation
+      ev.stopImmediatePropagation();
+      ev.stopPropagation();
+      ev.preventDefault();
+      // Optionally, you can flash a small ripple or ignore silently
+      return false;
+    }
+  }
+
+  // Attach both click and tap-like events in capture phase
+  ['click', 'mousedown', 'touchstart', 'touchend'].forEach(function(type){
+    document.addEventListener(type, onAnyClickCapture, true);
   });
 })();
 </script>
