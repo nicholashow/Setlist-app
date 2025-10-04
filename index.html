@@ -1590,20 +1590,6 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
   color: #ffffff !important;
 }
 
-
-/* === Page-cover layer ABOVE sidebar (sidebar untouched) === */
-#sidebar-cover-layer {
-  position: fixed;
-  left: 0;
-  top: 0;
-  height: 100vh;
-  width: 0;                 /* we set width dynamically to match the sidebar */
-  z-index: 15;              /* > sidebar, < main */
-  pointer-events: none;
-  transition: opacity 0.18s ease;
-  opacity: 1;
-}
-
 </style>
 </head>
 
@@ -4183,61 +4169,6 @@ function destroyPdfOverlay() {
     syncAll();
     // Also run once more after layout settles
     setTimeout(syncAll, 0);
-  });
-})();
-</script>
-
-
-<script>
-(function(){
-  var DURATION = 350; // match your existing collapse timing if needed
-
-  function el(q){ return document.querySelector(q); }
-  function bgOfMain(){
-    var m = el('main') || el('#app') || document.body;
-    var bg = getComputedStyle(m).backgroundColor;
-    return (!bg || bg === 'transparent' || bg === 'rgba(0, 0, 0, 0)') ? '#ffffff' : bg;
-  }
-  function sidebarWidth(){
-    var s = el('.left-col');
-    if (!s) return 256; // default w-64
-    return Math.round(s.getBoundingClientRect().width) || 256;
-  }
-  function ensureCover(){
-    var c = el('#sidebar-cover-layer');
-    if (!c){
-      c = document.createElement('div');
-      c.id = 'sidebar-cover-layer';
-      document.body.appendChild(c);
-    }
-    c.style.background = bgOfMain(); // no black flash
-    c.style.width = sidebarWidth() + 'px';
-    c.style.opacity = '1';
-    return c;
-  }
-  function showCoverFor(ms){
-    var c = ensureCover();
-    // Keep it fully covering the sidebar while your layout changes happen
-    setTimeout(function(){
-      // fade away fast at the end of animation to avoid any flash
-      c.style.opacity = '0';
-      setTimeout(function(){
-        if (c && c.parentNode) c.parentNode.removeChild(c);
-      }, 200);
-    }, ms);
-  }
-
-  // We DO NOT modify the sidebar or add classes; we just add/remove a cover above it.
-  function onToggleCapture(){
-    // Always place a cover immediately before your existing collapse/open runs
-    showCoverFor(DURATION);
-  }
-
-  document.addEventListener('DOMContentLoaded', function(){
-    var btn = document.getElementById('sidebar-toggle');
-    if (!btn) return;
-    // Capture phase so the cover appears before any sidebar reflow is visible
-    btn.addEventListener('click', onToggleCapture, true);
   });
 })();
 </script>
