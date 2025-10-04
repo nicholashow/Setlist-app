@@ -2028,9 +2028,16 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
             $('#prev-doc').on('click', function() { if (!$(this).is(':disabled') && currentViewerIndex > 0) { openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1, 'prev'); }});
             startInactivityTimer();
         }
-        function resetScrollHandlers() { $('#doc-view, #next-doc, #prev-doc').off('mousemove touchstart touchend click'); clearTimeout(inactivityTimer); }
+        function resetScrollHandlers() { $('#doc-view, #next-doc, #prev-doc').off('mousemove touchstart touchend click'); clearTimeout(inactivityTimer); 
+    try{
+      if (window.__docTapCapture) {
+        document.removeEventListener('touchstart', window.__docTapCapture, {capture:true});
+        document.removeEventListener('pointerdown', window.__docTapCapture, {capture:true});
+      }
+    }catch(e){}
+}
         function showNavButtons() { $('#doc-nav-buttons').removeClass('hidden'); startInactivityTimer(); }
-        function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000); }, 3000); }
+        function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000); }
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
     </script>
     <!-- Left-edge custom scrollbar (visible only when sidebar is collapsed) -->
@@ -3901,6 +3908,50 @@ function destroyPdfOverlay() {
   }
 })();
 </script>
+
+
+<!-- BEGIN: Surgical NEXT/PREV transplant (from working older app) -->
+<script>
+(function(){
+  if (window.__nextPrevTransplant) return;
+  window.__nextPrevTransplant = true;
+
+  function bindNav(){
+    if (typeof window.jQuery !== 'function') return; // this transplant assumes jQuery exists like the rest of the app
+    var $ = window.jQuery;
+
+    try { $('#next-doc').off('click'); } catch(e){}
+    try { $('#prev-doc').off('click'); } catch(e){}
+
+    $('#next-doc').on('click', function(){
+      var $btn = $(this);
+      var list = Array.isArray(window.currentViewerList) ? window.currentViewerList : null;
+      var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
+      if ($btn.is(':disabled') || !list || i < 0 || i >= list.length - 1) return;
+      if (typeof window.openSongInContext === 'function') {
+        window.openSongInContext(list[i + 1].id, window.currentViewerContext, i + 1, 'next');
+      }
+    });
+
+    $('#prev-doc').on('click', function(){
+      var $btn = $(this);
+      var list = Array.isArray(window.currentViewerList) ? window.currentViewerList : null;
+      var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
+      if ($btn.is(':disabled') || !list || i <= 0) return;
+      if (typeof window.openSongInContext === 'function') {
+        window.openSongInContext(list[i - 1].id, window.currentViewerContext, i - 1, 'prev');
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindNav);
+  } else {
+    bindNav();
+  }
+})();
+</script>
+<!-- END: Surgical NEXT/PREV transplant -->
 
 </body>
 
