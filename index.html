@@ -1590,6 +1590,76 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
   color: #ffffff !important;
 }
 
+
+/* === Unified sizing & centering — exact match across Date / Venue / Order === */
+:root {
+  --details-height: 40px;
+  --details-font-size: 16px;
+  --details-font-weight: 600;
+}
+
+#setlist-details-content input,
+#setlist-details-content select {
+  height: var(--details-height);
+  line-height: var(--details-height);
+  font-size: var(--details-font-size);
+  font-weight: var(--details-font-weight);
+  text-align: center;
+  color: #ffffff; /* typed text color */
+}
+
+/* Ensure placeholders (Venue) are white & centered */
+#setlist-venue::placeholder {
+  color: #ffffff !important;
+  opacity: 1;
+  text-align: center;
+}
+
+/* Date overlay uses identical font sizing */
+#date-placeholder {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  font-size: var(--details-font-size);
+  font-weight: var(--details-font-weight);
+  color: #ffffff !important;
+  white-space: nowrap;
+}
+
+/* Order overlay to ensure pixel-perfect centering like the Date overlay */
+#order-overlay {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  font-size: var(--details-font-size);
+  font-weight: var(--details-font-weight);
+  color: #ffffff !important;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+}
+
+/* When the Custom Order overlay is showing, hide the native select's text to avoid misalignment jitter */
+.select-hide-text {
+  color: transparent !important;
+  text-shadow: none !important;
+}
+
+/* Keep the dropdown chevron visible */
+#setlist-details-content .pointer-events-none svg {
+  color: #ffffff;
+  fill: currentColor;
+}
+
+/* iPad/iOS tweaks for select rendering */
+#setlist-details-content select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 </style>
 </head>
 
@@ -4168,6 +4238,86 @@ function destroyPdfOverlay() {
   document.addEventListener('DOMContentLoaded', function(){
     syncAll();
     // Also run once more after layout settles
+    setTimeout(syncAll, 0);
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  function centerDatePlaceholder(){
+    var cont = document.getElementById('setlist-date-container');
+    var input = document.getElementById('setlist-date');
+    var ph = document.getElementById('date-placeholder');
+    if (!cont || !input || !ph) return;
+    var r = input.getBoundingClientRect();
+    var c = cont.getBoundingClientRect();
+    var cx = (r.left - c.left) + (r.width / 2);
+    var cy = (r.top  - c.top)  + (r.height / 2);
+    ph.style.left = cx + 'px';
+    ph.style.top  = cy + 'px';
+    ph.style.transform = 'translate(-50%, -50%)';
+    ph.style.width = r.width + 'px';
+    ph.style.textAlign = 'center';
+    // show/hide
+    ph.style.display = input.value ? 'none' : 'block';
+  }
+
+  function ensureOrderOverlay(){
+    var rel = document.querySelector('#setlist-details-content .relative');
+    var sel = document.getElementById('setlist-sort-filter-dropdown');
+    if (!rel || !sel) return;
+    var ov = document.getElementById('order-overlay');
+    if (!ov){
+      ov = document.createElement('span');
+      ov.id = 'order-overlay';
+      ov.textContent = 'Custom Order';
+      rel.appendChild(ov);
+    }
+    // Positioning is handled via CSS center; we only toggle visibility and native text
+    var selectedText = (sel.options[sel.selectedIndex] || {}).text || '';
+    var isPlaceholder = selectedText.trim().toLowerCase() === 'custom order';
+    if (isPlaceholder){
+      ov.style.display = 'block';
+      sel.classList.add('select-hide-text');
+    } else {
+      ov.style.display = 'none';
+      sel.classList.remove('select-hide-text');
+    }
+  }
+
+  function syncAll(){
+    centerDatePlaceholder();
+    ensureOrderOverlay();
+  }
+
+  // Events to keep things aligned
+  window.addEventListener('resize', syncAll);
+  window.addEventListener('orientationchange', syncAll);
+  document.addEventListener('change', function(e){
+    if (e.target && (e.target.id === 'setlist-date' || e.target.id === 'setlist-sort-filter-dropdown')){
+      syncAll();
+    }
+  });
+  document.addEventListener('input', function(e){
+    if (e.target && e.target.id === 'setlist-date'){
+      syncAll();
+    }
+  });
+
+  // Also re-sync when details are toggled open/closed
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    if (!t) return;
+    var toggle = document.getElementById('setlist-details-toggle');
+    if (t === toggle || (t.closest && toggle && t.closest('#setlist-details-toggle'))) {
+      setTimeout(syncAll, 0);
+    }
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', function(){
+    // Run after layout
     setTimeout(syncAll, 0);
   });
 })();
