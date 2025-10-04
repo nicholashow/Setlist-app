@@ -1675,6 +1675,34 @@ html, body, #setlist-details-content {
   font-family: inherit;
 }
 
+
+/* Hard-lock unified typography for overlays and controls */
+:root {
+  --details-height: 40px;
+  --details-font-size-px: 16px;
+  --details-font-weight: 600;
+}
+#setlist-details-content input,
+#setlist-details-content select {
+  height: var(--details-height);
+  line-height: var(--details-height);
+  font-size: var(--details-font-size-px) !important;
+  font-weight: var(--details-font-weight) !important;
+  text-align: center;
+  color: #ffffff;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+#date-placeholder,
+#order-overlay {
+  font-size: var(--details-font-size-px) !important;
+  font-weight: var(--details-font-weight) !important;
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
+}
+/* Keep native select text hidden when placeholder is active */
+.select-hide-text { color: transparent !important; text-shadow: none !important; }
+
 </style>
 </head>
 
@@ -4399,6 +4427,106 @@ function destroyPdfOverlay() {
     if (t === toggle || (t.closest && toggle && t.closest('#setlist-details-toggle'))) {
       setTimeout(resyncAll, 0);
     }
+  }, true);
+})();
+</script>
+
+
+<script>
+(function(){
+  // Compute center for both Date and Order overlays and lock font size to Venue's computed px.
+  function px(n){ return (typeof n==='number' && !isNaN(n)) ? (n + 'px') : n; }
+
+  function centerDateOverlay(){
+    var cont = document.getElementById('setlist-date-container');
+    var input = document.getElementById('setlist-date');
+    var ph = document.getElementById('date-placeholder');
+    if (!cont || !input || !ph) return;
+    var r = input.getBoundingClientRect();
+    var c = cont.getBoundingClientRect();
+    ph.style.left = (r.left - c.left + r.width/2) + 'px';
+    ph.style.top  = (r.top  - c.top  + r.height/2) + 'px';
+    ph.style.transform = 'translate(-50%, -50%)';
+    ph.style.width = r.width + 'px';
+    ph.style.textAlign = 'center';
+    ph.style.display = input.value ? 'none' : 'block';
+  }
+
+  function centerOrderOverlay(){
+    var rel = document.querySelector('#setlist-details-content .relative');
+    var sel = document.getElementById('setlist-sort-filter-dropdown');
+    if (!rel || !sel) return;
+    var ov = document.getElementById('order-overlay');
+    if (!ov){
+      ov = document.createElement('span');
+      ov.id = 'order-overlay';
+      ov.textContent = 'Custom Order';
+      ov.style.position = 'absolute';
+      rel.appendChild(ov);
+    }
+    var rr = rel.getBoundingClientRect();
+    var sr = sel.getBoundingClientRect();
+    // Center overlay to the select
+    ov.style.left = (sr.left - rr.left + sr.width/2) + 'px';
+    ov.style.top  = (sr.top  - rr.top  + sr.height/2) + 'px';
+    ov.style.transform = 'translate(-50%, -50%)';
+    ov.style.width = sr.width + 'px';
+    ov.style.textAlign = 'center';
+
+    // Show overlay only when placeholder option is selected
+    var text = (sel.options[sel.selectedIndex]||{}).text || '';
+    var isPlaceholder = text.trim().toLowerCase() === 'custom order';
+    ov.style.display = isPlaceholder ? 'block' : 'none';
+    sel.classList.toggle('select-hide-text', isPlaceholder);
+  }
+
+  function lockOverlayFont(){
+    var venue = document.getElementById('setlist-venue');
+    var datePh = document.getElementById('date-placeholder');
+    var orderOv = document.getElementById('order-overlay');
+    if (!venue) return;
+    var cs = getComputedStyle(venue);
+    var fz = parseFloat(cs.fontSize)||16;
+    var lh = parseFloat(cs.lineHeight)||parseFloat(getComputedStyle(venue).height)||40;
+    var ff = cs.fontFamily || 'inherit';
+    var fw = cs.fontWeight || '600';
+    [datePh, orderOv].forEach(function(el){
+      if (!el) return;
+      el.style.fontSize = px(fz);
+      el.style.lineHeight = px(lh);
+      el.style.fontFamily = ff;
+      el.style.fontWeight = fw;
+      el.style.letterSpacing = cs.letterSpacing || '0';
+    });
+    // Also ensure the select and date inputs themselves match exactly
+    var sel = document.getElementById('setlist-sort-filter-dropdown');
+    var dateIn = document.getElementById('setlist-date');
+    [sel, dateIn].forEach(function(el){
+      if (!el) return;
+      el.style.fontSize = px(fz);
+      el.style.lineHeight = px(lh);
+      el.style.fontFamily = ff;
+      el.style.fontWeight = fw;
+      el.style.letterSpacing = cs.letterSpacing || '0';
+    });
+  }
+
+  function syncAll(){
+    lockOverlayFont();
+    centerDateOverlay();
+    centerOrderOverlay();
+  }
+
+  window.addEventListener('resize', syncAll);
+  window.addEventListener('orientationchange', syncAll);
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(syncAll, 0); });
+  document.addEventListener('change', function(e){
+    if (e.target && (e.target.id==='setlist-date' || e.target.id==='setlist-sort-filter-dropdown')) setTimeout(syncAll, 0);
+  });
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    var toggle = document.getElementById('setlist-details-toggle');
+    if (toggle && (t===toggle || (t.closest && t.closest('#setlist-details-toggle')))) setTimeout(syncAll, 0);
   }, true);
 })();
 </script>
