@@ -4173,5 +4173,191 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<!-- BEGIN: Robust Next/Prev Controller (non-destructive, idempotent) -->
+<script>
+(function(){
+  if (window.__viewerNavPatched) return;
+  window.__viewerNavPatched = true;
+
+  // State
+  window.currentViewerList  = window.currentViewerList  || null; // [{id, el}]
+  window.currentViewerIndex = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
+  window.currentViewerContext = window.currentViewerContext || null;
+
+  // DOM helpers: returns [{id, el}]
+  function getListForContext(ctx){
+    var map = {
+      'setlist':    '#setlist-list > li',
+      'master':     '#master-list > li',
+      'favorites':  '#favorites-list > li',
+      'genre-view': '#genre-song-list > li',
+      'plays':      '#plays-list > li',
+      // allow custom values to map to common containers
+      'recordings': '#recordings-list > li',
+      'energy':     '#energy-list > li'
+    };
+    var sel = map[ctx] || '#setlist-list > li, #master-list > li, #favorites-list > li, #genre-song-list > li, #plays-list > li';
+    var els = Array.prototype.slice.call(document.querySelectorAll(sel));
+    var list = [];
+    els.forEach(function(li){
+      var id = li.getAttribute('data-id') || li.getAttribute('data-file-id') || li.dataset?.id || li.dataset?.fileId || li.id || '';
+      if (!id) return;
+      list.push({ id: String(id), el: li });
+    });
+    return list.length ? list : null;
+  }
+
+  function findIndexById(list, id){
+    id = String(id);
+    for (var i=0; i<list.length; i++){
+      var matchId = String(list[i].id);
+      if (matchId === id) return i;
+      // tolerate prefixes like "song-" or numeric-only matches
+      if (matchId.replace(/^song-/, '') === id.replace(/^song-/, '')) return i;
+    }
+    return -1;
+  }
+
+  // Button enable/disable + UI highlighting
+  function updateNavUI(){
+    try {
+      var nextBtn = document.getElementById('next-doc');
+      var prevBtn = document.getElementById('prev-doc');
+      if (nextBtn) nextBtn.disabled = !window.currentViewerList || window.currentViewerIndex >= window.currentViewerList.length - 1 || window.currentViewerIndex < 0;
+      if (prevBtn) prevBtn.disabled = !window.currentViewerList || window.currentViewerIndex <= 0 || window.currentViewerIndex < 0;
+    } catch(e) {}
+
+    // Optional: update blue "viewed" index circle in setlist
+    try {
+      var allCircles = document.querySelectorAll('#setlist-list li .index-number.viewed-index');
+      allCircles.forEach(function(c){ c.classList.remove('viewed-index'); });
+      if (window.currentViewerContext === 'setlist' && window.currentViewerList && window.currentViewerIndex >= 0){
+        var li = window.currentViewerList[window.currentViewerIndex].el;
+        var bubble = li && li.querySelector('.index-number');
+        if (bubble) bubble.classList.add('viewed-index');
+      }
+    } catch(e) {}
+  }
+
+  // Safe event rebind (avoids duplicates)
+  function rebindButtons(){
+    var $ = window.jQuery;
+    if (!$) return;
+    try { $('#next-doc').off('click.__nav'); } catch(e){}
+    try { $('#prev-doc').off('click.__nav'); } catch(e){}
+
+    $('#next-doc').on('click.__nav', function(){
+      if (!window.currentViewerList) return;
+      var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
+      if (i >= 0 && i < window.currentViewerList.length - 1){
+        var next = window.currentViewerList[i+1];
+        if (typeof window.openSongInContext === 'function'){
+          window.openSongInContext(next.id, window.currentViewerContext, i+1, 'next');
+        } else if (typeof window.openDocument === 'function'){
+          window.openDocument(next.id, window.currentViewerContext, i+1, 'next');
+        }
+      }
+    });
+
+    $('#prev-doc').on('click.__nav', function(){
+      if (!window.currentViewerList) return;
+      var i = (typeof window.currentViewerIndex === 'number') ? window.currentViewerIndex : -1;
+      if (i > 0){
+        var prev = window.currentViewerList[i-1];
+        if (typeof window.openSongInContext === 'function'){
+          window.openSongInContext(prev.id, window.currentViewerContext, i-1, 'prev');
+        } else if (typeof window.openDocument === 'function'){
+          window.openDocument(prev.id, window.currentViewerContext, i-1, 'prev');
+        }
+      }
+    });
+  }
+
+  // Wrap the app's open function to keep state in sync
+  (function wrapOpen(){
+    var original = window.openSongInContext || window.openDocument;
+    if (!original) return;
+    var wrapper = function(id, context, indexHint, direction){
+      // Determine live list for this context
+      window.currentViewerContext = context || window.currentViewerContext || 'setlist';
+      var list = getListForContext(window.currentViewerContext);
+      window.currentViewerList = list;
+
+      // Compute index
+      var idx = -1;
+      if (Array.isArray(list)){
+        if (typeof indexHint === 'number' && indexHint >= 0 && indexHint < list.length){
+          idx = indexHint;
+        } else {
+          idx = findIndexById(list, id);
+        }
+      }
+
+      // Call original loader first so UI opens as usual
+      var ret = original.apply(this, arguments);
+
+      // Then update our state & UI
+      if (idx >= 0){
+        window.currentViewerIndex = idx;
+      } else {
+        // fallback: if we can't find it, clamp to 0 so buttons still work
+        window.currentViewerIndex = 0;
+      }
+      updateNavUI();
+      rebindButtons();
+      return ret;
+    };
+
+    if (window.openSongInContext){
+      window.openSongInContext = wrapper;
+    } else {
+      window.openDocument = wrapper;
+    }
+  })();
+
+  // Also observe when the viewer gets inserted so we can (re)bind buttons
+  var mo = new MutationObserver(function(){
+    rebindButtons();
+    updateNavUI();
+  });
+  try {
+    mo.observe(document.body, {childList:true, subtree:true});
+  } catch(e){}
+
+  // Initialize asap
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){
+      rebindButtons(); updateNavUI();
+    });
+  } else {
+    rebindButtons(); updateNavUI();
+  }
+
+  // Bonus: swipe left/right on the fullscreen doc area (non-invasive; won't double bind your existing code)
+  try{
+    var startX = null;
+    document.addEventListener('touchstart', function(e){
+      var dv = document.getElementById('doc-view');
+      if (!dv || !dv.contains(e.target)) return;
+      startX = e.touches && e.touches[0] ? e.touches[0].clientX : null;
+    }, {passive:true});
+    document.addEventListener('touchend', function(e){
+      var dv = document.getElementById('doc-view');
+      if (!dv || startX == null) return;
+      var endX = e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : null;
+      if (endX == null) return;
+      var delta = endX - startX;
+      if (delta < -50){
+        var btn = document.getElementById('next-doc'); if (btn && !btn.disabled) btn.click();
+      } else if (delta > 50){
+        var btn = document.getElementById('prev-doc'); if (btn && !btn.disabled) btn.click();
+      }
+      startX = null;
+    }, {passive:true});
+  }catch(e){}
+})();
+</script>
+<!-- END: Robust Next/Prev Controller -->
 </body>
 </html>
