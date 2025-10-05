@@ -1,8 +1,8 @@
 <!DOCTYPE html>
+<html lang="en" class="dark">
 
-<html class="dark" lang="en">
 <head>
-<script data-ios-detect-early="">
+    <script data-ios-detect-early>
     (function(){
       try{
         var isiOS = /AppleWebKit/.test(navigator.userAgent||'') && (navigator.maxTouchPoints||0) > 1;
@@ -10,11 +10,12 @@
       }catch(e){}
     })();
     </script>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no" name="viewport"/>
-<title>Setlist Manager - Enhanced</title>
-<script src="https://cdn.tailwindcss.com/3.4.14"></script>
-<script>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title>Setlist Manager - Enhanced</title>
+    <script src="https://cdn.tailwindcss.com/3.4.14"></script>
+    <script>
         tailwind.config = {
             darkMode: 'class',
         }
@@ -199,7 +200,7 @@
         })();
 
     </script>
-<script>
+    <script>
         (function() {
             var ua = navigator.userAgent || navigator.vendor || window.opera;
             var isiOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -208,10 +209,15 @@
             }
         })();
     </script>
-<script crossorigin="anonymous" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script crossorigin="anonymous" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
-<style>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+        integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+    <style>
         html,
         body {
             height: 100%;
@@ -1589,282 +1595,292 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 }
 
 </style>
-<link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet"/>
-<style>
-/* === Hide nav controls only (keep containers and logic intact) === */
-#prev-doc,
-#next-doc,
-#close-doc,
-#pdf-btn-prev,
-#pdf-btn-next,
-#pdf-btn-close {
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
+    <link rel="stylesheet"
+      href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+</head>
 
-/* Optional: prevent accidental tap on the top bar area from triggering actions */
-#doc-nav-buttons .doc-nav-button { pointer-events: none !important; }
-</style></head>
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
-<div id="app">
-<aside class="left-col w-64 bg-gray-800 text-white flex-shrink-0 dark:bg-black">
-<div class="left-col-main-content">
-<div class="app-header app-header-selected" id="home-btn">
-<h1 class="text-2xl font-bold mb-2 underline">ALL SONGS</h1>
-<p class="text-sm whitespace-nowrap">Organize music performances</p>
-</div>
-<div class="mb-2 p-2 rounded-lg bg-gray-700" id="nav-setlists">
-<div class="flex items-center justify-between">
-<span class="font-medium uppercase">Setlists</span>
-<button class="text-sm px-2 py-1 rounded-md bg-gray-600" id="toggle-setlists">▾</button>
-</div>
-<div class="mt-2" id="setlists-container"></div>
-<div class="mt-2">
-<input class="w-full p-1 text-sm rounded-md bg-gray-700" id="new-setlist-name" placeholder="New setlist name"/>
-<button class="w-full mt-1 p-1 text-sm rounded-md btn-add" id="add-setlist-btn">Add Setlist</button>
-</div>
-</div>
-<div class="sidebar-item" id="nav-favorites">Favorites</div>
-<div class="sidebar-item" id="nav-plays">Plays</div>
-<div class="sidebar-item" id="nav-recordings">Recordings</div>
-<div class="sidebar-item" id="nav-energy">Energy Levels</div>
-<div class="mt-4">
-<h3 class="text-sm font-semibold uppercase">Genres</h3>
-<div class="item-creation">
-<div class="color-picker-wrapper">
-<div id="genre-color-display"></div>
-<input id="genre-color" title="Select color" type="color"/>
-</div>
-<input class="item-name-input" id="genre-name" placeholder="New genre">
-<button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-genre">Add</button>
-</input></div>
-<div class="mt-2 space-y-1" id="genre-list"></div>
-</div>
-<div class="mt-4">
-<h3 class="text-sm font-semibold uppercase">Venues</h3>
-<div class="item-creation">
-<input class="item-name-input" id="venue-name" placeholder="New venue"/>
-<button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-venue">Add</button>
-</div>
-<div class="mt-2 space-y-1" id="venue-list"></div>
-</div>
-</div>
-<div class="stats-container">
-<h3 class="stats-title">Top Played</h3>
-<ul class="text-xs mt-1" id="top-played"></ul>
-<h3 class="stats-title mt-3">Least Played</h3>
-<ul class="text-xs mt-1" id="least-played"></ul>
-</div>
+    <div id="app">
+        <aside class="left-col w-64 bg-gray-800 text-white flex-shrink-0 dark:bg-black">
+            <div class="left-col-main-content">
+                <div class="app-header app-header-selected" id="home-btn">
+                    <h1 class="text-2xl font-bold mb-2 underline">ALL SONGS</h1>
+                    <p class="text-sm whitespace-nowrap">Organize music performances</p>
+                </div>
+
+                <div class="mb-2 p-2 rounded-lg bg-gray-700" id="nav-setlists">
+                    <div class="flex items-center justify-between">
+                        <span class="font-medium uppercase">Setlists</span>
+                        <button class="text-sm px-2 py-1 rounded-md bg-gray-600" id="toggle-setlists">▾</button>
+                    </div>
+                    <div class="mt-2" id="setlists-container"></div>
+                    <div class="mt-2">
+                        <input class="w-full p-1 text-sm rounded-md bg-gray-700" id="new-setlist-name" placeholder="New setlist name" />
+                        <button class="w-full mt-1 p-1 text-sm rounded-md btn-add" id="add-setlist-btn">Add Setlist</button>
+                    </div>
+                </div>
+                <div class="sidebar-item" id="nav-favorites">Favorites</div>
+                <div class="sidebar-item" id="nav-plays">Plays</div>
+                <div class="sidebar-item" id="nav-recordings">Recordings</div>
+                <div class="sidebar-item" id="nav-energy">Energy Levels</div>
+
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold uppercase">Genres</h3>
+                     <div class="item-creation">
+                        <div class="color-picker-wrapper">
+                            <div id="genre-color-display"></div>
+                            <input type="color" id="genre-color" title="Select color">
+                        </div>
+                        <input class="item-name-input" id="genre-name" placeholder="New genre" />
+                        <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-genre">Add</button>
+                    </div>
+                    <div class="mt-2 space-y-1" id="genre-list"></div>
+                </div>
+
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold uppercase">Venues</h3>
+                    <div class="item-creation">
+                        <input class="item-name-input" id="venue-name" placeholder="New venue" />
+                        <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-venue">Add</button>
+                    </div>
+                    <div class="mt-2 space-y-1" id="venue-list"></div>
+                </div>
+            </div>
+            
+            <div class="stats-container">
+                <h3 class="stats-title">Top Played</h3>
+                <ul class="text-xs mt-1" id="top-played"></ul>
+                <h3 class="stats-title mt-3">Least Played</h3>
+                <ul class="text-xs mt-1" id="least-played"></ul>
+            </div>
+        
 <div id="stats-external-scroll"><div class="track"></div><div id="stats-thumb"></div></div>
 </aside>
-<button id="sidebar-toggle">
-<svg class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-</button>
-<main class="flex-1 p-4 overflow-auto">
-<section id="master-view">
-<div id="master-view-controls">
-<div id="search-container">
-<input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..."/>
-<datalist id="search-results"></datalist>
-<div id="dark-mode-container">
-<label class="flex items-center cursor-pointer ml-4" for="dark-mode-toggle">
-<span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark</span>
-<div class="relative">
-<input class="dark-mode-toggle sr-only" id="dark-mode-toggle" type="checkbox"/>
-<div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
-<div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
-</div>
-</label>
-</div>
-</div>
-<div id="controls-row">
-<div id="filters-group">
-<select class="p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select" id="sort-dropdown">
-<option value="name">Sort by Name</option>
-<option value="artist">Sort by Artist</option>
-<option value="lastPlayed">Sort by Last Played</option>
-<option value="energy">Sort by Energy</option>
-</select>
-<div class="relative" id="genre-filter-container">
-<button class="p-2 rounded-lg bg-transparent text-sm text-left dark:bg-transparent dark:text-gray-200" id="genre-filter-button">Select Genres</button>
-<div class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700" id="genre-filter-dropdown"></div>
-</div>
-</div>
-<div class="flex gap-2" id="master-view-buttons">
-<input accept=".pdf" class="hidden" id="master-upload" multiple="" type="file">
-<button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow btn-master" id="upload-master-btn">Add files</button>
-<button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow btn-master" id="delete-all-btn">Delete All</button>
-</input></div>
-</div>
-</div>
-<div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-<ul id="master-list"></ul>
-</div>
-<div class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-8 pointer-events-none" id="master-drop-overlay">
-<div class="text-center bg-white dark:bg-gray-800 p-12 rounded-2xl border-4 border-dashed border-blue-500">
-<h2 class="text-2xl font-bold">Drop Files Here</h2>
-<p>Add PDF song sheets to ALL SONGS</p>
-</div>
-</div>
-</section>
-<section class="hidden" id="setlist-view">
-<div class="flex items-center gap-2 mb-2">
-<button class="hidden p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition dark:bg-gray-700 dark:hover:bg-gray-600" id="back-to-venue-btn">← Back</button>
-<h2 class="text-xl font-bold" id="setlist-title">Setlist</h2>
-<p class="text-sm text-gray-500 dark:text-white ml-2" id="setlist-total-duration"></p>
-<p class="text-sm text-gray-500 dark:text-white ml-2" id="setlist-song-count"></p>
-</div>
-<div class="flex items-end justify-between flex-wrap gap-4 mb-2">
-<div class="flex items-center gap-2">
-<button class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow" id="record-show">Record Show</button>
-<button class="p-2 bg-red-600 text-white rounded-lg hidden shadow" id="stop-record">Stop Recording</button>
-<button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow" id="print-setlist">Print Setlist</button>
-<div class="relative inline-block">
-<button class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow" id="share-setlist-btn">Share Setlist</button>
-<div class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700" id="share-options">
-<a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" href="#" id="share-native">Share with Device (inc. PDFs)</a>
-<a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" href="#" id="share-email">Share via Email (text only)</a>
-<a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" href="#" id="share-gmail">Share via Gmail (text only)</a>
-<a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" href="#" id="share-copy">Copy to Clipboard (text only)</a>
-</div>
-<span class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity" id="copy-feedback">Copied!</span>
-</div>
-</div>
-</div>
-<div class="mb-2" id="setlist-details-container">
-<div id="setlist-details-toggle">
-<span>Setlist Details</span>
-<span class="toggle-arrow">▾</span>
-</div>
-<div id="setlist-details-content">
-<div id="setlist-date-container">
-<label class="font-medium text-xs" for="setlist-date">Date</label>
-<input class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600" id="setlist-date" type="date"/>
-<span id="date-placeholder">mm/dd/yyyy</span>
-</div>
-<div>
-<label class="font-medium text-xs" for="setlist-venue">Venue</label>
-<input class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" id="setlist-venue" placeholder="Enter venue" type="text"/>
-</div>
-<div>
-<label class="font-medium text-xs" for="setlist-sort-filter-dropdown">Order</label>
-<div class="relative">
-<select class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" id="setlist-sort-filter-dropdown">
-<option value="custom">Custom Order</option>
-<option value="name">Sort by Name</option>
-<option value="artist">Sort by Artist</option>
-<option value="genre">Sort by Genre</option>
-<option value="energy">Sort by Energy</option>
-</select>
-<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
-<svg class="fill-current h-4 w-4" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path></svg>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="mb-2" id="setlist-recordings"></div>
-<div class="setlist-view-container">
-<div class="setlist-panel">
-<div class="panel-header">Setlist Songs</div>
-<ul id="setlist-list"></ul>
-</div>
-<div class="setlist-panel">
-<div class="panel-header">Add Songs to Setlist</div>
-<input class="w-full p-2 border-b dark:bg-gray-800 dark:border-gray-600 flex-shrink-0" id="setlist-search-add" placeholder="Search all songs..."/>
-<ul id="setlist-add-songs-list"></ul>
-</div>
-</div>
-</section>
-<section class="hidden" id="favorites-view">
-<div class="flex items-center justify-between mb-2">
-<h2 class="text-xl font-bold">Favorite Songs</h2>
-<div class="relative">
-<select class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600" id="favorites-sort-dropdown">
-<option value="name">Sort by Name</option>
-<option value="artist">Sort by Artist</option>
-<option value="lastPlayed">Sort by Last Played</option>
-<option value="energy">Sort by Energy</option>
-</select>
-<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-<svg class="fill-current h-4 w-4" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-<path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path></svg>
-</div>
-</div>
-</div>
-<div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-<ul id="favorites-list"></ul>
-</div>
-</section>
-<section class="hidden" id="genre-view">
-<div class="flex items-center justify-between mb-2">
-<h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
-<div class="relative">
-<select class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600" id="genre-sort-dropdown">
-<option value="name">Sort by Name</option>
-<option value="artist">Sort by Artist</option>
-<option value="lastPlayed">Sort by Last Played</option>
-<option value="energy">Sort by Energy</option>
-</select>
-<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-<svg class="fill-current h-4 w-4" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-<path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path></svg>
-</div>
-</div>
-</div>
-<div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-<ul id="genre-song-list"></ul>
-</div>
-</section>
-<section class="hidden" id="plays-view">
-<div class="flex items-center justify-between mb-2">
-<h2 class="text-xl font-bold">Plays</h2>
-<button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow" id="reset-plays">Reset All Plays</button>
-</div>
-<div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-<ul id="plays-list"></ul>
-</div>
-</section>
-<section class="hidden" id="recordings-view">
-<div class="flex items-center justify-between mb-2">
-<h2 class="text-xl font-bold">Recordings</h2>
-</div>
-<div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-<ul id="recordings-list"></ul>
-</div>
-</section>
-<section class="hidden" id="energy-view">
-<h2 class="text-xl font-bold mb-2">Energy Levels</h2>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="energy-level-container"></div>
-</section>
-<section class="hidden" id="venue-setlists-view">
-<h2 class="text-xl font-bold mb-2" id="venue-setlists-title"></h2>
-<div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-<ul id="venue-setlists-list"></ul>
-</div>
-</section>
-</main>
-</div>
-<section class="hidden" id="doc-view">
-<div id="doc-iframe-wrapper"></div>
-<div class="doc-nav-buttons" id="doc-nav-buttons">
-<button class="doc-nav-button no-select" id="prev-doc">
-<svg class="h-4 w-4" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+
+        <button id="sidebar-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </button>
+
+        <main class="flex-1 p-4 overflow-auto">
+            <section id="master-view">
+                 <div id="master-view-controls">
+                    <div id="search-container">
+                        <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..." />
+                        <datalist id="search-results"></datalist>
+                        <div id="dark-mode-container">
+                             <label for="dark-mode-toggle" class="flex items-center cursor-pointer ml-4">
+                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="dark-mode-toggle" class="dark-mode-toggle sr-only">
+                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="controls-row">
+                        <div id="filters-group">
+                            <select id="sort-dropdown" class="p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select">
+                                <option value="name">Sort by Name</option>
+                                <option value="artist">Sort by Artist</option>
+                                <option value="lastPlayed">Sort by Last Played</option>
+                                <option value="energy">Sort by Energy</option>
+                            </select>
+                            <div id="genre-filter-container" class="relative">
+                                <button id="genre-filter-button" class="p-2 rounded-lg bg-transparent text-sm text-left dark:bg-transparent dark:text-gray-200">Select Genres</button>
+                                <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
+                            </div>
+                        </div>
+                        <div id="master-view-buttons" class="flex gap-2">
+                            <input accept=".pdf" class="hidden" id="master-upload" multiple="" type="file" />
+                            <button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow btn-master" id="upload-master-btn">Add files</button>
+                            <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow btn-master" id="delete-all-btn">Delete All</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="master-list"></ul>
+                </div>
+                <div id="master-drop-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-8 pointer-events-none">
+                    <div class="text-center bg-white dark:bg-gray-800 p-12 rounded-2xl border-4 border-dashed border-blue-500">
+                        <h2 class="text-2xl font-bold">Drop Files Here</h2>
+                        <p>Add PDF song sheets to ALL SONGS</p>
+                    </div>
+                </div>
+            </section>
+
+
+            <section class="hidden" id="setlist-view">
+                 <div class="flex items-center gap-2 mb-2">
+                    <button id="back-to-venue-btn" class="hidden p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition dark:bg-gray-700 dark:hover:bg-gray-600">← Back</button>
+                    <h2 class="text-xl font-bold" id="setlist-title">Setlist</h2>
+                    <p id="setlist-total-duration" class="text-sm text-gray-500 dark:text-white ml-2"></p>
+                    <p id="setlist-song-count" class="text-sm text-gray-500 dark:text-white ml-2"></p>
+                </div>
+
+                <div class="flex items-end justify-between flex-wrap gap-4 mb-2">
+                    <div class="flex items-center gap-2">
+                        <button id="record-show" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Record Show</button>
+                        <button id="stop-record" class="p-2 bg-red-600 text-white rounded-lg hidden shadow">Stop Recording</button>
+                        <button id="print-setlist" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">Print Setlist</button>
+                        <div class="relative inline-block">
+                            <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Share Setlist</button>
+                            <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
+                                <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
+                                <a href="#" id="share-email" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Email (text only)</a>
+                                <a href="#" id="share-gmail" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Gmail (text only)</a>
+                                <a href="#" id="share-copy" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Copy to Clipboard (text only)</a>
+                            </div>
+                            <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="setlist-details-container" class="mb-2">
+                    <div id="setlist-details-toggle">
+                        <span>Setlist Details</span>
+                        <span class="toggle-arrow">▾</span>
+                    </div>
+                    <div id="setlist-details-content">
+                        <div id="setlist-date-container">
+                            <label for="setlist-date" class="font-medium text-xs">Date</label>
+                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                            <span id="date-placeholder">mm/dd/yyyy</span>
+                        </div>
+                        <div>
+                            <label for="setlist-venue" class="font-medium text-xs">Venue</label>
+                            <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                        </div>
+                        <div>
+                            <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
+                            <div class="relative">
+                                <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                                    <option value="custom">Custom Order</option>
+                                    <option value="name">Sort by Name</option>
+                                    <option value="artist">Sort by Artist</option>
+                                    <option value="genre">Sort by Genre</option>
+                                    <option value="energy">Sort by Energy</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="setlist-recordings" class="mb-2"></div>
+                
+                 <div class="setlist-view-container">
+                    <div class="setlist-panel">
+                        <div class="panel-header">Setlist Songs</div>
+                        <ul id="setlist-list"></ul>
+                    </div>
+                    <div class="setlist-panel">
+                        <div class="panel-header">Add Songs to Setlist</div>
+                        <input id="setlist-search-add" class="w-full p-2 border-b dark:bg-gray-800 dark:border-gray-600 flex-shrink-0" placeholder="Search all songs...">
+                        <ul id="setlist-add-songs-list"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="hidden" id="favorites-view">
+                <div class="flex items-center justify-between mb-2">
+                     <h2 class="text-xl font-bold">Favorite Songs</h2>
+                    <div class="relative">
+                        <select id="favorites-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
+                            <option value="name">Sort by Name</option>
+                            <option value="artist">Sort by Artist</option>
+                            <option value="lastPlayed">Sort by Last Played</option>
+                            <option value="energy">Sort by Energy</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="favorites-list"></ul>
+                </div>
+            </section>
+
+            <section class="hidden" id="genre-view">
+                 <div class="flex items-center justify-between mb-2">
+                     <h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
+                    <div class="relative">
+                        <select id="genre-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
+                            <option value="name">Sort by Name</option>
+                            <option value="artist">Sort by Artist</option>
+                            <option value="lastPlayed">Sort by Last Played</option>
+                            <option value="energy">Sort by Energy</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="genre-song-list"></ul>
+                </div>
+            </section>
+
+            <section class="hidden" id="plays-view">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl font-bold">Plays</h2>
+                    <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow" id="reset-plays">Reset All Plays</button>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="plays-list"></ul>
+                </div>
+            </section>
+
+            <section class="hidden" id="recordings-view">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl font-bold">Recordings</h2>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="recordings-list"></ul>
+                </div>
+            </section>
+
+            <section class="hidden" id="energy-view">
+                <h2 class="text-xl font-bold mb-2">Energy Levels</h2>
+                <div id="energy-level-container" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+            </section>
+
+            <section class="hidden" id="venue-setlists-view">
+                <h2 class="text-xl font-bold mb-2" id="venue-setlists-title"></h2>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="venue-setlists-list"></ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <section class="hidden" id="doc-view">
+         <div id="doc-iframe-wrapper"></div>
+        <div class="doc-nav-buttons" id="doc-nav-buttons">
+            <button class="doc-nav-button no-select" id="prev-doc">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
                 Previous
             </button>
-<button class="doc-nav-button no-select" id="next-doc">
+            <button class="doc-nav-button no-select" id="next-doc">
                 Next
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-</button>
-<button class="doc-nav-button doc-nav-close no-select" id="close-doc">
-<svg class="h-4 w-4" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+            </button>
+            <button class="doc-nav-button doc-nav-close no-select" id="close-doc">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 Close
             </button>
-</div>
-</section>
-<script>
+        </div>
+    </section>
+
+    <script>
         // ================== Disable Zoom on iPad ==================
         document.addEventListener('touchstart', (event) => {
           if (event.touches.length > 1) {
@@ -2122,10 +2138,12 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
         function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000); }
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
     </script>
-<!-- Left-edge custom scrollbar (visible only when sidebar is collapsed) -->
-<div aria-hidden="true" class="hidden" id="edge-scrollbar">
-<div id="edge-thumb"></div>
-</div>
+    <!-- Left-edge custom scrollbar (visible only when sidebar is collapsed) -->
+    <div id="edge-scrollbar" class="hidden" aria-hidden="true">
+        <div id="edge-thumb"></div>
+    </div>
+
+
 <script>
 (function(){
   // Find the stats container
@@ -2300,6 +2318,8 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
 })();
 
 </script>
+
+
 <script>
 function loadPDFJSLib() {
   return new Promise((resolve, reject) => {
@@ -2365,6 +2385,7 @@ async function renderPDFWithPDFJS(url, containerEl) {
   }
 }
 </script>
+
 <script>
 (function(){
   window.__docTapListenerInstalled = true;
@@ -2380,6 +2401,7 @@ async function renderPDFWithPDFJS(url, containerEl) {
   document.addEventListener('pointerdown', cap, {passive:true, capture:true});
 })();
 </script>
+
 <script>
 function loadPDFJSLib() {
   return new Promise((resolve, reject) => {
@@ -2429,6 +2451,7 @@ async function renderPDFInto(containerEl, url) {
   if (revoke) setTimeout(() => URL.revokeObjectURL(revoke), 30000);
 }
 </script>
+
 <script>
 function ensurePdfOverlay() {
   let ov = document.getElementById('pdf-overlay');
@@ -2460,13 +2483,15 @@ function destroyPdfOverlay() {
   if (sc) sc.innerHTML = '';
 }
 </script>
+
 <!-- Non-intrusive PDF top buttons -->
 <div id="pdf-btn-hit"></div>
-<div aria-hidden="true" id="pdf-btn-bar">
-<button class="btn" id="pdf-btn-prev" type="button">PREVIOUS</button>
-<button class="btn" id="pdf-btn-next" type="button">NEXT</button>
-<button class="btn" id="pdf-btn-close" type="button">CLOSE</button>
+<div id="pdf-btn-bar" aria-hidden="true">
+  <button id="pdf-btn-prev" class="btn" type="button">PREVIOUS</button>
+  <button id="pdf-btn-next" class="btn" type="button">NEXT</button>
+  <button id="pdf-btn-close" class="btn" type="button">CLOSE</button>
 </div>
+
 <script>
 (function(){
   if (window.__pdfBtnsInstalled) return;
@@ -2530,6 +2555,7 @@ function destroyPdfOverlay() {
 
 })();
 </script>
+
 <script>
 (function(){
   if (window.__pdfBtnsEnh2) return;
@@ -2645,13 +2671,15 @@ function destroyPdfOverlay() {
   setTimeout(syncOverlayButtons, 500);
 })();
 </script>
+
 <!-- Overlay PDF Button Bar -->
 <div id="pdf-btn-hit"></div>
-<div aria-hidden="true" id="pdf-btn-bar">
-<button class="btn" id="pdf-btn-prev" type="button">PREVIOUS</button>
-<button class="btn" id="pdf-btn-next" type="button">NEXT</button>
-<button class="btn" id="pdf-btn-close" type="button">CLOSE</button>
+<div id="pdf-btn-bar" aria-hidden="true">
+  <button id="pdf-btn-prev" class="btn" type="button">PREVIOUS</button>
+  <button id="pdf-btn-next" class="btn" type="button">NEXT</button>
+  <button id="pdf-btn-close" class="btn" type="button">CLOSE</button>
 </div>
+
 <script>
 (function(){
   if (window.__pdfBtnsInstalled_v3) return;
@@ -2781,6 +2809,7 @@ function destroyPdfOverlay() {
   setTimeout(syncState, 400);
 })();
 </script>
+
 <script>
 (function(){
   if (window.__pdfBtnsInstalled_v4) return;
@@ -2959,6 +2988,7 @@ function destroyPdfOverlay() {
   setTimeout(syncState, 400);
 })();
 </script>
+
 <script>
 (function(){
   if (window.__pdfBtnsInstalled_v5) return;
@@ -3139,6 +3169,7 @@ function destroyPdfOverlay() {
   setTimeout(syncState, 400);
 })();
 </script>
+
 <script>
 (function(){
   if (window.__wrapOpenSongInContext_v1) return;
@@ -3176,6 +3207,7 @@ function destroyPdfOverlay() {
   }
 })();
 </script>
+
 <script>
 (function(){
   if (window.__bindPdfScroller_v2) return;
@@ -3211,6 +3243,7 @@ function destroyPdfOverlay() {
   mo.observe(document.body, { childList: true, subtree: true });
 })();
 </script>
+
 <script>
 (function(){
   if (window.__pdfBtnWire_v6) return;
@@ -3261,13 +3294,16 @@ function destroyPdfOverlay() {
   closeB && closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
 })();
 </script>
+
 <!-- Overlay PDF Top Bar (new safe IDs) -->
 <div id="pdf-top-hit"></div>
-<div aria-hidden="true" id="pdf-topbar">
-<button class="btn" id="pdf-prev" type="button">PREVIOUS</button>
-<button class="btn" id="pdf-next" type="button">NEXT</button>
-<button class="btn" id="pdf-close" type="button">CLOSE</button>
+<div id="pdf-topbar" aria-hidden="true">
+  <button id="pdf-prev"  class="btn" type="button">PREVIOUS</button>
+  <button id="pdf-next"  class="btn" type="button">NEXT</button>
+  <button id="pdf-close" class="btn" type="button">CLOSE</button>
 </div>
+
+
 <!-- Topbar V7 wiring -->
 <script>
 /* Universal viewer wiring so buttons work on Songs, Setlists, Favorites */
@@ -3426,6 +3462,8 @@ function destroyPdfOverlay() {
 
   window.addEventListener('pdfTopbarSync', function(){ try { syncState(); } catch(e){} });
 </script>
+
+
 <!-- wrap openDocViewer v1 -->
 <script>
 (function(){
@@ -3449,6 +3487,7 @@ function destroyPdfOverlay() {
   install(); document.addEventListener('DOMContentLoaded', install); setTimeout(install, 500); setTimeout(install, 1500);
 })();
 </script>
+
 <!-- pdfTopbarSync init -->
 <script>
 (function(){
@@ -3459,13 +3498,16 @@ function destroyPdfOverlay() {
   } catch(e){}
 })();
 </script>
+
 <!-- FINAL overlay topbar -->
 <div id="pdf-top-hit"></div>
-<div aria-hidden="true" id="pdf-topbar">
-<button class="btn" id="pdf-prev" type="button">PREVIOUS</button>
-<button class="btn" id="pdf-next" type="button">NEXT</button>
-<button class="btn" id="pdf-close" type="button">CLOSE</button>
+<div id="pdf-topbar" aria-hidden="true">
+  <button id="pdf-prev"  class="btn" type="button">PREVIOUS</button>
+  <button id="pdf-next"  class="btn" type="button">NEXT</button>
+  <button id="pdf-close" class="btn" type="button">CLOSE</button>
 </div>
+
+
 <!-- FINAL topbar wiring -->
 <script>
 /* Keep viewer globals in sync across all open paths */
@@ -3649,6 +3691,8 @@ function destroyPdfOverlay() {
   setTimeout(syncState, 400);
 })();
 </script>
+
+
 <!-- Venue size matcher -->
 <script>
 (function(){
@@ -3689,6 +3733,8 @@ function destroyPdfOverlay() {
   });
 })();
 </script>
+
+
 <!-- Universal CLOSE for the PDF/file viewer — install once -->
 <script>
 (function () {
@@ -3756,6 +3802,8 @@ function destroyPdfOverlay() {
   window.universalCloseViewer = universalCloseViewer;
 })();
 </script>
+
+
 <!-- Genre/Venue exact symmetry + centered placeholders (robust) -->
 <style>
 #genre-name::placeholder, #venue-name::placeholder { text-align: center; }
@@ -3820,6 +3868,8 @@ function destroyPdfOverlay() {
   } catch(_){}
 })();
 </script>
+
+
 <!-- Venue/Genre left-edge alignment + Pull-to-close v4 -->
 <script>
 (function(){
@@ -3956,6 +4006,8 @@ function destroyPdfOverlay() {
   }
 })();
 </script>
+
+
 <script>
 // === Drag into Genres: blue hover + assign song to genre ===
 (function(){
@@ -4013,6 +4065,8 @@ function destroyPdfOverlay() {
   });
 })();
 </script>
+
+
 <script>
 // === Override: ensure Genre view shows songs dropped into that genre ===
 (function(){
@@ -4047,6 +4101,8 @@ function destroyPdfOverlay() {
   };
 })();
 </script>
+
+
 <script>
 // === Setlist Details: keep the date placeholder span visible only when empty ===
 (function(){
@@ -4065,6 +4121,8 @@ function destroyPdfOverlay() {
   $(function(){ updateDatePlaceholder(); });
 })();
 </script>
+
+
 <script>
 (function(){
   function positionDatePlaceholder(){
@@ -4120,6 +4178,8 @@ function destroyPdfOverlay() {
   });
 })();
 </script>
+
+
 <script>
 // --- iOS passive event safety: allow preventDefault during custom drags ---
 (function(){
@@ -4153,5 +4213,6 @@ function destroyPdfOverlay() {
   } catch (e) {}
 })();
 </script>
+
 </body>
 </html>
