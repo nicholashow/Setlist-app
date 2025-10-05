@@ -4174,122 +4174,101 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- BEGIN: Toolbar Function Graft (v4) -->
 <script>
 (function(){
-  if (window.__graftInit) return;
-  window.__graftInit = true;
+  if (window.__noZoomGuards) return; window.__noZoomGuards = true;
+  try {
+    document.addEventListener('gesturestart',  function(e){ e.preventDefault(); }, {passive:false});
+    document.addEventListener('gesturechange', function(e){ e.preventDefault(); }, {passive:false});
+    document.addEventListener('gestureend',    function(e){ e.preventDefault(); }, {passive:false});
+    var lastTap=0;
+    document.addEventListener('touchend', function(e){
+      var now = Date.now();
+      if (now - lastTap < 350) e.preventDefault();
+      lastTap = now;
+    }, {passive:false});
+  } catch(e){}
+})();
+</script>
 
-  // Identify "first" vs "second" by DOM order; many apps reuse the same IDs.
-  function allWithIds(ids){
-    const out = {};
-    ids.forEach(id => { out[id] = Array.prototype.slice.call(document.querySelectorAll('#'+id)); });
-    return out;
-  }
-  function getFirstSet(){
-    // Accept multiple common id patterns
-    const ids = ['prev-doc','next-doc','close-doc','previous-btn','next-btn','close-btn'];
-    const map = allWithIds(ids);
-    function pick(name){ return map[name] && map[name][0] || null; }
-    return {
-      prev: pick('prev-doc') || pick('previous-btn'),
-      next: pick('next-doc') || pick('next-btn'),
-      close: pick('close-doc') || pick('close-btn')
-    };
-  }
-  function getSecondSet(){
-    const ids = ['prev-doc','next-doc','close-doc','previous-btn','next-btn','close-btn'];
-    const map = allWithIds(ids);
-    function pick(name){ return map[name] && map[name].length > 1 ? map[name][map[name].length-1] : null; }
-    return {
-      prev: pick('prev-doc') || pick('previous-btn'),
-      next: pick('next-doc') || pick('next-btn'),
-      close: pick('close-doc') || pick('close-btn')
-    };
-  }
 
-  // Mirror enable/disable state from second -> first
-  function mirrorDisabled(firstBtn, secondBtn){
-    if (!firstBtn || !secondBtn) return;
-    const disabled = secondBtn.disabled || secondBtn.getAttribute('disabled') !== null;
-    firstBtn.disabled = !!disabled;
+<!-- BEGIN: Keep-Second-Toolbar / Remove-First-Toolbar -->
+<script>
+(function(){
+  if (window.__keepSecondToolbarInit) return;
+  window.__keepSecondToolbarInit = true;
+
+  // Identify toolbar buttons by common IDs the app uses
+  const IDS = ['prev-doc','next-doc','close-doc','previous-btn','next-btn','close-btn'];
+
+  function collectAll(){
+    const map = {};
+    IDS.forEach(id => { map[id] = Array.prototype.slice.call(document.querySelectorAll('#'+id)); });
+    return map;
   }
 
-  // Hide second visually but leave click handlers intact
-  function hideVisually(el){
+  function removeElementHard(el){
     if (!el) return;
-    el.style.opacity = '0';
-    el.style.pointerEvents = 'none';
-    el.style.position = 'absolute';
-    el.style.width = '0px';
-    el.style.height = '0px';
-    el.style.overflow = 'hidden';
-  }
-  function hideSecondSet(sec){
-    hideVisually(sec.prev);
-    hideVisually(sec.next);
-    hideVisually(sec.close);
+    // Prefer to remove a likely toolbar container if it looks like a group
+    var group = el.closest && el.closest('.viewer-toolbar, .doc-view-controls, .toolbar, .controls, .buttons');
+    if (group && group.querySelectorAll('#prev-doc, #next-doc, #close-doc, #previous-btn, #next-btn, #close-btn').length >= 1){
+      group.remove();
+    } else {
+      el.remove();
+    }
   }
 
-  // Bind first -> second click forwarding
-  function graft(){
-    const first = getFirstSet();
-    const second = getSecondSet();
-    if (!first.prev && !first.next && !first.close) return; // nothing to bind
-    if (!second.prev && !second.next && !second.close) return; // second not present yet
+  function keepSecondRemoveFirst(){
+    const map = collectAll();
 
-    // Only bind once per element instance
-    if (first.prev && !first.prev.__grafted){
-      first.prev.__grafted = true;
-      first.prev.addEventListener('click', function(e){
-        e.preventDefault(); e.stopPropagation();
-        if (second.prev) second.prev.click();
-      }, true);
+    // If we see at least one type with duplicates, assume two toolbars exist.
+    let hasDuplicate = false;
+    for (const key in map){
+      if (map[key] && map[key].length > 1) { hasDuplicate = true; break; }
     }
-    if (first.next && !first.next.__grafted){
-      first.next.__grafted = true;
-      first.next.addEventListener('click', function(e){
-        e.preventDefault(); e.stopPropagation();
-        if (second.next) second.next.click();
-      }, true);
-    }
-    if (first.close && !first.close.__grafted){
-      first.close.__grafted = true;
-      first.close.addEventListener('click', function(e){
-        // Let the app's close run first if it already has a handler
-        setTimeout(function(){
-          if (second.close) second.close.click();
-        }, 0);
-      }, false);
-    }
+    if (!hasDuplicate) return;
 
-    // Keep second visually hidden; we only need its logic
-    hideSecondSet(second);
-
-    // Initial mirror
-    mirrorDisabled(first.prev, second.prev);
-    mirrorDisabled(first.next, second.next);
-
-    // Observe attribute changes on the second buttons to mirror state live
-    const obs = new MutationObserver(function(){
-      mirrorDisabled(first.prev, second.prev);
-      mirrorDisabled(first.next, second.next);
+    // Remove the *first* occurrence across all three controls; keep the last set intact.
+    // We find the earliest button element in the DOM among the duplicates as "first set".
+    let firstCandidates = [];
+    ['prev-doc','next-doc','close-doc','previous-btn','next-btn','close-btn'].forEach(key => {
+      const arr = map[key];
+      if (arr && arr.length > 1){
+        // arr[0] is earlier, arr[arr.length-1] is later
+        firstCandidates.push(arr[0]);
+      }
     });
-    [second.prev, second.next].forEach(el => { if (el) obs.observe(el, {attributes:true, attributeFilter:['disabled','class','style']}); });
+    // Remove duplicates of the earlier set
+    firstCandidates.forEach(el => removeElementHard(el));
+
+    // Ensure the remaining (second) set is visible
+    ['prev-doc','next-doc','close-doc','previous-btn','next-btn','close-btn'].forEach(key => {
+      const arr = document.querySelectorAll('#'+key);
+      if (arr && arr.length){
+        const last = arr[arr.length-1];
+        if (last){
+          last.style.opacity = '';
+          last.style.pointerEvents = '';
+          last.style.position = '';
+          last.style.width = '';
+          last.style.height = '';
+          last.style.overflow = '';
+        }
+      }
+    });
   }
 
-  // Keep trying to graft whenever DOM changes (e.g., after you press Close and the app injects second set)
-  const mo = new MutationObserver(function(){ try { graft(); } catch(e){} });
+  // Run on DOM changes and on load
+  const mo = new MutationObserver(function(){ try { keepSecondRemoveFirst(); } catch(e){} });
   try { mo.observe(document.body, {childList:true, subtree:true}); } catch(e){}
-
   if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ graft(); });
+    document.addEventListener('DOMContentLoaded', keepSecondRemoveFirst);
   } else {
-    graft();
+    keepSecondRemoveFirst();
   }
 })();
 </script>
-<!-- END: Toolbar Function Graft (v4) -->
+<!-- END: Keep-Second-Toolbar / Remove-First-Toolbar -->
 
 </body>
 </html>
