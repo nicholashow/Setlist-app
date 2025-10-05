@@ -4192,83 +4192,178 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- BEGIN: Keep-Second-Toolbar / Remove-First-Toolbar -->
+<!-- BEGIN: Keep Toolbar B Only (auto-detect, no redesign) -->
 <script>
 (function(){
-  if (window.__keepSecondToolbarInit) return;
-  window.__keepSecondToolbarInit = true;
+  if (window.__keepBOnly) return;
+  window.__keepBOnly = true;
 
-  // Identify toolbar buttons by common IDs the app uses
-  const IDS = ['prev-doc','next-doc','close-doc','previous-btn','next-btn','close-btn'];
+  // Helper: find buttons by id or by role/text label
+  function norm(t){ return (t||'').toLowerCase().trim(); }
+  function isPrevLabel(t){ t = norm(t); return t === 'prev' || t === 'previous' || t.includes('prev'); }
+  function isNextLabel(t){ t = norm(t); return t === 'next' || t.includes('next'); }
+  function isCloseLabel(t){ t = norm(t); return t === 'close' || t.includes('close') || t === '×' || t === 'x'; }
 
-  function collectAll(){
-    const map = {};
-    IDS.forEach(id => { map[id] = Array.prototype.slice.call(document.querySelectorAll('#'+id)); });
-    return map;
+  function allCandidateButtons(){
+    const btns = Array.prototype.slice.call(
+      document.querySelectorAll('button, [role="button"], .btn, .button')
+    );
+    // Also include common IDs directly if present
+    ['#prev-doc','#next-doc','#close-doc','#previous-btn','#next-btn','#close-btn']
+      .forEach(sel => { var el = document.querySelector(sel); if (el && btns.indexOf(el)===-1) btns.push(el); });
+    return btns.filter(Boolean);
   }
 
-  function removeElementHard(el){
+  function classifyToolbarGroups(){
+    // Build buckets of containers that appear to hold Prev/Next/Close trio
+    const containers = new Map(); // containerEl -> {prev:[], next:[], close:[]}
+    const btns = allCandidateButtons();
+    btns.forEach(b => {
+      // detect role by id or text
+      const id = (b.id||'').toLowerCase();
+      const txt = (b.textContent||'').trim();
+      let role = null;
+      if (id.includes('prev')) role = 'prev';
+      else if (id.includes('next')) role = 'next';
+      else if (id.includes('close')) role = 'close';
+      else if (isPrevLabel(txt)) role = 'prev';
+      else if (isNextLabel(txt)) role = 'next';
+      else if (isCloseLabel(txt)) role = 'close';
+
+      if (!role) return;
+
+      // group by nearest toolbar-ish ancestor or parent
+      let container = b.closest('.viewer-toolbar, .doc-view-controls, .toolbar, .controls, .buttons, .header, .footer, .topbar');
+      if (!container) container = b.parentElement;
+      if (!container) return;
+
+      if (!containers.has(container)){
+        containers.set(container, {container: container, prev:[], next:[], close:[], firstIndex: getDomIndex(container)});
+      }
+      containers.get(container)[role].push(b);
+    });
+
+    // Return only groups that have at least a prev or next and a close.
+    let groups = Array.from(containers.values()).filter(g => (g.prev.length || g.next.length) && g.close.length);
+    // Sort by DOM order (firstIndex), earlier first; last is "B"
+    groups.sort((a,b) => a.firstIndex - b.firstIndex);
+    return groups;
+  }
+
+  function getDomIndex(el){
+    // Flatten index by walking up; used to order groups by appearance in DOM
+    let idx = 0;
+    let n = el;
+    while (n && n.previousSibling){
+      n = n.previousSibling;
+      idx++;
+    }
+    // incorporate depth a bit
+    let depth = 0, p = el.parentElement;
+    while (p){ depth++; p = p.parentElement; }
+    return depth * 10000 + idx;
+  }
+
+  function keepOnlyB(){
+    const groups = classifyToolbarGroups();
+    if (!groups.length) return;
+    // If only one group, keep it
+    if (groups.length === 1){
+      reveal(groups[0]);
+      return;
+    }
+    // Keep last (B), remove first (A). If more than 2, remove all except last.
+    for (let i=0; i<groups.length-1; i++){
+      hardRemoveGroup(groups[i]);
+    }
+    reveal(groups[groups.length-1]);
+  }
+
+  function hardRemoveGroup(g){
+    try {
+      g.container.remove();
+    } catch(e){
+      // Fallback: hide all its controls
+      [g.prev, g.next, g.close].forEach(list => list.forEach(el => hide(el)));
+      hide(g.container);
+    }
+  }
+
+  function hide(el){
     if (!el) return;
-    // Prefer to remove a likely toolbar container if it looks like a group
-    var group = el.closest && el.closest('.viewer-toolbar, .doc-view-controls, .toolbar, .controls, .buttons');
-    if (group && group.querySelectorAll('#prev-doc, #next-doc, #close-doc, #previous-btn, #next-btn, #close-btn').length >= 1){
-      group.remove();
-    } else {
-      el.remove();
-    }
+    el.style.opacity = '0';
+    el.style.pointerEvents = 'none';
+    el.style.position = 'absolute';
+    el.style.width = '0px';
+    el.style.height = '0px';
+    el.style.overflow = 'hidden';
   }
 
-  function keepSecondRemoveFirst(){
-    const map = collectAll();
-
-    // If we see at least one type with duplicates, assume two toolbars exist.
-    let hasDuplicate = false;
-    for (const key in map){
-      if (map[key] && map[key].length > 1) { hasDuplicate = true; break; }
-    }
-    if (!hasDuplicate) return;
-
-    // Remove the *first* occurrence across all three controls; keep the last set intact.
-    // We find the earliest button element in the DOM among the duplicates as "first set".
-    let firstCandidates = [];
-    ['prev-doc','next-doc','close-doc','previous-btn','next-btn','close-btn'].forEach(key => {
-      const arr = map[key];
-      if (arr && arr.length > 1){
-        // arr[0] is earlier, arr[arr.length-1] is later
-        firstCandidates.push(arr[0]);
-      }
-    });
-    // Remove duplicates of the earlier set
-    firstCandidates.forEach(el => removeElementHard(el));
-
-    // Ensure the remaining (second) set is visible
-    ['prev-doc','next-doc','close-doc','previous-btn','next-btn','close-btn'].forEach(key => {
-      const arr = document.querySelectorAll('#'+key);
-      if (arr && arr.length){
-        const last = arr[arr.length-1];
-        if (last){
-          last.style.opacity = '';
-          last.style.pointerEvents = '';
-          last.style.position = '';
-          last.style.width = '';
-          last.style.height = '';
-          last.style.overflow = '';
-        }
-      }
+  function reveal(g){
+    // Make sure B is visible and clickable
+    [g.container].concat(g.prev, g.next, g.close).forEach(el => {
+      if (!el) return;
+      el.style.opacity = '';
+      el.style.pointerEvents = '';
+      el.style.position = '';
+      el.style.width = '';
+      el.style.height = '';
+      el.style.overflow = '';
     });
   }
 
-  // Run on DOM changes and on load
-  const mo = new MutationObserver(function(){ try { keepSecondRemoveFirst(); } catch(e){} });
+  // Avoid black-screen overlays after close by clearing common overlay nodes/classes
+  function clearOverlays(){
+    ['doc-view','document-viewer','pdf-viewer','file-viewer','overlay-viewer','backdrop','modal-backdrop','overlay-bg']
+      .forEach(id => { const el = document.getElementById(id); if (el && isOverlayLike(el)) el.style.display = 'none'; });
+    // remove common overlay classes
+    Array.prototype.slice.call(document.querySelectorAll('.backdrop,.modal-backdrop,.overlay,.overlay-bg,.dim,.scrim'))
+      .forEach(el => { el.style.display = 'none'; });
+  }
+  function isOverlayLike(el){
+    const s = window.getComputedStyle(el);
+    return (s.position === 'fixed' || s.position === 'absolute') && (parseFloat(s.zIndex)||0) >= 1000;
+  }
+
+  // Hook native open to ensure B is the only toolbar right after open
+  const openFn = window.openSongInContext || window.openDocument;
+  if (openFn && !window.__openWrappedKeepB){
+    window.__openWrappedKeepB = true;
+    const native = openFn;
+    const wrapped = function(){
+      const ret = native.apply(this, arguments);
+      // Defer to next microtask/frame so DOM is in final state
+      setTimeout(function(){ try { keepOnlyB(); } catch(e){} }, 0);
+      return ret;
+    };
+    if (window.openSongInContext){ window.openSongInContext = wrapped; } else { window.openDocument = wrapped; }
+  }
+
+  // Observe changes and enforce
+  const mo = new MutationObserver(function(){
+    try { keepOnlyB(); } catch(e){}
+  });
   try { mo.observe(document.body, {childList:true, subtree:true}); } catch(e){}
+
+  // Also try to clear overlays after any click on a "Close" button
+  document.addEventListener('click', function(e){
+    const t = e.target.closest && e.target.closest('button,[role="button"],.btn,.button');
+    if (!t) return;
+    const label = (t.textContent||'').trim().toLowerCase();
+    if (label.includes('close') || t.id.toLowerCase().includes('close')){
+      setTimeout(clearOverlays, 50);
+    }
+  }, true);
+
+  // Initial run
   if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', keepSecondRemoveFirst);
+    document.addEventListener('DOMContentLoaded', function(){ keepOnlyB(); });
   } else {
-    keepSecondRemoveFirst();
+    keepOnlyB();
   }
 })();
 </script>
-<!-- END: Keep-Second-Toolbar / Remove-First-Toolbar -->
+<!-- END: Keep Toolbar B Only (auto-detect, no redesign) -->
 
 </body>
 </html>
