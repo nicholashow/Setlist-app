@@ -4192,158 +4192,154 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- BEGIN: Safe Keep-Last-Toolbar (v5) -->
+<!-- BEGIN: Dual-Toolbar Diagnostic + Proxy (v6) -->
 <style>
-/* Only hide via a class we control, so we can rollback if needed */
-.hidden-by-keeper { display: none !important; }
+.toolbar-marker {
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  background: #111827;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 20px;
+  height: 20px;
+  min-width: 20px;
+  padding: 0 6px;
+  border: 2px solid #60a5fa;
+  z-index: 999999;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+.toolbar-outline-a { outline: 2px dashed #ef4444; outline-offset: 4px; }
+.toolbar-outline-b { outline: 2px dashed #10b981; outline-offset: 4px; }
 </style>
 <script>
 (function(){
-  if (window.__keepLastToolbarV5) return;
-  window.__keepLastToolbarV5 = true;
+  if (window.__diagProxyV6) return;
+  window.__diagProxyV6 = true;
 
   function norm(t){ return (t||'').toLowerCase().trim(); }
-  function isPrevLabel(t){ t = norm(t); return t === 'prev' || t === 'previous' || t.includes('prev') || t.includes('⟵') || t.includes('←'); }
-  function isNextLabel(t){ t = norm(t); return t === 'next' || t.includes('next') || t.includes('⟶') || t.includes('→'); }
-  function isCloseLabel(t){ t = norm(t); return t === 'close' || t === 'x' || t === '×' || t.includes('close'); }
+  function isPrev(t){ t = norm(t); return t.includes('prev'); }
+  function isNext(t){ t = norm(t); return t.includes('next'); }
+  function isClose(t){ t = norm(t); return t === 'close' || t.includes('close') || t==='x' || t==='×'; }
 
   function candidateButtons(){
     const set = new Set();
     document.querySelectorAll('button, [role="button"], .btn, .button').forEach(b => set.add(b));
-    ['#prev-doc','#next-doc','#close-doc','#previous-btn','#next-btn','#close-btn'].forEach(sel => {
-      const el = document.querySelector(sel); if (el) set.add(el);
-    });
+    ['#prev-doc','#next-doc','#close-doc','#previous-btn','#next-btn','#close-btn'].forEach(sel => { const el = document.querySelector(sel); if (el) set.add(el); });
     return Array.from(set);
   }
-
-  function getGroupContainer(btn){
-    // Prefer nearest toolbar-ish ancestor; else parent
-    return btn.closest('.viewer-toolbar, .doc-view-controls, .toolbar, .controls, .buttons, .topbar, .bottombar, header, footer') || btn.parentElement || null;
+  function groupFor(btn){
+    return btn.closest('.viewer-toolbar, .doc-view-controls, .toolbar, .controls, .buttons, header, footer, .topbar, .bottombar') || btn.parentElement || null;
   }
-
   function collectGroups(){
-    const map = new Map(); // container -> {container, buttons:[], prev:[], next:[], close:[], order: number}
-    const btns = candidateButtons();
-    btns.forEach(b => {
+    const map = new Map();
+    candidateButtons().forEach(b => {
       const id = (b.id||'').toLowerCase();
       const txt = (b.textContent||'').trim();
       let role = null;
       if (id.includes('prev')) role = 'prev';
       else if (id.includes('next')) role = 'next';
       else if (id.includes('close')) role = 'close';
-      else if (isPrevLabel(txt)) role = 'prev';
-      else if (isNextLabel(txt)) role = 'next';
-      else if (isCloseLabel(txt)) role = 'close';
-
+      else if (isPrev(txt)) role = 'prev';
+      else if (isNext(txt)) role = 'next';
+      else if (isClose(txt)) role = 'close';
       if (!role) return;
-      const container = getGroupContainer(b);
-      if (!container || container === document.body) return;
-      if (!map.has(container)){
-        map.set(container, {container, buttons:[], prev:[], next:[], close:[], order: domOrder(container)});
-      }
-      const g = map.get(container);
-      g.buttons.push(b);
-      g[role].push(b);
+      const gEl = groupFor(b);
+      if (!gEl || gEl === document.body) return;
+      if (!map.has(gEl)) map.set(gEl, {el:gEl, prev:[], next:[], close:[], order: domOrder(gEl), marked:false});
+      map.get(gEl)[role].push(b);
     });
-
-    // Keep groups that look like toolbars (at least Close + one of Prev/Next)
-    const groups = Array.from(map.values()).filter(g => g.close.length && (g.prev.length || g.next.length));
-
-    // Sort by DOM order so the last one is "Toolbar B"
-    groups.sort((a,b) => a.order - b.order);
+    const groups = Array.from(map.values()).filter(g => (g.prev.length || g.next.length) && g.close.length);
+    groups.sort((a,b)=>a.order-b.order);
     return groups;
   }
-
   function domOrder(el){
-    // Robust DOM order: walk to root collecting indices
-    let score = 0, depth = 0;
-    for (let n = el; n && n.parentElement; n = n.parentElement){
-      const parent = n.parentElement;
-      const children = Array.prototype.slice.call(parent.children);
-      const idx = Math.max(0, children.indexOf(n));
-      score += idx + 1;
-      depth++;
+    let score=0, depth=0;
+    for (let n=el; n && n.parentElement; n=n.parentElement){
+      const parent=n.parentElement;
+      const idx=Array.prototype.indexOf.call(parent.children, n);
+      score += (idx+1); depth++;
     }
-    return depth * 10000 + score;
+    return depth*10000 + score;
+  }
+  function markGroup(g, label, klass){
+    if (g.marked) return;
+    g.marked = true;
+    const badge = document.createElement('div');
+    badge.textContent = label;
+    badge.className = 'toolbar-marker';
+    g.el.classList.add(klass);
+    g.el.style.position = g.el.style.position || 'relative';
+    g.el.appendChild(badge);
   }
 
-  function anyVisibleButtons(){
-    return !!document.querySelector('button:not(.hidden-by-keeper), [role="button"]:not(.hidden-by-keeper)');
-  }
+  // Proxy: when B exists, A forwards to B (no hiding)
+  function graftAtoB(groups){
+    if (groups.length < 2) return;
+    const A = groups[0];
+    const B = groups[groups.length - 1];
 
-  function enforceKeepLast(){
-    const groups = collectGroups();
-    if (!groups.length) return;
-    // If only one group, unhide it and bail
-    if (groups.length === 1){
-      unhideGroup(groups[0]);
-      return;
+    function forward(srcList, dstBtn){
+      if (!srcList || !srcList.length || !dstBtn) return;
+      srcList.forEach(src => {
+        if (src.__v6Bound) return;
+        src.__v6Bound = true;
+        src.addEventListener('click', function(e){
+          e.preventDefault(); e.stopPropagation();
+          try { dstBtn.click(); } catch(_) {}
+        }, true);
+      });
     }
-    // Hide all but the last
-    for (let i=0; i<groups.length - 1; i++){
-      hideGroup(groups[i]);
-    }
-    unhideGroup(groups[groups.length - 1]);
 
-    // Fail‑safe: if our change results in zero visible buttons, rollback
+    // Forward A->B
+    forward(A.prev, B.prev && B.prev[0]);
+    forward(A.next, B.next && B.next[0]);
+    forward(A.close, B.close && B.close[0]);
+
+    // Also mirror disabled state periodically while both exist
     setTimeout(function(){
-      const visible = document.querySelectorAll('button:not(.hidden-by-keeper), [role="button"]:not(.hidden-by-keeper)').length;
-      const hasPrevOrNext = document.querySelectorAll('button:not(.hidden-by-keeper)[id*="prev"], button:not(.hidden-by-keeper)[id*="next"], [role="button"]:not(.hidden-by-keeper)[id*="prev"], [role="button"]:not(.hidden-by-keeper)[id*="next"]').length;
-      const hasClose = document.querySelectorAll('button:not(.hidden-by-keeper)[id*="close"], [role="button"]:not(.hidden-by-keeper)[id*="close"]').length;
-      if (visible === 0 || (!hasClose && !hasPrevOrNext)){
-        // Rollback: unhide everything we hid
-        groups.forEach(unhideGroup);
-      }
-    }, 0);
+      try {
+        if (A.prev && A.prev[0] && B.prev && B.prev[0]) A.prev[0].disabled = !!(B.prev[0].disabled || B.prev[0].getAttribute('disabled')!==null);
+        if (A.next && A.next[0] && B.next && B.next[0]) A.next[0].disabled = !!(B.next[0].disabled || B.next[0].getAttribute('disabled')!==null);
+      } catch(e){}
+    }, 30);
   }
 
-  function hideGroup(g){
-    if (!g || !g.container) return;
-    g.container.classList.add('hidden-by-keeper');
-    g.buttons.forEach(b => b.classList.add('hidden-by-keeper'));
-  }
-  function unhideGroup(g){
-    if (!g || !g.container) return;
-    g.container.classList.remove('hidden-by-keeper');
-    g.buttons.forEach(b => b.classList.remove('hidden-by-keeper'));
-    // Also clear inline hiding left by earlier attempts
-    [g.container].concat(g.buttons).forEach(el => {
-      if (!el) return;
-      el.style.opacity = '';
-      el.style.pointerEvents = '';
-      el.style.position = '';
-      el.style.width = '';
-      el.style.height = '';
-      el.style.overflow = '';
-      el.style.display = '';
-      el.hidden = false;
-    });
+  function run(){
+    const groups = collectGroups();
+    // Clear existing markers first
+    document.querySelectorAll('.toolbar-marker').forEach(n=>n.remove());
+    document.querySelectorAll('.toolbar-outline-a').forEach(n=>n.classList.remove('toolbar-outline-a'));
+    document.querySelectorAll('.toolbar-outline-b').forEach(n=>n.classList.remove('toolbar-outline-b'));
+
+    if (!groups.length) return;
+    if (groups[0]) markGroup(groups[0], 'A', 'toolbar-outline-a');
+    if (groups.length > 1) markGroup(groups[groups.length-1], 'B', 'toolbar-outline-b');
+
+    graftAtoB(groups);
   }
 
-  // Enforce after opens, and on DOM changes
+  // Wrap open to run after file opens
   const openFn = window.openSongInContext || window.openDocument;
-  if (openFn && !window.__wrapKeepLastV5){
-    window.__wrapKeepLastV5 = true;
+  if (openFn && !window.__v6Wrapped){
+    window.__v6Wrapped = true;
     const native = openFn;
     const wrapped = function(){
       const ret = native.apply(this, arguments);
-      setTimeout(enforceKeepLast, 0);
+      setTimeout(run, 0);
       return ret;
     };
     if (window.openSongInContext){ window.openSongInContext = wrapped; } else { window.openDocument = wrapped; }
   }
 
-  const mo = new MutationObserver(function(){ enforceKeepLast(); });
+  const mo = new MutationObserver(function(){ run(); });
   try { mo.observe(document.body, {childList:true, subtree:true}); } catch(e){}
 
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ enforceKeepLast(); });
-  } else {
-    enforceKeepLast();
-  }
+  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', run); } else { run(); }
 })();
 </script>
-<!-- END: Safe Keep-Last-Toolbar (v5) -->
+<!-- END: Dual-Toolbar Diagnostic + Proxy (v6) -->
 
 </body>
 </html>
