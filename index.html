@@ -1648,6 +1648,16 @@ html, body, #app {
 /* === END: Redesigned Doc Toolbar === */
 
 </style>
+<style>
+
+/* === PATCH: Suppress any legacy viewer buttons the app might inject === */
+#prev-doc, #next-doc, #close-doc,
+#previous-btn, #next-btn, #close-btn,
+.viewer-toolbar, .doc-view-controls {
+  display: none !important;
+}
+
+</style>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2142,6 +2152,16 @@ html, body, #app {
   color: #fff !important;
 }
 /* === END: Redesigned Doc Toolbar === */
+
+</style>
+<style>
+
+/* === PATCH: Suppress any legacy viewer buttons the app might inject === */
+#prev-doc, #next-doc, #close-doc,
+#previous-btn, #next-btn, #close-btn,
+.viewer-toolbar, .doc-view-controls {
+  display: none !important;
+}
 
 </style>
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
@@ -4302,182 +4322,212 @@ function destroyPdfOverlay() {
 </div>
 <!-- === END: Redesigned Doc Toolbar === -->
 
-<!-- === BEGIN: Doc Toolbar Logic (fully redesigned) === -->
+
+
+<!-- === BEGIN: Doc Toolbar Logic (v2: single instance, first-open correct) === -->
 <script>
 (function(){
-  if (window.__docToolbarInit) return;
-  window.__docToolbarInit = true;
+  // Prevent double init
+  if (window.__docToolbarInitV2) return;
+  window.__docToolbarInitV2 = true;
 
-  // ====== Hard-disable zoom gestures app-wide ======
+  // Hard-disable zoom (iPad Safari quirks)
   try {
     document.addEventListener('gesturestart', function(e){ e.preventDefault(); }, {passive:false});
     document.addEventListener('gesturechange', function(e){ e.preventDefault(); }, {passive:false});
     document.addEventListener('gestureend', function(e){ e.preventDefault(); }, {passive:false});
-    // Prevent double-tap zoom
-    var lastTapTime = 0;
+    let lastTapTime = 0;
     document.addEventListener('touchend', function(e){
-      var now = Date.now();
-      if (now - lastTapTime < 350) { e.preventDefault(); }
+      const now = Date.now();
+      if (now - lastTapTime < 350) e.preventDefault();
       lastTapTime = now;
     }, {passive:false});
   } catch(e){}
 
-  // ====== Runtime removal of any legacy Prev/Next/Close elements & handlers ======
-  function nukeLegacyButtons(){
-    var ids = ['prev-doc','next-doc','close-doc','previous-btn','next-btn','close-btn'];
-    ids.forEach(function(id){
-      var el = document.getElementById(id);
-      if (!el) return;
-      try { if (window.jQuery) window.jQuery(el).off(); } catch(e){}
-      el.remove();
-    });
-  }
+  // Ensure only one toolbar element exists
+  (function ensureToolbarExists(){
+    if (!document.getElementById('doc-toolbar')){
+      const div = document.createElement('div');
+      div.id = 'doc-toolbar';
+      div.style.display = 'none';
+      div.innerHTML = `
+        <button id="doc-prev" class="doc-btn" type="button" aria-label="Previous (←)">
+          <span class="ico" aria-hidden="true">⟵</span> Prev
+        </button>
+        <button id="doc-next" class="doc-btn" type="button" aria-label="Next (→)">
+          Next <span class="ico" aria-hidden="true">⟶</span>
+        </button>
+        <button id="doc-close" class="doc-btn" type="button" aria-label="Close (Esc)">✕ Close</button>`;
+      document.body.appendChild(div);
+    }
+  })();
 
-  // ====== List helpers ======
+  // Global state
+  let ctx = null;
+  let list = null;
+  let index = -1;
+  let pendingOpenId = null;
+  let pendingOpenCtx = null;
+
   function $all(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); }
-  function buildListForContext(ctx){
-    var map = {
+  function buildListForContext(context){
+    const map = {
       'setlist':    '#setlist-list > li',
       'master':     '#master-list > li',
       'favorites':  '#favorites-list > li',
       'genre':      '#genre-song-list > li',
       'recordings': '#recordings-list > li'
     };
-    var sel = map[ctx] || '#setlist-list > li, #master-list > li, #favorites-list > li, #genre-song-list > li';
-    var arr = $all(sel).map(function(li){
-      var id = li.getAttribute('data-id') || li.getAttribute('data-file-id') || li.dataset.fileId || li.dataset.id || li.id || '';
-      return id ? {id:String(id), el:li} : null;
+    const sel = map[context] || '#setlist-list > li, #master-list > li, #favorites-list > li, #genre-song-list > li';
+    const arr = $all(sel).map(li => {
+      const id = li.getAttribute('data-id') || li.getAttribute('data-file-id') || (li.dataset && (li.dataset.fileId || li.dataset.id)) || li.id || '';
+      return id ? { id: String(id), el: li } : null;
     }).filter(Boolean);
     return arr.length ? arr : null;
   }
-  function findIndex(list, id){
+  function findIndex(arr, id){
     id = String(id||'');
-    for (var i=0;i<list.length;i++){
-      var mid = String(list[i].id||'');
+    for (let i=0;i<arr.length;i++){
+      const mid = String(arr[i].id||'');
       if (mid === id) return i;
       if (mid.replace(/^song-/, '') === id.replace(/^song-/, '')) return i;
     }
     return -1;
   }
 
-  // ====== Toolbar state ======
-  var ctx = null;
-  var list = null;
-  var index = -1;
-
-  function showToolbar(){ var tb = document.getElementById('doc-toolbar'); if (tb) tb.style.display = 'flex'; }
-  function hideToolbar(){ var tb = document.getElementById('doc-toolbar'); if (tb) tb.style.display = 'none'; }
+  function showToolbar(){ const el = document.getElementById('doc-toolbar'); if (el) el.style.display = 'flex'; }
+  function hideToolbar(){ const el = document.getElementById('doc-toolbar'); if (el) el.style.display = 'none'; }
 
   function updateButtons(){
-    var bPrev = document.getElementById('doc-prev');
-    var bNext = document.getElementById('doc-next');
+    const bPrev = document.getElementById('doc-prev');
+    const bNext = document.getElementById('doc-next');
     if (bPrev) bPrev.disabled = !(list && index > 0);
     if (bNext) bNext.disabled = !(list && index >= 0 && index < list.length - 1);
   }
-
-  // Optional: mark viewed index bubble in setlist
   function markViewed(){
     try {
-      var circles = document.querySelectorAll('#setlist-list li .index-number.viewed-index');
-      circles.forEach(function(c){ c.classList.remove('viewed-index'); });
+      const circles = document.querySelectorAll('#setlist-list li .index-number.viewed-index');
+      circles.forEach(c => c.classList.remove('viewed-index'));
       if (ctx === 'setlist' && list && index >= 0){
-        var bubble = list[index].el && list[index].el.querySelector('.index-number');
+        const bubble = list[index].el && list[index].el.querySelector('.index-number');
         if (bubble) bubble.classList.add('viewed-index');
       }
     } catch(e){}
   }
 
-  // ====== Core open wrapper ======
-  var nativeOpen = window.openSongInContext || window.openDocument;
+  // Capture which item is being opened BEFORE the viewer shows up (handles first-open enablement)
+  function capturePendingOpen(e, context){
+    const li = e.target.closest && e.target.closest('li');
+    if (!li) return;
+    const id = li.getAttribute('data-id') || li.getAttribute('data-file-id') || (li.dataset && (li.dataset.fileId || li.dataset.id)) || li.id;
+    if (!id) return;
+    pendingOpenId = String(id);
+    pendingOpenCtx = context;
+  }
+
+  // Delegate clicks on common lists
+  document.addEventListener('click', function(e){
+    if (e.target.closest('#setlist-list')) capturePendingOpen(e, 'setlist');
+    else if (e.target.closest('#master-list')) capturePendingOpen(e, 'master');
+    else if (e.target.closest('#favorites-list')) capturePendingOpen(e, 'favorites');
+    else if (e.target.closest('#genre-song-list')) capturePendingOpen(e, 'genre');
+  }, true);
+
+  // Wrap native opener if available
+  const nativeOpen = window.openSongInContext || window.openDocument;
   if (nativeOpen){
-    var wrapped = function(id, context, indexHint){
-      // compute list + index first
-      ctx = context || ctx || 'setlist';
+    const wrapped = function(id, context, indexHint){
+      ctx = context || pendingOpenCtx || ctx || 'setlist';
       list = buildListForContext(ctx);
-      index = -1;
       if (list){
         if (typeof indexHint === 'number' && indexHint >=0 && indexHint < list.length) {
           index = indexHint;
         } else {
-          index = findIndex(list, id);
+          const seed = id || pendingOpenId;
+          index = seed ? findIndex(list, seed) : -1;
+          if (index < 0 && list.length) index = 0;
         }
+      } else {
+        index = -1;
       }
-      var ret = nativeOpen.apply(this, arguments);
 
-      // reveal toolbar & set buttons after open
+      const ret = nativeOpen.apply(this, arguments);
+
       showToolbar();
       updateButtons();
       markViewed();
+      // clear pending once used
+      pendingOpenId = null;
+      pendingOpenCtx = null;
       return ret;
     };
     if (window.openSongInContext){ window.openSongInContext = wrapped; } else { window.openDocument = wrapped; }
+  } else {
+    // When there is no native opener, rely on DOM changes to compute state when the viewer appears
   }
 
-  // ====== Close handler (respects existing implementations if present) ======
   function requestClose(){
     hideToolbar();
     if (typeof window.closeDocumentViewer === 'function') return window.closeDocumentViewer();
     if (typeof window.closeFullscreenDoc === 'function') return window.closeFullscreenDoc();
-    // Fallbacks: try to hide common viewer elements
-    var ids = ['doc-view','document-viewer','pdf-viewer','file-viewer','overlay-viewer'];
-    for (var i=0;i<ids.length;i++){
-      var el = document.getElementById(ids[i]);
+    const ids = ['doc-view','document-viewer','pdf-viewer','file-viewer','overlay-viewer'];
+    for (let i=0;i<ids.length;i++){
+      const el = document.getElementById(ids[i]);
       if (el){ el.style.display = 'none'; break; }
     }
-    // Also try a synthetic Escape to trigger any key handlers
-    var esc = new KeyboardEvent('keydown', {key:'Escape'});
+    const esc = new KeyboardEvent('keydown', {key:'Escape'});
     document.dispatchEvent(esc);
   }
 
-  // ====== Next/Prev actions ======
   function go(delta){
     if (!list || index < 0) return;
-    var nextIndex = index + delta;
+    const nextIndex = index + delta;
     if (nextIndex < 0 || nextIndex >= list.length) return;
-    var target = list[nextIndex];
-    var opener = window.openSongInContext || window.openDocument;
+    const target = list[nextIndex];
+    const opener = window.openSongInContext || window.openDocument;
     if (!opener) return;
     opener(target.id, ctx, nextIndex);
   }
 
-  // ====== Bind our redesigned buttons ======
   function bindToolbar(){
-    var prev = document.getElementById('doc-prev');
-    var next = document.getElementById('doc-next');
-    var cls  = document.getElementById('doc-close');
-    if (prev){ prev.onclick = function(){ go(-1); }; }
-    if (next){ next.onclick = function(){ go(1);  }; }
-    if (cls){  cls.onclick  = function(){ requestClose(); }; }
+    const prev = document.getElementById('doc-prev');
+    const next = document.getElementById('doc-next');
+    const cls  = document.getElementById('doc-close');
+    if (prev) prev.onclick = function(){ go(-1); };
+    if (next) next.onclick = function(){ go(1);  };
+    if (cls)  cls.onclick  = function(){ requestClose(); };
   }
 
-  // ====== Observe DOM so we can nuke legacy and keep toolbar live ======
-  var mo = new MutationObserver(function(){
-    nukeLegacyButtons();
+  // MutationObserver keeps toolbar live and suppresses legacy elements that reappear
+  const mo = new MutationObserver(function(){
+    // nuke any legacy controls
+    ['prev-doc','next-doc','close-doc','previous-btn','next-btn','close-btn'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    });
     bindToolbar();
     updateButtons();
   });
   try { mo.observe(document.body, {childList:true, subtree:true}); } catch(e){}
 
-  // initial run
+  // Initial bind
   if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){
-      nukeLegacyButtons();
-      bindToolbar();
-    });
+    document.addEventListener('DOMContentLoaded', function(){ bindToolbar(); });
   } else {
-    nukeLegacyButtons();
     bindToolbar();
   }
 
-  // Keyboard shortcuts for convenience
+  // Keyboard shortcuts
   document.addEventListener('keydown', function(e){
-    if (!document.getElementById('doc-toolbar') || document.getElementById('doc-toolbar').style.display === 'none') return;
-    if (e.key === 'ArrowRight') { go(1); }
-    if (e.key === 'ArrowLeft')  { go(-1); }
-    if (e.key === 'Escape')     { requestClose(); }
+    const visible = document.getElementById('doc-toolbar');
+    if (!visible || visible.style.display === 'none') return;
+    if (e.key === 'ArrowRight') go(1);
+    else if (e.key === 'ArrowLeft') go(-1);
+    else if (e.key === 'Escape') requestClose();
   });
 })();
 </script>
-<!-- === END: Doc Toolbar Logic === -->
+<!-- === END: Doc Toolbar Logic (v2) === -->
+
 </body>
 </html>
