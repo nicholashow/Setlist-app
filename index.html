@@ -1650,7 +1650,6 @@ html, body, #app {
 </style>
 <style>
 
-/* === PATCH: Suppress any legacy viewer buttons the app might inject === */
 #prev-doc, #next-doc, #close-doc,
 #previous-btn, #next-btn, #close-btn,
 .viewer-toolbar, .doc-view-controls {
@@ -2156,7 +2155,6 @@ html, body, #app {
 </style>
 <style>
 
-/* === PATCH: Suppress any legacy viewer buttons the app might inject === */
 #prev-doc, #next-doc, #close-doc,
 #previous-btn, #next-btn, #close-btn,
 .viewer-toolbar, .doc-view-controls {
@@ -4324,32 +4322,35 @@ function destroyPdfOverlay() {
 
 
 
-<!-- === BEGIN: Doc Toolbar Logic (v2: single instance, first-open correct) === -->
+
+
+
+<!-- === BEGIN: Doc Toolbar Logic (v3: proxy legacy handlers) === -->
 <script>
 (function(){
-  // Prevent double init
-  if (window.__docToolbarInitV2) return;
-  window.__docToolbarInitV2 = true;
+  if (window.__docToolbarInitV3) return;
+  window.__docToolbarInitV3 = true;
 
-  // Hard-disable zoom (iPad Safari quirks)
+  // --- No-zoom hardening ---
   try {
-    document.addEventListener('gesturestart', function(e){ e.preventDefault(); }, {passive:false});
-    document.addEventListener('gesturechange', function(e){ e.preventDefault(); }, {passive:false});
-    document.addEventListener('gestureend', function(e){ e.preventDefault(); }, {passive:false});
-    let lastTapTime = 0;
-    document.addEventListener('touchend', function(e){
+    document.addEventListener('gesturestart',  e => e.preventDefault(), {passive:false});
+    document.addEventListener('gesturechange', e => e.preventDefault(), {passive:false});
+    document.addEventListener('gestureend',    e => e.preventDefault(), {passive:false});
+    let lastTap = 0;
+    document.addEventListener('touchend', e => {
       const now = Date.now();
-      if (now - lastTapTime < 350) e.preventDefault();
-      lastTapTime = now;
+      if (now - lastTap < 350) e.preventDefault();
+      lastTap = now;
     }, {passive:false});
   } catch(e){}
 
-  // Ensure only one toolbar element exists
+  // Ensure toolbar exists once
   (function ensureToolbarExists(){
     if (!document.getElementById('doc-toolbar')){
       const div = document.createElement('div');
       div.id = 'doc-toolbar';
       div.style.display = 'none';
+      div.className = 'doc-toolbar-pill';
       div.innerHTML = `
         <button id="doc-prev" class="doc-btn" type="button" aria-label="Previous (←)">
           <span class="ico" aria-hidden="true">⟵</span> Prev
@@ -4362,21 +4363,50 @@ function destroyPdfOverlay() {
     }
   })();
 
-  // Global state
-  let ctx = null;
-  let list = null;
-  let index = -1;
-  let pendingOpenId = null;
-  let pendingOpenCtx = null;
-
+  // Helpers
   function $all(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+  function first(sel){ return document.querySelector(sel); }
+  function showToolbar(){ const t = first('#doc-toolbar'); if (t) t.style.display = 'flex'; }
+  function hideToolbar(){ const t = first('#doc-toolbar'); if (t) t.style.display = 'none'; }
+
+  // Proxy: find legacy controls and hide them visually (but keep in DOM so .click() works)
+  function getLegacy(){
+    const ids = {
+      prev: ['#prev-doc','#previous-btn'],
+      next: ['#next-doc','#next-btn'],
+      close:['#close-doc','#close-btn']
+    };
+    function pick(arr){
+      for (let sel of arr){
+        const el = first(sel);
+        if (el) return el;
+      }
+      return null;
+    }
+    const prev = pick(ids.prev);
+    const next = pick(ids.next);
+    const close = pick(ids.close);
+    // visually hide if found
+    [prev,next,close].forEach(el => {
+      if (!el) return;
+      el.style.opacity = '0';
+      el.style.pointerEvents = 'none';
+      el.style.position = 'absolute';
+      el.style.width = '0px';
+      el.style.height = '0px';
+      el.style.overflow = 'hidden';
+    });
+    return {prev,next,close};
+  }
+
+  // DOM-index fallback (if legacy missing)
   function buildListForContext(context){
     const map = {
-      'setlist':    '#setlist-list > li',
-      'master':     '#master-list > li',
-      'favorites':  '#favorites-list > li',
-      'genre':      '#genre-song-list > li',
-      'recordings': '#recordings-list > li'
+      setlist:    '#setlist-list > li',
+      master:     '#master-list > li',
+      favorites:  '#favorites-list > li',
+      genre:      '#genre-song-list > li',
+      recordings: '#recordings-list > li'
     };
     const sel = map[context] || '#setlist-list > li, #master-list > li, #favorites-list > li, #genre-song-list > li';
     const arr = $all(sel).map(li => {
@@ -4395,15 +4425,37 @@ function destroyPdfOverlay() {
     return -1;
   }
 
-  function showToolbar(){ const el = document.getElementById('doc-toolbar'); if (el) el.style.display = 'flex'; }
-  function hideToolbar(){ const el = document.getElementById('doc-toolbar'); if (el) el.style.display = 'none'; }
+  let ctx = null, list = null, index = -1, pendingId = null, pendingCtx = null;
+
+  // Pre-capture intended open to fix first-open disabled state
+  document.addEventListener('click', function(e){
+    const m = e.target.closest && (e.target.closest('#setlist-list') || e.target.closest('#master-list') || e.target.closest('#favorites-list') || e.target.closest('#genre-song-list'));
+    if (!m) return;
+    const li = e.target.closest('li');
+    if (!li) return;
+    const id = li.getAttribute('data-id') || li.getAttribute('data-file-id') || (li.dataset && (li.dataset.fileId || li.dataset.id)) || li.id;
+    if (id){ pendingId = String(id); }
+    if (m.id === 'setlist-list') pendingCtx = 'setlist';
+    else if (m.id === 'master-list') pendingCtx = 'master';
+    else if (m.id === 'favorites-list') pendingCtx = 'favorites';
+    else if (m.id === 'genre-song-list') pendingCtx = 'genre';
+  }, true);
 
   function updateButtons(){
-    const bPrev = document.getElementById('doc-prev');
-    const bNext = document.getElementById('doc-next');
+    const bPrev = first('#doc-prev');
+    const bNext = first('#doc-next');
+    // prefer legacy enabled state if it exists
+    const legacy = getLegacy();
+    if (legacy.prev && legacy.next){
+      if (bPrev) bPrev.disabled = legacy.prev.disabled === true || legacy.prev.getAttribute('disabled') !== null;
+      if (bNext) bNext.disabled = legacy.next.disabled === true || legacy.next.getAttribute('disabled') !== null;
+      return;
+    }
+    // fallback to our index logic
     if (bPrev) bPrev.disabled = !(list && index > 0);
     if (bNext) bNext.disabled = !(list && index >= 0 && index < list.length - 1);
   }
+
   function markViewed(){
     try {
       const circles = document.querySelectorAll('#setlist-list li .index-number.viewed-index');
@@ -4415,71 +4467,60 @@ function destroyPdfOverlay() {
     } catch(e){}
   }
 
-  // Capture which item is being opened BEFORE the viewer shows up (handles first-open enablement)
-  function capturePendingOpen(e, context){
-    const li = e.target.closest && e.target.closest('li');
-    if (!li) return;
-    const id = li.getAttribute('data-id') || li.getAttribute('data-file-id') || (li.dataset && (li.dataset.fileId || li.dataset.id)) || li.id;
-    if (!id) return;
-    pendingOpenId = String(id);
-    pendingOpenCtx = context;
-  }
-
-  // Delegate clicks on common lists
-  document.addEventListener('click', function(e){
-    if (e.target.closest('#setlist-list')) capturePendingOpen(e, 'setlist');
-    else if (e.target.closest('#master-list')) capturePendingOpen(e, 'master');
-    else if (e.target.closest('#favorites-list')) capturePendingOpen(e, 'favorites');
-    else if (e.target.closest('#genre-song-list')) capturePendingOpen(e, 'genre');
-  }, true);
-
-  // Wrap native opener if available
+  // Wrap native opener to compute state and show our toolbar
   const nativeOpen = window.openSongInContext || window.openDocument;
   if (nativeOpen){
     const wrapped = function(id, context, indexHint){
-      ctx = context || pendingOpenCtx || ctx || 'setlist';
+      ctx = context || pendingCtx || ctx || 'setlist';
       list = buildListForContext(ctx);
+      index = -1;
       if (list){
-        if (typeof indexHint === 'number' && indexHint >=0 && indexHint < list.length) {
-          index = indexHint;
-        } else {
-          const seed = id || pendingOpenId;
+        if (typeof indexHint === 'number' && indexHint >= 0 && indexHint < list.length) index = indexHint;
+        else {
+          const seed = id || pendingId;
           index = seed ? findIndex(list, seed) : -1;
           if (index < 0 && list.length) index = 0;
         }
-      } else {
-        index = -1;
       }
-
       const ret = nativeOpen.apply(this, arguments);
-
       showToolbar();
       updateButtons();
       markViewed();
-      // clear pending once used
-      pendingOpenId = null;
-      pendingOpenCtx = null;
+      pendingId = null; pendingCtx = null;
       return ret;
     };
     if (window.openSongInContext){ window.openSongInContext = wrapped; } else { window.openDocument = wrapped; }
-  } else {
-    // When there is no native opener, rely on DOM changes to compute state when the viewer appears
   }
 
+  // Close that proxies legacy close first, then fallbacks
   function requestClose(){
+    const legacy = getLegacy();
+    if (legacy.close){
+      legacy.close.click();
+      // If close succeeds but leaves backdrop/black screen, clean up common overlays
+      setTimeout(() => {
+        ['doc-view','document-viewer','pdf-viewer','file-viewer','overlay-viewer','backdrop','modal-backdrop','overlay-bg']
+          .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+        hideToolbar();
+      }, 10);
+      return;
+    }
+    // Fallback
     hideToolbar();
     if (typeof window.closeDocumentViewer === 'function') return window.closeDocumentViewer();
     if (typeof window.closeFullscreenDoc === 'function') return window.closeFullscreenDoc();
-    const ids = ['doc-view','document-viewer','pdf-viewer','file-viewer','overlay-viewer'];
-    for (let i=0;i<ids.length;i++){
-      const el = document.getElementById(ids[i]);
-      if (el){ el.style.display = 'none'; break; }
-    }
+    ['doc-view','document-viewer','pdf-viewer','file-viewer','overlay-viewer','backdrop','modal-backdrop','overlay-bg']
+      .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
     const esc = new KeyboardEvent('keydown', {key:'Escape'});
     document.dispatchEvent(esc);
   }
 
+  // Our Prev/Next proxy the legacy buttons when available; otherwise fallback
   function go(delta){
+    const legacy = getLegacy();
+    if (delta < 0 && legacy.prev){ legacy.prev.click(); setTimeout(updateButtons, 30); return; }
+    if (delta > 0 && legacy.next){ legacy.next.click(); setTimeout(updateButtons, 30); return; }
+    // fallback
     if (!list || index < 0) return;
     const nextIndex = index + delta;
     if (nextIndex < 0 || nextIndex >= list.length) return;
@@ -4490,44 +4531,39 @@ function destroyPdfOverlay() {
   }
 
   function bindToolbar(){
-    const prev = document.getElementById('doc-prev');
-    const next = document.getElementById('doc-next');
-    const cls  = document.getElementById('doc-close');
-    if (prev) prev.onclick = function(){ go(-1); };
-    if (next) next.onclick = function(){ go(1);  };
-    if (cls)  cls.onclick  = function(){ requestClose(); };
+    const prev = first('#doc-prev');
+    const next = first('#doc-next');
+    const cls  = first('#doc-close');
+    if (prev) prev.onclick = () => go(-1);
+    if (next) next.onclick = () => go(1);
+    if (cls)  cls.onclick  = () => requestClose();
   }
 
-  // MutationObserver keeps toolbar live and suppresses legacy elements that reappear
-  const mo = new MutationObserver(function(){
-    // nuke any legacy controls
-    ['prev-doc','next-doc','close-doc','previous-btn','next-btn','close-btn'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.remove();
-    });
+  // Keep bindings fresh as DOM changes and ensure legacy is always hidden but present
+  const mo = new MutationObserver(() => {
+    getLegacy(); // re-hide legacy if recreated
     bindToolbar();
     updateButtons();
   });
   try { mo.observe(document.body, {childList:true, subtree:true}); } catch(e){}
 
-  // Initial bind
   if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ bindToolbar(); });
+    document.addEventListener('DOMContentLoaded', () => { getLegacy(); bindToolbar(); });
   } else {
-    bindToolbar();
+    getLegacy(); bindToolbar();
   }
 
   // Keyboard shortcuts
-  document.addEventListener('keydown', function(e){
-    const visible = document.getElementById('doc-toolbar');
-    if (!visible || visible.style.display === 'none') return;
+  document.addEventListener('keydown', (e) => {
+    const tb = first('#doc-toolbar');
+    if (!tb || tb.style.display === 'none') return;
     if (e.key === 'ArrowRight') go(1);
     else if (e.key === 'ArrowLeft') go(-1);
     else if (e.key === 'Escape') requestClose();
   });
 })();
 </script>
-<!-- === END: Doc Toolbar Logic (v2) === -->
+<!-- === END: Doc Toolbar Logic (v3) === -->
 
 </body>
 </html>
