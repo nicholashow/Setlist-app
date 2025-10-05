@@ -1591,20 +1591,19 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 </style>
 <link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet"/>
 <style>
-/* === Safe removal of Previous/Next/Close UI (hidden but DOM kept) === */
-#doc-nav-buttons,
-#pdf-btn-hit,
-#pdf-btn-bar,
+/* === Hide nav controls only (keep containers and logic intact) === */
 #prev-doc,
 #next-doc,
 #close-doc,
 #pdf-btn-prev,
 #pdf-btn-next,
 #pdf-btn-close {
-  display: none !important;
-  visibility: hidden !important;
+  opacity: 0 !important;
   pointer-events: none !important;
 }
+
+/* Optional: prevent accidental tap on the top bar area from triggering actions */
+#doc-nav-buttons .doc-nav-button { pointer-events: none !important; }
 </style></head>
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
 <div id="app">
@@ -4154,42 +4153,5 @@ function destroyPdfOverlay() {
   } catch (e) {}
 })();
 </script>
-<script>
-// === Neutralize nav button logic to avoid breaking other features ===
-(function(){
-  try{
-    var ids = ['doc-nav-buttons','prev-doc','next-doc','close-doc','pdf-btn-bar','pdf-btn-hit','pdf-btn-prev','pdf-btn-next','pdf-btn-close'];
-    ids.forEach(function(id){
-      var el = document.getElementById(id);
-      if (el){
-        el.setAttribute('aria-hidden','true');
-        try{ el.tabIndex = -1; }catch(_){}
-        if (typeof el.disabled !== 'undefined') { el.disabled = true; }
-        // Stop any click/gesture propagation on these nodes
-        el.addEventListener('click', function(e){ e.stopImmediatePropagation(); e.preventDefault(); }, true);
-        el.addEventListener('touchstart', function(e){ e.stopImmediatePropagation(); e.preventDefault(); }, true);
-      }
-    });
-
-    // Override helper functions (if defined) that would show/hide nav
-    try { window.showNavButtons = function(){}; } catch(_){}
-    try { window.startInactivityTimer = function(){}; } catch(_){}
-
-    // If any code tries to programmatically "show" the bars, block it.
-    document.addEventListener('showNavButtons', function(e){ e.stopImmediatePropagation(); }, true);
-
-    // If overlay attempts to reveal its own button bar, keep it invisible.
-    var observer = new MutationObserver(function(mutations){
-      mutations.forEach(function(m){
-        if (m.type === 'attributes' && m.target && (m.target.id === 'pdf-btn-bar' || m.target.id === 'doc-nav-buttons')){
-          // strip 'visible' class if added
-          try { m.target.classList.remove('visible'); } catch(_){}
-        }
-      });
-    });
-    var targets = [document.getElementById('pdf-btn-bar'), document.getElementById('doc-nav-buttons')];
-    targets.forEach(function(t){ if (t) observer.observe(t, { attributes: true, attributeFilter: ['class'] }); });
-  }catch(e){ /* swallow */ }
-})();
-</script></body>
+</body>
 </html>
