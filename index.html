@@ -4192,34 +4192,39 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- BEGIN: Keep Toolbar B Only (auto-detect, no redesign) -->
+<!-- BEGIN: Safe Keep-Last-Toolbar (v5) -->
+<style>
+/* Only hide via a class we control, so we can rollback if needed */
+.hidden-by-keeper { display: none !important; }
+</style>
 <script>
 (function(){
-  if (window.__keepBOnly) return;
-  window.__keepBOnly = true;
+  if (window.__keepLastToolbarV5) return;
+  window.__keepLastToolbarV5 = true;
 
-  // Helper: find buttons by id or by role/text label
   function norm(t){ return (t||'').toLowerCase().trim(); }
-  function isPrevLabel(t){ t = norm(t); return t === 'prev' || t === 'previous' || t.includes('prev'); }
-  function isNextLabel(t){ t = norm(t); return t === 'next' || t.includes('next'); }
-  function isCloseLabel(t){ t = norm(t); return t === 'close' || t.includes('close') || t === '×' || t === 'x'; }
+  function isPrevLabel(t){ t = norm(t); return t === 'prev' || t === 'previous' || t.includes('prev') || t.includes('⟵') || t.includes('←'); }
+  function isNextLabel(t){ t = norm(t); return t === 'next' || t.includes('next') || t.includes('⟶') || t.includes('→'); }
+  function isCloseLabel(t){ t = norm(t); return t === 'close' || t === 'x' || t === '×' || t.includes('close'); }
 
-  function allCandidateButtons(){
-    const btns = Array.prototype.slice.call(
-      document.querySelectorAll('button, [role="button"], .btn, .button')
-    );
-    // Also include common IDs directly if present
-    ['#prev-doc','#next-doc','#close-doc','#previous-btn','#next-btn','#close-btn']
-      .forEach(sel => { var el = document.querySelector(sel); if (el && btns.indexOf(el)===-1) btns.push(el); });
-    return btns.filter(Boolean);
+  function candidateButtons(){
+    const set = new Set();
+    document.querySelectorAll('button, [role="button"], .btn, .button').forEach(b => set.add(b));
+    ['#prev-doc','#next-doc','#close-doc','#previous-btn','#next-btn','#close-btn'].forEach(sel => {
+      const el = document.querySelector(sel); if (el) set.add(el);
+    });
+    return Array.from(set);
   }
 
-  function classifyToolbarGroups(){
-    // Build buckets of containers that appear to hold Prev/Next/Close trio
-    const containers = new Map(); // containerEl -> {prev:[], next:[], close:[]}
-    const btns = allCandidateButtons();
+  function getGroupContainer(btn){
+    // Prefer nearest toolbar-ish ancestor; else parent
+    return btn.closest('.viewer-toolbar, .doc-view-controls, .toolbar, .controls, .buttons, .topbar, .bottombar, header, footer') || btn.parentElement || null;
+  }
+
+  function collectGroups(){
+    const map = new Map(); // container -> {container, buttons:[], prev:[], next:[], close:[], order: number}
+    const btns = candidateButtons();
     btns.forEach(b => {
-      // detect role by id or text
       const id = (b.id||'').toLowerCase();
       const txt = (b.textContent||'').trim();
       let role = null;
@@ -4231,77 +4236,78 @@ function destroyPdfOverlay() {
       else if (isCloseLabel(txt)) role = 'close';
 
       if (!role) return;
-
-      // group by nearest toolbar-ish ancestor or parent
-      let container = b.closest('.viewer-toolbar, .doc-view-controls, .toolbar, .controls, .buttons, .header, .footer, .topbar');
-      if (!container) container = b.parentElement;
-      if (!container) return;
-
-      if (!containers.has(container)){
-        containers.set(container, {container: container, prev:[], next:[], close:[], firstIndex: getDomIndex(container)});
+      const container = getGroupContainer(b);
+      if (!container || container === document.body) return;
+      if (!map.has(container)){
+        map.set(container, {container, buttons:[], prev:[], next:[], close:[], order: domOrder(container)});
       }
-      containers.get(container)[role].push(b);
+      const g = map.get(container);
+      g.buttons.push(b);
+      g[role].push(b);
     });
 
-    // Return only groups that have at least a prev or next and a close.
-    let groups = Array.from(containers.values()).filter(g => (g.prev.length || g.next.length) && g.close.length);
-    // Sort by DOM order (firstIndex), earlier first; last is "B"
-    groups.sort((a,b) => a.firstIndex - b.firstIndex);
+    // Keep groups that look like toolbars (at least Close + one of Prev/Next)
+    const groups = Array.from(map.values()).filter(g => g.close.length && (g.prev.length || g.next.length));
+
+    // Sort by DOM order so the last one is "Toolbar B"
+    groups.sort((a,b) => a.order - b.order);
     return groups;
   }
 
-  function getDomIndex(el){
-    // Flatten index by walking up; used to order groups by appearance in DOM
-    let idx = 0;
-    let n = el;
-    while (n && n.previousSibling){
-      n = n.previousSibling;
-      idx++;
+  function domOrder(el){
+    // Robust DOM order: walk to root collecting indices
+    let score = 0, depth = 0;
+    for (let n = el; n && n.parentElement; n = n.parentElement){
+      const parent = n.parentElement;
+      const children = Array.prototype.slice.call(parent.children);
+      const idx = Math.max(0, children.indexOf(n));
+      score += idx + 1;
+      depth++;
     }
-    // incorporate depth a bit
-    let depth = 0, p = el.parentElement;
-    while (p){ depth++; p = p.parentElement; }
-    return depth * 10000 + idx;
+    return depth * 10000 + score;
   }
 
-  function keepOnlyB(){
-    const groups = classifyToolbarGroups();
+  function anyVisibleButtons(){
+    return !!document.querySelector('button:not(.hidden-by-keeper), [role="button"]:not(.hidden-by-keeper)');
+  }
+
+  function enforceKeepLast(){
+    const groups = collectGroups();
     if (!groups.length) return;
-    // If only one group, keep it
+    // If only one group, unhide it and bail
     if (groups.length === 1){
-      reveal(groups[0]);
+      unhideGroup(groups[0]);
       return;
     }
-    // Keep last (B), remove first (A). If more than 2, remove all except last.
-    for (let i=0; i<groups.length-1; i++){
-      hardRemoveGroup(groups[i]);
+    // Hide all but the last
+    for (let i=0; i<groups.length - 1; i++){
+      hideGroup(groups[i]);
     }
-    reveal(groups[groups.length-1]);
+    unhideGroup(groups[groups.length - 1]);
+
+    // Fail‑safe: if our change results in zero visible buttons, rollback
+    setTimeout(function(){
+      const visible = document.querySelectorAll('button:not(.hidden-by-keeper), [role="button"]:not(.hidden-by-keeper)').length;
+      const hasPrevOrNext = document.querySelectorAll('button:not(.hidden-by-keeper)[id*="prev"], button:not(.hidden-by-keeper)[id*="next"], [role="button"]:not(.hidden-by-keeper)[id*="prev"], [role="button"]:not(.hidden-by-keeper)[id*="next"]').length;
+      const hasClose = document.querySelectorAll('button:not(.hidden-by-keeper)[id*="close"], [role="button"]:not(.hidden-by-keeper)[id*="close"]').length;
+      if (visible === 0 || (!hasClose && !hasPrevOrNext)){
+        // Rollback: unhide everything we hid
+        groups.forEach(unhideGroup);
+      }
+    }, 0);
   }
 
-  function hardRemoveGroup(g){
-    try {
-      g.container.remove();
-    } catch(e){
-      // Fallback: hide all its controls
-      [g.prev, g.next, g.close].forEach(list => list.forEach(el => hide(el)));
-      hide(g.container);
-    }
+  function hideGroup(g){
+    if (!g || !g.container) return;
+    g.container.classList.add('hidden-by-keeper');
+    g.buttons.forEach(b => b.classList.add('hidden-by-keeper'));
   }
-
-  function hide(el){
-    if (!el) return;
-    el.style.opacity = '0';
-    el.style.pointerEvents = 'none';
-    el.style.position = 'absolute';
-    el.style.width = '0px';
-    el.style.height = '0px';
-    el.style.overflow = 'hidden';
-  }
-
-  function reveal(g){
-    // Make sure B is visible and clickable
-    [g.container].concat(g.prev, g.next, g.close).forEach(el => {
+  function unhideGroup(g){
+    if (!g || !g.container) return;
+    g.container.classList.remove('hidden-by-keeper');
+    g.buttons.forEach(b => b.classList.remove('hidden-by-keeper'));
+    // Also clear inline hiding left by earlier attempts
+    [g.container].concat(g.buttons).forEach(el => {
       if (!el) return;
       el.style.opacity = '';
       el.style.pointerEvents = '';
@@ -4309,61 +4315,35 @@ function destroyPdfOverlay() {
       el.style.width = '';
       el.style.height = '';
       el.style.overflow = '';
+      el.style.display = '';
+      el.hidden = false;
     });
   }
 
-  // Avoid black-screen overlays after close by clearing common overlay nodes/classes
-  function clearOverlays(){
-    ['doc-view','document-viewer','pdf-viewer','file-viewer','overlay-viewer','backdrop','modal-backdrop','overlay-bg']
-      .forEach(id => { const el = document.getElementById(id); if (el && isOverlayLike(el)) el.style.display = 'none'; });
-    // remove common overlay classes
-    Array.prototype.slice.call(document.querySelectorAll('.backdrop,.modal-backdrop,.overlay,.overlay-bg,.dim,.scrim'))
-      .forEach(el => { el.style.display = 'none'; });
-  }
-  function isOverlayLike(el){
-    const s = window.getComputedStyle(el);
-    return (s.position === 'fixed' || s.position === 'absolute') && (parseFloat(s.zIndex)||0) >= 1000;
-  }
-
-  // Hook native open to ensure B is the only toolbar right after open
+  // Enforce after opens, and on DOM changes
   const openFn = window.openSongInContext || window.openDocument;
-  if (openFn && !window.__openWrappedKeepB){
-    window.__openWrappedKeepB = true;
+  if (openFn && !window.__wrapKeepLastV5){
+    window.__wrapKeepLastV5 = true;
     const native = openFn;
     const wrapped = function(){
       const ret = native.apply(this, arguments);
-      // Defer to next microtask/frame so DOM is in final state
-      setTimeout(function(){ try { keepOnlyB(); } catch(e){} }, 0);
+      setTimeout(enforceKeepLast, 0);
       return ret;
     };
     if (window.openSongInContext){ window.openSongInContext = wrapped; } else { window.openDocument = wrapped; }
   }
 
-  // Observe changes and enforce
-  const mo = new MutationObserver(function(){
-    try { keepOnlyB(); } catch(e){}
-  });
+  const mo = new MutationObserver(function(){ enforceKeepLast(); });
   try { mo.observe(document.body, {childList:true, subtree:true}); } catch(e){}
 
-  // Also try to clear overlays after any click on a "Close" button
-  document.addEventListener('click', function(e){
-    const t = e.target.closest && e.target.closest('button,[role="button"],.btn,.button');
-    if (!t) return;
-    const label = (t.textContent||'').trim().toLowerCase();
-    if (label.includes('close') || t.id.toLowerCase().includes('close')){
-      setTimeout(clearOverlays, 50);
-    }
-  }, true);
-
-  // Initial run
   if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ keepOnlyB(); });
+    document.addEventListener('DOMContentLoaded', function(){ enforceKeepLast(); });
   } else {
-    keepOnlyB();
+    enforceKeepLast();
   }
 })();
 </script>
-<!-- END: Keep Toolbar B Only (auto-detect, no redesign) -->
+<!-- END: Safe Keep-Last-Toolbar (v5) -->
 
 </body>
 </html>
