@@ -2102,6 +2102,8 @@ const s=$('.left-col');s.toggleClass('collapsed');
                 if (pdfContainer) { renderPDFWithPDFJS(url, pdfContainer); }
             })();
 if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
+            $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
+            $('#next-doc').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
         }
         function saveRecording(b){const r=new FileReader();r.readAsDataURL(b);r.onloadend=()=>{const s=setlists[currentSetlist];recordings.push({id:'r_'+Math.random().toString(36).slice(2,9),setlist:currentSetlist,date:s.date,venue:s.venue,audioData:r.result});save();if($('#recordings-view').is(':visible'))renderRecordings();if(currentSetlist)renderSetlist()}}
         function setupScrollHandlers() {
@@ -2111,9 +2113,14 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
             $('#doc-view').on('touchstart', e => { touchstartX = e.originalEvent.touches[0].screenX; });
             $('#doc-view').on('touchend', e => {
                 const touchendX = e.originalEvent.changedTouches[0].screenX;
+                if (touchendX < touchstartX - 50) $('#next-doc').trigger('click'); // Swipe left
+                if (touchendX > touchstartX + 50) $('#prev-doc').trigger('click'); // Swipe right
             });
+            $('#next-doc').on('click', function() { if (!$(this).is(':disabled') && currentViewerIndex < currentViewerList.length - 1) { openSongInContext(currentViewerList[currentViewerIndex + 1].id, currentViewerContext, currentViewerIndex + 1, 'next'); }});
+            $('#prev-doc').on('click', function() { if (!$(this).is(':disabled') && currentViewerIndex > 0) { openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1, 'prev'); }});
             startInactivityTimer();
         }
+        function resetScrollHandlers() { $('#doc-view, #next-doc, #prev-doc').off('mousemove touchstart touchend click'); clearTimeout(inactivityTimer); 
     try{
       if (window.__docTapCapture) {
         document.removeEventListener('touchstart', window.__docTapCapture, {capture:true});
@@ -3006,6 +3013,7 @@ function destroyPdfOverlay() {
     // fallback: click original
     try { var el = $('prev-doc'); if (el) { el.click(); return true; } } catch(e){}
     // fallback: jQuery trigger
+    try { if (window.$) { $('#prev-doc').trigger('click'); return true; } } catch(e){}
     return false;
   }
   function callNext() {
@@ -3018,6 +3026,7 @@ function destroyPdfOverlay() {
       }
     } catch(e){}
     try { var el = $('next-doc'); if (el) { el.click(); return true; } } catch(e){}
+    try { if (window.$) { $('#next-doc').trigger('click'); return true; } } catch(e){}
     return false;
   }
   function callClose() {
@@ -3249,6 +3258,7 @@ function destroyPdfOverlay() {
       }
     } catch(e){}
     try { var el = $('prev-doc'); if (el) { el.click(); return true; } } catch(e){}
+    try { if (window.$) { $('#prev-doc').trigger('click'); return true; } } catch(e){}
     return false;
   }
   function callNext(){
@@ -3261,6 +3271,7 @@ function destroyPdfOverlay() {
       }
     } catch(e){}
     try { var el = $('next-doc'); if (el) { el.click(); return true; } } catch(e){}
+    try { if (window.$) { $('#next-doc').trigger('click'); return true; } } catch(e){}
     return false;
   }
   function callClose(){
@@ -3367,6 +3378,7 @@ function destroyPdfOverlay() {
       }
     } catch(e){}
     var el = document.getElementById('prev-doc'); if (el) { el.click(); return; }
+    if (window.$) try { $('#prev-doc').trigger('click'); } catch(e){}
   }
   function callNext(){
     try {
@@ -3376,6 +3388,7 @@ function destroyPdfOverlay() {
       }
     } catch(e){}
     var el = document.getElementById('next-doc'); if (el) { el.click(); return; }
+    if (window.$) try { $('#next-doc').trigger('click'); } catch(e){}
   }
   function callClose(){
     var ok = false;
@@ -3596,6 +3609,7 @@ function destroyPdfOverlay() {
       }
     } catch(_){}
     var el = document.getElementById('prev-doc'); if (el) { try { el.click(); return; } catch(_){ } }
+    if (window.$) try { $('#prev-doc').trigger('click'); } catch(_){}
   }
   function callNext(){
     try {
@@ -3609,6 +3623,7 @@ function destroyPdfOverlay() {
       }
     } catch(_){}
     var el = document.getElementById('next-doc'); if (el) { try { el.click(); return; } catch(_){ } }
+    if (window.$) try { $('#next-doc').trigger('click'); } catch(_){}
   }
   function callClose(){
     var ok = false;
@@ -4158,154 +4173,5 @@ function destroyPdfOverlay() {
 })();
 </script>
 
-<script>
-/* === PDF NAV CORE — single source of truth for prev/next === */
-(function () {
-  if (window.__PDF_NAV_CORE__) return;  // guard
-  window.__PDF_NAV_CORE__ = true;
-
-  const byId = (id) => document.getElementById(id);
-
-  const btnPrev  = byId('pdf-btn-prev')  || byId('prev-doc');
-  const btnNext  = byId('pdf-btn-next')  || byId('next-doc');
-  const btnClose = byId('pdf-btn-close') || byId('close-doc');
-
-  function hasContext() {
-    return Array.isArray(window.currentViewerList)
-        && typeof window.currentViewerIndex === 'number'
-        && typeof window.openSongInContext === 'function';
-  }
-
-  function syncNavState() {
-    try {
-      const i  = window.currentViewerIndex|0;
-      const n  = (window.currentViewerList || []).length|0;
-      if (btnPrev) btnPrev.classList.toggle('disabled', !(i > 0));
-      if (btnNext) btnNext.classList.toggle('disabled', !(i < n - 1));
-      if (btnPrev) btnPrev.disabled = !(i > 0);
-      if (btnNext) btnNext.disabled = !(i < n - 1);
-    } catch (_) {}
-  }
-
-  function goTo(index, direction) {
-    if (!hasContext()) return;
-    const n = window.currentViewerList.length;
-    if (index < 0 || index >= n) return;
-    const item = window.currentViewerList[index];
-    const id   = item && (item.id ?? item.docId ?? item.songId ?? item.fileId ?? item.pdfId);
-    if (!id) return;
-    const ctx = window.currentViewerContext || 'master';
-    try {
-      window.openSongInContext(id, ctx, index, direction);
-    } catch (e) {
-      console.error('openSongInContext failed:', e);
-      return;
-    }
-    syncNavState();
-  }
-
-  function next() { if (!hasContext()) return; goTo(window.currentViewerIndex + 1, 'next'); }
-  function prev() { if (!hasContext()) return; goTo(window.currentViewerIndex - 1, 'prev'); }
-
-  if (btnNext) {
-    btnNext.addEventListener('click', function (e) {
-      e.stopPropagation(); e.preventDefault();
-      if (!btnNext.disabled) next();
-    }, { passive:false });
-  }
-  if (btnPrev) {
-    btnPrev.addEventListener('click', function (e) {
-      e.stopPropagation(); e.preventDefault();
-      if (!btnPrev.disabled) prev();
-    }, { passive:false });
-  }
-
-  (function attachSwipe() {
-    const scroller = document.getElementById('pdf-overlay-scroll') || document.getElementById('doc-view');
-    if (!scroller) return;
-    let startX = null;
-    scroller.addEventListener('touchstart', (e) => {
-      const t = e.touches && e.touches[0]; startX = t ? t.clientX : null;
-    }, { passive:true });
-    scroller.addEventListener('touchend', (e) => {
-      const t = e.changedTouches && e.changedTouches[0];
-      if (!t || startX == null) return;
-      const dx = t.clientX - startX;
-      if (Math.abs(dx) < 50) return;
-      if (dx < 0) next(); else prev();
-    }, { passive:true });
-  })();
-
-  const mo = new MutationObserver(() => setTimeout(syncNavState, 0));
-  mo.observe(document.documentElement, { childList:true, subtree:true, attributes:true });
-  setTimeout(syncNavState, 0);
-
-  window.__pdfNavCore = { syncNavState, next, prev, goTo };
-})();
-</script>
-
-<!-- ===== SAFE NEXT/PREV PATCH (non-invasive) ===== -->
-<script>
-(function () {
-  if (window.__NEXT_PREV_PATCH__) return;
-  window.__NEXT_PREV_PATCH__ = true;
-
-  function pick(ids){ for (var i=0;i<ids.length;i++){ var el=document.getElementById(ids[i]); if(el) return el; } return null; }
-
-  var btnPrev = pick(['pdf-btn-prev','prev-doc','btnPrev','viewer-prev']);
-  var btnNext = pick(['pdf-btn-next','next-doc','btnNext','viewer-next']);
-
-  if (!btnPrev && !btnNext) return;
-
-  function hasContext() {
-    return Array.isArray(window.currentViewerList)
-        && typeof window.currentViewerIndex === 'number'
-        && typeof window.openSongInContext === 'function';
-  }
-
-  function syncNavState() {
-    if (!hasContext()) return;
-    var i = (window.currentViewerIndex|0);
-    var n = (window.currentViewerList||[]).length|0;
-    if (btnPrev) { btnPrev.disabled = !(i > 0); btnPrev.classList.toggle('disabled', !(i>0)); }
-    if (btnNext) { btnNext.disabled = !(i < n-1); btnNext.classList.toggle('disabled', !(i<n-1)); }
-  }
-
-  function idFromItem(item){
-    if (!item || typeof item!=='object') return null;
-    return item.id ?? item.docId ?? item.songId ?? item.fileId ?? item.pdfId ?? item.uuid ?? null;
-  }
-
-  function go(direction){
-    if (!hasContext()) return;
-    var idx = window.currentViewerIndex|0;
-    var n   = (window.currentViewerList||[]).length|0;
-    var nextIdx = direction==='next' ? idx+1 : idx-1;
-    if (nextIdx < 0 || nextIdx >= n) return;
-    var item = window.currentViewerList[nextIdx];
-    var id = idFromItem(item);
-    if (!id) return;
-    var ctx = window.currentViewerContext || 'master';
-    try { window.openSongInContext(id, ctx, nextIdx, direction); } catch (e) { console.error(e); }
-    setTimeout(syncNavState, 0);
-  }
-
-  function onClick(direction){
-    return function(e){
-      e.preventDefault(); e.stopPropagation();
-      if (this.disabled) return;
-      go(direction);
-    };
-  }
-
-  if (btnPrev) btnPrev.addEventListener('click', onClick('prev'), {passive:false});
-  if (btnNext) btnNext.addEventListener('click', onClick('next'), {passive:false});
-
-  setTimeout(syncNavState, 0);
-  document.addEventListener('viewer:navigated', syncNavState, true);
-  document.addEventListener('click', function(){ setTimeout(syncNavState, 50); }, true);
-})();
-</script>
-<!-- ===== END SAFE NEXT/PREV PATCH ===== -->
 </body>
 </html>
