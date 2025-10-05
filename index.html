@@ -4244,15 +4244,18 @@ function destroyPdfOverlay() {
 })();
 </script>
 
-<!-- === Injected: PDF NAV CORE (Next/Previous single source of truth) === -->
+<!-- ===== SAFE NEXT/PREV PATCH (non-invasive) ===== -->
 <script>
 (function () {
-  if (window.__PDF_NAV_CORE__) return;  // guard
-  window.__PDF_NAV_CORE__ = true;
+  if (window.__NEXT_PREV_PATCH__) return;
+  window.__NEXT_PREV_PATCH__ = true;
 
-  const byId  = (id) => document.getElementById(id);
-  const btnPrev  = byId('pdf-btn-prev')  || byId('prev-doc');
-  const btnNext  = byId('pdf-btn-next')  || byId('next-doc');
+  function pick(ids){ for (var i=0;i<ids.length;i++){ var el=document.getElementById(ids[i]); if(el) return el; } return null; }
+
+  var btnPrev = pick(['pdf-btn-prev','prev-doc','btnPrev','viewer-prev']);
+  var btnNext = pick(['pdf-btn-next','next-doc','btnNext','viewer-next']);
+
+  if (!btnPrev && !btnNext) return;
 
   function hasContext() {
     return Array.isArray(window.currentViewerList)
@@ -4261,58 +4264,48 @@ function destroyPdfOverlay() {
   }
 
   function syncNavState() {
-    try {
-      const i = window.currentViewerIndex|0;
-      const n = (window.currentViewerList || []).length|0;
-      if (btnPrev) { btnPrev.classList.toggle('disabled', !(i > 0)); btnPrev.disabled = !(i > 0); }
-      if (btnNext) { btnNext.classList.toggle('disabled', !(i < n - 1)); btnNext.disabled = !(i < n - 1); }
-    } catch (_) {}
-  }
-
-  function goTo(index, direction) {
     if (!hasContext()) return;
-    const n = window.currentViewerList.length;
-    if (index < 0 || index >= n) return;
-    const item = window.currentViewerList[index];
-    const id   = item && (item.id ?? item.docId ?? item.songId ?? item.fileId ?? item.pdfId ?? item.uuid);
-    if (!id) return;
-    const ctx = window.currentViewerContext || 'master';
-    try { window.openSongInContext(id, ctx, index, direction); } catch (e) { console.error(e); }
-    syncNavState();
+    var i = (window.currentViewerIndex|0);
+    var n = (window.currentViewerList||[]).length|0;
+    if (btnPrev) { btnPrev.disabled = !(i > 0); btnPrev.classList.toggle('disabled', !(i>0)); }
+    if (btnNext) { btnNext.disabled = !(i < n-1); btnNext.classList.toggle('disabled', !(i<n-1)); }
   }
 
-  function next() { if (!hasContext()) return; goTo(window.currentViewerIndex + 1, 'next'); }
-  function prev() { if (!hasContext()) return; goTo(window.currentViewerIndex - 1, 'prev'); }
+  function idFromItem(item){
+    if (!item || typeof item!=='object') return null;
+    return item.id ?? item.docId ?? item.songId ?? item.fileId ?? item.pdfId ?? item.uuid ?? null;
+  }
 
-  if (btnNext) btnNext.addEventListener('click', function (e) {
-    e.stopPropagation(); e.preventDefault(); if (!btnNext.disabled) next();
-  }, { passive:false });
+  function go(direction){
+    if (!hasContext()) return;
+    var idx = window.currentViewerIndex|0;
+    var n   = (window.currentViewerList||[]).length|0;
+    var nextIdx = direction==='next' ? idx+1 : idx-1;
+    if (nextIdx < 0 || nextIdx >= n) return;
+    var item = window.currentViewerList[nextIdx];
+    var id = idFromItem(item);
+    if (!id) return;
+    var ctx = window.currentViewerContext || 'master';
+    try { window.openSongInContext(id, ctx, nextIdx, direction); } catch (e) { console.error(e); }
+    setTimeout(syncNavState, 0);
+  }
 
-  if (btnPrev) btnPrev.addEventListener('click', function (e) {
-    e.stopPropagation(); e.preventDefault(); if (!btnPrev.disabled) prev();
-  }, { passive:false });
+  function onClick(direction){
+    return function(e){
+      e.preventDefault(); e.stopPropagation();
+      if (this.disabled) return;
+      go(direction);
+    };
+  }
 
-  // Optional: swipe to navigate on the PDF overlay
-  (function attachSwipe() {
-    const scroller = document.getElementById('pdf-overlay-scroll') || document.getElementById('doc-view') || document.body;
-    if (!scroller) return;
-    let startX = null;
-    scroller.addEventListener('touchstart', (e) => {
-      const t = e.touches && e.touches[0]; startX = t ? t.clientX : null;
-    }, { passive:true });
-    scroller.addEventListener('touchend', (e) => {
-      const t = e.changedTouches && e.changedTouches[0];
-      if (!t || startX == null) return;
-      const dx = t.clientX - startX;
-      if (Math.abs(dx) < 50) return;
-      if (dx < 0) next(); else prev();
-    }, { passive:true });
-  })();
+  if (btnPrev) btnPrev.addEventListener('click', onClick('prev'), {passive:false});
+  if (btnNext) btnNext.addEventListener('click', onClick('next'), {passive:false});
 
-  // Keep states (enabled/disabled) accurate as you move
   setTimeout(syncNavState, 0);
-  document.addEventListener('click', () => { setTimeout(syncNavState, 60); setTimeout(syncNavState, 300); }, true);
+  document.addEventListener('viewer:navigated', syncNavState, true);
+  document.addEventListener('click', function(){ setTimeout(syncNavState, 50); }, true);
 })();
 </script>
+<!-- ===== END SAFE NEXT/PREV PATCH ===== -->
 </body>
 </html>
