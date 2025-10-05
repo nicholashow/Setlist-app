@@ -12,7 +12,7 @@
     </script>
 
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Setlist Manager - Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -4172,6 +4172,90 @@ function destroyPdfOverlay() {
   });
 })();
 </script>
+
+
+<script>
+(function(){
+  if (window.__noZoomGuards) return; window.__noZoomGuards = true;
+  try {
+    document.addEventListener('gesturestart',  function(e){ e.preventDefault(); }, {passive:false});
+    document.addEventListener('gesturechange', function(e){ e.preventDefault(); }, {passive:false});
+    document.addEventListener('gestureend',    function(e){ e.preventDefault(); }, {passive:false});
+    var lastTap=0;
+    document.addEventListener('touchend', function(e){
+      var now = Date.now();
+      if (now - lastTap < 350) e.preventDefault();
+      lastTap = now;
+    }, {passive:false});
+  } catch(e){}
+})();
+</script>
+
+
+<!-- BEGIN: Keep Second Toolbar, Hide First (surgical, fail-safe) -->
+<style>
+  .__hide-first-toolbar__ { display: none !important; }
+</style>
+<script>
+(function(){
+  if (window.__keepSecondToolbarOnce) return;
+  window.__keepSecondToolbarOnce = true;
+
+  var IDS = ['prev-doc','next-doc','close-doc','previous-btn','next-btn','close-btn'];
+
+  // Hide only the *first* occurrence when duplicates exist; keep the last set (working) intact
+  function hideFirstSetIfDuplicate(){
+    try {
+      var hidden = [];
+      IDS.forEach(function(id){
+        var els = document.querySelectorAll('#'+id);
+        if (els.length > 1){
+          // hide the first, keep the last
+          var first = els[0];
+          first.classList.add('__hide-first-toolbar__');
+          hidden.push(first);
+        }
+      });
+      // Fail-safe: if after hiding we end up with no visible toolbar buttons at all, unhide what we hid
+      var anyVisible = false;
+      IDS.forEach(function(id){
+        var el = document.querySelector('#'+id+':not(.__hide-first-toolbar__)');
+        if (el) anyVisible = true;
+      });
+      if (!anyVisible){
+        hidden.forEach(function(el){ el.classList.remove('__hide-first-toolbar__'); });
+      }
+    } catch(e){ /* no-op */ }
+  }
+
+  // Run after a file opens (wrap existing opener lightly)
+  var opener = window.openSongInContext || window.openDocument;
+  if (opener && !window.__wrappedKeepSecond){
+    window.__wrappedKeepSecond = true;
+    var nativeOpen = opener;
+    var wrapped = function(){
+      var ret = nativeOpen.apply(this, arguments);
+      // Defer so the second toolbar has time to render
+      setTimeout(hideFirstSetIfDuplicate, 0);
+      return ret;
+    };
+    if (window.openSongInContext){ window.openSongInContext = wrapped; }
+    else { window.openDocument = wrapped; }
+  }
+
+  // Also watch the DOM in case toolbars are injected later (after Close, etc.)
+  var mo = new MutationObserver(function(){ hideFirstSetIfDuplicate(); });
+  try { mo.observe(document.body, {childList:true, subtree:true}); } catch(e){}
+
+  // First pass on load
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', hideFirstSetIfDuplicate);
+  } else {
+    hideFirstSetIfDuplicate();
+  }
+})();
+</script>
+<!-- END: Keep Second Toolbar, Hide First (surgical, fail-safe) -->
 
 </body>
 </html>
