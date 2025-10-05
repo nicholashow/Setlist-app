@@ -4174,132 +4174,122 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- BEGIN: Minimal Prev/Next/Close Controller (stable) -->
+<!-- BEGIN: Toolbar Function Graft (v4) -->
 <script>
 (function(){
-  if (window.__minimalNavPatched) return;
-  window.__minimalNavPatched = true;
+  if (window.__graftInit) return;
+  window.__graftInit = true;
 
-  // Helpers
-  function $(sel){ return document.querySelector(sel); }
-  function $all(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+  // Identify "first" vs "second" by DOM order; many apps reuse the same IDs.
+  function allWithIds(ids){
+    const out = {};
+    ids.forEach(id => { out[id] = Array.prototype.slice.call(document.querySelectorAll('#'+id)); });
+    return out;
+  }
+  function getFirstSet(){
+    // Accept multiple common id patterns
+    const ids = ['prev-doc','next-doc','close-doc','previous-btn','next-btn','close-btn'];
+    const map = allWithIds(ids);
+    function pick(name){ return map[name] && map[name][0] || null; }
+    return {
+      prev: pick('prev-doc') || pick('previous-btn'),
+      next: pick('next-doc') || pick('next-btn'),
+      close: pick('close-doc') || pick('close-btn')
+    };
+  }
+  function getSecondSet(){
+    const ids = ['prev-doc','next-doc','close-doc','previous-btn','next-btn','close-btn'];
+    const map = allWithIds(ids);
+    function pick(name){ return map[name] && map[name].length > 1 ? map[name][map[name].length-1] : null; }
+    return {
+      prev: pick('prev-doc') || pick('previous-btn'),
+      next: pick('next-doc') || pick('next-btn'),
+      close: pick('close-doc') || pick('close-btn')
+    };
+  }
 
-  // Try to find your existing opener
-  var opener = window.openSongInContext || window.openDocument || null;
+  // Mirror enable/disable state from second -> first
+  function mirrorDisabled(firstBtn, secondBtn){
+    if (!firstBtn || !secondBtn) return;
+    const disabled = secondBtn.disabled || secondBtn.getAttribute('disabled') !== null;
+    firstBtn.disabled = !!disabled;
+  }
 
-  // Determine where we are (setlist/master/favorites/genre) by looking at which container is visible
-  function detectContext(){
-    var contexts = [
-      {ctx:'setlist',    sel:'#setlist-list > li'},
-      {ctx:'master',     sel:'#master-list > li'},
-      {ctx:'favorites',  sel:'#favorites-list > li'},
-      {ctx:'genre',      sel:'#genre-song-list > li'}
-    ];
-    // Prefer a container that currently has a selected/active item or is most populated
-    var best = null, bestLen = 0;
-    for (var i=0;i<contexts.length;i++){
-      var arr = $all(contexts[i].sel);
-      if (arr.length > bestLen){ bestLen = arr.length; best = contexts[i]; }
+  // Hide second visually but leave click handlers intact
+  function hideVisually(el){
+    if (!el) return;
+    el.style.opacity = '0';
+    el.style.pointerEvents = 'none';
+    el.style.position = 'absolute';
+    el.style.width = '0px';
+    el.style.height = '0px';
+    el.style.overflow = 'hidden';
+  }
+  function hideSecondSet(sec){
+    hideVisually(sec.prev);
+    hideVisually(sec.next);
+    hideVisually(sec.close);
+  }
+
+  // Bind first -> second click forwarding
+  function graft(){
+    const first = getFirstSet();
+    const second = getSecondSet();
+    if (!first.prev && !first.next && !first.close) return; // nothing to bind
+    if (!second.prev && !second.next && !second.close) return; // second not present yet
+
+    // Only bind once per element instance
+    if (first.prev && !first.prev.__grafted){
+      first.prev.__grafted = true;
+      first.prev.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        if (second.prev) second.prev.click();
+      }, true);
     }
-    return best ? best.ctx : 'setlist';
+    if (first.next && !first.next.__grafted){
+      first.next.__grafted = true;
+      first.next.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        if (second.next) second.next.click();
+      }, true);
+    }
+    if (first.close && !first.close.__grafted){
+      first.close.__grafted = true;
+      first.close.addEventListener('click', function(e){
+        // Let the app's close run first if it already has a handler
+        setTimeout(function(){
+          if (second.close) second.close.click();
+        }, 0);
+      }, false);
+    }
+
+    // Keep second visually hidden; we only need its logic
+    hideSecondSet(second);
+
+    // Initial mirror
+    mirrorDisabled(first.prev, second.prev);
+    mirrorDisabled(first.next, second.next);
+
+    // Observe attribute changes on the second buttons to mirror state live
+    const obs = new MutationObserver(function(){
+      mirrorDisabled(first.prev, second.prev);
+      mirrorDisabled(first.next, second.next);
+    });
+    [second.prev, second.next].forEach(el => { if (el) obs.observe(el, {attributes:true, attributeFilter:['disabled','class','style']}); });
   }
 
-  function buildList(ctx){
-    var map = {
-      'setlist':'#setlist-list > li',
-      'master':'#master-list > li',
-      'favorites':'#favorites-list > li',
-      'genre':'#genre-song-list > li'
-    };
-    var sel = map[ctx] || map['setlist'];
-    var arr = $all(sel).map(function(li){
-      var id = li.getAttribute('data-id') || li.getAttribute('data-file-id') || (li.dataset && (li.dataset.fileId || li.dataset.id)) || li.id || '';
-      return id ? {id:String(id), el:li} : null;
-    }).filter(Boolean);
-    return arr;
-  }
-
-  // Track current opened id; try to update when a file is opened by any means
-  window.__currentOpenId = window.__currentOpenId || null;
-  window.__currentOpenCtx = window.__currentOpenCtx || null;
-  window.__currentOpenIndex = (typeof window.__currentOpenIndex === 'number') ? window.__currentOpenIndex : -1;
-
-  // Wrap opener if available to keep state synced
-  if (opener && !window.__openerWrapped){
-    window.__openerWrapped = true;
-    var nativeOpen = opener;
-    var wrapped = function(id, context, indexHint){
-      var ctx = context || detectContext();
-      var list = buildList(ctx);
-      var idx = -1;
-      if (list && list.length){
-        if (typeof indexHint === 'number' && indexHint >= 0 && indexHint < list.length){
-          idx = indexHint;
-        } else {
-          var sid = String(id);
-          for (var i=0;i<list.length;i++){
-            var mid = String(list[i].id);
-            if (mid === sid || mid.replace(/^song-/,'') === sid.replace(/^song-/,'')){ idx = i; break; }
-          }
-        }
-      }
-      window.__currentOpenCtx = ctx;
-      window.__currentOpenId = String(id||'');
-      window.__currentOpenIndex = (idx >= 0) ? idx : 0;
-      return nativeOpen.apply(this, arguments);
-    };
-    if (window.openSongInContext){ window.openSongInContext = wrapped; }
-    else { window.openDocument = wrapped; }
-  }
-
-  function go(delta){
-    var ctx = window.__currentOpenCtx || detectContext();
-    var list = buildList(ctx);
-    var i = (typeof window.__currentOpenIndex === 'number') ? window.__currentOpenIndex : -1;
-    if (!list || list.length === 0 || i < 0) return;
-    var ni = i + delta;
-    if (ni < 0 || ni >= list.length) return;
-    var target = list[ni];
-    var openFn = window.openSongInContext || window.openDocument;
-    if (openFn){ openFn(target.id, ctx, ni); }
-  }
-
-  function requestClose(){
-    // Prefer native close flows if they exist
-    if (typeof window.closeDocumentViewer === 'function') return window.closeDocumentViewer();
-    if (typeof window.closeFullscreenDoc === 'function') return window.closeFullscreenDoc();
-    // Fallbacks: hide common viewer containers but keep the app visible
-    ['doc-view','document-viewer','pdf-viewer','file-viewer','overlay-viewer','backdrop','modal-backdrop','overlay-bg']
-      .forEach(function(id){ var el = document.getElementById(id); if (el) el.style.display = 'none'; });
-    // Send ESC to trigger any key-based listeners
-    try { document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape'})); } catch(e){}
-  }
-
-  // Bind FIRST visible toolbar buttons (do not create any new toolbars)
-  function bind(){
-    var prev = document.getElementById('prev-doc') || document.getElementById('previous-btn');
-    var next = document.getElementById('next-doc') || document.getElementById('next-btn');
-    var close= document.getElementById('close-doc') || document.getElementById('close-btn');
-    if (prev && !prev.__bound){ prev.__bound = true; prev.addEventListener('click', function(e){ e.stopPropagation(); e.preventDefault(); go(-1); }, true); }
-    if (next && !next.__bound){ next.__bound = true; next.addEventListener('click', function(e){ e.stopPropagation(); e.preventDefault(); go(1); }, true); }
-    if (close && !close.__bound){ close.__bound = true; close.addEventListener('click', function(e){ /* let native close happen first, then clean */ setTimeout(requestClose, 10); }, false); }
-  }
-
-  // Keep bindings alive as DOM changes
-  var mo = new MutationObserver(function(){ bind(); });
+  // Keep trying to graft whenever DOM changes (e.g., after you press Close and the app injects second set)
+  const mo = new MutationObserver(function(){ try { graft(); } catch(e){} });
   try { mo.observe(document.body, {childList:true, subtree:true}); } catch(e){}
-  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', bind); } else { bind(); }
 
-  // Optional keyboard shortcuts
-  document.addEventListener('keydown', function(e){
-    if (e.key === 'ArrowRight') go(1);
-    else if (e.key === 'ArrowLeft') go(-1);
-    else if (e.key === 'Escape') requestClose();
-  });
-
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ graft(); });
+  } else {
+    graft();
+  }
 })();
 </script>
-<!-- END: Minimal Prev/Next/Close Controller (stable) -->
+<!-- END: Toolbar Function Graft (v4) -->
 
 </body>
 </html>
