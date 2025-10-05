@@ -14,7 +14,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>Setlist Manager - Enhanced</title>
-    <script src="https://cdn.tailwindcss.com/3.4.14"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -210,12 +210,8 @@
         })();
     </script>
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
-        crossorigin="anonymous"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
-        integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
-        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
     <style>
         html,
@@ -418,60 +414,19 @@
             display: block; /* Fix potential extra space */
         }
         
-        .doc-nav-buttons {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            z-index: 103;
-            opacity: 1;
-            transition: opacity 0.3s;
-            background: rgba(30,30,30, 0.8);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
 
-        .doc-nav-buttons.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
 
-        .doc-nav-button {
-            padding: 8px 16px;
-            background: #3b82f6;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 14px;
-            border: none;
-            transition: background-color 0.2s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            user-select: none;
-        }
 
-        .doc-nav-button:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-        }
 
-        .doc-nav-close {
-            background: #ef4444;
-        }
 
-        .doc-nav-button:not(:disabled):hover {
-            background-color: #2563eb;
-        }
 
-        .doc-nav-close:hover {
-            background-color: #dc2626;
-        }
+
+
+
+
+
+
+
         
         .del-setlist {
             background: #ef4444;
@@ -1376,130 +1331,49 @@
 /* === Overlay-integrated original nav (non-intrusive) === */
 html.pdf-overlay-active #doc-view { display: block !important; } /* unhide the section so nav exists */
 html.pdf-overlay-active #doc-iframe-wrapper { display: none !important; } /* keep old wrapper hidden to avoid any layout/scroll changes */
-html.pdf-overlay-active #doc-nav-buttons {
-  position: fixed !important;
-  top: 0; left: 0; right: 0;
-  z-index: 1000001 !important; /* above #pdf-overlay (999999) */
-  pointer-events: auto;
-}
+
 /* Do not modify overlay scroll area at all */
 
 
 /* === Ensure original nav is above overlay and not trapped in a transform context === */
 html.pdf-overlay-active #doc-view { display: block !important; transform: none !important; }
 html.pdf-overlay-active #doc-view * { transform: none !important; }
-html.pdf-overlay-active #doc-nav-buttons {
-  position: fixed !important;
-  top: 0; left: 0; right: 0;
-  z-index: 2147483000 !important; /* way above any overlay */
-  pointer-events: auto !important;
-}
+
 /* Make sure overlay stays below */
 #pdf-overlay { z-index: 2147482000 !important; }
 
 
 /* === PDF Top Buttons Overlay (non-intrusive) === */
-#pdf-btn-hit {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 56px;
-  z-index: 2147483600;
-  background: transparent;
-  pointer-events: auto;
-}
-#pdf-btn-bar {
-  position: fixed;
-  top: 6px; left: 50%;
-  transform: translateX(-50%);
-  z-index: 2147483601;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .2s ease;
-}
-#pdf-btn-bar.visible { opacity: 1; }
-#pdf-btn-bar .btn {
-  pointer-events: auto;
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-weight: 700;
-  border: none;
-  box-shadow: 0 2px 8px rgba(0,0,0,.35);
-  user-select: none;
-}
-#pdf-btn-prev, #pdf-btn-next { background: #2563eb; color: #fff; }
-#pdf-btn-close { background: #ef4444; color: #fff; }
-html:not(.pdf-overlay-active) #pdf-btn-hit,
-html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
+
+
+
+
+
+
+
 
 
 /* === Ensure single button set & disabled visuals === */
-html.pdf-overlay-active #doc-nav-buttons { display: none !important; } /* avoid double bars */
-#pdf-btn-bar .btn.disabled {
-  opacity: 0.45;
-  filter: grayscale(40%);
-  cursor: default;
-  box-shadow: none;
-}
+ /* avoid double bars */
+
 
 
 /* === Overlay PDF Button Bar (top-center, non-intrusive) === */
-#pdf-btn-hit {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 72px;                 /* slightly taller tap zone for reliability */
-  z-index: 2147483600;
-  background: transparent;
-  pointer-events: auto;
-}
-#pdf-btn-bar {
-  position: fixed;
-  top: 18px;                    /* moved down a bit as requested */
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2147483601;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;         /* container doesn't block scroll */
-  opacity: 0;
-  transition: opacity .20s ease;
-}
-#pdf-btn-bar.visible { opacity: 1; }
-#pdf-btn-bar .btn {
-  pointer-events: auto;
-  padding: 9px 18px;
-  border-radius: 12px;
-  font-weight: 800;
-  border: none;
-  letter-spacing: .3px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.35);
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-#pdf-btn-prev, #pdf-btn-next { background: #2563eb; color: #fff; }
-#pdf-btn-close { background: #ef4444; color: #fff; }
+
+
+
+
+
+
 
 /* Disabled look for grey state */
-#pdf-btn-bar .btn.disabled {
-  background: #9ca3af !important; /* grey */
-  color: #fff !important;
-  opacity: 1;
-  filter: none;
-  cursor: default;
-  box-shadow: none;
-}
+
 
 /* Show only when overlay is active */
-html:not(.pdf-overlay-active) #pdf-btn-hit,
-html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
+
 
 /* Hide the original bar while overlay is active so there is only one set */
-html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
+
 
 
 
@@ -1594,43 +1468,6 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
   color: #ffffff !important;
 }
 
-</style>
-    <link rel="stylesheet"
-      href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-<style>
-/* === Robust PDF Toolbar Patch (2025-10-05) === */
-html.pdf-overlay-active #unified-pdf-toolbar{display:flex}
-#unified-pdf-toolbar{ 
-  position: fixed; left: 0; right: 0; top: 0;
-  height: 54px; z-index: 999999;
-  display: none; align-items: center; justify-content: center;
-  gap: 12px; opacity: 1; pointer-events: auto; /* ensure clicks work */
-  -webkit-user-select: none; user-select: none;
-  background: linear-gradient(to bottom, rgba(0,0,0,.75), rgba(0,0,0,.35));
-  backdrop-filter: blur(6px);
-}
-#unified-pdf-toolbar .navbtn{
-  border: 1px solid rgba(255,255,255,.35);
-  padding: 10px 14px; border-radius: 9999px;
-  font-size: 13px; font-weight: 600; letter-spacing: .04em;
-  color: #fff; background: rgba(255,255,255,.08);
-  outline: none; cursor: pointer;
-  transition: transform .08s ease, background .12s ease, opacity .12s ease;
-}
-#unified-pdf-toolbar .navbtn:hover{ transform: translateY(-1px) }
-#unified-pdf-toolbar .navbtn:active{ transform: translateY(1px) }
-#unified-pdf-toolbar .navbtn.disabled{ 
-  opacity: .45; cursor: default; pointer-events: none;
-}
-/* Hide legacy toolbars to prevent duplication */
-#pdf-btn-bar, #pdf-topbar { display: none !important; }
-#pdf-btn-hit, #pdf-top-hit { display: none !important; }
-
-/* Hot corners to reveal toolbar when hidden UI is desired */
-#unified-pdf-hotzone{
-  position: fixed; left:0; right:0; top:0; height: 24px; z-index: 999998;
-  background: transparent; pointer-events: auto;
-}
 </style>
 </head>
 
@@ -1899,20 +1736,7 @@ html.pdf-overlay-active #unified-pdf-toolbar{display:flex}
 
     <section class="hidden" id="doc-view">
          <div id="doc-iframe-wrapper"></div>
-        <div class="doc-nav-buttons" id="doc-nav-buttons">
-            <button class="doc-nav-button no-select" id="prev-doc">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                Previous
-            </button>
-            <button class="doc-nav-button no-select" id="next-doc">
-                Next
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-            </button>
-            <button class="doc-nav-button doc-nav-close no-select" id="close-doc">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                Close
-            </button>
-        </div>
+        
     </section>
 
     <script>
@@ -2169,8 +1993,8 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
       }
     }catch(e){}
 }
-        function showNavButtons() { $('#doc-nav-buttons').removeClass('hidden'); startInactivityTimer(); }
-        function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000); }
+        function showNavButtons() { startInactivityTimer(); }
+        function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { }, 3000); }
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
     </script>
     <!-- Left-edge custom scrollbar (visible only when sidebar is collapsed) -->
@@ -2520,24 +2344,15 @@ function destroyPdfOverlay() {
 </script>
 
 <!-- Non-intrusive PDF top buttons -->
-<div id="pdf-btn-hit"></div>
-<div id="pdf-btn-bar" aria-hidden="true">
-  <button id="pdf-btn-prev" class="btn" type="button">PREVIOUS</button>
-  <button id="pdf-btn-next" class="btn" type="button">NEXT</button>
-  <button id="pdf-btn-close" class="btn" type="button">CLOSE</button>
-</div>
+
+
 
 <script>
 (function(){
   if (window.__pdfBtnsInstalled) return;
   window.__pdfBtnsInstalled = true;
 
-  var bar   = document.getElementById('pdf-btn-bar');
-  var hit   = document.getElementById('pdf-btn-hit');
-  var prevB = document.getElementById('pdf-btn-prev');
-  var nextB = document.getElementById('pdf-btn-next');
-  var closeB= document.getElementById('pdf-btn-close');
-  var hideTimer = null;
+  var bar   = var hit   = var prevB = var nextB = var closeB= var hideTimer = null;
 
   function forwardClick(id){
     try {
@@ -2708,12 +2523,8 @@ function destroyPdfOverlay() {
 </script>
 
 <!-- Overlay PDF Button Bar -->
-<div id="pdf-btn-hit"></div>
-<div id="pdf-btn-bar" aria-hidden="true">
-  <button id="pdf-btn-prev" class="btn" type="button">PREVIOUS</button>
-  <button id="pdf-btn-next" class="btn" type="button">NEXT</button>
-  <button id="pdf-btn-close" class="btn" type="button">CLOSE</button>
-</div>
+
+
 
 <script>
 (function(){
@@ -3255,8 +3066,7 @@ function destroyPdfOverlay() {
     sc.__overlayBound = true;
 
     // Reuse existing bar logic if present
-    var bar = document.getElementById('pdf-btn-bar');
-    function showBar(){
+    var bar = function showBar(){
       if (!bar) return;
       if (sc.scrollTop > 2) return;
       bar.classList.add('visible');
@@ -3805,8 +3615,7 @@ function destroyPdfOverlay() {
     try { document.body.classList.remove('pdf-overlay-active'); closed = true; } catch(_) {}
 
     try {
-      var bar = document.getElementById('pdf-topbar') || document.getElementById('pdf-btn-bar');
-      if (bar) bar.classList.remove('visible');
+      var bar = document.getElementById('pdf-topbar') || if (bar) bar.classList.remove('visible');
     } catch(_) {}
 
     return !!closed;
@@ -3814,12 +3623,7 @@ function destroyPdfOverlay() {
 
   function onDocClick(e) {
     var t = e.target;
-    var isClose = (t && t.id === 'pdf-close') || (t && t.closest && (t.closest('#pdf-close') || t.closest('#pdf-btn-close')));
-    if (isClose) {
-      e.stopPropagation();
-      e.preventDefault();
-      universalCloseViewer();
-    }
+
   }
   document.addEventListener('click', onDocClick, true);
 
@@ -4215,252 +4019,195 @@ function destroyPdfOverlay() {
 </script>
 
 
+<!-- New file navigation toolbar -->
+<style id="nav-new-css">
+  .nav-new{position:fixed;left:0;right:0;top:0;display:flex;gap:.5rem;justify-content:center;
+    padding:.5rem;z-index:999999;background:rgba(17,17,17,.85);backdrop-filter:saturate(1.2) blur(6px);
+    -webkit-backdrop-filter:saturate(1.2) blur(6px);transform:translateY(-120%);transition:transform .28s ease;}
+  .nav-new.visible{transform:translateY(0)}
+  .nav-new.hidden{visibility:hidden}
+  .nav-new-btn{font:600 14px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+    padding:.6rem 1rem;border-radius:999px;border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.08);color:#fff;touch-action:manipulation}
+  .nav-new-btn:active{transform:translateY(1px)}
+  .nav-new-btn[disabled]{opacity:.45;pointer-events:none}
+  .nav-new-close{border-color:rgba(255,75,75,.35);}
+  @media (pointer:coarse){ .nav-new-btn{padding:.8rem 1.2rem;font-size:16px} }
+</style>
+<div id="navbar-new" class="nav-new hidden" aria-hidden="true">
+  <button id="nav-prev" type="button" class="nav-new-btn" aria-label="Previous file">Previous</button>
+  <button id="nav-next" type="button" class="nav-new-btn" aria-label="Next file">Next</button>
+  <button id="nav-close" type="button" class="nav-new-btn nav-new-close" aria-label="Close file">Close</button>
+</div>
 <script>
-// --- iOS passive event safety: allow preventDefault during custom drags ---
 (function(){
-  try {
-    var draggingEdgeThumb = false;
+  if (window.__NewDocNavInjected) return;
+  window.__NewDocNavInjected = true;
 
-    // Hook into existing thumb start/end by listening on the element directly
-    function setFlag(el){
-      if (!el) return;
-      el.addEventListener('touchstart', function(){ draggingEdgeThumb = true; }, {passive:true});
-      el.addEventListener('touchend', function(){ draggingEdgeThumb = false; }, {passive:true});
-      el.addEventListener('touchcancel', function(){ draggingEdgeThumb = false; }, {passive:true});
-    }
-    function init(){
-      setFlag(document.getElementById('edge-thumb'));
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', init, {once:true});
-    } else {
-      init();
-    }
-
-    // Make sure document's touchmove is non-passive so our existing code can call preventDefault() when dragging
-    document.addEventListener('touchmove', function(e){
-      if (draggingEdgeThumb) {
-        // The jQuery onMove handler already calls preventDefault(); this ensures the browser allows it.
-        e.preventDefault();
-      }
-    }, {passive:false});
-
-  } catch (e) {}
-})();
-</script>
-
-<script>
-/* === Robust PDF Navigation & Toolbar Patch (2025-10-05) === */
-(function(){
-  const d = document;
-  const w = window;
-
-  // Ensure overlay class is set on any open attempt
-  function ensureOverlayActive(){
-    if(!d.documentElement.classList.contains('pdf-overlay-active')){
-      d.documentElement.classList.add('pdf-overlay-active');
-    }
+  function qsa(sel, root=document){ try { return Array.from(root.querySelectorAll(sel)); } catch(e){ return []; } }
+  function isVisible(el){
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    return rect.width>0 && rect.height>0 && !!(el.offsetParent || el === document.body);
   }
-
-  // Build unified toolbar once
-  function buildToolbar(){
-    if(d.getElementById('unified-pdf-toolbar')) return;
-    const bar = d.createElement('div');
-    bar.id = 'unified-pdf-toolbar';
-    bar.innerHTML = `
-      <button class="navbtn" id="u_prev" aria-label="Previous (Left Arrow)">Previous</button>
-      <button class="navbtn" id="u_next" aria-label="Next (Right Arrow)">Next</button>
-      <button class="navbtn" id="u_close" aria-label="Close (Esc)">Close</button>
-    `;
-    const hot = d.createElement('div');
-    hot.id = 'unified-pdf-hotzone';
-    d.body.appendChild(hot);
-    d.body.appendChild(bar);
-
-    // Reveal toolbar on any top-edge tap/mouse
-    let revealTimer=null;
-    function showBar(){ bar.style.display='flex'; }
-    function hideBar(){ /* keep visible; the app hides other UI already */ }
-    hot.addEventListener('mouseenter', showBar, {passive:true});
-    hot.addEventListener('mousemove', showBar, {passive:true});
-    hot.addEventListener('touchstart', showBar, {passive:true});
-
-    // Keyboard shortcuts
-    d.addEventListener('keydown', (e)=>{
-      if(e.key==='ArrowLeft'){ e.preventDefault(); goPrev(); }
-      else if(e.key==='ArrowRight'){ e.preventDefault(); goNext(); }
-      else if(e.key==='Escape'){ e.preventDefault(); doClose(); }
-    });
-
-    // Button events
-    d.getElementById('u_prev').addEventListener('click', goPrev);
-    d.getElementById('u_next').addEventListener('click', goNext);
-    d.getElementById('u_close').addEventListener('click', doClose);
-
-    syncButtons();
-  }
-
-  // Context tracker that *always* has a fallback
-  const NavContext = {
-    list: null,
-    index: -1,
-    // Try to sync from app globals first
-    syncFromGlobals(){
-      try{
-        if(Array.isArray(w.currentViewerList) && typeof w.currentViewerIndex==='number'){
-          this.list = w.currentViewerList.slice();
-          this.index = w.currentViewerIndex|0;
-          return true;
-        }
-      }catch(_){}
-      return false;
-    },
-    // Fallback: derive from any visible "current file" markers in DOM
-    // Expect list items to have [data-file-id] attributes; adjust selectors to match app markup
-    syncFromDom(){
-      // Try setlist first
-      const activeList = d.querySelectorAll('[data-file-id].is-visible, .song-item[data-file-id]');
-      if(activeList && activeList.length){
-        this.list = Array.from(activeList).map(el => el.getAttribute('data-file-id'));
-        // Determine current id from an attribute on the open overlay/viewer
-        const curId = getOpenFileId();
-        this.index = curId ? this.list.indexOf(curId) : -1;
-        return this.list.length>0;
-      }
-      return false;
-    }
+  const state = {
+    list: [], index: -1,
+    itemSelectors: ['[data-file]','[data-file-path]','[data-path]','a[href$=".pdf"]','a[data-type="pdf"]','.file-item','.song-item','.setlist-file'],
+    viewerSelectors: ['#pdfViewer','iframe[src$=".pdf"]','embed[type="application/pdf"]','object[type="application/pdf"]','.pdfViewer','.pdf-canvas','#file-viewer','.file-viewer','.viewer-overlay','.pdfjs-container']
   };
+  const bar = document.getElementById('navbar-new');
+  const btnPrev = document.getElementById('nav-prev');
+  const btnNext = document.getElementById('nav-next');
+  const btnClose = document.getElementById('nav-close');
 
-  function getOpenFileId(){
-    // Try explicit marker on overlay/webview container
-    const v = d.querySelector('[data-open-file-id]');
-    if(v) return v.getAttribute('data-open-file-id');
-    // Try URL of embedded <iframe>/<embed> if present
-    const frame = d.querySelector('iframe.pdf-frame, embed.pdf-embed, object.pdf-object');
-    if(frame && frame.src){
-      return frame.getAttribute('data-file-id') || frame.src;
+  function getNodeSelector(node){
+    if (!node || !node.parentElement) return null;
+    const parts = [];
+    let el = node;
+    while (el && el !== document.body){
+      let part = el.nodeName.toLowerCase();
+      if (el.id){ part += '#' + CSS.escape(el.id); parts.unshift(part); break; }
+      if (el.classList && el.classList.length){
+        part += '.' + Array.from(el.classList).map(c=>CSS.escape(c)).join('.');
+      }
+      const p = el.parentElement;
+      if (p){
+        const siblings = Array.from(p.children).filter(c => c.nodeName === el.nodeName);
+        if (siblings.length>1){
+          const idx = siblings.indexOf(el)+1;
+          part += `:nth-of-type(${idx})`;
+        }
+      }
+      parts.unshift(part);
+      el = el.parentElement;
+      if (parts.length>5) break;
     }
-    // Last resort: global
-    try{
-      if(w.currentViewerId) return w.currentViewerId;
-    }catch(_){}
+    return parts.join(' > ');
+  }
+
+  function buildList(){
+    const results = new Set();
+    for (const sel of state.itemSelectors){
+      for (const node of qsa(sel)){
+        let path = node.getAttribute('data-file') || node.getAttribute('data-file-path') || node.getAttribute('data-path') || node.getAttribute('href') || '';
+        if (!path) continue;
+        path = path.trim();
+        if (!path) continue;
+        results.add(JSON.stringify({ path, nodeSelector: getNodeSelector(node) }));
+      }
+    }
+    state.list = Array.from(results).map(s => JSON.parse(s)).filter(x => !!x.path);
+  }
+
+  function findViewer(){
+    for (const sel of state.viewerSelectors){
+      const nodes = qsa(sel);
+      for (const n of nodes){ if (isVisible(n)) return n; }
+    }
     return null;
   }
-
-  // Helper: click hidden native button if available
-  function clickIfExists(sel){
-    const el = d.querySelector(sel);
-    if(el && !el.disabled){ el.click(); return true; }
-    return false;
-  }
-
-  // Close action — always available
-  function doClose(){
-    if(!clickIfExists('#close-doc')){
-      // App-specific fallback: remove overlay classes or call global close
-      if(typeof w.closeCurrentViewer==='function'){ w.closeCurrentViewer(); }
-      d.documentElement.classList.remove('pdf-overlay-active');
+  function currentViewerSrc(viewer){
+    if (!viewer) return null;
+    if ('src' in viewer && viewer.src) return viewer.src;
+    if (viewer.tagName === 'OBJECT' || viewer.tagName === 'EMBED'){
+      const da = viewer.getAttribute('data') || viewer.getAttribute('src');
+      if (da) return da;
     }
-    setTimeout(syncButtons, 60);
+    const container = viewer.closest('[data-current-file]');
+    if (container) return container.getAttribute('data-current-file');
+    return null;
   }
-
-  // Compute neighbors robustly
-  function computeNeighbors(){
-    // Prefer globals
-    if(!NavContext.syncFromGlobals()){
-      NavContext.syncFromDom();
-    }
-    const n = {
-      canPrev: false, canNext:false,
-      prevId: null, nextId: null
-    };
-    const list = NavContext.list || [];
-    const idx = NavContext.index;
-    if(list.length>1 && idx>=0){
-      if(idx>0){ n.canPrev = true; n.prevId = list[idx-1]; }
-      if(idx<list.length-1){ n.canNext = true; n.nextId = list[idx+1]; }
-    }
-    return n;
-  }
-
-  // Open by id (fallback path when app buttons/globals are missing)
-  function openById(fileId, direction){
-    // Try global helper first
-    if(typeof w.openSongInContext === 'function'){
-      w.openSongInContext(fileId, {navDirection: direction||0});
-      return true;
-    }
-    // Fallback: find a list item and simulate a click
-    const el = d.querySelector(`[data-file-id="${CSS.escape(fileId)}"]`);
-    if(el){ el.click(); return true; }
-    return false;
-  }
-
-  function goPrev(){
-    // First try the app's own hidden button
-    if(clickIfExists('#prev-doc')){ setTimeout(syncButtons, 60); return; }
-    const nb = computeNeighbors();
-    if(nb.canPrev && nb.prevId){ openById(nb.prevId, -1); }
-    setTimeout(syncButtons, 100);
-  }
-  function goNext(){
-    if(clickIfExists('#next-doc')){ setTimeout(syncButtons, 60); return; }
-    const nb = computeNeighbors();
-    if(nb.canNext && nb.nextId){ openById(nb.nextId, +1); }
-    setTimeout(syncButtons, 100);
-  }
-
-  function syncButtons(){
-    const bar = d.getElementById('unified-pdf-toolbar');
-    if(!bar) return;
-    ensureOverlayActive();
-    const nb = computeNeighbors();
-    const p = d.getElementById('u_prev');
-    const n = d.getElementById('u_next');
-    p.classList.toggle('disabled', !nb.canPrev);
-    n.classList.toggle('disabled', !nb.canNext);
-  }
-
-  // Monkey-patch app open to keep context synced and overlay active
-  function patchOpeners(){
-    if(!w.__patchedOpeners){
-      w.__patchedOpeners = true;
-      const origOpen = w.openSongInContext;
-      if(typeof origOpen === 'function'){
-        w.openSongInContext = function(fileId, options){
-          ensureOverlayActive();
-          buildToolbar();
-          const ret = origOpen.apply(this, arguments);
-          try{
-            // Update globals → NavContext will pick these up
-            if(typeof w.currentViewerId!=='undefined'){ w.currentViewerId = fileId; }
-          }catch(_){}
-          setTimeout(syncButtons, 80);
-          return ret;
-        };
+  function normalizePath(p){ try { return new URL(p, window.location.href).href; } catch(e){ return p; } }
+  function detectIndex(){
+    const viewer = findViewer();
+    const vsrc = normalizePath(currentViewerSrc(viewer) || '');
+    if (!vsrc) { state.index = -1; return; }
+    let best = -1;
+    for (let i=0;i<state.list.length;i++){
+      const item = state.list[i];
+      const itemHref = normalizePath(item.path);
+      if (itemHref === vsrc || vsrc.endsWith(itemHref) || itemHref.indexOf(itemHref) >= 0 || itemHref.indexOf(vsrc) >= 0){
+        best = i; break;
       }
-      // Also patch any known “open file” custom events
-      d.addEventListener('pdfviewer:opened', function(ev){
-        ensureOverlayActive(); buildToolbar(); setTimeout(syncButtons, 50);
-      });
+    }
+    state.index = best;
+  }
+  function openByIndex(nextIdx){
+    if (nextIdx < 0 || nextIdx >= state.list.length) return;
+    const target = state.list[nextIdx];
+    const path = target.path;
+    if (typeof window.openFileByPath === 'function') { window.openFileByPath(path); return; }
+    if (typeof window.openFile === 'function') { window.openFile(path); return; }
+    if (typeof window.App === 'object' && typeof window.App.openFile === 'function'){ window.App.openFile(path); return; }
+    const viewer = findViewer();
+    if (viewer){
+      if ('src' in viewer) { viewer.src = path; }
+      else if (viewer.tagName === 'OBJECT') { viewer.setAttribute('data', path); }
+      else if (viewer.tagName === 'EMBED') { viewer.setAttribute('src', path); }
+      const cont = viewer.closest('[data-current-file]');
+      if (cont) cont.setAttribute('data-current-file', path);
+    }
+    if (target.nodeSelector){
+      const node = document.querySelector(target.nodeSelector);
+      if (node) node.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
     }
   }
-
-  // Initial boot
-  function boot(){
-    buildToolbar();
-    patchOpeners();
-    ensureOverlayActive();
-    setTimeout(syncButtons, 120);
+  function doPrev(){ if (state.index <= 0) return; openByIndex(state.index - 1); setTimeout(refresh, 60); }
+  function doNext(){ if (state.index >= state.list.length-1) return; openByIndex(state.index + 1); setTimeout(refresh, 60); }
+  function doClose(){
+    if (typeof window.closeFileViewer === 'function') { window.closeFileViewer(); hide(); return; }
+    if (typeof window.closeFile === 'function') { window.closeFile(); hide(); return; }
+    if (typeof window.App === 'object' && typeof window.App.closeFile === 'function'){ window.App.closeFile(); hide(); return; }
+    const candidates = ['[data-action="close-file"]','.close-file','#viewer-close','button[aria-label="Close"]'];
+    for (const sel of candidates){
+      const btn = document.querySelector(sel);
+      if (btn){ btn.click(); hide(); return; }
+    }
+    const viewer = findViewer();
+    if (viewer){
+      if ('src' in viewer) viewer.src = '';
+      else if (viewer.tagName === 'OBJECT') viewer.removeAttribute('data');
+      const overlay = viewer.closest('.viewer-overlay, #file-viewer, .file-viewer');
+      if (overlay) overlay.classList.add('hidden');
+    }
+    hide();
+    document.documentElement.classList.remove('file-open');
+    document.body.classList.remove('file-open');
+    window.dispatchEvent(new CustomEvent('file:close'));
   }
-
-  if(d.readyState === 'complete' || d.readyState === 'interactive'){
-    boot();
-  }else{
-    d.addEventListener('DOMContentLoaded', boot);
+  function show(){ bar.classList.remove('hidden'); requestAnimationFrame(()=>bar.classList.add('visible')); bar.setAttribute('aria-hidden','false'); }
+  function hide(){ bar.classList.remove('visible'); bar.setAttribute('aria-hidden','true'); setTimeout(()=>bar.classList.add('hidden'), 300); }
+  function refresh(){
+    buildList(); detectIndex();
+    const prevDis = (state.index <= 0);
+    const nextDis = (state.index < 0 || state.index >= state.list.length-1);
+    if (btnPrev) btnPrev.disabled = prevDis;
+    if (btnNext) btnNext.disabled = nextDis;
   }
+  // Bind
+  if (btnPrev) btnPrev.addEventListener('click', doPrev);
+  if (btnNext) btnNext.addEventListener('click', doNext);
+  if (btnClose) btnClose.addEventListener('click', doClose);
+
+  function considerVisibility(){
+    const v = findViewer();
+    const open = !!v && isVisible(v);
+    if (open){ refresh(); show(); } else { hide(); }
+  }
+  window.addEventListener('file:open', considerVisibility);
+  window.addEventListener('pdf:opened', considerVisibility);
+  window.addEventListener('file:close', considerVisibility);
+  window.addEventListener('transitionend', considerVisibility);
+  window.addEventListener('hashchange', considerVisibility);
+  document.addEventListener('click', function(){ setTimeout(considerVisibility, 80); }, true);
+  const mo = new MutationObserver(() => setTimeout(considerVisibility, 20));
+  mo.observe(document.documentElement, { childList:true, subtree:true, attributes:true, attributeFilter:['class','style','src','data'] });
+  setTimeout(considerVisibility, 150);
+
+  // Expose tiny API
+  window.NewDocNav = { show:()=>{show(); refresh();}, hide, next:doNext, prev:doPrev, close:doClose, rebuild:refresh };
 })();
 </script>
-<!-- Injected robust navigation patch on 2025-10-05T05:32:36.674285 -->
+
 </body>
 </html>
