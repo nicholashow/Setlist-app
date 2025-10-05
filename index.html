@@ -1591,72 +1591,6 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 }
 
 </style>
-<style>
-
-/* === BEGIN: Redesigned Doc Toolbar (no zoom, no layout break) === */
-#doc-toolbar {
-  position: fixed;
-  top: env(safe-area-inset-top, 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 10px;
-  z-index: 99999;
-  background: rgba(18,18,20,0.85);
-  backdrop-filter: blur(6px);
-  padding: 8px 10px;
-  border-radius: 999px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-  -webkit-user-select: none;
-  user-select: none;
-  touch-action: manipulation;
-}
-
-.doc-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  height: 44px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-  color: #fff;
-  font-weight: 600;
-  letter-spacing: .2px;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-}
-
-.doc-btn:active { transform: scale(0.98); }
-.doc-btn[disabled] { opacity: .4; pointer-events: none; }
-.doc-btn .ico { width: 18px; height: 18px; margin-right: 8px; display:inline-block; }
-
-/* Hide text selection / callout throughout the app to help avoid zoom/selection quirks */
-html, body, #app {
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-  touch-action: manipulation;
-}
-
-/* Optional highlight of the current item bubble in setlists (if present) */
-.index-number.viewed-index {
-  background: #2563eb !important;
-  color: #fff !important;
-}
-/* === END: Redesigned Doc Toolbar === */
-
-</style>
-<style>
-
-#prev-doc, #next-doc, #close-doc,
-#previous-btn, #next-btn, #close-btn,
-.viewer-toolbar, .doc-view-controls {
-  display: none !important;
-}
-
-</style>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2096,73 +2030,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
-            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style><style>
-
-/* === BEGIN: Redesigned Doc Toolbar (no zoom, no layout break) === */
-#doc-toolbar {
-  position: fixed;
-  top: env(safe-area-inset-top, 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 10px;
-  z-index: 99999;
-  background: rgba(18,18,20,0.85);
-  backdrop-filter: blur(6px);
-  padding: 8px 10px;
-  border-radius: 999px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
-  -webkit-user-select: none;
-  user-select: none;
-  touch-action: manipulation;
-}
-
-.doc-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  height: 44px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
-  color: #fff;
-  font-weight: 600;
-  letter-spacing: .2px;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-}
-
-.doc-btn:active { transform: scale(0.98); }
-.doc-btn[disabled] { opacity: .4; pointer-events: none; }
-.doc-btn .ico { width: 18px; height: 18px; margin-right: 8px; display:inline-block; }
-
-/* Hide text selection / callout throughout the app to help avoid zoom/selection quirks */
-html, body, #app {
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
-  touch-action: manipulation;
-}
-
-/* Optional highlight of the current item bubble in setlists (if present) */
-.index-number.viewed-index {
-  background: #2563eb !important;
-  color: #fff !important;
-}
-/* === END: Redesigned Doc Toolbar === */
-
-</style>
-<style>
-
-#prev-doc, #next-doc, #close-doc,
-#previous-btn, #next-btn, #close-btn,
-.viewer-toolbar, .doc-view-controls {
-  display: none !important;
-}
-
-</style>
-</head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
+            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style></head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
             $('#share-email').on('click',e=>{e.preventDefault();shareSetlist('email')});
@@ -4306,264 +4174,132 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- === BEGIN: Redesigned Doc Toolbar === -->
-<div id="doc-toolbar" style="display:none;">
-  <button id="doc-prev" class="doc-btn" type="button" aria-label="Previous (←)">
-    <span class="ico" aria-hidden="true">⟵</span> Prev
-  </button>
-  <button id="doc-next" class="doc-btn" type="button" aria-label="Next (→)">
-    Next <span class="ico" aria-hidden="true">⟶</span>
-  </button>
-  <button id="doc-close" class="doc-btn" type="button" aria-label="Close (Esc)">
-    ✕ Close
-  </button>
-</div>
-<!-- === END: Redesigned Doc Toolbar === -->
-
-
-
-
-
-
-<!-- === BEGIN: Doc Toolbar Logic (v3: proxy legacy handlers) === -->
+<!-- BEGIN: Minimal Prev/Next/Close Controller (stable) -->
 <script>
 (function(){
-  if (window.__docToolbarInitV3) return;
-  window.__docToolbarInitV3 = true;
-
-  // --- No-zoom hardening ---
-  try {
-    document.addEventListener('gesturestart',  e => e.preventDefault(), {passive:false});
-    document.addEventListener('gesturechange', e => e.preventDefault(), {passive:false});
-    document.addEventListener('gestureend',    e => e.preventDefault(), {passive:false});
-    let lastTap = 0;
-    document.addEventListener('touchend', e => {
-      const now = Date.now();
-      if (now - lastTap < 350) e.preventDefault();
-      lastTap = now;
-    }, {passive:false});
-  } catch(e){}
-
-  // Ensure toolbar exists once
-  (function ensureToolbarExists(){
-    if (!document.getElementById('doc-toolbar')){
-      const div = document.createElement('div');
-      div.id = 'doc-toolbar';
-      div.style.display = 'none';
-      div.className = 'doc-toolbar-pill';
-      div.innerHTML = `
-        <button id="doc-prev" class="doc-btn" type="button" aria-label="Previous (←)">
-          <span class="ico" aria-hidden="true">⟵</span> Prev
-        </button>
-        <button id="doc-next" class="doc-btn" type="button" aria-label="Next (→)">
-          Next <span class="ico" aria-hidden="true">⟶</span>
-        </button>
-        <button id="doc-close" class="doc-btn" type="button" aria-label="Close (Esc)">✕ Close</button>`;
-      document.body.appendChild(div);
-    }
-  })();
+  if (window.__minimalNavPatched) return;
+  window.__minimalNavPatched = true;
 
   // Helpers
+  function $(sel){ return document.querySelector(sel); }
   function $all(sel){ return Array.prototype.slice.call(document.querySelectorAll(sel)); }
-  function first(sel){ return document.querySelector(sel); }
-  function showToolbar(){ const t = first('#doc-toolbar'); if (t) t.style.display = 'flex'; }
-  function hideToolbar(){ const t = first('#doc-toolbar'); if (t) t.style.display = 'none'; }
 
-  // Proxy: find legacy controls and hide them visually (but keep in DOM so .click() works)
-  function getLegacy(){
-    const ids = {
-      prev: ['#prev-doc','#previous-btn'],
-      next: ['#next-doc','#next-btn'],
-      close:['#close-doc','#close-btn']
-    };
-    function pick(arr){
-      for (let sel of arr){
-        const el = first(sel);
-        if (el) return el;
-      }
-      return null;
+  // Try to find your existing opener
+  var opener = window.openSongInContext || window.openDocument || null;
+
+  // Determine where we are (setlist/master/favorites/genre) by looking at which container is visible
+  function detectContext(){
+    var contexts = [
+      {ctx:'setlist',    sel:'#setlist-list > li'},
+      {ctx:'master',     sel:'#master-list > li'},
+      {ctx:'favorites',  sel:'#favorites-list > li'},
+      {ctx:'genre',      sel:'#genre-song-list > li'}
+    ];
+    // Prefer a container that currently has a selected/active item or is most populated
+    var best = null, bestLen = 0;
+    for (var i=0;i<contexts.length;i++){
+      var arr = $all(contexts[i].sel);
+      if (arr.length > bestLen){ bestLen = arr.length; best = contexts[i]; }
     }
-    const prev = pick(ids.prev);
-    const next = pick(ids.next);
-    const close = pick(ids.close);
-    // visually hide if found
-    [prev,next,close].forEach(el => {
-      if (!el) return;
-      el.style.opacity = '0';
-      el.style.pointerEvents = 'none';
-      el.style.position = 'absolute';
-      el.style.width = '0px';
-      el.style.height = '0px';
-      el.style.overflow = 'hidden';
-    });
-    return {prev,next,close};
+    return best ? best.ctx : 'setlist';
   }
 
-  // DOM-index fallback (if legacy missing)
-  function buildListForContext(context){
-    const map = {
-      setlist:    '#setlist-list > li',
-      master:     '#master-list > li',
-      favorites:  '#favorites-list > li',
-      genre:      '#genre-song-list > li',
-      recordings: '#recordings-list > li'
+  function buildList(ctx){
+    var map = {
+      'setlist':'#setlist-list > li',
+      'master':'#master-list > li',
+      'favorites':'#favorites-list > li',
+      'genre':'#genre-song-list > li'
     };
-    const sel = map[context] || '#setlist-list > li, #master-list > li, #favorites-list > li, #genre-song-list > li';
-    const arr = $all(sel).map(li => {
-      const id = li.getAttribute('data-id') || li.getAttribute('data-file-id') || (li.dataset && (li.dataset.fileId || li.dataset.id)) || li.id || '';
-      return id ? { id: String(id), el: li } : null;
+    var sel = map[ctx] || map['setlist'];
+    var arr = $all(sel).map(function(li){
+      var id = li.getAttribute('data-id') || li.getAttribute('data-file-id') || (li.dataset && (li.dataset.fileId || li.dataset.id)) || li.id || '';
+      return id ? {id:String(id), el:li} : null;
     }).filter(Boolean);
-    return arr.length ? arr : null;
-  }
-  function findIndex(arr, id){
-    id = String(id||'');
-    for (let i=0;i<arr.length;i++){
-      const mid = String(arr[i].id||'');
-      if (mid === id) return i;
-      if (mid.replace(/^song-/, '') === id.replace(/^song-/, '')) return i;
-    }
-    return -1;
+    return arr;
   }
 
-  let ctx = null, list = null, index = -1, pendingId = null, pendingCtx = null;
+  // Track current opened id; try to update when a file is opened by any means
+  window.__currentOpenId = window.__currentOpenId || null;
+  window.__currentOpenCtx = window.__currentOpenCtx || null;
+  window.__currentOpenIndex = (typeof window.__currentOpenIndex === 'number') ? window.__currentOpenIndex : -1;
 
-  // Pre-capture intended open to fix first-open disabled state
-  document.addEventListener('click', function(e){
-    const m = e.target.closest && (e.target.closest('#setlist-list') || e.target.closest('#master-list') || e.target.closest('#favorites-list') || e.target.closest('#genre-song-list'));
-    if (!m) return;
-    const li = e.target.closest('li');
-    if (!li) return;
-    const id = li.getAttribute('data-id') || li.getAttribute('data-file-id') || (li.dataset && (li.dataset.fileId || li.dataset.id)) || li.id;
-    if (id){ pendingId = String(id); }
-    if (m.id === 'setlist-list') pendingCtx = 'setlist';
-    else if (m.id === 'master-list') pendingCtx = 'master';
-    else if (m.id === 'favorites-list') pendingCtx = 'favorites';
-    else if (m.id === 'genre-song-list') pendingCtx = 'genre';
-  }, true);
-
-  function updateButtons(){
-    const bPrev = first('#doc-prev');
-    const bNext = first('#doc-next');
-    // prefer legacy enabled state if it exists
-    const legacy = getLegacy();
-    if (legacy.prev && legacy.next){
-      if (bPrev) bPrev.disabled = legacy.prev.disabled === true || legacy.prev.getAttribute('disabled') !== null;
-      if (bNext) bNext.disabled = legacy.next.disabled === true || legacy.next.getAttribute('disabled') !== null;
-      return;
-    }
-    // fallback to our index logic
-    if (bPrev) bPrev.disabled = !(list && index > 0);
-    if (bNext) bNext.disabled = !(list && index >= 0 && index < list.length - 1);
-  }
-
-  function markViewed(){
-    try {
-      const circles = document.querySelectorAll('#setlist-list li .index-number.viewed-index');
-      circles.forEach(c => c.classList.remove('viewed-index'));
-      if (ctx === 'setlist' && list && index >= 0){
-        const bubble = list[index].el && list[index].el.querySelector('.index-number');
-        if (bubble) bubble.classList.add('viewed-index');
-      }
-    } catch(e){}
-  }
-
-  // Wrap native opener to compute state and show our toolbar
-  const nativeOpen = window.openSongInContext || window.openDocument;
-  if (nativeOpen){
-    const wrapped = function(id, context, indexHint){
-      ctx = context || pendingCtx || ctx || 'setlist';
-      list = buildListForContext(ctx);
-      index = -1;
-      if (list){
-        if (typeof indexHint === 'number' && indexHint >= 0 && indexHint < list.length) index = indexHint;
-        else {
-          const seed = id || pendingId;
-          index = seed ? findIndex(list, seed) : -1;
-          if (index < 0 && list.length) index = 0;
+  // Wrap opener if available to keep state synced
+  if (opener && !window.__openerWrapped){
+    window.__openerWrapped = true;
+    var nativeOpen = opener;
+    var wrapped = function(id, context, indexHint){
+      var ctx = context || detectContext();
+      var list = buildList(ctx);
+      var idx = -1;
+      if (list && list.length){
+        if (typeof indexHint === 'number' && indexHint >= 0 && indexHint < list.length){
+          idx = indexHint;
+        } else {
+          var sid = String(id);
+          for (var i=0;i<list.length;i++){
+            var mid = String(list[i].id);
+            if (mid === sid || mid.replace(/^song-/,'') === sid.replace(/^song-/,'')){ idx = i; break; }
+          }
         }
       }
-      const ret = nativeOpen.apply(this, arguments);
-      showToolbar();
-      updateButtons();
-      markViewed();
-      pendingId = null; pendingCtx = null;
-      return ret;
+      window.__currentOpenCtx = ctx;
+      window.__currentOpenId = String(id||'');
+      window.__currentOpenIndex = (idx >= 0) ? idx : 0;
+      return nativeOpen.apply(this, arguments);
     };
-    if (window.openSongInContext){ window.openSongInContext = wrapped; } else { window.openDocument = wrapped; }
+    if (window.openSongInContext){ window.openSongInContext = wrapped; }
+    else { window.openDocument = wrapped; }
   }
 
-  // Close that proxies legacy close first, then fallbacks
+  function go(delta){
+    var ctx = window.__currentOpenCtx || detectContext();
+    var list = buildList(ctx);
+    var i = (typeof window.__currentOpenIndex === 'number') ? window.__currentOpenIndex : -1;
+    if (!list || list.length === 0 || i < 0) return;
+    var ni = i + delta;
+    if (ni < 0 || ni >= list.length) return;
+    var target = list[ni];
+    var openFn = window.openSongInContext || window.openDocument;
+    if (openFn){ openFn(target.id, ctx, ni); }
+  }
+
   function requestClose(){
-    const legacy = getLegacy();
-    if (legacy.close){
-      legacy.close.click();
-      // If close succeeds but leaves backdrop/black screen, clean up common overlays
-      setTimeout(() => {
-        ['doc-view','document-viewer','pdf-viewer','file-viewer','overlay-viewer','backdrop','modal-backdrop','overlay-bg']
-          .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-        hideToolbar();
-      }, 10);
-      return;
-    }
-    // Fallback
-    hideToolbar();
+    // Prefer native close flows if they exist
     if (typeof window.closeDocumentViewer === 'function') return window.closeDocumentViewer();
     if (typeof window.closeFullscreenDoc === 'function') return window.closeFullscreenDoc();
+    // Fallbacks: hide common viewer containers but keep the app visible
     ['doc-view','document-viewer','pdf-viewer','file-viewer','overlay-viewer','backdrop','modal-backdrop','overlay-bg']
-      .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-    const esc = new KeyboardEvent('keydown', {key:'Escape'});
-    document.dispatchEvent(esc);
+      .forEach(function(id){ var el = document.getElementById(id); if (el) el.style.display = 'none'; });
+    // Send ESC to trigger any key-based listeners
+    try { document.dispatchEvent(new KeyboardEvent('keydown', {key:'Escape'})); } catch(e){}
   }
 
-  // Our Prev/Next proxy the legacy buttons when available; otherwise fallback
-  function go(delta){
-    const legacy = getLegacy();
-    if (delta < 0 && legacy.prev){ legacy.prev.click(); setTimeout(updateButtons, 30); return; }
-    if (delta > 0 && legacy.next){ legacy.next.click(); setTimeout(updateButtons, 30); return; }
-    // fallback
-    if (!list || index < 0) return;
-    const nextIndex = index + delta;
-    if (nextIndex < 0 || nextIndex >= list.length) return;
-    const target = list[nextIndex];
-    const opener = window.openSongInContext || window.openDocument;
-    if (!opener) return;
-    opener(target.id, ctx, nextIndex);
+  // Bind FIRST visible toolbar buttons (do not create any new toolbars)
+  function bind(){
+    var prev = document.getElementById('prev-doc') || document.getElementById('previous-btn');
+    var next = document.getElementById('next-doc') || document.getElementById('next-btn');
+    var close= document.getElementById('close-doc') || document.getElementById('close-btn');
+    if (prev && !prev.__bound){ prev.__bound = true; prev.addEventListener('click', function(e){ e.stopPropagation(); e.preventDefault(); go(-1); }, true); }
+    if (next && !next.__bound){ next.__bound = true; next.addEventListener('click', function(e){ e.stopPropagation(); e.preventDefault(); go(1); }, true); }
+    if (close && !close.__bound){ close.__bound = true; close.addEventListener('click', function(e){ /* let native close happen first, then clean */ setTimeout(requestClose, 10); }, false); }
   }
 
-  function bindToolbar(){
-    const prev = first('#doc-prev');
-    const next = first('#doc-next');
-    const cls  = first('#doc-close');
-    if (prev) prev.onclick = () => go(-1);
-    if (next) next.onclick = () => go(1);
-    if (cls)  cls.onclick  = () => requestClose();
-  }
-
-  // Keep bindings fresh as DOM changes and ensure legacy is always hidden but present
-  const mo = new MutationObserver(() => {
-    getLegacy(); // re-hide legacy if recreated
-    bindToolbar();
-    updateButtons();
-  });
+  // Keep bindings alive as DOM changes
+  var mo = new MutationObserver(function(){ bind(); });
   try { mo.observe(document.body, {childList:true, subtree:true}); } catch(e){}
+  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', bind); } else { bind(); }
 
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', () => { getLegacy(); bindToolbar(); });
-  } else {
-    getLegacy(); bindToolbar();
-  }
-
-  // Keyboard shortcuts
-  document.addEventListener('keydown', (e) => {
-    const tb = first('#doc-toolbar');
-    if (!tb || tb.style.display === 'none') return;
+  // Optional keyboard shortcuts
+  document.addEventListener('keydown', function(e){
     if (e.key === 'ArrowRight') go(1);
     else if (e.key === 'ArrowLeft') go(-1);
     else if (e.key === 'Escape') requestClose();
   });
+
 })();
 </script>
-<!-- === END: Doc Toolbar Logic (v3) === -->
+<!-- END: Minimal Prev/Next/Close Controller (stable) -->
 
 </body>
 </html>
