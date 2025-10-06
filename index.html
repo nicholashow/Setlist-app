@@ -4177,21 +4177,18 @@ function destroyPdfOverlay() {
 </html>
 
 
-<!-- ===== Bottom Bar Nav v1.4 (dedupe + robust wiring) =====
-- Keeps the first bottom-pill look, but:
-  • Hides legacy top nav while overlay is active (so you only see one set)
-  • Debounces actions to fix "buggy" prev/next
-  • Close is wired through multiple fallbacks (forwardClick/guard/jQuery/native/Esc)
-============================================================== -->
+<!-- ===== Bottom Bar Nav v1.5 (verify + retry) =====
+- Single bottom bar (legacy top hidden while open)
+- Prev/Next/Close run through robust sequence with verification and retries
+- Touch + Click handlers; reduced edge tap zones to prevent misfires
+====================================================== -->
 <style id="reader-nav-style">
-  /* Hide legacy/top bars ONLY while file overlay is active */
   html.pdf-overlay-active .doc-nav-buttons,
   html.pdf-overlay-active #pdf-btn-bar,
   html.pdf-overlay-active #pdf-btn-hit,
   html.pdf-overlay-active #pdf-top-nav,
   html.pdf-overlay-active #doc-nav-top { display: none !important; }
 
-  /* Bottom pill */
   #reader-nav {
     position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
     z-index: 2147483602; display: flex; align-items: center; gap: 10px;
@@ -4206,8 +4203,7 @@ function destroyPdfOverlay() {
   #reader-close { background: #ef4444; color: #fff; }
   #reader-progress { font-weight: 700; font-size: 13px; color: #e5e7eb; padding: 0 8px; min-width: 64px; text-align: center; }
 
-  /* Edge tap zones */
-  .reader-tap-zone { position: fixed; top: 0; bottom: 0; width: 22vw; z-index: 2147483601; background: transparent; pointer-events: auto; }
+  .reader-tap-zone { position: fixed; top: 0; bottom: 0; width: 15vw; z-index: 2147483601; background: transparent; pointer-events: auto; }
   #tap-left { left: 0; } #tap-right { right: 0; }
   .reader-tap-zone:active { background: rgba(255,255,255,.03); }
 </style>
@@ -4217,81 +4213,89 @@ function destroyPdfOverlay() {
   if (window.__ReaderNavPatched) return; window.__ReaderNavPatched = true;
 
   const st = { nav:null, progress:null, zones:[] };
-  const DEBOUNCE_MS = 220;
-  let lastTap = 0;
-
-  function now(){ return Date.now(); }
-  function debounced(fn){
-    return function(ev){
-      const t = now();
-      if (t - lastTap < DEBOUNCE_MS) { ev && ev.stopImmediatePropagation && ev.stopImmediatePropagation(); return; }
-      lastTap = t;
-      ev && ev.stopPropagation && ev.stopPropagation();
-      ev && ev.preventDefault && ev.preventDefault();
-      fn();
-      setTimeout(refreshProgress, 120);
-    };
-  }
 
   function id(s){ return document.getElementById(s); }
-
-  function triggerById(idStr){
-    // 1) Try forwardClick/guard helpers if they exist
-    try { if (typeof window.forwardClick==='function'){ window.forwardClick(idStr); return true; } } catch(e){}
-    try { if (typeof window.guard==='function'){ window.guard(null, idStr, null, true); return true; } } catch(e){}
-    // 2) jQuery trigger if present
-    try { if (window.$ && typeof window.$ === 'function'){ const $el = window.$('#'+idStr); if ($el && $el.length){ $el.trigger('click'); return true; } } } catch(e){}
-    // 3) Native click
-    const el = id(idStr);
-    if (el){ try{ el.click(); return true; }catch(e){} }
-    return false;
-  }
-
-  function doPrev(){ if (triggerById('prev-doc')) return; document.dispatchEvent(new CustomEvent('reader-nav:prev')); }
-  function doNext(){ if (triggerById('next-doc')) return; document.dispatchEvent(new CustomEvent('reader-nav:next')); }
-  function doClose(){
-    if (triggerById('close-doc')) return;
-    // Esc fallback
-    try{ document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',keyCode:27,which:27,bubbles:true})); }catch(e){}
-    // Safe overlay teardown
-    const ov = document.querySelector('#pdf-overlay');
-    if (ov){
-      ov.style.display='none'; ov.setAttribute('aria-hidden','true');
-      document.documentElement.classList.remove('pdf-overlay-active');
-      document.dispatchEvent(new CustomEvent('overlay:closed',{bubbles:true}));
-    }
-  }
-
-  function refreshProgress(){
-    try{
-      if (typeof window.currentViewerIndex!=='undefined' && Array.isArray(window.currentViewerList)){
-        const idx = Number(window.currentViewerIndex)+1, cnt = window.currentViewerList.length||0;
-        if (st.progress) st.progress.textContent = cnt? (idx+' / '+cnt) : '';
-      }
-    }catch(e){}
-  }
-
   function isOpen(){
     if (document.documentElement.classList.contains('pdf-overlay-active')) return true;
     const o = document.querySelector('#pdf-overlay'); if (!o) return false;
     const cs = getComputedStyle(o); return (cs.display!=='none' && cs.visibility!=='hidden' && cs.opacity!=='0');
   }
+  function getIndex(){ try{ return Number(window.currentViewerIndex); }catch(e){ return null; } }
+  function getCount(){ try{ return Array.isArray(window.currentViewerList) ? window.currentViewerList.length : null; }catch(e){ return null; } }
+  function refreshProgress(){
+    const i = getIndex(), c = getCount();
+    if (st.progress) st.progress.textContent = (i!=null && c) ? (String(i+1)+' / '+String(c)) : '';
+  }
+
+  // Low-level triggers in order
+  function tryForward(idStr){ try{ if (typeof window.forwardClick==='function'){ window.forwardClick(idStr); return true; } }catch(e){} return false; }
+  function tryGuard(idStr){ try{ if (typeof window.guard==='function'){ window.guard(null, idStr, null, true); return true; } }catch(e){} return false; }
+  function tryJQ(idStr){ try{ if (window.$){ const $el = window.$('#'+idStr); if ($el && $el.length){ $el.trigger('click'); return true; } } }catch(e){} return false; }
+  function tryNative(idStr){ const el=id(idStr); if (el){ try{ el.click(); return true; }catch(e){} } return false; }
+  function tryEsc(){ try{ document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',keyCode:27,which:27,bubbles:true})); return true; }catch(e){} return false; }
+  function tryTeardown(){ const ov=document.querySelector('#pdf-overlay'); if (ov){ ov.style.display='none'; ov.setAttribute('aria-hidden','true'); } document.documentElement.classList.remove('pdf-overlay-active'); document.dispatchEvent(new CustomEvent('overlay:closed',{bubbles:true})); return true; }
+
+  function actionPrevNext(kind){
+    const targetId = (kind==='next') ? 'next-doc' : 'prev-doc';
+    const before = getIndex();
+    // Sequence of attempts
+    const attempts = [
+      ()=>tryForward(targetId),
+      ()=>tryGuard(targetId),
+      ()=>tryJQ(targetId),
+      ()=>tryNative(targetId)
+    ];
+    let step = 0;
+    function verifyAndMaybeRetry(){
+      const after = getIndex();
+      if (before==null || after==null || before!==after){ refreshProgress(); return; }
+      if (step >= attempts.length){ return; }
+      const ok = attempts[step++]();
+      setTimeout(verifyAndMaybeRetry, ok ? 120 : 40);
+    }
+    // Kick first attempt then verify
+    attempts[step++]();
+    setTimeout(verifyAndMaybeRetry, 120);
+  }
+
+  function actionClose(){
+    const wasOpen = isOpen();
+    const attempts = [
+      ()=>tryForward('close-doc'),
+      ()=>tryGuard('close-doc'),
+      ()=>tryJQ('close-doc'),
+      ()=>tryNative('close-doc'),
+      ()=>tryEsc(),
+      ()=>tryTeardown()
+    ];
+    let step = 0;
+    function verifyAndMaybeRetry(){
+      if (!isOpen()){ return; }
+      if (step >= attempts.length){ return; }
+      const ok = attempts[step++]();
+      setTimeout(verifyAndMaybeRetry, ok ? 120 : 60);
+    }
+    attempts[step++]();
+    setTimeout(verifyAndMaybeRetry, 100);
+  }
+
+  function attachPress(el, fn){
+    const h = (ev)=>{ ev.stopImmediatePropagation(); ev.stopPropagation(); ev.preventDefault(); fn(); };
+    el.addEventListener('touchstart', h, {passive:false});
+    el.addEventListener('click', h, {passive:false});
+  }
 
   function build(){
-    // Remove any stale instance of our bar if present
-    const old = document.getElementById('reader-nav'); if (old) old.remove();
-    const zl = document.getElementById('tap-left'); if (zl) zl.remove();
-    const zr = document.getElementById('tap-right'); if (zr) zr.remove();
+    // Remove old instances
+    ['reader-nav','tap-left','tap-right'].forEach(k=>{ const n=document.getElementById(k); if(n) n.remove(); });
 
-    // Edge zones
     const L=document.createElement('div'); L.id='tap-left'; L.className='reader-tap-zone';
     const R=document.createElement('div'); R.id='tap-right'; R.className='reader-tap-zone';
-    L.addEventListener('click', debounced(()=>{ doPrev(); }));
-    R.addEventListener('click', debounced(()=>{ doNext(); }));
+    attachPress(L, ()=>actionPrevNext('prev'));
+    attachPress(R, ()=>actionPrevNext('next'));
     document.documentElement.appendChild(L); document.documentElement.appendChild(R);
     st.zones=[L,R];
 
-    // Bottom pill
     const nav=document.createElement('div'); nav.id='reader-nav';
     nav.innerHTML=`
       <button id="reader-prev" class="btn" aria-label="Previous">Previous</button>
@@ -4302,11 +4306,11 @@ function destroyPdfOverlay() {
     document.documentElement.appendChild(nav);
     st.nav=nav; st.progress=nav.querySelector('#reader-progress');
 
-    nav.querySelector('#reader-prev').addEventListener('click', debounced(()=>{ doPrev(); }));
-    nav.querySelector('#reader-next').addEventListener('click', debounced(()=>{ doNext(); }));
-    nav.querySelector('#reader-close').addEventListener('click', debounced(()=>{ doClose(); }));
+    attachPress(nav.querySelector('#reader-prev'), ()=>actionPrevNext('prev'));
+    attachPress(nav.querySelector('#reader-next'), ()=>actionPrevNext('next'));
+    attachPress(nav.querySelector('#reader-close'), ()=>actionClose());
 
-    // Wake bar on interaction
+    // show bar on any interaction
     ['mousemove','mousedown','touchstart','touchmove','keydown','wheel'].forEach(evt=>{
       document.addEventListener(evt, ()=>{ if(isOpen()){ nav.classList.add('visible'); } }, {passive:true});
     });
@@ -4329,5 +4333,5 @@ function destroyPdfOverlay() {
   });
 })();
 </script>
-<!-- ===== /Bottom Bar Nav v1.4 ===== -->
+<!-- ===== /Bottom Bar Nav v1.5 ===== -->
 
