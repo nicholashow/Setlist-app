@@ -416,6 +416,61 @@
             display: block; /* Fix potential extra space */
         }
         
+        .doc-nav-buttons {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            z-index: 103;
+            opacity: 1;
+            transition: opacity 0.3s;
+            background: rgba(30,30,30, 0.8);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .doc-nav-buttons.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .doc-nav-button {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            border: none;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            user-select: none;
+        }
+
+        .doc-nav-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .doc-nav-close {
+            background: #ef4444;
+        }
+
+        .doc-nav-button:not(:disabled):hover {
+            background-color: #2563eb;
+        }
+
+        .doc-nav-close:hover {
+            background-color: #dc2626;
+        }
+        
         .del-setlist {
             background: #ef4444;
             border-radius: 4px;
@@ -1539,83 +1594,73 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 
 </style>
 
-<!-- Nav styles copied from reference -->
 <style>
-.doc-nav-buttons {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            z-index: 103;
-            opacity: 1;
-            transition: opacity 0.3s;
-            background: rgba(30,30,30, 0.8);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-.doc-nav-buttons.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-/* helps iOS Safari */
-</style>
-<style id="reader-nav-style">
-  /* Hide legacy/top bars ONLY while file overlay is active */
-  html.pdf-overlay-active .doc-nav-buttons,
-  html.pdf-overlay-active #pdf-btn-bar,
-  html.pdf-overlay-active #pdf-btn-hit,
-  html.pdf-overlay-active #pdf-top-nav,
-  html.pdf-overlay-active #doc-nav-top { display: none !important; }
-.doc-nav-button {
-            padding: 8px 16px;
-            background: #3b82f6;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 14px;
-            border: none;
-            transition: background-color 0.2s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            user-select: none;
-        }
-.doc-nav-button:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-        }
-.doc-nav-button:not(:disabled):hover {
-            background-color: #2563eb;
-        }
-.doc-nav-close {
-            background: #ef4444;
-        }
-.doc-nav-close:hover {
-            background-color: #dc2626;
-        }
+
+/* === Top-floating PDF buttons (no container box) === */
+html.pdf-overlay-active #doc-nav-buttons,
+html.pdf-overlay-active .doc-nav-buttons,
+html.doc-viewer-active #doc-nav-buttons,
+html.doc-viewer-active .doc-nav-buttons {
+  display: none !important; /* ensure bottom/boxed bars are hidden */
+}
+
+/* Invisible hit zone across the top to reveal controls */
+#viewer-top-hit {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 64px; /* generous tap target */
+  z-index: 2147483600;
+  background: transparent;
+  display: none; /* only on when viewer active */
+  pointer-events: auto;
+}
+
+/* Floating button row (no container bar) */
+#viewer-top-buttons {
+  position: fixed;
+  top: 14px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483601;
+  display: none;              /* toggled on when viewer active */
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;       /* container doesn't block scroll; buttons do */
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+
+/* Individual pill buttons */
+#viewer-top-buttons .vbtn {
+  pointer-events: auto;
+  padding: 9px 16px;
+  border-radius: 14px;
+  font-weight: 800;
+  border: none;
+  letter-spacing: .2px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 6px 18px rgba(0,0,0,.28);
+  font-size: 15px;
+}
+#vbtn-prev, #vbtn-next { background: #2563eb; color: #fff; }
+#vbtn-close { background: #ef4444; color: #fff; }
+
+/* Show/hide states */
+#viewer-top-buttons.visible { opacity: 1; }
+
 </style>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
-<div class="doc-nav-buttons" id="doc-nav-buttons">
-            <button class="doc-nav-button no-select" id="prev-doc">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                Previous
-            </button>
-            <button class="doc-nav-button no-select" id="next-doc">
-                Next
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-            </button>
-            <button class="doc-nav-button doc-nav-close no-select" id="close-doc">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                Close
-            </button>
-        </div>
+
+<div id="viewer-top-hit"></div>
+<div id="viewer-top-buttons" class="flex">
+  <button id="vbtn-prev" class="vbtn">Previous</button>
+  <button id="vbtn-close" class="vbtn">Close</button>
+  <button id="vbtn-next" class="vbtn">Next</button>
+</div>
+
 
     <div id="app">
         <aside class="left-col w-64 bg-gray-800 text-white flex-shrink-0 dark:bg-black">
@@ -1881,7 +1926,20 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 
     <section class="hidden" id="doc-view">
          <div id="doc-iframe-wrapper"></div>
-        
+        <div class="doc-nav-buttons" id="doc-nav-buttons">
+            <button class="doc-nav-button no-select" id="prev-doc">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                Previous
+            </button>
+            <button class="doc-nav-button no-select" id="next-doc">
+                Next
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+            </button>
+            <button class="doc-nav-button doc-nav-close no-select" id="close-doc">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                Close
+            </button>
+        </div>
     </section>
 
     <script>
@@ -4257,6 +4315,176 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<script>
+(function(){
+  // Toggle top controls when the document viewer is active.
+  var hit = null, bar = null, hideTimer = null, active = false, lock = false;
+
+  function $(sel){ return document.querySelector(sel); }
+
+  function ensureNodes(){
+    hit = $('#viewer-top-hit');
+    bar = $('#viewer-top-buttons');
+  }
+
+  function showBar(){
+    if (!bar) return;
+    bar.style.display = 'flex';
+    bar.classList.add('visible');
+    scheduleHide();
+  }
+
+  function hideBar(){
+    if (!bar) return;
+    bar.classList.remove('visible');
+  }
+
+  function scheduleHide(){
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(hideBar, 3000); // 3 seconds
+  }
+
+  function onAnyInteraction(){
+    if (!active) return;
+    showBar();
+  }
+
+  function enableViewerControls(){
+    ensureNodes();
+    if (!hit || !bar) return;
+    hit.style.display = 'block';
+    bar.style.display = 'flex';
+    active = true;
+    showBar();
+  }
+
+  function disableViewerControls(){
+    ensureNodes();
+    if (hit) hit.style.display = 'none';
+    if (bar) { bar.style.display = 'none'; bar.classList.remove('visible'); }
+    clearTimeout(hideTimer);
+    active = false;
+  }
+
+  // Detect viewer open/close via class changes on <html> or <body>
+  var htmlEl = document.documentElement;
+  var bodyEl = document.body;
+  function isViewerActive(){
+    return htmlEl.classList.contains('pdf-overlay-active') ||
+           bodyEl.classList.contains('pdf-overlay-active') ||
+           htmlEl.classList.contains('doc-viewer-active') ||
+           bodyEl.classList.contains('doc-viewer-active');
+  }
+
+  var mo = new MutationObserver(function(){
+    if (isViewerActive()) enableViewerControls();
+    else disableViewerControls();
+  });
+  mo.observe(htmlEl, { attributes: true, attributeFilter: ['class'] });
+  mo.observe(bodyEl, { attributes: true, attributeFilter: ['class'] });
+
+  // Also check on load in case viewer is already open.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){
+      if (isViewerActive()) enableViewerControls();
+    });
+  } else {
+    if (isViewerActive()) enableViewerControls();
+  }
+
+  // Reveal on tapping the imaginary top bar
+  document.addEventListener('pointerdown', function(ev){
+    if (!active) return;
+    var y = ev.clientY;
+    if (y <= 72) { // top strip
+      showBar();
+    }
+  }, { passive: true });
+
+  // Keep visible while interacting near the top
+  document.addEventListener('pointermove', function(ev){
+    if (!active) return;
+    if (ev.clientY <= 72) showBar();
+  }, { passive: true });
+
+  // Buttons: robust bindings to existing app functions
+  function call(fn){
+    try { if (typeof fn === 'function') fn(); } catch(e){ console.error(e); }
+  }
+  function openByIndex(idx){
+    if (typeof window.openFileByIndex === 'function') return window.openFileByIndex(idx);
+  }
+  function getList(){
+    if (Array.isArray(window.currentSetlist)) return window.currentSetlist;
+    if (Array.isArray(window.orderedFiles)) return window.orderedFiles;
+    if (Array.isArray(window.files)) return window.files;
+    return [];
+  }
+  function getCurrentId(){
+    var v = document.getElementById('fileViewer') || document.querySelector('.file-viewer, #pdfViewer, #docViewer');
+    if (v && v.dataset && v.dataset.fileId) return String(v.dataset.fileId);
+    if (window.currentFile && typeof window.currentFile === 'object' && (window.currentFile.id || window.currentFile.fileId)) {
+      return String(window.currentFile.id || window.currentFile.fileId);
+    }
+    if (typeof window.currentFile === 'string' || typeof window.currentFile === 'number') return String(window.currentFile);
+    return null;
+  }
+  function indexOfId(list, id){
+    return list.findIndex(function(x){
+      if (!x) return false;
+      if (typeof x === 'string' || typeof x === 'number') return String(x) === String(id);
+      return String(x.id || x.fileId || x.name) === String(id);
+    });
+  }
+  function nav(delta){
+    if (lock) return;
+    lock = true;
+    var list = getList();
+    var id = getCurrentId();
+    var cur = indexOfId(list, id);
+    if (cur < 0) cur = (window.__lastIdx || 0);
+    var next = Math.max(0, Math.min(list.length - 1, cur + delta));
+    window.__lastIdx = next;
+    if (typeof window.showNextFile === 'function' && delta > 0) { call(window.showNextFile); }
+    else if (typeof window.showPreviousFile === 'function' && delta < 0) { call(window.showPreviousFile); }
+    else { openByIndex(next); }
+    setTimeout(function(){ lock = false; }, 250); // avoid double fire on iOS
+    scheduleHide();
+  }
+
+  function bindButtons(){
+    ensureNodes();
+    var prev = document.getElementById('vbtn-prev');
+    var next = document.getElementById('vbtn-next');
+    var close = document.getElementById('vbtn-close');
+    if (prev) {
+      prev.addEventListener('click', function(){ nav(-1); }, { passive: true });
+      prev.addEventListener('pointerup', function(){ nav(-1); }, { passive: true });
+    }
+    if (next) {
+      next.addEventListener('click', function(){ nav(1); }, { passive: true });
+      next.addEventListener('pointerup', function(){ nav(1); }, { passive: true });
+    }
+    if (close) {
+      var doClose = function(){
+        if (typeof window.closeFileViewer === 'function') call(window.closeFileViewer);
+        else if (typeof window.closeViewer === 'function') call(window.closeViewer);
+        else {
+          var overlay = document.getElementById('fileViewer') || document.querySelector('.file-viewer, #pdfViewer, #docViewer, #pdf-overlay');
+          if (overlay) overlay.style.display = 'none';
+          document.documentElement.classList.remove('pdf-overlay-active', 'doc-viewer-active');
+          document.body.classList.remove('pdf-overlay-active', 'doc-viewer-active');
+        }
+      };
+      close.addEventListener('click', doClose, { passive: true });
+      close.addEventListener('pointerup', doClose, { passive: true });
+    }
+  }
+
+  bindButtons();
+})();
+</script>
 </body>
 </html>
 
@@ -4267,7 +4495,13 @@ function destroyPdfOverlay() {
   • Debounces actions to fix "buggy" prev/next
   • Close is wired through multiple fallbacks (forwardClick/guard/jQuery/native/Esc)
 ============================================================== -->
-
+<style id="reader-nav-style">
+  /* Hide legacy/top bars ONLY while file overlay is active */
+  html.pdf-overlay-active .doc-nav-buttons,
+  html.pdf-overlay-active #pdf-btn-bar,
+  html.pdf-overlay-active #pdf-btn-hit,
+  html.pdf-overlay-active #pdf-top-nav,
+  html.pdf-overlay-active #doc-nav-top { display: none !important; }
 
   /* Bottom pill */
   #reader-nav {
