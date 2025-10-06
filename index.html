@@ -4173,63 +4173,6 @@ function destroyPdfOverlay() {
 })();
 </script>
 
-
-<!-- Minimal, isolated CLOSE fix (no impact on Prev/Next) -->
-<script>
-(function () {
-  if (window.__CloseWire_MIN_v1) return; window.__CloseWire_MIN_v1 = true;
-
-  function safeForwardClose() {
-    try {
-      var nativeBtn = document.getElementById('close-doc');
-      if (nativeBtn) {
-        if (typeof nativeBtn.click === 'function') nativeBtn.click();
-        else nativeBtn.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true}));
-      } else if (window.$) {
-        try { $('#close-doc').trigger('click'); } catch(_) {}
-      }
-    } catch(e){ /* swallow */ }
-  }
-
-  function hardDismissOverlay() {
-    // Remove 'active' flags and hide common overlay containers without touching other UI
-    try { document.documentElement.classList.remove('pdf-overlay-active'); } catch(_) {}
-    try { document.body.classList.remove('pdf-overlay-active'); } catch(_) {}
-    var ids = ['pdf-overlay','pdf-viewer','doc-overlay','viewer-overlay','doc-iframe-wrapper'];
-    for (var i=0;i<ids.length;i++) {
-      var el = document.getElementById(ids[i]);
-      if (el) { try { el.style.display = 'none'; el.setAttribute('aria-hidden','true'); } catch(_){} }
-    }
-    // Hide any top/bottom bars if present
-    try {
-      var bar = document.getElementById('pdf-topbar') || document.getElementById('pdf-btn-bar');
-      if (bar) bar.classList.remove('visible');
-    } catch(_){}
-    // Emit a lightweight signal some code listens for
-    try { document.dispatchEvent(new CustomEvent('overlay:closed',{bubbles:true})); } catch(_){}
-  }
-
-  function handleCloseClick(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    // First, forward to app's own close logic if available
-    safeForwardClose();
-    // Then, ensure overlay is truly gone
-    hardDismissOverlay();
-  }
-
-  function hook(id) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('click', handleCloseClick, {capture:true});
-  }
-
-  // Wire ONLY the two visible close IDs for the PDF viewer buttons
-  hook('pdf-btn-close');
-  hook('pdf-close');
-})();
-</script>
-
 </body>
 </html>
 
