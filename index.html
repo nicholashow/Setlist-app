@@ -4177,17 +4177,14 @@ function destroyPdfOverlay() {
 </html>
 
 
-<!-- ===== ReaderNav Patch v1.2 (strong wiring + safe hard-close) =====
-- Broadened function fallbacks for next/prev/close
-- Broadened selector fallbacks
-- Added ESC dispatch and safe "hard close" fallback
-- Keeps everything non-destructive and scoped to overlay open state
+<!-- ===== ReaderNav Patch v1.3 (direct selectors only) =====
+- Directly triggers #prev-doc, #next-doc, #close-doc
+- No global function indirection
+- No disabling of prev/next; lets your app handle edge cases
+- Progress bound to currentViewerIndex/currentViewerList
 ====================================================== -->
 <style id="reader-nav-style">
   html.pdf-overlay-active .doc-nav-buttons { display: none !important; }
-  html.pdf-overlay-active #pdf-btn-bar,
-  html.pdf-overlay-active #pdf-btn-hit { display: none !important; }
-
   #reader-nav {
     position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
     z-index: 2147483602; display: flex; align-items: center; gap: 10px;
@@ -4200,164 +4197,101 @@ function destroyPdfOverlay() {
   #reader-nav .btn { border: none; padding: 10px 14px; border-radius: 9999px; font-weight: 800; letter-spacing: .3px; user-select: none; -webkit-tap-highlight-color: transparent; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
   #reader-prev, #reader-next { background: #2563eb; color: #fff; }
   #reader-close { background: #ef4444; color: #fff; }
-  #reader-nav .btn[disabled]{ background:#9ca3af !important; color:#fff !important; box-shadow:none; cursor:default; }
   #reader-progress { font-weight: 700; font-size: 13px; color: #e5e7eb; padding: 0 8px; min-width: 64px; text-align: center; }
 
   .reader-tap-zone { position: fixed; top: 0; bottom: 0; width: 22vw; z-index: 2147483601; background: transparent; pointer-events: auto; }
   #tap-left { left: 0; } #tap-right { right: 0; }
   .reader-tap-zone:active { background: rgba(255,255,255,.03); }
-
-  #reader-scrub { -webkit-appearance: none; appearance: none; width: 160px; height: 4px; border-radius: 9999px; background: #4b5563; outline: none; }
-  #reader-scrub::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 9999px; background: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,.6); margin-top: -7px; }
-  #reader-scrub::-moz-range-thumb { width: 18px; height: 18px; border-radius: 9999px; background: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,.6); }
 </style>
 
 <script id="reader-nav-script">
 (function(){
   if (window.__ReaderNavPatched) return; window.__ReaderNavPatched = true;
 
-  const state = { visible:false, index:null, count:null, idleTimer:null, edgeZones:null, navEl:null, scrubEl:null, progressEl:null };
+  const state = { navEl:null, progressEl:null, edgeZones:null };
 
-  const fnLists = {
-    next: ['callNext','nextFile','goNext','openNext','showNextFile','advanceNext'],
-    prev: ['callPrev','prevFile','goPrev','openPrev','showPrevFile','advancePrev','previousFile'],
-    close:['callClose','closeFile','closeOverlay','hideOverlay','exitViewer','closeDocument','teardownViewer','dismissOverlay']
-  };
-
-  const selLists = {
-    next: ['#next-doc','[data-action="next-file"]','.next-file','#next','.btn-next','button[aria-label="Next"]','[data-nav="next"]'],
-    prev: ['#prev-doc','[data-action="prev-file"]','.prev-file','#prev','.btn-prev','button[aria-label="Previous"]','[data-nav="prev"]'],
-    close:['#close-doc','[data-action="close-file"]','.close-file','#close','.btn-close','button[aria-label="Close"]','[data-nav="close"]','.overlay-close']
-  };
-
-  function tryFunctions(kind){
-    for (const name of fnLists[kind]){
-      try{
-        const fn = window[name];
-        if (typeof fn === 'function'){ fn(); return true; }
-      }catch(e){}
-    }
+  function id(id){ return document.getElementById(id); }
+  function clickId(idStr){
+    const el = id(idStr);
+    if (el){ el.click(); return true; }
     return false;
   }
 
-  function trySelectors(kind){
-    for (const sel of selLists[kind]){
-      const el = document.querySelector(sel);
-      if (el){ el.click(); return true; }
-    }
-    return false;
-  }
-
-  function hardClose(){
-    // Send ESC first
+  function callPrev(){ if (!clickId('prev-doc')) document.dispatchEvent(new CustomEvent('reader-nav:prev')); }
+  function callNext(){ if (!clickId('next-doc')) document.dispatchEvent(new CustomEvent('reader-nav:next')); }
+  function callClose(){
+    if (clickId('close-doc')) return;
+    // Fallback: ESC
     try {
-      const escEvt = new KeyboardEvent('keydown', {key:'Escape', keyCode:27, which:27, bubbles:true});
-      document.dispatchEvent(escEvt);
+      document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape', keyCode:27, which:27, bubbles:true}));
     } catch(e){}
-    // Remove overlay class & hide overlay node
-    try {
+    // Fallback: hide overlay class + node if present
+    try{
       document.documentElement.classList.remove('pdf-overlay-active');
-      const ov = document.querySelector('#pdf-overlay');
-      if (ov){ ov.style.display = 'none'; ov.setAttribute('aria-hidden','true'); }
-      // let app know we closed
-      document.dispatchEvent(new CustomEvent('overlay:closed', {bubbles:true}));
-    } catch(e){}
+      const ov = document.querySelector('#pdf-overlay'); if (ov){ ov.style.display='none'; ov.setAttribute('aria-hidden','true'); }
+    }catch(e){}
   }
 
-  function callAction(kind){
-    if (tryFunctions(kind)) return;
-    if (trySelectors(kind)) return;
-    if (kind==='close'){ hardClose(); return; }
-    document.dispatchEvent(new CustomEvent('reader-nav:'+kind));
-  }
-
-  function refreshPosition(){
-    // Pull index from known globals if available
+  function refreshProgress(){
     try {
       if (typeof window.currentViewerIndex!=='undefined' && Array.isArray(window.currentViewerList)){
-        state.index = Number(window.currentViewerIndex)+1; // 0-based -> 1-based
-        state.count = window.currentViewerList.length || null;
+        const idx = Number(window.currentViewerIndex)+1;
+        const cnt = window.currentViewerList.length || 0;
+        if (state.progressEl) state.progressEl.textContent = (cnt>0 ? (idx + ' / ' + cnt) : '');
       }
     } catch(e){}
-    // Update UI
-    if (state.progressEl){
-      state.progressEl.textContent = (state.index && state.count) ? (state.index + ' / ' + state.count) : '';
-    }
-    if (state.navEl){
-      const prevBtn = state.navEl.querySelector('#reader-prev');
-      const nextBtn = state.navEl.querySelector('#reader-next');
-      // Only disable when we are certain about bounds
-      if (prevBtn) prevBtn.disabled = (state.index!=null && state.index<=1);
-      if (nextBtn) nextBtn.disabled = (state.index!=null && state.count!=null && state.index>=state.count);
-    }
-    if (state.scrubEl && state.count){
-      state.scrubEl.max = String(state.count);
-      state.scrubEl.value = String(Math.max(1, Math.min(state.count, state.index || 1)));
-    }
   }
 
-  function isFileOpen(){
+  function isOpen(){
     if (document.documentElement.classList.contains('pdf-overlay-active')) return true;
     const o = document.querySelector('#pdf-overlay');
-    if (o){
-      const cs = getComputedStyle(o);
-      if (cs.display!=='none' && cs.visibility!=='hidden' && cs.opacity!=='0') return true;
-    }
-    return false;
+    if (!o) return false;
+    const cs = getComputedStyle(o);
+    return (cs.display!=='none' && cs.visibility!=='hidden' && cs.opacity!=='0');
   }
 
-  function showNav(){ if (!state.navEl) buildNav(); state.visible=true; state.navEl.classList.add('visible'); if (state.edgeZones){ state.edgeZones.forEach(z=>z.style.display='block'); } refreshPosition(); resetIdle(); }
-  function hideNav(){ if (!state.navEl) return; state.visible=false; state.navEl.classList.remove('visible'); if (state.edgeZones){ state.edgeZones.forEach(z=>z.style.display='none'); } clearTimeout(state.idleTimer); }
-  function resetIdle(){ clearTimeout(state.idleTimer); state.idleTimer=setTimeout(()=>{ if (!state.navEl) return; state.navEl.classList.remove('visible'); if (state.edgeZones){ state.edgeZones.forEach(z=>z.style.display='none'); } }, 2500); }
-
-  function buildNav(){
+  function build(){
+    // edge tap zones
     const left = document.createElement('div'); left.id='tap-left'; left.className='reader-tap-zone';
     const right= document.createElement('div'); right.id='tap-right'; right.className='reader-tap-zone';
-    left.addEventListener('click', ()=>{ callAction('prev'); resetIdle(); setTimeout(refreshPosition,80); });
-    right.addEventListener('click',()=>{ callAction('next'); resetIdle(); setTimeout(refreshPosition,80); });
-    document.documentElement.appendChild(left); document.documentElement.appendChild(right); state.edgeZones=[left,right];
+    left.addEventListener('click', ()=>{ callPrev(); refreshProgress(); });
+    right.addEventListener('click',()=>{ callNext(); refreshProgress(); });
+    document.documentElement.appendChild(left); document.documentElement.appendChild(right);
+    state.edgeZones=[left,right];
 
+    // nav pill
     const nav = document.createElement('div'); nav.id='reader-nav';
     nav.innerHTML = `
       <button id="reader-prev" class="btn" aria-label="Previous">Previous</button>
       <span id="reader-progress"></span>
-      <input id="reader-scrub" type="range" min="1" value="1" />
       <button id="reader-next" class="btn" aria-label="Next">Next</button>
       <button id="reader-close" class="btn" aria-label="Close">Close</button>
     `;
     document.documentElement.appendChild(nav);
-    state.navEl=nav; state.scrubEl=nav.querySelector('#reader-scrub'); state.progressEl=nav.querySelector('#reader-progress');
+    state.navEl = nav;
+    state.progressEl = nav.querySelector('#reader-progress');
 
-    nav.querySelector('#reader-prev').addEventListener('click', ()=>{ callAction('prev'); resetIdle(); setTimeout(refreshPosition,120); });
-    nav.querySelector('#reader-next').addEventListener('click', ()=>{ callAction('next'); resetIdle(); setTimeout(refreshPosition,120); });
-    nav.querySelector('#reader-close').addEventListener('click',()=>{ callAction('close'); });
+    nav.querySelector('#reader-prev').addEventListener('click', ()=>{ callPrev(); refreshProgress(); });
+    nav.querySelector('#reader-next').addEventListener('click', ()=>{ callNext(); refreshProgress(); });
+    nav.querySelector('#reader-close').addEventListener('click',()=>{ callClose(); });
 
-    state.scrubEl.addEventListener('input',(e)=>{
-      const target = parseInt(e.target.value,10);
-      if (!state.count || state.index==null) return;
-      let delta = target - state.index;
-      const step = ()=>{
-        if (delta===0) return refreshPosition();
-        if (delta>0){ delta--; callAction('next'); }
-        else { delta++; callAction('prev'); }
-        setTimeout(step, 50);
-      };
-      step();
-    });
-
-    // Wake the bar when user interacts
     ['mousemove','mousedown','touchstart','touchmove','keydown','wheel'].forEach(evt=>{
-      document.addEventListener(evt, ()=>{ if (isFileOpen()) { showNav(); } }, {passive:true});
+      document.addEventListener(evt, ()=>{ if (isOpen()) { nav.classList.add('visible'); } }, {passive:true});
     });
   }
 
-  const classObs = new MutationObserver(()=>{ if (isFileOpen()) showNav(); else hideNav(); refreshPosition(); });
-  classObs.observe(document.documentElement,{attributes:true,attributeFilter:['class']});
-  const overlay = document.querySelector('#pdf-overlay') || document.body;
-  const bodyObs = new MutationObserver(()=>{ if (isFileOpen()) showNav(); else hideNav(); refreshPosition(); });
-  bodyObs.observe(overlay,{attributes:true,childList:true,subtree:true});
-
-  window.addEventListener('load', ()=>{ setTimeout(()=>{ if (isFileOpen()) showNav(); else hideNav(); refreshPosition(); }, 60); });
+  const mo = new MutationObserver(()=>{
+    if (!state.navEl) return;
+    if (isOpen()){ state.navEl.classList.add('visible'); state.edgeZones.forEach(z=>z.style.display='block'); refreshProgress(); }
+    else { state.navEl.classList.remove('visible'); state.edgeZones.forEach(z=>z.style.display='none'); }
+  });
+  document.addEventListener('DOMContentLoaded', ()=>{
+    build();
+    mo.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+    const overlay = document.querySelector('#pdf-overlay') || document.body;
+    const mo2 = new MutationObserver(()=>{ if (isOpen()){ state.navEl.classList.add('visible'); state.edgeZones.forEach(z=>z.style.display='block'); refreshProgress(); } else { state.navEl.classList.remove('visible'); state.edgeZones.forEach(z=>z.style.display='none'); } });
+    mo2.observe(overlay, {attributes:true, childList:true, subtree:true});
+  });
 })();
 </script>
 <!-- ===== /ReaderNav Patch ===== -->
