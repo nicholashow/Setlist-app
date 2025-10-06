@@ -4175,3 +4175,132 @@ function destroyPdfOverlay() {
 
 </body>
 </html>
+
+
+<!-- ===== ReaderNav Bottom Bar (Start-Over Fix A) =====
+- Matches the first rework look (bottom pill bar).
+- Keeps your app logic intact; shows only while a file is open.
+- NEXT / PREVIOUS / CLOSE are hard-wired to #next-doc / #prev-doc / #close-doc.
+====================================================== -->
+<style id="reader-nav-style">
+  /* Hide any legacy bars only while overlay is active to avoid double UI */
+  html.pdf-overlay-active .doc-nav-buttons { display: none !important; }
+
+  /* Bottom pill bar */
+  #reader-nav {
+    position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+    z-index: 2147483602; display: flex; align-items: center; gap: 10px;
+    background: rgba(20,20,20,.85); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 9999px; padding: 10px 14px; backdrop-filter: blur(4px);
+    box-shadow: 0 6px 24px rgba(0,0,0,.35); opacity: 0; pointer-events: none;
+    transition: opacity .18s ease;
+  }
+  #reader-nav.visible { opacity: 1; pointer-events: auto; }
+  #reader-nav .btn { border: none; padding: 10px 14px; border-radius: 9999px; font-weight: 800; letter-spacing: .3px; user-select: none; -webkit-tap-highlight-color: transparent; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+  #reader-prev, #reader-next { background: #2563eb; color: #fff; }
+  #reader-close { background: #ef4444; color: #fff; }
+  #reader-progress { font-weight: 700; font-size: 13px; color: #e5e7eb; padding: 0 8px; min-width: 64px; text-align: center; }
+
+  /* Edge tap zones for quick nav */
+  .reader-tap-zone { position: fixed; top: 0; bottom: 0; width: 22vw; z-index: 2147483601; background: transparent; pointer-events: auto; }
+  #tap-left { left: 0; } #tap-right { right: 0; }
+  .reader-tap-zone:active { background: rgba(255,255,255,.03); }
+</style>
+
+<script id="reader-nav-script">
+(function(){
+  if (window.__ReaderNavPatched) return; window.__ReaderNavPatched = true;
+
+  const st = { nav:null, progress:null, zones:[] };
+
+  function id(s){ return document.getElementById(s); }
+  function safeClick(el){ try{ el && el.click(); }catch(e){} }
+
+  function doPrev(){
+    const el = id('prev-doc');
+    if (el){ safeClick(el); return; }
+    document.dispatchEvent(new CustomEvent('reader-nav:prev'));
+  }
+  function doNext(){
+    const el = id('next-doc');
+    if (el){ safeClick(el); return; }
+    document.dispatchEvent(new CustomEvent('reader-nav:next'));
+  }
+  function doClose(){
+    const el = id('close-doc');
+    if (el){ safeClick(el); return; }
+    // Escape fallback
+    try{ document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',keyCode:27,which:27,bubbles:true})); }catch(e){}
+    // Hide overlay safely if still open
+    const ov = document.querySelector('#pdf-overlay');
+    if (ov){
+      ov.style.display='none'; ov.setAttribute('aria-hidden','true');
+      document.documentElement.classList.remove('pdf-overlay-active');
+      document.dispatchEvent(new CustomEvent('overlay:closed',{bubbles:true}));
+    }
+  }
+
+  function refreshProgress(){
+    try{
+      if (typeof window.currentViewerIndex!=='undefined' && Array.isArray(window.currentViewerList)){
+        const idx = Number(window.currentViewerIndex)+1, cnt = window.currentViewerList.length||0;
+        if (st.progress) st.progress.textContent = cnt? (idx+' / '+cnt) : '';
+      }
+    }catch(e){}
+  }
+
+  function isOpen(){
+    if (document.documentElement.classList.contains('pdf-overlay-active')) return true;
+    const o = document.querySelector('#pdf-overlay'); if (!o) return false;
+    const cs = getComputedStyle(o); return (cs.display!=='none' && cs.visibility!=='hidden' && cs.opacity!=='0');
+  }
+
+  function build(){
+    // edge zones
+    const L=document.createElement('div'); L.id='tap-left'; L.className='reader-tap-zone';
+    const R=document.createElement('div'); R.id='tap-right'; R.className='reader-tap-zone';
+    L.addEventListener('click',()=>{ doPrev(); refreshProgress(); });
+    R.addEventListener('click',()=>{ doNext(); refreshProgress(); });
+    document.documentElement.appendChild(L); document.documentElement.appendChild(R);
+    st.zones=[L,R];
+
+    // bottom pill
+    const nav=document.createElement('div'); nav.id='reader-nav';
+    nav.innerHTML=`
+      <button id="reader-prev" class="btn" aria-label="Previous">Previous</button>
+      <span id="reader-progress"></span>
+      <button id="reader-next" class="btn" aria-label="Next">Next</button>
+      <button id="reader-close" class="btn" aria-label="Close">Close</button>
+    `;
+    document.documentElement.appendChild(nav);
+    st.nav=nav; st.progress=nav.querySelector('#reader-progress');
+
+    nav.querySelector('#reader-prev').addEventListener('click',()=>{ doPrev(); refreshProgress(); });
+    nav.querySelector('#reader-next').addEventListener('click',()=>{ doNext(); refreshProgress(); });
+    nav.querySelector('#reader-close').addEventListener('click',()=>{ doClose(); });
+
+    // show on interaction
+    ['mousemove','mousedown','touchstart','touchmove','keydown','wheel'].forEach(evt=>{
+      document.addEventListener(evt, ()=>{ if(isOpen()){ nav.classList.add('visible'); } }, {passive:true});
+    });
+  }
+
+  function syncVisible(){
+    if (!st.nav) return;
+    if (isOpen()){ st.nav.classList.add('visible'); st.zones.forEach(z=>z.style.display='block'); refreshProgress(); }
+    else { st.nav.classList.remove('visible'); st.zones.forEach(z=>z.style.display='none'); }
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    build();
+    const mo1=new MutationObserver(syncVisible);
+    mo1.observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+    const ov=document.querySelector('#pdf-overlay')||document.body;
+    const mo2=new MutationObserver(syncVisible);
+    mo2.observe(ov,{attributes:true,childList:true,subtree:true});
+    syncVisible();
+  });
+})();
+</script>
+<!-- ===== /ReaderNav Bottom Bar (End) ===== -->
+
