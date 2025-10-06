@@ -4177,11 +4177,7 @@ function destroyPdfOverlay() {
 </html>
 
 
-<!-- ===== Bottom Bar Nav v1.5 (verify + retry) =====
-- Single bottom bar (legacy top hidden while open)
-- Prev/Next/Close run through robust sequence with verification and retries
-- Touch + Click handlers; reduced edge tap zones to prevent misfires
-====================================================== -->
+<!-- ===== Bottom Bar Nav v1.6 (instant close + reliable prev/next) ===== -->
 <style id="reader-nav-style">
   html.pdf-overlay-active .doc-nav-buttons,
   html.pdf-overlay-active #pdf-btn-bar,
@@ -4227,72 +4223,104 @@ function destroyPdfOverlay() {
     if (st.progress) st.progress.textContent = (i!=null && c) ? (String(i+1)+' / '+String(c)) : '';
   }
 
+  function sendTap(el){
+    try{
+      const ts = new Event('touchstart', {bubbles:true, cancelable:true});
+      el.dispatchEvent(ts);
+    }catch(e){}
+    try{
+      const clk = new MouseEvent('click', {bubbles:true, cancelable:true});
+      el.dispatchEvent(clk);
+    }catch(e){}
+  }
+
+  function temporarilyEnable(el){
+    if (!el) return ()=>{};
+    const wasDisabled = el.hasAttribute('disabled') || /disabled/.test(el.className||'');
+    if (wasDisabled){ el.removeAttribute('disabled'); el.className = (el.className||'').replace(/\bdisabled\b/g,''); }
+    return ()=>{
+      if (wasDisabled){ try{ el.setAttribute('disabled','disabled'); el.classList.add('disabled'); }catch(e){} }
+    };
+  }
+
   // Low-level triggers in order
   function tryForward(idStr){ try{ if (typeof window.forwardClick==='function'){ window.forwardClick(idStr); return true; } }catch(e){} return false; }
   function tryGuard(idStr){ try{ if (typeof window.guard==='function'){ window.guard(null, idStr, null, true); return true; } }catch(e){} return false; }
-  function tryJQ(idStr){ try{ if (window.$){ const $el = window.$('#'+idStr); if ($el && $el.length){ $el.trigger('click'); return true; } } }catch(e){} return false; }
-  function tryNative(idStr){ const el=id(idStr); if (el){ try{ el.click(); return true; }catch(e){} } return false; }
+  function tryJQ(idStr){ try{ if (window.$){ const $el = window.$('#'+idStr); if ($el && $el.length){ $el.trigger('touchstart').trigger('click'); return true; } } }catch(e){} return false; }
+  function tryNativeTap(idStr){
+    const el = idStr && id(idStr);
+    if (!el) return false;
+    const restore = temporarilyEnable(el);
+    sendTap(el);
+    setTimeout(restore, 10);
+    return true;
+  }
   function tryEsc(){ try{ document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',keyCode:27,which:27,bubbles:true})); return true; }catch(e){} return false; }
-  function tryTeardown(){ const ov=document.querySelector('#pdf-overlay'); if (ov){ ov.style.display='none'; ov.setAttribute('aria-hidden','true'); } document.documentElement.classList.remove('pdf-overlay-active'); document.dispatchEvent(new CustomEvent('overlay:closed',{bubbles:true})); return true; }
+  function instantHideOverlay(){
+    const ov=document.querySelector('#pdf-overlay');
+    if (ov){ ov.style.display='none'; ov.setAttribute('aria-hidden','true'); }
+    document.documentElement.classList.remove('pdf-overlay-active');
+  }
 
   function actionPrevNext(kind){
     const targetId = (kind==='next') ? 'next-doc' : 'prev-doc';
     const before = getIndex();
-    // Sequence of attempts
+
     const attempts = [
       ()=>tryForward(targetId),
       ()=>tryGuard(targetId),
       ()=>tryJQ(targetId),
-      ()=>tryNative(targetId)
+      ()=>tryNativeTap(targetId)
     ];
     let step = 0;
+
     function verifyAndMaybeRetry(){
       const after = getIndex();
       if (before==null || after==null || before!==after){ refreshProgress(); return; }
       if (step >= attempts.length){ return; }
       const ok = attempts[step++]();
-      setTimeout(verifyAndMaybeRetry, ok ? 120 : 40);
+      setTimeout(verifyAndMaybeRetry, ok ? 160 : 60);
     }
-    // Kick first attempt then verify
+    // Kick then verify
     attempts[step++]();
-    setTimeout(verifyAndMaybeRetry, 120);
+    setTimeout(verifyAndMaybeRetry, 160);
   }
 
   function actionClose(){
-    const wasOpen = isOpen();
+    // Instant visual close for snappy feel
+    instantHideOverlay();
+    // Then run app cleanups through normal paths
     const attempts = [
       ()=>tryForward('close-doc'),
       ()=>tryGuard('close-doc'),
       ()=>tryJQ('close-doc'),
-      ()=>tryNative('close-doc'),
-      ()=>tryEsc(),
-      ()=>tryTeardown()
+      ()=>tryNativeTap('close-doc'),
+      ()=>tryEsc()
     ];
     let step = 0;
     function verifyAndMaybeRetry(){
-      if (!isOpen()){ return; }
+      if (!isOpen()){ return; } // if app re-opened it, stop
       if (step >= attempts.length){ return; }
       const ok = attempts[step++]();
-      setTimeout(verifyAndMaybeRetry, ok ? 120 : 60);
+      setTimeout(verifyAndMaybeRetry, ok ? 140 : 60);
     }
     attempts[step++]();
-    setTimeout(verifyAndMaybeRetry, 100);
+    setTimeout(verifyAndMaybeRetry, 120);
   }
 
-  function attachPress(el, fn){
+  function attach(el, fn){
     const h = (ev)=>{ ev.stopImmediatePropagation(); ev.stopPropagation(); ev.preventDefault(); fn(); };
     el.addEventListener('touchstart', h, {passive:false});
     el.addEventListener('click', h, {passive:false});
   }
 
   function build(){
-    // Remove old instances
     ['reader-nav','tap-left','tap-right'].forEach(k=>{ const n=document.getElementById(k); if(n) n.remove(); });
 
     const L=document.createElement('div'); L.id='tap-left'; L.className='reader-tap-zone';
     const R=document.createElement('div'); R.id='tap-right'; R.className='reader-tap-zone';
-    attachPress(L, ()=>actionPrevNext('prev'));
-    attachPress(R, ()=>actionPrevNext('next'));
+    attach(L, ()=>actionPrevNext('prev'));
+    attach(R, ()=>actionPrevNext('next'));
     document.documentElement.appendChild(L); document.documentElement.appendChild(R);
     st.zones=[L,R];
 
@@ -4306,11 +4334,10 @@ function destroyPdfOverlay() {
     document.documentElement.appendChild(nav);
     st.nav=nav; st.progress=nav.querySelector('#reader-progress');
 
-    attachPress(nav.querySelector('#reader-prev'), ()=>actionPrevNext('prev'));
-    attachPress(nav.querySelector('#reader-next'), ()=>actionPrevNext('next'));
-    attachPress(nav.querySelector('#reader-close'), ()=>actionClose());
+    attach(nav.querySelector('#reader-prev'), ()=>actionPrevNext('prev'));
+    attach(nav.querySelector('#reader-next'), ()=>actionPrevNext('next'));
+    attach(nav.querySelector('#reader-close'), ()=>actionClose());
 
-    // show bar on any interaction
     ['mousemove','mousedown','touchstart','touchmove','keydown','wheel'].forEach(evt=>{
       document.addEventListener(evt, ()=>{ if(isOpen()){ nav.classList.add('visible'); } }, {passive:true});
     });
@@ -4333,5 +4360,5 @@ function destroyPdfOverlay() {
   });
 })();
 </script>
-<!-- ===== /Bottom Bar Nav v1.5 ===== -->
+<!-- ===== /Bottom Bar Nav v1.6 ===== -->
 
