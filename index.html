@@ -1594,11 +1594,11 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 
 </style>
 
-<!-- Move-bottom-buttons-to-top & restyle (non-breaking overrides) -->
+<!-- Move existing nav bar to top (non-breaking) -->
 <style>
 
-/* === Override: move existing doc nav bar to top & remove box === */
-.doc-nav-buttons, #doc-nav-buttons {
+/* === Force existing bottom control bar to top and remove box === */
+#doc-nav-buttons {
   position: fixed !important;
   top: 12px !important;
   bottom: auto !important;
@@ -1609,35 +1609,28 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
   box-shadow: none !important;
   padding: 0 !important;
   z-index: 2147483600 !important;
+  pointer-events: none !important; /* let the page still scroll; buttons themselves will be interactive */
 }
+#doc-nav-buttons > * { pointer-events: auto !important; }
 
-/* Ensure container doesn't block scrolling except on the buttons themselves */
-.doc-nav-buttons > * { pointer-events: auto; }
-.doc-nav-buttons { pointer-events: none; display: flex; gap: 12px; align-items: center; }
-
-/* === Modernize the existing buttons (keep same classes/IDs for handlers) === */
-.doc-nav-button, .doc-nav-close, #doc-nav-buttons button {
-  pointer-events: auto;
+/* Modernize pill buttons without changing their IDs/classes so handlers keep working */
+#doc-nav-buttons button {
   padding: 9px 16px !important;
   border-radius: 14px !important;
   border: none !important;
   font-weight: 700 !important;
-  letter-spacing: .2px !important;
   -webkit-tap-highlight-color: transparent !important;
   box-shadow: 0 6px 18px rgba(0,0,0,.28) !important;
   font-size: 15px !important;
-  opacity: 0.98;
+  opacity: 0.98 !important;
 }
 
-/* Color passes (guess common class names; harmless if not present) */
-#btnPrevious, .btn-previous { background: #111827 !important; color: #fff !important; }
-#btnNext, .btn-next       { background: #2563eb !important; color: #fff !important; }
-#btnClose, .btn-close     { background: #ef4444 !important; color: #fff !important; }
+/* Color assignments for common IDs (harmless if not present) */
+#btnPrevious { background: #111827 !important; color: #fff !important; }
+#btnNext     { background: #2563eb !important; color: #fff !important; }
+#btnClose    { background: #ef4444 !important; color: #fff !important; }
 
-/* Hover/press (desktop + iPad visual feedback) */
-#doc-nav-buttons button:active,
-.doc-nav-button:active,
-.doc-nav-close:active { transform: translateX(0) translateY(1px) !important; opacity: 0.9 !important; }
+#doc-nav-buttons button:active { transform: translateY(1px) !important; opacity: 0.9 !important; }
 
 </style>
 </head>
@@ -4296,6 +4289,38 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<script>
+(function(){
+  function applyTopBar(){
+    var bar = document.getElementById('doc-nav-buttons');
+    if (!bar) return;
+    bar.style.position = 'fixed';
+    bar.style.top = '12px';
+    bar.style.bottom = 'auto';
+    bar.style.left = '50%';
+    bar.style.transform = 'translateX(-50%)';
+    bar.style.background = 'transparent';
+    bar.style.border = 'none';
+    bar.style.boxShadow = 'none';
+    bar.style.padding = '0';
+    bar.style.zIndex = '2147483600';
+    bar.style.pointerEvents = 'none';
+    // ensure buttons remain clickable
+    Array.prototype.forEach.call(bar.children || [], function(ch){
+      if (ch && ch.style) ch.style.pointerEvents = 'auto';
+    });
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', applyTopBar);
+  } else {
+    applyTopBar();
+  }
+  // Re-apply if the viewer toggles classes or the bar gets re-rendered
+  var mo = new MutationObserver(applyTopBar);
+  mo.observe(document.documentElement, { attributes: true, childList: true, subtree: true });
+})();
+</script>
 </body>
 </html>
 
