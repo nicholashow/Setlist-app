@@ -416,27 +416,9 @@
             display: block; /* Fix potential extra space */
         }
         
-        .doc-nav-buttons {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            z-index: 103;
-            opacity: 1;
-            transition: opacity 0.3s;
-            background: rgba(30,30,30, 0.8);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
+        .doc-nav-buttons { position: fixed !important; top: 12px !important; bottom: auto !important; left: 50% !important; transform: translateX(-50%) !important; display: flex !important; align-items: center !important; justify-content: center !important; gap: 10px !important; height: auto !important; width: auto !important; padding: 0 !important; background: transparent !important; border: none !important; box-shadow: none !important; z-index: 2147483600 !important; pointer-events: none !important;}
 
-        .doc-nav-buttons.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
+        .doc-nav-buttons.hidden { opacity: 0; pointer-events: none; }
 
         .doc-nav-button {
             padding: 8px 16px;
@@ -1592,6 +1574,11 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
   color: #ffffff !important;
 }
 
+</style>
+
+<style>
+.doc-nav-button, #doc-nav-buttons button, .doc-nav-close { pointer-events: auto !important; padding: 9px 16px !important; border-radius: 12px !important; border: none !important; font-weight: 700 !important; -webkit-tap-highlight-color: transparent !important; box-shadow: 0 6px 18px rgba(0,0,0,.28) !important; font-size: 15px !important;}
+.doc-nav-buttons > * { pointer-events: auto !important; }
 </style>
 </head>
 
@@ -4249,6 +4236,37 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<script>
+(function(){
+  function forceTopBar(){
+    var bar = document.getElementById('doc-nav-buttons') || document.querySelector('.doc-nav-buttons');
+    if (!bar) return;
+    var st = bar.style;
+    st.position = 'fixed';
+    st.top = '12px';
+    st.bottom = 'auto';
+    st.left = '50%';
+    st.transform = 'translateX(-50%)';
+    st.background = 'transparent';
+    st.border = 'none';
+    st.boxShadow = 'none';
+    st.width = 'auto';
+    st.height = 'auto';
+    st.padding = '0';
+    st.zIndex = '2147483600';
+    bar.classList.remove('bottom', 'footer', 'at-bottom');
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', forceTopBar);
+  } else {
+    forceTopBar();
+  }
+  // Re-apply on class/attribute changes that may occur when opening/closing the viewer
+  var mo = new MutationObserver(forceTopBar);
+  mo.observe(document.documentElement, { attributes: true, subtree: true, childList: true });
+})();
+</script>
 </body>
 </html>
 
