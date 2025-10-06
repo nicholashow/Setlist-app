@@ -15,33 +15,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>Setlist Manager - Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Core libs moved BEFORE any inline $ usage -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
-
-    <script>
-    (function(){
-      var supportsPassive = false;
-      try {
-        var opts = Object.defineProperty({}, 'passive', { get: function(){ supportsPassive = true; } });
-        window.addEventListener('test', null, opts);
-      } catch (e) {}
-      if (!supportsPassive) return;
-      var _add = EventTarget.prototype.addEventListener;
-      EventTarget.prototype.addEventListener = function(type, listener, options){
-        if (options === undefined || options === false || options === true) {
-          if (type === 'touchstart' || type === 'touchmove' || type === 'wheel') {
-            options = { passive: true };
-          }
-        } else if (typeof options === 'object') {
-          if ((type === 'touchstart' || type === 'touchmove' || type === 'wheel') && options.passive === undefined) {
-            options = Object.assign({ passive: true }, options);
-          }
-        }
-        return _add.call(this, type, listener, options);
-      };
-    })();
-    </script>
 
     <script>
         tailwind.config = {
@@ -238,9 +215,6 @@
         })();
     </script>
 
-    
-    
-    
     <style>
         html,
         body {
@@ -1610,7 +1584,7 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 
 #-webkit-date-text { color: #ffffff; } /* noop fallback */
 .dark #setlist-venue::placeholder { color: #ffffff !important; }
-# setlist-venue::placeholder { color: #ffffff !important; } /* ensure white in light mode too */
+#setlist-venue::placeholder { color: #ffffff !important; } /* ensure white in light mode too */
 
 #setlist-sort-filter-dropdown {
   text-align: center;
