@@ -15,11 +15,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>Setlist Manager - Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Core libs moved BEFORE any inline $ usage -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
-
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -215,6 +210,9 @@
         })();
     </script>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
     <style>
         html,
         body {
@@ -1584,7 +1582,7 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 
 #-webkit-date-text { color: #ffffff; } /* noop fallback */
 .dark #setlist-venue::placeholder { color: #ffffff !important; }
-#setlist-venue::placeholder { color: #ffffff !important; } /* ensure white in light mode too */
+# setlist-venue::placeholder { color: #ffffff !important; } /* ensure white in light mode too */
 
 #setlist-sort-filter-dropdown {
   text-align: center;
@@ -1593,13 +1591,375 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 }
 
 </style>
+
+<!-- Controls styles ported from old version -->
+<style>
+
+        /* Dark mode on (checked) */
+        .dark-mode-toggle:checked+div {
+            background-color: #22c55e;
+        }
+
+
+        .stats-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1e40af;
+        }
+
+
+
+        /* Consistent Add Button Style */
+        .btn-add {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            transition: background-color 0.2s;
+            flex-shrink: 0; /* Prevent button from shrinking */
+        }
+
+        .dark .setlist-panel > .panel-header {
+            background-color: #374151;
+            border-bottom-color: #4b5563;
+        }
+
+
+        /* Reverted Genre/Venue Creation Style */
+        .item-creation {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background-color: #1f2937;
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+
+
+
+/* === Ensure single button set & disabled visuals === */
+html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
+
+
+        .app-header {
+            color: white;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            transition: background 0.3s ease;
+            cursor: pointer;
+        }
+ /* keep old wrapper hidden to avoid any layout/scroll changes */
+html.pdf-overlay-active #doc-nav-buttons {
+  position: fixed !important;
+  top: 0; left: 0; right: 0;
+  z-index: 1000001 !important; /* above #pdf-overlay (999999) */
+  pointer-events: auto;
+}
+
+        .left-col-main-content::-webkit-scrollbar-thumb,
+        .stats-container::-webkit-scrollbar-thumb {
+            background-color: #6b7280;
+            border-radius: 8px;
+            border: 4px solid transparent; /* Keep thumb wide */
+            background-clip: content-box; /* Makes the border an invisible padding */
+        }
+
+        /* Optional subtle blur of inner items when closing */
+        .left-col.closing .left-col-main-content,
+        .left-col.closing .stats-container {
+            filter: blur(1px);
+        }
+
+
+        .doc-nav-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .app-header-unselected:hover {
+            background: #4b5563;
+        }
+
+        .setlist-panel > .panel-header {
+            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+            background-color: #f3f4f6;
+            border-bottom: 1px solid #e5e7eb;
+            flex-shrink: 0;
+        }
+
+        /* Light mode on (not checked) */
+        .dark-mode-toggle:not(:checked)+div {
+            background-color: #1f2937; /* Black */
+        }
+
+
+        .doc-nav-close {
+            background: #ef4444;
+        }
+
+        #setlist-details-toggle.open .toggle-arrow {
+            transform: rotate(180deg);
+        }
+
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            border-radius: 0.5rem;
+            margin-bottom: 4px;
+            background: #374151;
+            cursor: pointer;
+            color: #e5e7eb;
+            transition: background-color 0.2s;
+            overflow: hidden; /* Fix width issues */
+        }
+
+
+        .doc-nav-button:not(:disabled):hover {
+            background-color: #2563eb;
+        }
+
+        .left-col-main-content::-webkit-scrollbar-thumb:hover,
+        .stats-container::-webkit-scrollbar-thumb:hover {
+            background-color: #9ca3af;
+        }
+
+        .dark .setlist-panel {
+            background-color: #1f2937;
+        }
+
+        .left-col-main-content::-webkit-scrollbar-track,
+        .stats-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+
+        .dark .stats-container {
+            background-color: #374151;
+            color: #d1d5db;
+        }
+
+
+        .doc-nav-button {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            border: none;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            user-select: none;
+        }
+
+        .setlist-panel > ul {
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+.stats-container {
+            /* Match the width of other sidebar blocks: no negative margins */
+            margin-right: 0;
+            padding-right: 0;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+
+        .stats-container {
+            background-color: #f3f4f6;
+            border-radius: 0.75rem;
+            color: #1f2937;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: auto; /* Pushes to bottom */
+            flex-shrink: 0; /* Prevent shrinking */
+            padding: 0.5rem;
+        }
+
+        
+        .doc-nav-buttons {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            z-index: 103;
+            opacity: 1;
+            transition: opacity 0.3s;
+            background: rgba(30,30,30, 0.8);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        
+        /* === Setlist View 1-Column Layout === */
+        .setlist-view-container {
+            display: flex;
+            flex-direction: column; /* Stack panels vertically */
+            gap: 1rem;
+            height: calc(100% - 150px); /* Adjust based on controls height */
+            min-height: 0;
+        }
+
+
+        .left-col-main-content::-webkit-scrollbar,
+        .stats-container::-webkit-scrollbar {
+            width: 16px; /* Wider track for a larger touch target */
+        }
+
+
+        .dark .stats-title {
+            color: #60a5fa;
+        }
+
+        
+        /* CORRECTED Dark Mode Toggle Visual */
+        .dark-mode-toggle+div {
+            transition: all 0.3s ease;
+        }
+
+        #setlist-details-toggle .toggle-arrow {
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .setlist-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            background-color: #fff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
+            overflow: hidden;
+            flex: 1; /* Allow panels to share space */
+        }
+
+        .dark-mode-toggle+div .dot {
+            transition: all 0.3s ease;
+        }
+
+.stats-container::-webkit-scrollbar { width: 0 !important; height: 0 !important; }
+
+        .dark-mode-toggle:checked+div .dot {
+            transform: translateX(1px); /* Ball is on the LEFT */
+        }
+
+
+        .doc-nav-close:hover {
+            background-color: #dc2626;
+        }
+
+
+        #master-view-buttons .btn-master {
+            width: 90px; /* Reduced button size */
+        }
+
+
+/* Hide the original bar while overlay is active so there is only one set */
+html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
+
+        .sidebar-item:hover {
+            background: #4b5563;
+        }
+
+html.pdf-overlay-active #doc-nav-buttons {
+  position: fixed !important;
+  top: 0; left: 0; right: 0;
+  z-index: 2147483000 !important; /* way above any overlay */
+  pointer-events: auto !important;
+}
+
+        .app-header-unselected {
+            background: #374151;
+        }
+
+        .app-header-selected {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        }
+
+        .dark-mode-toggle:not(:checked)+div .dot {
+            transform: translateX(20px); /* Ball is on the RIGHT */
+        }
+
+        .item-creation .item-name-input {
+             flex-grow: 1;
+             background-color: #374151;
+             border: 1px solid #4b5563;
+             padding: 4px 8px;
+             border-radius: 4px;
+             color: white;
+             min-width: 0; /* FIX: Allows input to shrink to fit */
+        }
+
+        .btn-add:hover {
+            background-color: #2563eb;
+        }
+
+        
+        /* New rule to hide sidebar content during collapse */
+        .left-col.collapsed .left-col-main-content,
+        .left-col.collapsed .stats-container {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+
+    
+
+/* === External scrollbar for Top/Least Played (non-intrusive box size) === */
+.stats-container {
+    /* Keep size exactly the same but hide native scrollbar */
+    scrollbar-width: none; /* Firefox */
+}
+
+/* The dropdown arrow container color (so it doesn't clash) */
+#setlist-details-content .pointer-events-none svg {
+  color: #ffffff;
+  fill: currentColor;
+}
+
+        .filter-select, #genre-filter-button {
+            border: none;
+            background: none;
+            appearance: none;
+            padding: 0.5rem;
+        }
+
+
+        .doc-nav-buttons.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Wrapper for custom color input */
+        .color-picker-wrapper {
+            position: relative;
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+
+#stats-external-scroll .track {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    border-radius: 8px;
+}
+</style>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
-    <div id="app">
-        <aside class="left-col w-64 bg-gray-800 text-white flex-shrink-0 dark:bg-black">
-            <div class="left-col-main-content">
-                <div class="app-header app-header-selected" id="home-btn">
+<div class="app-header app-header-selected" id="home-btn">
                     <h1 class="text-2xl font-bold mb-2 underline">ALL SONGS</h1>
                     <p class="text-sm whitespace-nowrap">Organize music performances</p>
                 </div>
@@ -1874,6 +2234,11 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
                 Close
             </button>
         </div>
+
+    <div id="app">
+        <aside class="left-col w-64 bg-gray-800 text-white flex-shrink-0 dark:bg-black">
+            <div class="left-col-main-content">
+                
     </section>
 
     <script>
@@ -2481,12 +2846,7 @@ function destroyPdfOverlay() {
 </script>
 
 <!-- Non-intrusive PDF top buttons -->
-<div id="pdf-btn-hit"></div>
-<div id="pdf-btn-bar" aria-hidden="true">
-  <button id="pdf-btn-prev" class="btn" type="button">PREVIOUS</button>
-  <button id="pdf-btn-next" class="btn" type="button">NEXT</button>
-  <button id="pdf-btn-close" class="btn" type="button">CLOSE</button>
-</div>
+
 
 <script>
 (function(){
@@ -2669,12 +3029,7 @@ function destroyPdfOverlay() {
 </script>
 
 <!-- Overlay PDF Button Bar -->
-<div id="pdf-btn-hit"></div>
-<div id="pdf-btn-bar" aria-hidden="true">
-  <button id="pdf-btn-prev" class="btn" type="button">PREVIOUS</button>
-  <button id="pdf-btn-next" class="btn" type="button">NEXT</button>
-  <button id="pdf-btn-close" class="btn" type="button">CLOSE</button>
-</div>
+
 
 <script>
 (function(){
@@ -4249,6 +4604,134 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<script>
+(function(){
+  // Safeguard: avoid double-binding across hot reloads
+  if (window.__navBound) return; 
+  window.__navBound = true;
+
+  // Element references (support both old and generic ids)
+  var btnPrev = document.getElementById('btnPrev') || document.querySelector('[data-action="prev"]') || document.querySelector('button:contains("Previous"), button:contains("Prev")');
+  var btnNext = document.getElementById('btnNext') || document.querySelector('[data-action="next"]') || document.querySelector('button:contains("Next")');
+  var btnClose = document.getElementById('btnClose') || document.querySelector('[data-action="close"]') || document.querySelector('button:contains("Close")');
+
+  // Basic helper: robust contains text (querySelector :contains() isn't standard)
+  function byText(label){
+    var btns = Array.from(document.querySelectorAll('button, .btn, [role="button"]'));
+    return btns.find(function(b){ return (b.textContent || '').trim().toLowerCase() === label; });
+  }
+  if (!btnPrev) btnPrev = byText('previous') || byText('prev');
+  if (!btnNext) btnNext = byText('next');
+  if (!btnClose) btnClose = byText('close');
+
+  // State helpers your app likely already sets up
+  function getOrderedFiles(){
+    // Use active setlist if present, else fallback to all files
+    if (window.currentSetlist && Array.isArray(window.currentSetlist)) return window.currentSetlist;
+    if (window.orderedFiles && Array.isArray(window.orderedFiles)) return window.orderedFiles;
+    if (window.files && Array.isArray(window.files)) return window.files;
+    return [];
+  }
+  function getCurrentFileId(){
+    // Try several known anchors
+    var viewer = document.getElementById('fileViewer') || document.querySelector('.file-viewer, #pdfViewer, #docViewer');
+    if (viewer && viewer.dataset && viewer.dataset.fileId) return viewer.dataset.fileId;
+    if (window.currentFile && (typeof window.currentFile === 'string' || typeof window.currentFile === 'number')) return String(window.currentFile);
+    if (window.currentFile && window.currentFile.id) return String(window.currentFile.id);
+    return null;
+  }
+  function getIndexById(list, id){
+    if (!id) return -1;
+    return list.findIndex(function(x){
+      if (!x) return false;
+      if (typeof x === 'string' || typeof x === 'number') return String(x) === String(id);
+      return String(x.id || x.fileId || x.name) === String(id);
+    });
+  }
+  function openByIndex(list, idx){
+    // Canonical open function probe
+    if (typeof window.openFileByIndex === 'function') return window.openFileByIndex(idx);
+    var item = list[idx];
+    if (!item) return;
+    // Try by id
+    var id = (typeof item === 'object') ? (item.id || item.fileId || item.name) : item;
+    if (typeof window.openFileById === 'function') return window.openFileById(id);
+    if (typeof window.openFile === 'function') return window.openFile(item, idx);
+    // Fallback: click simulated on corresponding DOM node
+    var el = document.querySelector('[data-file-id="'+id+'"], [data-id="'+id+'"]');
+    if (el) el.click();
+  }
+
+  var lock = false;
+  function nav(delta){
+    if (lock) return;
+    lock = true;
+    var list = getOrderedFiles();
+    if (!list.length) { lock = false; return; }
+    var id = getCurrentFileId();
+    var cur = getIndexById(list, id);
+    if (cur < 0) { cur = Math.max(0, Math.min(window.__lastIdx||0, list.length-1)); }
+    var next = cur + delta;
+    if (next < 0) next = 0; // clamp (or wrap if desired)
+    if (next >= list.length) next = list.length - 1;
+    window.__lastIdx = next;
+    try { openByIndex(list, next); } finally {
+      // Release lock after a short delay to avoid double-trigger on iOS (touch + synthetic click)
+      setTimeout(function(){ lock = false; }, 280);
+    }
+  }
+
+  // Pointer-safe binding to avoid double fire on iOS (no passive to ensure preventDefault works if needed)
+  function bind(el, handler){
+    if (!el) return;
+    el.addEventListener('pointerup', function(e){ handler(e); }, { passive: true });
+    el.addEventListener('click', function(e){ handler(e); }, { passive: true });
+    // Visual pressed state
+    el.addEventListener('pointerdown', function(){ el.classList.add('opacity-60'); }, { passive: true });
+    el.addEventListener('pointerup', function(){ el.classList.remove('opacity-60'); }, { passive: true });
+    el.addEventListener('pointercancel', function(){ el.classList.remove('opacity-60'); }, { passive: true });
+  }
+
+  bind(btnPrev, function(e){ nav(-1); });
+  bind(btnNext, function(e){ nav(+1); });
+  if (btnClose) {
+    bind(btnClose, function(e){
+      if (typeof window.closeFileViewer === 'function') window.closeFileViewer();
+      else if (typeof window.closeViewer === 'function') window.closeViewer();
+      else {
+        // fallback: hide overlay
+        var overlay = document.getElementById('fileViewer') || document.querySelector('.file-viewer, #pdfViewer, #docViewer');
+        if (overlay) overlay.style.display = 'none';
+      }
+    });
+  }
+
+  // Auto-hide/reveal behavior similar to older file (best effort)
+  var bar = document.getElementById('file-controls') || document.querySelector('[class*="controls"], [class*="toolbar"]');
+  var hideTimer;
+  function scheduleHide(){
+    if (!bar) return;
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(function(){ bar.style.opacity = '0'; bar.style.pointerEvents = 'none'; }, 1800);
+  }
+  function reveal(){
+    if (!bar) return;
+    bar.style.opacity = '1';
+    bar.style.pointerEvents = 'auto';
+    scheduleHide();
+  }
+  if (bar){
+    bar.style.transition = 'opacity 200ms ease';
+    document.addEventListener('pointerdown', function(ev){
+      // If tapping within viewer, show controls
+      var viewer = document.getElementById('fileViewer') || document.querySelector('.file-viewer, #pdfViewer, #docViewer');
+      if (viewer && viewer.contains(ev.target)) reveal();
+    }, { passive: true });
+    scheduleHide();
+  }
+})();
+</script>
 </body>
 </html>
 
