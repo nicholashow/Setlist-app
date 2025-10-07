@@ -9,7 +9,7 @@
         if (isiOS) document.documentElement.classList.add('ios');
       }catch(e){}
     })();
-    </script>
+</script>
 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
@@ -21,70 +21,76 @@
         }
         // === Long-press (1s) before dragging files ===
         let dragTimer = null;
-        $(document).on('mousedown touchstart', 'li.draggable', function(e) {
+$(document).on('mousedown touchstart', 'li.draggable', function(e) {
             const item = $(this);
             dragTimer = setTimeout(() => {
                 item.draggable('enable');
             }, 1000); // 1 second hold
             // disable dragging immediately until timer completes
             item.draggable('disable');
-        }).on('mouseup mouseleave touchend touchcancel', 'li.draggable', function(e) {
+  
+      }).on('mouseup mouseleave touchend touchcancel', 'li.draggable', function(e) {
             clearTimeout(dragTimer);
             // re-disable dragging so it requires hold again next time
             $(this).draggable('disable');
         });
-        // Initially disable all draggables until long-press
+// Initially disable all draggables until long-press
         $(function() {
             $('li.draggable').draggable('disable');
         });
-        // === Refined long-press-to-drag with movement threshold ===
+// === Refined long-press-to-drag with movement threshold ===
         (function(){
             let dragTimer = null;
             let startX = 0, startY = 0;
             const THRESHOLD = 8; // px
             const HOLD_MS = 1100;
             function getPoint(e){
-                if (e.touches && e.touches.length) return {x: e.touches[0].clientX, y: e.touches[0].clientY};
+       
+         if (e.touches && e.touches.length) return {x: e.touches[0].clientX, y: e.touches[0].clientY};
                 if (e.changedTouches && e.changedTouches.length) return {x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY};
                 return {x: e.clientX || 0, y: e.clientY || 0};
             }
             function cancelTimer(){
-                if (dragTimer){ clearTimeout(dragTimer); dragTimer = null; }
+          
+      if (dragTimer){ clearTimeout(dragTimer); dragTimer = null; }
             }
             $(document).on('mousedown touchstart', 'li.draggable', function(e) {
                 const item = $(this);
                 const p = getPoint(e);
                 startX = p.x; startY = p.y;
-                item.draggable('disable'); // always start disabled
+ 
+               item.draggable('disable'); // always start disabled
                 cancelTimer();
-                dragTimer = setTimeout(() => {
+dragTimer = setTimeout(() => {
                     // Only enable if we haven't moved too much during the hold
                     item.draggable('enable');
                 }, HOLD_MS);
-            });
+});
             $(document).on('mousemove touchmove', 'li.draggable', function(e) {
                 if (!dragTimer) return; // already enabled or canceled
                 const p = getPoint(e);
                 const dx = Math.abs(p.x - startX);
                 const dy = Math.abs(p.y - startY);
-                if (dx > THRESHOLD || dy > THRESHOLD) {
+           
+     if (dx > THRESHOLD || dy > THRESHOLD) {
                     // User is scrolling or moving: cancel drag enabling
                     cancelTimer();
                     $(this).draggable('disable');
                 }
-            });
-            $(document).on('mouseup mouseleave touchend touchcancel', 'li.draggable', function(e) {
+   
+         });
+$(document).on('mouseup mouseleave touchend touchcancel', 'li.draggable', function(e) {
                 cancelTimer();
                 // Require long-press again next time
                 $(this).draggable('disable');
             });
-            // On load, add a small distance requirement for extra safety
+// On load, add a small distance requirement for extra safety
             $(function(){
                 try {
                     $('li.draggable').draggable('option', 'distance', 12);
                 } catch(e) {}
             });
-        })();
+})();
         // === Left-edge custom scrollbar logic (shown when sidebar is collapsed) ===
         (function(){
             const $main = $('main');
@@ -93,54 +99,58 @@
             const $thumb = $('#edge-thumb');
 
             const MIN_THUMB = 48; // px minimum size
-            let dragging = false;
+ 
+           let dragging = false;
             let trackTop = 0;
             let trackHeight = 0;
             let startY = 0;
             let startScroll = 0;
 
             function updateThumb(){
-                // Only operate if element present
+             
+   // Only operate if element present
                 if ($edge.length === 0) return;
                 const scrollEl = $main.get(0);
                 const scrollH = scrollEl.scrollHeight;
                 const clientH  = scrollEl.clientHeight;
-                const maxScroll = Math.max(1, scrollH - clientH);
+              
+  const maxScroll = Math.max(1, scrollH - clientH);
                 const trackRect = $edge.get(0).getBoundingClientRect();
                 trackTop = trackRect.top + (window.innerHeight * 0.04); // 4vh top offset to match ::before
-                trackHeight = window.innerHeight * 0.92; // 92vh like CSS
+                trackHeight = window.innerHeight * 0.92;
+// 92vh like CSS
 
                 // Thumb size proportional to viewport/total
                 let thumbH = Math.max(MIN_THUMB, (clientH / scrollH) * trackHeight);
-                $thumb.css('height', thumbH + 'px');
+$thumb.css('height', thumbH + 'px');
 
                 const ratio = $main.scrollTop() / maxScroll;
                 const maxY = trackHeight - thumbH;
-                const y = trackTop + (ratio * maxY);
+const y = trackTop + (ratio * maxY);
                 $thumb.css('top', y + 'px');
-            }
+}
 
             function setScrollFromThumb(pageY){
                 const scrollEl = $main.get(0);
-                const scrollH = scrollEl.scrollHeight;
+const scrollH = scrollEl.scrollHeight;
                 const clientH  = scrollEl.clientHeight;
                 const maxScroll = Math.max(1, scrollH - clientH);
 
                 const thumbH = $thumb.outerHeight();
-                const maxY = trackHeight - thumbH;
+const maxY = trackHeight - thumbH;
                 let localY = pageY - trackTop - (thumbH/2);
                 localY = Math.max(0, Math.min(maxY, localY));
-                const ratio = localY / maxY;
+const ratio = localY / maxY;
                 $main.scrollTop(ratio * maxScroll);
             }
 
             function showEdgeIfCollapsed(){
                 if ($sidebar.hasClass('collapsed')) {
                     $edge.addClass('visible').removeClass('hidden');
-                    updateThumb();
+updateThumb();
                 } else {
                     $edge.removeClass('visible').addClass('hidden');
-                }
+}
             }
 
             // Sync on load and on changes
@@ -148,27 +158,26 @@
                 showEdgeIfCollapsed();
                 updateThumb();
                 // Update on main scroll & resize
-                $main.on('scroll', updateThumb);
+    
+            $main.on('scroll', updateThumb);
                 $(window).on('resize', updateThumb);
             });
-
-            // Tie into existing sidebar toggle
+// Tie into existing sidebar toggle
             $('#sidebar-toggle').on('click', function(){
                 // Delay to allow class toggle to settle
                 setTimeout(showEdgeIfCollapsed, 0);
                 setTimeout(updateThumb, 0);
             });
-
-            // Drag handling (mouse + touch) on the thumb
+// Drag handling (mouse + touch) on the thumb
             function onMove(e){
                 if (!dragging) return;
-                const pageY = (e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY);
+const pageY = (e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY);
                 setScrollFromThumb(pageY);
                 e.preventDefault();
-            }
+}
             function onUp(){
                 dragging = false;
-                $(document).off('mousemove touchmove', onMove);
+$(document).off('mousemove touchmove', onMove);
                 $(document).off('mouseup touchend touchcancel', onUp);
             }
             $thumb.on('mousedown touchstart', function(e){
@@ -176,30 +185,31 @@
                 $(document).on('mousemove touchmove', onMove);
                 $(document).on('mouseup touchend touchcancel', onUp);
                 e.preventDefault();
-            });
+        
+    });
 
             // Clicking the track jumps the thumb to that position
             $edge.on('mousedown touchstart', function(e){
                 if (e.target === $thumb.get(0)) return; // handled by thumb
                 const pageY = (e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY);
                 setScrollFromThumb(pageY);
-            });
+       
+     });
 
             // Also update when content visibility changes (navigation)
             const originalShow = window.show;
-            if (typeof originalShow === 'function') {
+if (typeof originalShow === 'function') {
                 window.show = function(view){
                     originalShow(view);
-                    // after view switch, update thumb position
+// after view switch, update thumb position
                     setTimeout(function(){
                         showEdgeIfCollapsed();
                         updateThumb();
                     }, 0);
-                }
+}
             }
         })();
-
-    </script>
+</script>
     <script>
         (function() {
             var ua = navigator.userAgent || navigator.vendor || window.opera;
@@ -207,7 +217,8 @@
             if (isiOS) {
                 document.documentElement.classList.add('ios');
             }
-        })();
+   
+     })();
     </script>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -217,285 +228,319 @@
         html,
         body {
             height: 100%;
-            width: 100%;
+width: 100%;
             overflow: hidden;
             position: fixed; /* Prevents panning/scrolling on touch devices */
         }
         
         #app {
             height: 100%;
-            display: flex;
+display: flex;
         }
 
         /* --- FIX: Correctly enables scrolling on touch devices when PDF viewer is open --- */
         body.doc-viewer-active {
-            position: static; /* Revert to default positioning to allow scrolling */
-            overflow: auto !important;   /* Explicitly allow scrolling on the body */
+            position: static;
+/* Revert to default positioning to allow scrolling */
+            overflow: auto !important;
+/* Explicitly allow scrolling on the body */
         }
 
         .doc-viewer-active #app {
-            display: none; /* Hide the main app UI to prevent interaction and layout shifts */
+            display: none;
+/* Hide the main app UI to prevent interaction and layout shifts */
         }
         
         .doc-view-fullscreen {
-            overflow: hidden; /* Prevent scrollbars on the main viewer, child will scroll */
+            overflow: hidden;
+/* Prevent scrollbars on the main viewer, child will scroll */
         }
 
         /* --- FIX: Smooth sidebar collapse transition for main content --- */
         main {
             transition: all 0.4s ease-in-out;
-        }
+}
         
         .sortable {
             list-style: none;
-            padding: 0;
+padding: 0;
             margin: 0;
         }
 
         .draggable {
             cursor: move;
-        }
+}
         
         /* Subtle placeholder for sorting */
         .sortable-placeholder {
             background-color: #e5e7eb;
-            border: 1px dashed #9ca3af;
+border: 1px dashed #9ca3af;
             opacity: 0.5;
             height: 60px;
             margin-bottom: 1px;
             border-radius: 0.5rem;
-        }
+}
         .dark .sortable-placeholder {
             background-color: #374151;
-            border-color: #6b7280;
+border-color: #6b7280;
         }
 
         /* Style for the actual item being sorted */
         .is-sorting {
-            background: #2563eb !important; /* Record Show button blue */
+            background: #2563eb !important;
+/* Record Show button blue */
             color: white !important;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             z-index: 1000;
         }
         .is-sorting * {
             color: white !important;
-        }
+}
         .is-sorting .song-details-container {
-            display: none; /* Hide inputs while sorting songs */
+            display: none;
+/* Hide inputs while sorting songs */
         }
         .is-sorting .delete-genre, .is-sorting .delete-venue {
-            display: none; /* Hide delete button while sorting genres/venues */
+            display: none;
+/* Hide delete button while sorting genres/venues */
         }
 
 
         /* Unified selected style for sidebar items */
         .selected {
             background-color: #3b82f6 !important;
-            color: white !important;
+color: white !important;
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
-        }
+}
 
         .selected .genre-name, .selected .venue-name {
              color: white !important;
-        }
+}
 
         /* Simple hover class for dragging over a setlist */
         .drag-hover-setlist {
             background-color: #3b82f6 !important;
-            color: white !important;
+color: white !important;
         }
         
         /* Multiple selection highlight */
         .item-selected {
             background-color: #3b82f6 !important;
-            color: white !important;
+color: white !important;
         }
         .dark .item-selected {
             background-color: #2563eb !important;
-            color: white !important;
+color: white !important;
         }
 
 
         /* Consistent Add Button Style */
         .btn-add {
             background-color: #3b82f6;
-            color: white;
+color: white;
             border: none;
             transition: background-color 0.2s;
             flex-shrink: 0; /* Prevent button from shrinking */
         }
         .btn-add:hover {
             background-color: #2563eb;
-        }
+}
 
         /* Genre dot and viewed indicator unified size */
         .genre-dot, .index-number {
             width: 24px;
-            height: 24px;
+height: 24px;
             border-radius: 50%;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0; /* Prevent shrinking */
-            font-size: 1.125rem; /* Bigger numbers */
-            font-weight: 600; /* Bolder numbers */
+            flex-shrink: 0;
+/* Prevent shrinking */
+            font-size: 1.125rem;
+/* Bigger numbers */
+            font-weight: 600;
+/* Bolder numbers */
         }
 
         /* Fullscreen viewer styles */
         .doc-view-fullscreen {
             position: fixed;
-            top: 0;
+top: 0;
             left: 0;
             width: 100vw;
             height: 100vh;
             z-index: 100;
-            background: #333; /* Dark background for page turn effect */
+            background: #333;
+/* Dark background for page turn effect */
         }
         .dark .doc-view-fullscreen {
             background: #111827;
-        }
+}
         
         /* --- Page Turn Animation --- */
         #doc-iframe-wrapper {
             width: 100%;
-            height: 100%;
+height: 100%;
             perspective: 2500px; /* Enable 3D space for a more dramatic effect */
         }
         .doc-iframe-container {
             position: absolute;
-            top: 0;
+top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             transform-style: preserve-3d;
-            backface-visibility: hidden; /* Hide the back of the page */
-            transition: transform 0.8s cubic-bezier(0.6, 0.0, 0.2, 1); /* Smoother animation curve */
-            transform-origin: left center; /* For turning left-to-right */
-            overflow: auto; /* Allow this container to scroll */
-            -webkit-overflow-scrolling: touch; /* For iOS */
+            backface-visibility: hidden;
+/* Hide the back of the page */
+            transition: transform 0.8s cubic-bezier(0.6, 0.0, 0.2, 1);
+/* Smoother animation curve */
+            transform-origin: left center;
+/* For turning left-to-right */
+            overflow: auto;
+/* Allow this container to scroll */
+            -webkit-overflow-scrolling: touch;
+/* For iOS */
         }
         /* Page states */
         .doc-iframe-container.current {
             transform: rotateY(0deg);
-            z-index: 101;
+z-index: 101;
         }
         .doc-iframe-container.next {
             transform: rotateY(180deg);
-            z-index: 100;
+z-index: 100;
         }
         .doc-iframe-container.prev {
             transform: rotateY(-180deg);
-            z-index: 100;
+z-index: 100;
         }
         /* Animation classes */
         .turning-next { /* Current page turns away to the left */
             transform: rotateY(-180deg);
-        }
+}
         .turning-prev { /* Current page turns away to the right */
             transform-origin: right center;
-            transform: rotateY(180deg);
+transform: rotateY(180deg);
         }
         /* New page coming in from the right */
         .incoming-next {
             transform-origin: left center;
-            transform: rotateY(0deg);
+transform: rotateY(0deg);
         }
         /* New page coming in from the left */
         .incoming-prev {
             transform-origin: right center;
-            transform: rotateY(0deg);
+transform: rotateY(0deg);
         }
 
 
         #doc-object {
             width: 100%;
-            min-height: 100%; /* Ensure it fills the scrollable area */
+min-height: 100%; /* Ensure it fills the scrollable area */
             border: 0;
-            display: block; /* Fix potential extra space */
+display: block; /* Fix potential extra space */
         }
         
         /* === NEW Redesigned Viewer Controls === */
         #viewer-controls {
             /* Gradient background for better text visibility over content */
             background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
-            /* Don't show by default */
+/* Don't show by default */
             display: none;
-        }
+}
         /* Show controls only when a viewer is active */
         body.doc-viewer-active #viewer-controls,
         html.pdf-overlay-active #viewer-controls {
             display: flex;
-        }
+}
 
         .viewer-btn {
             /* Frosted glass effect */
-            background-color: rgba(30, 41, 59, 0.75); /* slate-800 with opacity */
+            background-color: rgba(30, 41, 59, 0.75);
+/* slate-800 with opacity */
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            will-change: transform, background-color; /* Perf hint */
+border: 1px solid rgba(255, 255, 255, 0.15);
+            will-change: transform, background-color;
+/* Perf hint */
         }
 
         .viewer-btn:not(:disabled):hover {
-            background-color: rgba(59, 130, 246, 0.8); /* blue-500 with opacity */
+            background-color: rgba(59, 130, 246, 0.8);
+/* blue-500 with opacity */
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
         }
 
         .viewer-btn:disabled {
-            background-color: rgba(75, 85, 99, 0.5); /* gray-600 with opacity */
+            background-color: rgba(75, 85, 99, 0.5);
+/* gray-600 with opacity */
             transform: none;
             box-shadow: none;
-        }
+}
 
         .viewer-btn-close {
-            background-color: rgba(239, 68, 68, 0.75); /* red-500 with opacity */
+            background-color: rgba(239, 68, 68, 0.75);
+/* red-500 with opacity */
         }
 
-        .viewer-btn-close:hover {
-            background-color: rgba(220, 38, 38, 0.8); /* red-600 with opacity */
+        .viewer-btn-close:not(:disabled):hover {
+            background-color: rgba(220, 38, 38, 0.8);
+/* red-600 with opacity */
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .viewer-btn:not(:disabled):active {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.1s;
+        }
+
+        .viewer-btn-close:not(:disabled):active {
+            background-color: rgba(185, 28, 28, 0.85); /* red-700 with opacity */
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
         }
 
         .del-setlist {
             background: #ef4444;
-            border-radius: 4px;
+border-radius: 4px;
             width: 24px;
             height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-right: 8px;
-        }
+}
 
         .del-setlist svg {
             width: 14px;
-            height: 14px;
+height: 14px;
             fill: white;
         }
 
         .del-setlist:hover {
             background: #dc2626;
-        }
+}
 
         .setlist-item {
             display: flex;
-            align-items: center;
+align-items: center;
             transition: all 0.2s ease-out;
         }
 
         .setlist-name {
             flex: 1;
-            min-width: 0; /* Prevent overflow */
+min-width: 0; /* Prevent overflow */
             white-space: nowrap;
-            overflow: hidden;
+overflow: hidden;
             text-overflow: ellipsis;
         }
         
         #setlist-details-toggle {
             padding: 0.5rem 0.75rem;
-            background-color: #e5e7eb;
+background-color: #e5e7eb;
             border-radius: 0.5rem;
             margin-bottom: 0.5rem;
             cursor: pointer;
@@ -503,219 +548,234 @@
             justify-content: space-between;
             align-items: center;
             font-weight: 600;
-        }
+}
         .dark #setlist-details-toggle {
             background-color: #374151;
-        }
+}
         #setlist-details-toggle .toggle-arrow {
             transition: transform 0.2s ease-in-out;
-        }
+}
         #setlist-details-toggle.open .toggle-arrow {
             transform: rotate(180deg);
-        }
+}
 
         #setlist-details-content {
-            display: none; /* Initial state */
-            flex-direction: row; /* Force horizontal layout */
-            align-items: flex-end; /* Align items at the bottom */
+            display: none;
+/* Initial state */
+            flex-direction: row;
+/* Force horizontal layout */
+            align-items: flex-end;
+/* Align items at the bottom */
             gap: 1rem;
-            padding: 1rem;
+padding: 1rem;
             background-color: #f3f4f6;
             border-radius: 0.5rem;
             flex-wrap: wrap;
         }
         #setlist-details-content > div {
             display: flex;
-            flex-direction: column; /* Stack label/input vertically within their group */
+flex-direction: column; /* Stack label/input vertically within their group */
             gap: 0.25rem;
-        }
+}
         .dark #setlist-details-content {
             background-color: #374151;
-        }
+}
         .dark #setlist-details-content label,
         .dark #setlist-details-content input,
         .dark #setlist-details-content select {
             color: #f9fafb !important;
-        }
+}
        
         #setlist-details-content input, #setlist-details-content select {
             box-sizing: border-box;
-            border: 1px solid #d1d5db;
+border: 1px solid #d1d5db;
         }
         .dark #setlist-details-content input, .dark #setlist-details-content select {
             border-color: #4b5563;
-        }
+}
        
         /* --- FIX: Consistent size for setlist detail inputs & placeholder styling --- */
         #setlist-date, #setlist-venue, #setlist-sort-filter-dropdown {
-            width: 176px; /* 11rem, w-44 */
-            padding: 0.25rem 0.5rem; /* Add consistent padding */
-            height: 34px; /* Consistent height */
+            width: 176px;
+/* 11rem, w-44 */
+            padding: 0.25rem 0.5rem;
+/* Add consistent padding */
+            height: 34px;
+/* Consistent height */
         }
         #setlist-date-container {
             position: relative;
-        }
+}
         #date-placeholder {
             position: absolute;
-            top: 28px;
+top: 28px;
             left: 6px;
             pointer-events: none;
             color: #9ca3af; /* Light mode placeholder color */
         }
         .dark #date-placeholder {
             color: #ffffff;
-        }
+}
         .dark #setlist-venue::placeholder {
              color: #ffffff;
-        }
+}
         .dark #setlist-date {
-            color: #f9fafb; /* Ensure text is white */
+            color: #f9fafb;
+/* Ensure text is white */
         }
         .dark #setlist-date::-webkit-calendar-picker-indicator {
             filter: invert(1);
-        }
+}
 
 
         .drag-highlight {
             background-color: #dbeafe;
-            border: 2px dashed #3b82f6;
+border: 2px dashed #3b82f6;
             transform: scale(1.05);
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
-        }
+}
 
         .dark .drag-highlight {
             background-color: #1e3a8a;
-        }
+}
 
         .app-header {
             color: white;
-            padding: 1rem;
+padding: 1rem;
             border-radius: 0.75rem;
             margin-bottom: 1rem;
             transition: background 0.3s ease;
             cursor: pointer;
-        }
+}
         .app-header-selected {
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-        }
+}
         .app-header-unselected {
             background: #374151;
-        }
+}
         .app-header-unselected:hover {
             background: #4b5563;
-        }
+}
 
         .stats-container {
             background-color: #f3f4f6;
-            border-radius: 0.75rem;
+border-radius: 0.75rem;
             color: #1f2937;
             max-height: 200px;
             overflow-y: auto;
-            margin-top: auto; /* Pushes to bottom */
-            flex-shrink: 0; /* Prevent shrinking */
+            margin-top: auto;
+/* Pushes to bottom */
+            flex-shrink: 0;
+/* Prevent shrinking */
             padding: 0.5rem;
-        }
+}
 
         .dark .stats-container {
             background-color: #374151;
-            color: #d1d5db;
+color: #d1d5db;
         }
 
         .stats-title {
             font-weight: 600;
-            margin-bottom: 0.5rem;
+margin-bottom: 0.5rem;
             color: #1e40af;
         }
 
         .dark .stats-title {
             color: #60a5fa;
-        }
+}
         
         .left-col {
             display: flex;
-            flex-direction: column;
+flex-direction: column;
             height: 100%;
             transition: width 0.4s ease-in-out, padding 0.4s ease-in-out;
             position: relative;
             padding: 1rem;
-        }
+}
 
         /* --- FIX: Wider, styled scrollbars moved to the edge --- */
         .left-col-main-content {
-            margin-right: -1rem; /* Pull scrollbar to the edge */
-            padding-right: 1rem; /* Add padding to compensate for margin */
+            margin-right: -1rem;
+/* Pull scrollbar to the edge */
+            padding-right: 1rem;
+/* Add padding to compensate for margin */
             /* Add transition for smooth fade out */
             transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-        }
+}
 .stats-container {
             /* Match the width of other sidebar blocks: no negative margins */
             margin-right: 0;
-            padding-right: 0;
+padding-right: 0;
             transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
         }
 
         .left-col-main-content::-webkit-scrollbar,
         .stats-container::-webkit-scrollbar {
-            width: 16px; /* Wider track for a larger touch target */
+            width: 16px;
+/* Wider track for a larger touch target */
         }
         .left-col-main-content::-webkit-scrollbar-track,
         .stats-container::-webkit-scrollbar-track {
             background: transparent;
-        }
+}
         .left-col-main-content::-webkit-scrollbar-thumb,
         .stats-container::-webkit-scrollbar-thumb {
             background-color: #6b7280;
-            border-radius: 8px;
+border-radius: 8px;
             border: 4px solid transparent; /* Keep thumb wide */
-            background-clip: content-box; /* Makes the border an invisible padding */
+            background-clip: content-box;
+/* Makes the border an invisible padding */
         }
         .left-col-main-content::-webkit-scrollbar-thumb:hover,
         .stats-container::-webkit-scrollbar-thumb:hover {
             background-color: #9ca3af;
-        }
+}
         
         .left-col-main-content {
             overflow-y: auto;
-            overflow-x: hidden; /* PREVENT HORIZONTAL SCROLL */
+overflow-x: hidden; /* PREVENT HORIZONTAL SCROLL */
             flex-grow: 1;
-            margin-bottom: 1rem; /* Gap between venues and stats */
+margin-bottom: 1rem; /* Gap between venues and stats */
         }
 
         .left-col.collapsed {
             width: 0;
-            padding: 0; /* Ensures no leftover space */
-            overflow: hidden; /* Hides content fully */
+padding: 0; /* Ensures no leftover space */
+            overflow: hidden;
+/* Hides content fully */
         }
         
         /* New rule to hide sidebar content during collapse */
         .left-col.collapsed .left-col-main-content,
         .left-col.collapsed .stats-container {
             opacity: 0;
-            visibility: hidden;
+visibility: hidden;
         }
 
         #sidebar-toggle {
             background-color: #1f2937;
-            color: white;
+color: white;
             border: none;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 48px; /* Increased width */
+            width: 48px;
+/* Increased width */
             height: 60px;
-            border-radius: 0 8px 8px 0;
+border-radius: 0 8px 8px 0;
             flex-shrink: 0;
             transition: all 0.3s ease-in-out;
-        }
+}
 
         #sidebar-toggle:hover {
             background-color: #374151;
-        }
+}
 
         .sidebar-item {
             display: flex;
-            align-items: center;
+align-items: center;
             justify-content: space-between;
             padding: 8px;
             border-radius: 0.5rem;
@@ -724,66 +784,67 @@
             cursor: pointer;
             color: #e5e7eb;
             transition: background-color 0.2s;
-            overflow: hidden; /* Fix width issues */
+overflow: hidden; /* Fix width issues */
         }
         .sidebar-item:hover {
             background: #4b5563;
-        }
+}
 
         /* Reverted Genre/Venue Creation Style */
         .item-creation {
             display: flex;
-            gap: 8px;
+gap: 8px;
             align-items: center;
             background-color: #1f2937;
             padding: 8px;
             border-radius: 8px;
             margin-top: 8px;
-        }
+}
         .item-creation .item-name-input {
              flex-grow: 1;
-             background-color: #374151;
+background-color: #374151;
              border: 1px solid #4b5563;
              padding: 4px 8px;
              border-radius: 4px;
              color: white;
-             min-width: 0; /* FIX: Allows input to shrink to fit */
+             min-width: 0;
+/* FIX: Allows input to shrink to fit */
         }
         /* Wrapper for custom color input */
         .color-picker-wrapper {
             position: relative;
-            width: 24px;
+width: 24px;
             height: 24px;
             flex-shrink: 0;
         }
         #genre-color-display {
             width: 100%;
-            height: 100%;
+height: 100%;
             border-radius: 50%;
             background-image: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
             transition: background 0.2s;
-        }
+}
         #genre-color {
             position: absolute;
-            top: 0;
+top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             opacity: 0;
             cursor: pointer;
-        }
+}
 
 
         .genre-content {
             display: flex;
-            align-items: center;
+align-items: center;
             gap: 8px;
             flex-grow: 1;
             min-width: 0; /* Prevent overflow */
         }
         .genre-name, .venue-name {
             min-width: 0;
-            white-space: nowrap;
+white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
@@ -791,7 +852,7 @@
         .delete-genre,
         .delete-venue {
             color: #ef4444;
-            cursor: pointer;
+cursor: pointer;
             padding: 2px 6px;
             border-radius: 4px;
             flex-shrink: 0;
@@ -800,271 +861,285 @@
         .delete-genre:hover,
         .delete-venue:hover {
             background-color: #fee2e2;
-        }
+}
 
         .dark .delete-genre:hover,
         .dark .delete-venue:hover {
             background-color: #991b1b;
-        }
+}
         
         /* CORRECTED Dark Mode Toggle Visual */
         .dark-mode-toggle+div {
             transition: all 0.3s ease;
-        }
+}
         .dark-mode-toggle+div .dot {
             transition: all 0.3s ease;
-        }
+}
         /* Dark mode on (checked) */
         .dark-mode-toggle:checked+div {
             background-color: #22c55e;
-        }
+}
         .dark-mode-toggle:checked+div .dot {
-            transform: translateX(1px); /* Ball is on the LEFT */
+            transform: translateX(1px);
+/* Ball is on the LEFT */
         }
         /* Light mode on (not checked) */
         .dark-mode-toggle:not(:checked)+div {
-            background-color: #1f2937; /* Black */
+            background-color: #1f2937;
+/* Black */
         }
         .dark-mode-toggle:not(:checked)+div .dot {
-            transform: translateX(20px); /* Ball is on the RIGHT */
+            transform: translateX(20px);
+/* Ball is on the RIGHT */
         }
 
         /* Highly specific selector for viewed number color */
         #setlist-list li .index-number.viewed-index {
             background-color: white;
-            color: #3b82f6 !important; /* Blue button color */
+color: #3b82f6 !important; /* Blue button color */
             border: 1px solid #3b82f6;
-            font-weight: bold;
+font-weight: bold;
             font-size: 1.125rem; /* Even bigger when viewed */
         }
         
         /* === Redesigned Responsive Controls for Master View === */
         #master-view-controls {
             display: flex;
-            flex-direction: column;
+flex-direction: column;
             gap: 0.5rem;
             margin-bottom: 0.5rem;
         }
         #search-container {
             position: relative;
-        }
+}
         #search {
-            padding-right: 120px; /* Make space for the toggle */
+            padding-right: 120px;
+/* Make space for the toggle */
         }
         #dark-mode-container {
             position: absolute;
-            right: 8px;
+right: 8px;
             top: 50%;
             transform: translateY(-50%);
         }
         /* Sort dropdown width fix */
         #controls-row {
             display: flex;
-            gap: 0.75rem;
+gap: 0.75rem;
             align-items: center;
             flex-wrap: wrap; /* Allow controls to wrap on small screens */
         }
         #filters-group {
             display: flex;
-            flex-grow: 1; /* Allows this to expand */
+flex-grow: 1; /* Allows this to expand */
             gap: 0.5rem;
-            padding: 0.25rem;
+padding: 0.25rem;
             background-color: white;
             border-radius: 0.5rem;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
             min-width: 200px;
-        }
+}
         #sort-dropdown {
-            flex-grow: 1; /* The dropdown itself expands */
+            flex-grow: 1;
+/* The dropdown itself expands */
         }
         .dark #filters-group {
             background-color: #1f2937;
-        }
+}
 
         #master-view-buttons {
-            flex-shrink: 0; /* Prevent buttons from shrinking */
+            flex-shrink: 0;
+/* Prevent buttons from shrinking */
         }
 
         #master-view-buttons .btn-master {
-            width: 90px; /* Reduced button size */
+            width: 90px;
+/* Reduced button size */
         }
         .filter-select, #genre-filter-button {
             border: none;
-            background: none;
+background: none;
             appearance: none;
             padding: 0.5rem;
         }
         #genre-filter-button {
             width: auto;
-            min-width: 100px; /* Reduced min-width */
+min-width: 100px; /* Reduced min-width */
         }
         
         /* === Redesigned Grid Layout for Song Item Details === */
         .song-details-container {
             display: flex;
-            align-items: center;
+align-items: center;
             flex-wrap: wrap;
             gap: 0.5rem;
             flex-shrink: 0; /* Prevent from being overlapped */
         }
         .song-details-container input, .song-details-container .delete-btn {
-            width: 96px; /* Reduced width */
-            text-align: center; /* Center text in inputs */
+            width: 96px;
+/* Reduced width */
+            text-align: center;
+/* Center text in inputs */
         }
         .song-details-container .delete-btn {
-            width: 72px; /* Reduced width */
+            width: 72px;
+/* Reduced width */
         }
         
         .left-col:not(.collapsed) ~ main .song-details-container {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+grid-template-columns: repeat(2, 1fr);
             width: 220px; /* Reduced width */
             gap: 0.5rem;
-            align-items: stretch; /* Ensures items fill the cell height */
+align-items: stretch; /* Ensures items fill the cell height */
         }
         .left-col:not(.collapsed) ~ main .song-details-container input,
         .left-col:not(.collapsed) ~ main .song-details-container button {
-            width: 100%; /* Make items fill the grid cell */
+            width: 100%;
+/* Make items fill the grid cell */
             height: 100%;
-        }
+}
         
         /* === Setlist View 1-Column Layout === */
         .setlist-view-container {
             display: flex;
-            flex-direction: column; /* Stack panels vertically */
+flex-direction: column; /* Stack panels vertically */
             gap: 1rem;
-            height: calc(100% - 150px); /* Adjust based on controls height */
+height: calc(100% - 150px); /* Adjust based on controls height */
             min-height: 0;
-        }
+}
         .setlist-panel {
             display: flex;
-            flex-direction: column;
+flex-direction: column;
             min-height: 0;
             background-color: #fff;
             border-radius: 0.75rem;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1);
-            overflow: hidden;
+overflow: hidden;
             flex: 1; /* Allow panels to share space */
         }
         .dark .setlist-panel {
             background-color: #1f2937;
-        }
+}
         .setlist-panel > .panel-header {
             padding: 0.5rem 0.75rem;
-            font-weight: 600;
+font-weight: 600;
             background-color: #f3f4f6;
             border-bottom: 1px solid #e5e7eb;
             flex-shrink: 0;
-        }
+}
         .dark .setlist-panel > .panel-header {
             background-color: #374151;
-            border-bottom-color: #4b5563;
+border-bottom-color: #4b5563;
         }
         .setlist-panel > ul {
             overflow-y: auto;
-            flex-grow: 1;
+flex-grow: 1;
         }
         
         /* Add Songs panel with custom checkboxes */
         .add-song-item {
             display: flex;
-            align-items: center;
+align-items: center;
             border-bottom: 1px solid #e5e7eb;
         }
         .dark .add-song-item {
             border-bottom-color: #374151;
-        }
+}
         .add-song-item > label {
             display: flex;
-            align-items: center;
+align-items: center;
             width: 100%;
             cursor: pointer;
             padding: 0.75rem 0.5rem;
         }
         .add-song-item > label:hover .custom-checkbox-box {
-            background-color: #2563eb; /* Darker blue on hover */
+            background-color: #2563eb;
+/* Darker blue on hover */
         }
         .custom-checkbox-input {
             position: absolute;
-            opacity: 0;
+opacity: 0;
             cursor: pointer;
             height: 0;
             width: 0;
         }
         .custom-checkbox-box {
             width: 1.25rem;
-            height: 1.25rem;
+height: 1.25rem;
             background-color: #3b82f6; /* Blue */
             border-radius: 0.25rem;
-            transition: background-color 0.2s;
+transition: background-color 0.2s;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-        }
+}
         .custom-checkbox-box svg {
             opacity: 0;
-            transition: opacity 0.2s;
+transition: opacity 0.2s;
             width: 1rem;
             height: 1rem;
             stroke: white;
             stroke-width: 2.5;
-        }
+}
         .custom-checkbox-input:checked ~ .custom-checkbox-box svg {
             opacity: 1;
-        }
+}
 
 
         /* Consistent border on all song list items */
         #master-list > li, #setlist-list > li, #favorites-list > li, #genre-song-list > li, #plays-list > li, .add-song-item {
             border-bottom-width: 1px;
-        }
+}
         #master-list, #setlist-list, #favorites-list, #genre-song-list, #plays-list, #setlist-add-songs-list {
             border-color: #e5e7eb;
-        }
+}
         .dark #master-list, .dark #setlist-list, .dark #favorites-list, .dark #genre-song-list, .dark #plays-list, .dark #setlist-add-songs-list {
             border-color: #374151;
-        }
+}
         
         /* Touch Device Enhancements */
         main.overflow-auto,
         .setlist-songs-container,
         #genre-filter-dropdown {
             -webkit-overflow-scrolling: touch;
-        }
+}
 
         #master-list > li, #setlist-list > li, #favorites-list > li, #plays-list > li, #genre-song-list > li {
             padding-top: 1rem;
-            padding-bottom: 1rem;
+padding-bottom: 1rem;
             padding-left: 0.5rem;
             padding-right: 0.5rem;
         }
         #plays-list > li {
             padding-left: 1rem;
-        }
+}
 
         /* Single Favorite Star Fix */
         .favorite-star-container svg {
             width: 20px;
-            height: 20px;
+height: 20px;
             fill: none;
             stroke: #9ca3af; /* Gray outline */
             stroke-width: 1.5;
-            transition: all 0.2s;
+transition: all 0.2s;
         }
         .favorite-star-container.favorited svg {
             fill: white;
-            stroke: #4b5563; /* Dark outline for visibility on light backgrounds */
+stroke: #4b5563; /* Dark outline for visibility on light backgrounds */
         }
         .dark .favorite-star-container.favorited svg {
-            stroke: white; /* White outline on dark backgrounds */
+            stroke: white;
+/* White outline on dark backgrounds */
         }
     
         /* === iOS PDF scrolling fix: disable 3D transforms around iframe/object so all pages scroll === */
-        html.ios #doc-iframe-wrapper { perspective: none !important; }
+        html.ios #doc-iframe-wrapper { perspective: none !important;
+}
         html.ios .doc-iframe-container { 
             transform: none !important;
-            transition: none !important;
+transition: none !important;
             backface-visibility: visible !important;
             overflow: auto !important;
         }
@@ -1072,71 +1147,74 @@
         html.ios .doc-iframe-container.next,
         html.ios .doc-iframe-container.prev {
             transform: none !important;
-        }
+}
         html.ios .turning-next,
         html.ios .turning-prev,
         html.ios .incoming-next,
         html.ios .incoming-prev {
             transform: none !important;
-        }
+}
         /* Ensure embedded document fills available space and scrolls smoothly on iPad */
         html.ios #doc-object,
         html.ios .doc-iframe-container iframe,
         html.ios .doc-iframe-container embed,
         html.ios .doc-iframe-container object {
             width: 100% !important;
-            height: 100% !important;
+height: 100% !important;
             display: block !important;
         }
         html.ios .doc-view-fullscreen {
             overflow: hidden;
-        }
+}
         html.ios .doc-iframe-container {
             -webkit-overflow-scrolling: touch;
-        }
+}
         /* === Fix All Songs scroll and clipping === */
-        /* Let MAIN be the only scroll container; don't constrain the white card */
+        /* Let MAIN be the only scroll container;
+don't constrain the white card */
         #master-view > .bg-white {
-            overflow: visible; /* don't clip last item inside rounded container */
+            overflow: visible;
+/* don't clip last item inside rounded container */
         }
         /* Smooth iOS momentum and bottom padding so the last row isn't cut off */
         #master-list { 
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 1rem;
+padding-bottom: 1rem;
         }
         /* Momentum scrolling for setlist lists */
         #setlist-list,
         #setlist-add-songs-list {
             -webkit-overflow-scrolling: touch;
-        }
+}
         /* === Scrolling quality improvements === */
         main {
-            overflow-y: auto; /* main is the scroll container */
+            overflow-y: auto;
+/* main is the scroll container */
             -webkit-overflow-scrolling: touch;
-        }
+}
         /* Hint to the browser: vertical pans are scrolls, not drags */
         #master-list, #setlist-list, #setlist-add-songs-list, #favorites-list, #genre-song-list, #plays-list {
             touch-action: pan-y;
-        }
+}
         /* === Left-edge custom scrollbar for collapsed sidebar === */
         #edge-scrollbar {
             position: fixed;
-            left: 0;
+left: 0;
             top: 0;
             width: 18px;              /* track width */
             height: 100vh;
-            z-index: 120;             /* above app content, below nav buttons */
+z-index: 120;             /* above app content, below nav buttons */
             display: flex;
-            align-items: center;
+align-items: center;
             justify-content: center;
             pointer-events: none;     /* let pointer events pass except on the thumb */
             opacity: 0;
-            transition: opacity 0.2s ease;
+transition: opacity 0.2s ease;
         }
         /* Subtle dark translucent track, centered line */
         #edge-scrollbar::before {
             content: "";
-            position: absolute;
+position: absolute;
             left: 50%;
             transform: translateX(-50%);
             width: 6px;
@@ -1144,101 +1222,117 @@
             top: 4vh;
             border-radius: 9999px;
             background: rgba(0,0,0,0.25);
-        }
+}
         .dark #edge-scrollbar::before {
             background: rgba(255,255,255,0.12);
-        }
+}
         #edge-thumb {
             position: absolute;
-            left: 50%;
+left: 50%;
             transform: translateX(-50%);
             width: 6px;               /* white line */
-            height: 60px;             /* will be sized by JS */
-            border-radius: 9999px;    /* soft edges */
+            height: 60px;
+/* will be sized by JS */
+            border-radius: 9999px;
+/* soft edges */
             background: #ffffff;
-            box-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 2px rgba(0,0,0,0.2);
-            pointer-events: auto;     /* interactive */
-            touch-action: none;       /* we manage drag */
+box-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 2px rgba(0,0,0,0.2);
+            pointer-events: auto;
+/* interactive */
+            touch-action: none;
+/* we manage drag */
         }
         .dark #edge-thumb {
             background: #ffffff;
-            box-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 2px rgba(0,0,0,0.4);
+box-shadow: 0 0 8px rgba(255,255,255,0.8), 0 0 2px rgba(0,0,0,0.4);
         }
         /* Visible state */
         #edge-scrollbar.visible {
             opacity: 1;
-            pointer-events: none; /* only thumb is interactive */
+pointer-events: none; /* only thumb is interactive */
         }
         /* Twinkle animation for energy level 3 sparks */
         @keyframes energy-twinkle {
-            0%, 100% { opacity: 0.2; transform: scale(0.95); }
-            50%      { opacity: 1; transform: scale(1.05); }
+            0%, 100% { opacity: 0.2;
+transform: scale(0.95); }
+            50%      { opacity: 1;
+transform: scale(1.05); }
         }
         .energy-svg-3 .energy-spark {
             animation: energy-twinkle 1.2s ease-in-out infinite;
-        }
-        .energy-svg-3 .energy-spark:nth-child(2) { animation-delay: 0.2s; }
-        .energy-svg-3 .energy-spark:nth-child(3) { animation-delay: 0.4s; }
-        .energy-svg-3 .energy-spark:nth-child(4) { animation-delay: 0.6s; }
-        .energy-svg-3 .energy-spark:nth-child(5) { animation-delay: 0.8s; }
+}
+        .energy-svg-3 .energy-spark:nth-child(2) { animation-delay: 0.2s;
+}
+        .energy-svg-3 .energy-spark:nth-child(3) { animation-delay: 0.4s;
+}
+        .energy-svg-3 .energy-spark:nth-child(4) { animation-delay: 0.6s;
+}
+        .energy-svg-3 .energy-spark:nth-child(5) { animation-delay: 0.8s;
+}
         /* === Smooth sidebar closing/opening with curtain cover === */
         .left-col {
             position: relative;
-            z-index: 20;              /* ensure it sits above main while animating */
-            overflow: hidden;         /* hide inner content during slide */
+z-index: 20;              /* ensure it sits above main while animating */
+            overflow: hidden;
+/* hide inner content during slide */
         }
         main {
             position: relative;
-            z-index: 10;
+z-index: 10;
         }
         /* Curtain overlay that sweeps over options while closing */
         .left-col::after {
             content: "";
-            position: absolute;
+position: absolute;
             inset: 0;
             background: #1f2937;      /* matches .left-col dark bg */
             opacity: 0;
-            transform: translateX(-10%);
+transform: translateX(-10%);
             transition: transform 0.35s ease, opacity 0.25s ease;
             pointer-events: none;
-        }
+}
         .dark .left-col::after {
             background: #000000;
-        }
+}
         /* When closing, fade in the curtain and sweep it right to cover items smoothly */
         .left-col.closing::after {
             opacity: 1;
-            transform: translateX(0);
+transform: translateX(0);
         }
         /* Optional subtle blur of inner items when closing */
         .left-col.closing .left-col-main-content,
         .left-col.closing .stats-container {
             filter: blur(1px);
-        }
-        /* Keep width/padding transitions already present; improve easing */
+}
+        /* Keep width/padding transitions already present;
+improve easing */
         .left-col {
             transition: width 0.4s cubic-bezier(0.4, 0.0, 0.2, 1), padding 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
-        }
+}
         main {
             transition: margin 0.4s cubic-bezier(0.4, 0.0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
-        }
+}
 
     
 
 /* === External scrollbar for Top/Least Played (non-intrusive box size) === */
 .stats-container {
     /* Keep size exactly the same but hide native scrollbar */
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
+/* Firefox */
 }
-.stats-container::-webkit-scrollbar { width: 0 !important; height: 0 !important; } /* WebKit/iPad */
+.stats-container::-webkit-scrollbar { width: 0 !important; height: 0 !important;
+} /* WebKit/iPad */
 
 /* External scrollbar rail positioned on the black sidebar edge */
 #stats-external-scroll {
     position: absolute;
-    right: 0;                /* far-right, same lane as main sidebar scrollbar */
-    width: 12px;             /* visual width */
+right: 0;                /* far-right, same lane as main sidebar scrollbar */
+    width: 12px;
+/* visual width */
     background: transparent; /* no background, sits on black */
-    display: none;           /* toggled on when stats container is found */
+    display: none;
+/* toggled on when stats container is found */
     z-index: 2;
 }
 
@@ -1256,24 +1350,29 @@
     background: rgba(255,255,255,0.5);
     cursor: pointer;
     user-select: none;
-    -webkit-user-select: none;
+-webkit-user-select: none;
     touch-action: none;
 }
 #stats-external-scroll:hover #stats-thumb { background: rgba(255,255,255,0.7); }
 
 
 /* inline-rename */
-.song-name.renaming { contain: layout paint; } /* isolate to avoid shifts */
-.edit-input { font-size: 0.95rem; font-weight: 600; }
+.song-name.renaming { contain: layout paint;
+} /* isolate to avoid shifts */
+.edit-input { font-size: 0.95rem; font-weight: 600;
+}
 @media (prefers-color-scheme: dark) {
-  .edit-input { background: #111827; color: #e5e7eb; border-color: #2563eb; }
+  .edit-input { background: #111827; color: #e5e7eb; border-color: #2563eb;
+}
 }
 
 /* inline-rename v2 */
 .song-name.renaming { contain: layout paint; position: relative; }
-.song-name.renaming .edit-input { font-family: inherit; font-size: 0.95rem; font-weight: 600; }
+.song-name.renaming .edit-input { font-family: inherit; font-size: 0.95rem; font-weight: 600;
+}
 @media (prefers-color-scheme: dark) {
-  .song-name.renaming .edit-input { background: #111827; color: #e5e7eb; border-color: #2563eb; }
+  .song-name.renaming .edit-input { background: #111827; color: #e5e7eb; border-color: #2563eb;
+}
 }
 
 /* magic-square exact-fit */
@@ -1282,31 +1381,32 @@
   box-sizing: border-box !important;
   background: #ffffff !important;
   color: #2563eb !important;
-  border: 2px solid #2563eb !important;
+border: 2px solid #2563eb !important;
 }
 
 /* magic-square contenteditable */
 .song-name.renaming .edit-magic-square {
   padding: 0 !important;
   box-sizing: border-box !important;
-  background: #ffffff !important;
+background: #ffffff !important;
   color: #2563eb !important;
   border: 2px solid #2563eb !important;
   outline: none !important;
 }
 /* Keep siblings from shifting during edit */
-.song-name.renaming { position: relative; }
+.song-name.renaming { position: relative;
+}
 
         /* === iPad multipage viewer (Option B) === */
         html.doc-viewer-active, body.doc-viewer-active {
             position: static !important;
-            overflow: auto !important;
+overflow: auto !important;
             height: 100% !important;
         }
         /* Make the document wrapper the scroller while viewer is open */
         .doc-viewer-active #doc-iframe-wrapper {
             overflow: auto !important;
-            -webkit-overflow-scrolling: touch !important;
+-webkit-overflow-scrolling: touch !important;
         }
         /* Remove transforms/perspective in viewer ancestry on iOS (prevents single-page snapshot) */
         html.ios.doc-viewer-active #doc-view,
@@ -1316,52 +1416,60 @@
         html.ios.doc-viewer-active .incoming-prev,
         html.ios.doc-viewer-active .turning-next,
         html.ios.doc-viewer-active .turning-prev {
-            transform: none !important;
+            transform: none 
+!important;
             perspective: none !important;
             backface-visibility: visible !important;
             will-change: auto !important;
             filter: none !important;
-        }
+}
         /* PDF.js container styles */
-        .pdfjs-container { position:absolute; inset:0; overflow:auto; -webkit-overflow-scrolling:touch; padding: 8px; }
-        .pdfjs-page { margin: 0 auto 10px auto; }
-        .pdfjs-page canvas { display:block; width:100% !important; height:auto !important; background:#fff; border-radius:6px; }
+        .pdfjs-container { position:absolute;
+inset:0; overflow:auto; -webkit-overflow-scrolling:touch; padding: 8px; }
+        .pdfjs-page { margin: 0 auto 10px auto;
+}
+        .pdfjs-page canvas { display:block; width:100% !important; height:auto !important; background:#fff; border-radius:6px;
+}
 
 
         /* === Top-level PDF overlay (outside all transforms) === */
         #pdf-overlay {
-          position: fixed; inset: 0; z-index: 999999;
+          position: fixed;
+inset: 0; z-index: 999999;
           background: #000;
           display: none;
         }
         html.pdf-overlay-active, body.pdf-overlay-active {
           position: static !important;
-          overflow: auto !important;
+overflow: auto !important;
           height: 100% !important;
         }
         html.ios #pdf-overlay, html.ios #pdf-overlay * {
           transform: none !important;
-          perspective: none !important;
+perspective: none !important;
           backface-visibility: visible !important;
           will-change: auto !important;
           filter: none !important;
-        }
+}
         #pdf-overlay .pdfjs-scroll {
-          position: absolute; inset: 0;
+          position: absolute;
+inset: 0;
           overflow: auto; -webkit-overflow-scrolling: touch;
           padding: 12px 12px 72px;
-        }
-        #pdf-overlay .pdfjs-page { margin: 0 auto 12px; }
+}
+        #pdf-overlay .pdfjs-page { margin: 0 auto 12px;
+}
         #pdf-overlay .pdfjs-page canvas {
-          display: block; width: 100% !important; height: auto !important;
+          display: block;
+width: 100% !important; height: auto !important;
           background: #fff; border-radius: 6px;
-        }
+}
 
         /* === Setlist Details: unified centered placeholders (Date, Venue, Order) === */
         #setlist-details-content input,
         #setlist-details-content select {
           height: 34px;
-          font-size: 14px;
+font-size: 14px;
           font-weight: 600;
           text-align: center;          /* center typed text */
         }
@@ -1369,51 +1477,52 @@
         /* Centered white placeholder for Venue */
         #setlist-venue::placeholder {
           color: #ffffff !important;
-          opacity: 1;
+opacity: 1;
           text-align: center;
         }
 
         /* Date "placeholder" is a sibling span because date inputs don't support ::placeholder reliably */
         #setlist-date-container {
           position: relative;
-        }
+}
         #date-placeholder {
           position: absolute;
-          left: 50%;
+left: 50%;
           top: 50%;
           transform: translate(-50%, -50%);
           font-size: 14px;
           font-weight: 600;
-          color: #ffffff !important;   /* always white */
+          color: #ffffff !important;
+/* always white */
           pointer-events: none;
           white-space: nowrap;
-        }
+}
 
         /* Ensure date input content is centered and text is visible */
         #setlist-date {
           text-align: center;
-          color: #ffffff;               /* typed date text white */
+color: #ffffff;               /* typed date text white */
         }
         .dark #setlist-date {
           color: #ffffff;
-        }
+}
         .dark #setlist-date::-webkit-calendar-picker-indicator {
           filter: invert(1);
-        }
+}
 
         /* Order select: center displayed value text and keep it white */
         #setlist-sort-filter-dropdown {
           text-align: center;
-          text-align-last: center;      /* centers selected option in most browsers */
+text-align-last: center;      /* centers selected option in most browsers */
           color: #ffffff !important;
-        }
+}
         .dark #setlist-sort-filter-dropdown {
           color: #ffffff !important;
-        }
+}
         /* The dropdown arrow container color (so it doesn't clash) */
         #setlist-details-content .pointer-events-none svg {
           color: #ffffff;
-          fill: currentColor;
+fill: currentColor;
         }
 
 
@@ -1421,35 +1530,42 @@
         /* === Precise centering updates === */
         #setlist-details-content input,
         #setlist-details-content select {
-          height: 36px;                /* uniform control height */
-          line-height: 36px;           /* vertical centering for text & placeholders */
+          height: 36px;
+/* uniform control height */
+          line-height: 36px;
+/* vertical centering for text & placeholders */
           font-size: 15px;
-          font-weight: 600;
+font-weight: 600;
           text-align: center;
         }
 
         #date-placeholder {
           position: absolute;
-          z-index: 2;
+z-index: 2;
           pointer-events: none;
           font-size: 15px;
           font-weight: 600;
           color: #ffffff !important;
-          /* left/top set dynamically to the INPUT center */
+/* left/top set dynamically to the INPUT center */
         }
 
-        #-webkit-date-text { color: #ffffff; } /* noop fallback */
-        .dark #setlist-venue::placeholder { color: #ffffff !important; }
-        # setlist-venue::placeholder { color: #ffffff !important; } /* ensure white in light mode too */
+        #-webkit-date-text { color: #ffffff;
+} /* noop fallback */
+        .dark #setlist-venue::placeholder { color: #ffffff !important;
+}
+        # setlist-venue::placeholder { color: #ffffff !important;
+} /* ensure white in light mode too */
 
         #setlist-sort-filter-dropdown {
           text-align: center;
-          text-align-last: center;
+text-align-last: center;
           color: #ffffff !important;
         }
         
-        #genre-name::placeholder, #venue-name::placeholder { text-align: center; }
-        #genre-name, #venue-name { text-align: center; } /* helps iOS Safari */
+        #genre-name::placeholder, #venue-name::placeholder { text-align: center;
+}
+        #genre-name, #venue-name { text-align: center;
+} /* helps iOS Safari */
 
 </style>
 </head>
@@ -1460,51 +1576,61 @@
             <div class="left-col-main-content">
                 <div class="app-header app-header-selected" id="home-btn">
                     <h1 class="text-2xl font-bold mb-2 underline">ALL SONGS</h1>
-                    <p class="text-sm whitespace-nowrap">Organize music performances</p>
+                
+    <p class="text-sm whitespace-nowrap">Organize music performances</p>
                 </div>
 
                 <div class="mb-2 p-2 rounded-lg bg-gray-700" id="nav-setlists">
                     <div class="flex items-center justify-between">
                         <span class="font-medium uppercase">Setlists</span>
-                        <button class="text-sm px-2 py-1 rounded-md bg-gray-600" id="toggle-setlists">▾</button>
+      
+                  <button class="text-sm px-2 py-1 rounded-md bg-gray-600" id="toggle-setlists">▾</button>
                     </div>
                     <div class="mt-2" id="setlists-container"></div>
                     <div class="mt-2">
-                        <input class="w-full p-1 text-sm rounded-md bg-gray-700" id="new-setlist-name" placeholder="New setlist name" />
+             
+           <input class="w-full p-1 text-sm rounded-md bg-gray-700" id="new-setlist-name" placeholder="New setlist name" />
                         <button class="w-full mt-1 p-1 text-sm rounded-md btn-add" id="add-setlist-btn">Add Setlist</button>
                     </div>
                 </div>
-                <div class="sidebar-item" id="nav-favorites">Favorites</div>
+           
+     <div class="sidebar-item" id="nav-favorites">Favorites</div>
                 <div class="sidebar-item" id="nav-plays">Plays</div>
                 <div class="sidebar-item" id="nav-recordings">Recordings</div>
                 <div class="sidebar-item" id="nav-energy">Energy Levels</div>
 
                 <div class="mt-4">
-                    <h3 class="text-sm font-semibold uppercase">Genres</h3>
+                    <h3 
+class="text-sm font-semibold uppercase">Genres</h3>
                      <div class="item-creation">
                         <div class="color-picker-wrapper">
                             <div id="genre-color-display"></div>
-                            <input type="color" id="genre-color" title="Select color">
+                      
+      <input type="color" id="genre-color" title="Select color">
                         </div>
                         <input class="item-name-input" id="genre-name" placeholder="New genre" />
                         <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-genre">Add</button>
-                    </div>
+      
+              </div>
                     <div class="mt-2 space-y-1" id="genre-list"></div>
                 </div>
 
                 <div class="mt-4">
                     <h3 class="text-sm font-semibold uppercase">Venues</h3>
-                    <div class="item-creation">
+       
+             <div class="item-creation">
                         <input class="item-name-input" id="venue-name" placeholder="New venue" />
                         <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-venue">Add</button>
                     </div>
-                    <div class="mt-2 space-y-1" id="venue-list"></div>
+      
+              <div class="mt-2 space-y-1" id="venue-list"></div>
                 </div>
             </div>
             
             <div class="stats-container">
                 <h3 class="stats-title">Top Played</h3>
-                <ul class="text-xs mt-1" id="top-played"></ul>
+            
+    <ul class="text-xs mt-1" id="top-played"></ul>
                 <h3 class="stats-title mt-3">Least Played</h3>
                 <ul class="text-xs mt-1" id="least-played"></ul>
             </div>
@@ -1514,55 +1640,69 @@
 
         <button id="sidebar-toggle">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+  
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
         </button>
 
         <main class="flex-1 p-4 overflow-auto">
             <section id="master-view">
                  <div id="master-view-controls">
-                    <div id="search-container">
+                 
+   <div id="search-container">
                         <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..." />
                         <datalist id="search-results"></datalist>
                         <div id="dark-mode-container">
-                             <label for="dark-mode-toggle" class="flex items-center cursor-pointer ml-4">
+          
+                   <label for="dark-mode-toggle" class="flex items-center cursor-pointer ml-4">
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark</span>
                                 <div class="relative">
-                                    <input type="checkbox" id="dark-mode-toggle" class="dark-mode-toggle sr-only">
+       
+                             <input type="checkbox" id="dark-mode-toggle" class="dark-mode-toggle sr-only">
                                     <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
-                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                          
+          <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
                                 </div>
                             </label>
-                        </div>
+                     
+   </div>
                     </div>
                     <div id="controls-row">
                         <div id="filters-group">
-                            <select id="sort-dropdown" class="p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select">
+                            <select id="sort-dropdown" class="p-2 
+rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select">
                                 <option value="name">Sort by Name</option>
                                 <option value="artist">Sort by Artist</option>
-                                <option value="lastPlayed">Sort by Last Played</option>
+                         
+       <option value="lastPlayed">Sort by Last Played</option>
                                 <option value="energy">Sort by Energy</option>
                             </select>
-                            <div id="genre-filter-container" class="relative">
+                          
+  <div id="genre-filter-container" class="relative">
                                 <button id="genre-filter-button" class="p-2 rounded-lg bg-transparent text-sm text-left dark:bg-transparent dark:text-gray-200">Select Genres</button>
                                 <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
-                            </div>
+         
+                   </div>
                         </div>
                         <div id="master-view-buttons" class="flex gap-2">
-                            <input accept=".pdf" class="hidden" id="master-upload" multiple="" type="file" />
+                            <input accept=".pdf" 
+class="hidden" id="master-upload" multiple="" type="file" />
                             <button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow btn-master" id="upload-master-btn">Add files</button>
                             <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow btn-master" id="delete-all-btn">Delete All</button>
-                        </div>
+                    
+    </div>
                     </div>
                 </div>
 
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul id="master-list"></ul>
                 </div>
-                <div id="master-drop-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-8 pointer-events-none">
+  
+              <div id="master-drop-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-8 pointer-events-none">
                     <div class="text-center bg-white dark:bg-gray-800 p-12 rounded-2xl border-4 border-dashed border-blue-500">
                         <h2 class="text-2xl font-bold">Drop Files Here</h2>
-                        <p>Add PDF song sheets to ALL SONGS</p>
+                  
+      <p>Add PDF song sheets to ALL SONGS</p>
                     </div>
                 </div>
             </section>
@@ -1570,148 +1710,183 @@
 
             <section class="hidden" id="setlist-view">
                  <div class="flex items-center gap-2 mb-2">
-                    <button id="back-to-venue-btn" class="hidden p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition dark:bg-gray-700 dark:hover:bg-gray-600">← Back</button>
+     
+               <button id="back-to-venue-btn" class="hidden p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition dark:bg-gray-700 dark:hover:bg-gray-600">← Back</button>
                     <h2 class="text-xl font-bold" id="setlist-title">Setlist</h2>
                     <p id="setlist-total-duration" class="text-sm text-gray-500 dark:text-white ml-2"></p>
                     <p id="setlist-song-count" class="text-sm text-gray-500 dark:text-white ml-2"></p>
-                </div>
+  
+              </div>
 
                 <div class="flex items-end justify-between flex-wrap gap-4 mb-2">
                     <div class="flex items-center gap-2">
                         <button id="record-show" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Record Show</button>
-                        <button id="stop-record" class="p-2 bg-red-600 text-white rounded-lg hidden shadow">Stop Recording</button>
+        
+                <button id="stop-record" class="p-2 bg-red-600 text-white rounded-lg hidden shadow">Stop Recording</button>
                         <button id="print-setlist" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">Print Setlist</button>
                         <div class="relative inline-block">
-                            <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Share Setlist</button>
+                 
+           <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Share Setlist</button>
                             <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
-                                <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
+                                <a href="#" id="share-native" class="block px-4 py-2 text-sm 
+text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
                                 <a href="#" id="share-email" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Email (text only)</a>
                                 <a href="#" id="share-gmail" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Gmail (text only)</a>
-                                <a href="#" id="share-copy" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Copy to Clipboard (text only)</a>
+ 
+                               <a href="#" id="share-copy" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Copy to Clipboard (text only)</a>
                             </div>
-                            <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
+                           
+ <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
                         </div>
                     </div>
                 </div>
                 
-                <div id="setlist-details-container" class="mb-2">
+           
+     <div id="setlist-details-container" class="mb-2">
                     <div id="setlist-details-toggle">
                         <span>Setlist Details</span>
                         <span class="toggle-arrow">▾</span>
                     </div>
-                    <div id="setlist-details-content">
+  
+                  <div id="setlist-details-content">
                         <div id="setlist-date-container">
                             <label for="setlist-date" class="font-medium text-xs">Date</label>
-                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                         
+   <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600">
                             <span id="date-placeholder">mm/dd/yyyy</span>
                         </div>
                         <div>
-                            <label for="setlist-venue" class="font-medium text-xs">Venue</label>
+             
+               <label for="setlist-venue" class="font-medium text-xs">Venue</label>
                             <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                         </div>
-                        <div>
+                    
+    <div>
                             <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
                             <div class="relative">
-                                <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                                <select id="setlist-sort-filter-dropdown" class="block p-1 
+rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                                     <option value="custom">Custom Order</option>
                                     <option value="name">Sort by Name</option>
-                                    <option value="artist">Sort by Artist</option>
+            
+                        <option value="artist">Sort by Artist</option>
                                     <option value="genre">Sort by Genre</option>
-                                    <option value="energy">Sort by Energy</option>
+                                  
+  <option value="energy">Sort by Energy</option>
                                 </select>
                                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
-                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                      
+              <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                                 </div>
                             </div>
-                        </div>
+         
+               </div>
                     </div>
                 </div>
 
                 <div id="setlist-recordings" class="mb-2"></div>
                 
-                 <div class="setlist-view-container">
+               
+  <div class="setlist-view-container">
                     <div class="setlist-panel">
                         <div class="panel-header">Setlist Songs</div>
                         <ul id="setlist-list"></ul>
                     </div>
-                    <div class="setlist-panel">
+     
+               <div class="setlist-panel">
                         <div class="panel-header">Add Songs to Setlist</div>
                         <input id="setlist-search-add" class="w-full p-2 border-b dark:bg-gray-800 dark:border-gray-600 flex-shrink-0" placeholder="Search all songs...">
-                        <ul id="setlist-add-songs-list"></ul>
+                      
+  <ul id="setlist-add-songs-list"></ul>
                     </div>
                 </div>
             </section>
 
             <section class="hidden" id="favorites-view">
                 <div class="flex items-center justify-between mb-2">
-                     <h2 class="text-xl font-bold">Favorite Songs</h2>
+               
+      <h2 class="text-xl font-bold">Favorite Songs</h2>
                     <div class="relative">
                         <select id="favorites-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
                             <option value="name">Sort by Name</option>
-                            <option value="artist">Sort by Artist</option>
+ 
+                           <option value="artist">Sort by Artist</option>
                             <option value="lastPlayed">Sort by Last Played</option>
                             <option value="energy">Sort by Energy</option>
-                        </select>
+       
+                 </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                             <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+               
+                 <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                         </div>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+              
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul id="favorites-list"></ul>
                 </div>
             </section>
 
             <section class="hidden" id="genre-view">
                  <div class="flex items-center justify-between mb-2">
-                     <h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
+         
+            <h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
                     <div class="relative">
                         <select id="genre-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
-                            <option value="name">Sort by Name</option>
+                          
+  <option value="name">Sort by Name</option>
                             <option value="artist">Sort by Artist</option>
                             <option value="lastPlayed">Sort by Last Played</option>
                             <option value="energy">Sort by Energy</option>
-                        </select>
+ 
+                       </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                             <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+         
+                       <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                         </div>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+        
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul id="genre-song-list"></ul>
                 </div>
             </section>
 
             <section class="hidden" id="plays-view">
                 <div class="flex items-center justify-between mb-2">
-                    <h2 class="text-xl font-bold">Plays</h2>
+    
+                <h2 class="text-xl font-bold">Plays</h2>
                     <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow" id="reset-plays">Reset All Plays</button>
                 </div>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-                    <ul id="plays-list"></ul>
+               
+     <ul id="plays-list"></ul>
                 </div>
             </section>
 
             <section class="hidden" id="recordings-view">
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="text-xl font-bold">Recordings</h2>
-                </div>
+          
+      </div>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
                     <ul id="recordings-list"></ul>
                 </div>
             </section>
 
             <section class="hidden" id="energy-view">
-                <h2 class="text-xl font-bold mb-2">Energy Levels</h2>
+          
+      <h2 class="text-xl font-bold mb-2">Energy Levels</h2>
                 <div id="energy-level-container" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
             </section>
 
             <section class="hidden" id="venue-setlists-view">
                 <h2 class="text-xl font-bold mb-2" id="venue-setlists-title"></h2>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-                    <ul id="venue-setlists-list"></ul>
+  
+                  <ul id="venue-setlists-list"></ul>
                 </div>
             </section>
         </main>
@@ -1721,13 +1896,14 @@
          <div id="doc-iframe-wrapper"></div>
     </section>
 
-    <!-- VIEWER CONTROLS -->
-    <div id="viewer-controls" class="fixed top-0 left-0 right-0 h-20 z-[2147483647] p-4 flex justify-center items-center pointer-events-none transition-opacity duration-300 opacity-0">
+    <div id="viewer-controls" class="fixed top-0 left-0 right-0 h-20 z-[2147483647] p-4 flex 
+justify-center items-center pointer-events-none transition-opacity duration-300 opacity-0">
         <div class="flex justify-center items-center gap-4">
             <button id="viewer-prev-btn" class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32">
                 <span>Previous</span>
             </button>
-            <button id="viewer-next-btn" class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32">
+            <button id="viewer-next-btn" class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all 
+duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32">
                 <span>Next</span>
             </button>
             <button id="viewer-close-btn" class="viewer-btn viewer-btn-close pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 w-32">
@@ -1736,134 +1912,146 @@
         </div>
     </div>
 
-    <script>
+ 
+   <script>
         // ================== Disable Zoom on iPad ==================
         document.addEventListener('touchstart', (event) => {
           if (event.touches.length > 1) {
              event.preventDefault();
-          }
+}
         }, { passive: false });
         let lastTouchEnd = 0;
-        document.addEventListener('touchend', (event) => {
+document.addEventListener('touchend', (event) => {
           const now = (new Date()).getTime();
           if (now - lastTouchEnd <= 300) {
             event.preventDefault();
           }
           lastTouchEnd = now;
         }, false);
-        // ================== Memory Management ==================
+// ================== Memory Management ==================
         let objectURLs = new Set();
-        window.addEventListener('unload', () => {
+window.addEventListener('unload', () => {
             objectURLs.forEach(url => URL.revokeObjectURL(url));
             objectURLs.clear();
         });
-        // ================== Data Structures ==================
+// ================== Data Structures ==================
         let masterSongs = [];
         let setlists = {};
-        let currentSetlist = null;
+let currentSetlist = null;
         let playCounts = {};
         let genres = [{ name: 'Rock', color: '#ef4444' }, { name: 'Pop', color: '#3b82f6' }, { name: 'Jazz', color: '#10b981' }];
-        const energyIcons = [
+const energyIcons = [
             // Level 0 - outline only
             `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 1L5 14h6l-2 9 11-13h-7l3-10z" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linejoin="round"/>
             </svg>`,
             // Level 1 - lower fill
-            `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
+      
+      `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
                 <defs>
                     <linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%">
                         <stop offset="60%" style="stop-color:transparent" />
-                        <stop offset="60%" style="stop-color:#f59e0b" />
+                  
+      <stop offset="60%" style="stop-color:#f59e0b" />
                     </linearGradient>
                 </defs>
                 <path d="M12 1L5 14h6l-2 9 11-13h-7l3-10z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.8" stroke-linejoin="round"/>
             </svg>`,
             // Level 2 - deeper fill
-            `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
+ 
+           `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
                 <defs>
                     <linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%">
                         <stop offset="40%" style="stop-color:transparent" />
-                        <stop offset="40%" style="stop-color:#f59e0b" />
+             
+           <stop offset="40%" style="stop-color:#f59e0b" />
                     </linearGradient>
                 </defs>
                 <path d="M12 1L5 14h6l-2 9 11-13h-7l3-10z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.8" stroke-linejoin="round"/>
             </svg>`,
-            // Level 3 - full warm fill + twinkle sparks
+            // 
+Level 3 - full warm fill + twinkle sparks
             `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="-4 -4 32 32" class="energy-svg-3" aria-hidden="true">
                 <defs>
                     <radialGradient id="energy-grad-3" cx="50%" cy="50%" r="50%">
                         <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+    
+                    <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
                     </radialGradient>
                 </defs>
                 <g class="sparks">
-                    <path class="energy-spark" d="M12,0 L12.5,4 L15,4.5 L12.5,5 L12,9 L11.5,5 L9,4.5 L11.5,4 Z" fill="#FCD34D"/>
+                    <path class="energy-spark" d="M12,0 L12.5,4 
+L15,4.5 L12.5,5 L12,9 L11.5,5 L9,4.5 L11.5,4 Z" fill="#FCD34D"/>
                     <path class="energy-spark" d="M21,8 L21.5,12 L24,12.5 L21.5,13 L21,17 L20.5,13 L18,12.5 L20.5,12 Z" fill="#FCD34D"/>
                     <path class="energy-spark" d="M3,8 L3.5,12 L6,12.5 L3.5,13 L3,17 L2.5,13 L0,12.5 L2.5,12 Z" fill="#FCD34D"/>
-                    <path class="energy-spark" d="M6,17 L6.5,21 L9,21.5 L6.5,22 L6,26 L5.5,22 L3,21.5 L5.5,21 Z" fill="#FCD34D"/>
+                    <path class="energy-spark" d="M6,17 L6.5,21 L9,21.5 L6.5,22 L6,26 L5.5,22 L3,21.5 L5.5,21 Z" 
+fill="#FCD34D"/>
                     <path class="energy-spark" d="M18,17 L18.5,21 L21,21.5 L18.5,22 L18,26 L17.5,22 L15,21.5 L17.5,21 Z" fill="#FCD34D"/>
                 </g>
                 <g transform="scale(1.25) translate(-3, -3)">
                     <path d="M12 1L5 14h6l-2 9 11-13h-7l3-10z" fill="url(#energy-grad-3)" stroke="#b45309" stroke-width="1.8" stroke-linejoin="round"/>
-                </g>
+     
+           </g>
             </svg>`
         ];
-        let venues = [];
+let venues = [];
         let recordings = [];
         let masterSelectedGenres = [];
         let currentGenre = null;
-        let viewedSongsInSetlist = new Set();
+let viewedSongsInSetlist = new Set();
         let currentViewerContext = null;
         let currentViewerList = [];
         let currentViewerIndex = -1;
-        let inactivityTimer = null;
+let inactivityTimer = null;
         let recorder = null;
         let audioChunks = [];
         let cameFromVenue = null;
         let viewerButtonsClickable = false;
-        
-        // ================== Persistent Storage ==================
+// ================== Persistent Storage ==================
         function save() {
             localStorage.setItem('setlistData', JSON.stringify({
                 masterSongs: masterSongs.map(song => ({ ...song, file: undefined, fileInfo: song.fileInfo ? { name: song.fileInfo.name, type: song.fileInfo.type, size: song.fileInfo.size, data: song.fileInfo.data } : undefined })),
                 setlists, playCounts, genres, venues,
-                recordings: recordings.map(rec => ({ ...rec, audioData: rec.audioData }))
+                
+recordings: recordings.map(rec => ({ ...rec, audioData: rec.audioData }))
             }));
-            localStorage.setItem('darkMode', $('html').hasClass('dark') ? 'enabled' : 'disabled');
+localStorage.setItem('darkMode', $('html').hasClass('dark') ? 'enabled' : 'disabled');
         }
 
         function load() {
-            const raw = localStorage.getItem('setlistData'); if(raw){try{const o=JSON.parse(raw);masterSongs=o.masterSongs||[];masterSongs.forEach(s=>{s.lastPlayed=s.lastPlayed||null;s.favorite=s.favorite||!1});setlists=o.setlists||{};Object.keys(setlists).forEach(k=>{if(Array.isArray(setlists[k])){setlists[k]={songs:setlists[k].map(s=>s.id),date:"",venue:""}}});playCounts=o.playCounts||{};genres=o.genres||genres;venues=o.venues||[];recordings=o.recordings||[]}catch(e){console.error("Error parsing localStorage data: ",e);masterSongs=[];setlists={};playCounts={};venues=[];recordings=[]}}
-            const darkModePref = localStorage.getItem('darkMode'); if(darkModePref==='disabled'){$('html').removeClass('dark');$('#dark-mode-toggle').prop('checked',!1)}else{$('html').addClass('dark');$('#dark-mode-toggle').prop('checked',!0)}
+            const raw = localStorage.getItem('setlistData');
+if(raw){try{const o=JSON.parse(raw);masterSongs=o.masterSongs||[];masterSongs.forEach(s=>{s.lastPlayed=s.lastPlayed||null;s.favorite=s.favorite||!1});setlists=o.setlists||{};Object.keys(setlists).forEach(k=>{if(Array.isArray(setlists[k])){setlists[k]={songs:setlists[k].map(s=>s.id),date:"",venue:""}}});playCounts=o.playCounts||{};genres=o.genres||genres;venues=o.venues||[];recordings=o.recordings||[]}catch(e){console.error("Error parsing localStorage data: ",e);masterSongs=[];setlists={};playCounts={};venues=[];recordings=[]}}
+            const darkModePref = localStorage.getItem('darkMode');
+if(darkModePref==='disabled'){$('html').removeClass('dark');$('#dark-mode-toggle').prop('checked',!1)}else{$('html').addClass('dark');$('#dark-mode-toggle').prop('checked',!0)}
         }
         // ================== File Handling ==================
         function storeFile(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res({name:f.name,type:f.type,size:f.size,data:e.target.result});r.onerror=()=>rej(new Error('Failed to read file'));r.readAsDataURL(f)})}
         function getFileURL(s){if(!s||!s.fileInfo||!s.fileInfo.data){console.error(`Invalid song or fileInfo for song: ${s?.name||'unknown'}`);return null}if(!s.file||!objectURLs.has(s.file)){try{const b=dataURItoBlob(s.fileInfo.data),url=URL.createObjectURL(b);if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}s.file=url;objectURLs.add(url)}catch(e){console.error(`Error creating object URL for ${s.name}:`,e);return null}}return s.file}
         function dataURItoBlob(d){try{const s=d.split(',');if(s.length<2)throw new Error('Invalid data URI');const b=atob(s[1]),m=s[0].split(':')[1].split(';')[0],a=new ArrayBuffer(b.length),i=new Uint8Array(a);for(let j=0;j<b.length;j++){i[j]=b.charCodeAt(j)}return new Blob([a],{type:m})}catch(e){console.error('Error converting data URI to Blob:',e);throw e}}
         // ================== UI Helpers ==================
-        function autoCollapseSidebar(){const s=$('.left-col');if(!s.hasClass('collapsed')){s.addClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />')}}
+ 
+       function autoCollapseSidebar(){const s=$('.left-col');if(!s.hasClass('collapsed')){s.addClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />')}}
         // ================== Initialization ==================
         $(function(){function ds(){$('#home-btn').removeClass('app-header-selected').addClass('app-header-unselected');$('#nav-favorites, #nav-plays, #nav-recordings, #nav-energy, #setlists-container .setlist-item, #venue-list .venue-item, #genre-list .genre-item').removeClass('selected')}load();ds();$('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');renderLeftSetlists();renderGenres(ds);renderVenues(ds);bindNav(ds);updateTopLeast();show('master');
-        $(document).on('click','.genre-dot',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(!s)return;const g=[''].concat(genres.map(g=>g.name));s.genre=g[(g.indexOf(s.genre||'')+1)%g.length];const n=`<span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span>`;$(`li[id="${s.id}"]`).find('.genre-dot').parent().html(n);if($('#genre-view').is(':visible')){renderGenreView(currentGenre)}save()});
+$(document).on('click','.genre-dot',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(!s)return;const g=[''].concat(genres.map(g=>g.name));s.genre=g[(g.indexOf(s.genre||'')+1)%g.length];const n=`<span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span>`;$(`li[id="${s.id}"]`).find('.genre-dot').parent().html(n);if($('#genre-view').is(':visible')){renderGenreView(currentGenre)}save()});
         $(document).on('click','.energy-icon',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(s){s.energy=((s.energy||0)+1)%4;const n=energyIcons[s.energy||0];$(`li[id="${s.id}"]`).find('.energy-icon').html(n);if($('#energy-view').is(':visible')){renderEnergyLevels()}save()}});
         $('#genre-color').on('input',function(){$('#genre-color-display').css({'background-image':'none','background-color':$(this).val()})});
-        $('#add-genre').click(function(){const n=$('#genre-name').val().trim(),c=$('#genre-color').val();if(!n)return alert('Enter a genre name');if(genres.some(g=>g.name.toLowerCase()===n.toLowerCase()))return alert('Genre already exists');genres.push({name:n,color:c});$('#genre-name').val('');renderGenres(ds);$('#genre-color-display').css({'background-image':'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)','background-color':''});save()});
-        $('#add-venue').click(function(){const n=$('#venue-name').val().trim();if(!n)return alert('Enter a venue name');if(venues.some(v=>v.name.toLowerCase()===n.toLowerCase()))return alert('Venue already exists');venues.push({name:n});$('#venue-name').val('');renderVenues(ds);save()});
+$('#add-genre').click(function(){const n=$('#genre-name').val().trim(),c=$('#genre-color').val();if(!n)return alert('Enter a genre name');if(genres.some(g=>g.name.toLowerCase()===n.toLowerCase()))return alert('Genre already exists');genres.push({name:n,color:c});$('#genre-name').val('');renderGenres(ds);$('#genre-color-display').css({'background-image':'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)','background-color':''});save()});
+$('#add-venue').click(function(){const n=$('#venue-name').val().trim();if(!n)return alert('Enter a venue name');if(venues.some(v=>v.name.toLowerCase()===n.toLowerCase()))return alert('Venue already exists');venues.push({name:n});$('#venue-name').val('');renderVenues(ds);save()});
         $('#sidebar-toggle').click(function(){
 const s=$('.left-col');s.toggleClass('collapsed');
     if (!s.hasClass('collapsed')) {
         s.find('.left-col-main-content').scrollTop(0);
     }$(this).find('svg').html(s.hasClass('collapsed')?'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />':'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')});
-        $('#sidebar-toggle').droppable({accept:'.draggable',tolerance:'pointer',over:function(){const s=$('.left-col');if(s.hasClass('collapsed')){s.removeClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')}}});
+$('#sidebar-toggle').droppable({accept:'.draggable',tolerance:'pointer',over:function(){const s=$('.left-col');if(s.hasClass('collapsed')){s.removeClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')}}});
         
         // --- IPAD INPUT FIX: Manually focus inputs on touchstart and stop the event ---
         // This intercepts the tap before jQuery UI Touch Punch can hijack it for dragging.
-        $('main').on('touchstart', 'input.artist-input, input.notes-input, input.duration-input', function(e) {
+$('main').on('touchstart', 'input.artist-input, input.notes-input, input.duration-input', function(e) {
             this.focus();
             e.stopPropagation();
         });
-
-        $('main').on('click','li.draggable',function(e){if($(e.target).closest('input, button, a, .genre-dot, .energy-icon, .favorite-star-container').length>0){return}const s=$(this).attr('id'),c=$('main > section:visible').attr('id').replace('-view','');openSongInContext(s,c)});
+$('main').on('click','li.draggable',function(e){if($(e.target).closest('input, button, a, .genre-dot, .energy-icon, .favorite-star-container').length>0){return}const s=$(this).attr('id'),c=$('main > section:visible').attr('id').replace('-view','');openSongInContext(s,c)});
         
         // === NEW Redesigned Viewer Button Handlers ===
         $('#viewer-close-btn').on('click', function(e) {
@@ -1872,32 +2060,31 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('body').removeClass('doc-viewer-active');
             $('html').removeClass('doc-viewer-active pdf-overlay-active'); // ensure all viewer states are cleared
             $('#doc-view').removeClass('doc-view-fullscreen').hide();
-            resetScrollHandlers();
+    
+        resetScrollHandlers();
             $('#viewer-controls').addClass('opacity-0'); // Hide controls
             $('#doc-iframe-wrapper').empty();
             if (typeof destroyPdfOverlay === 'function') {
                 destroyPdfOverlay();
             }
         });
-
-        $('#viewer-next-btn').on('click', function() {
+$('#viewer-next-btn').on('click', function() {
             if (!viewerButtonsClickable) return;
             if (!$(this).is(':disabled') && currentViewerList && currentViewerIndex < currentViewerList.length - 1) {
                 openSongInContext(currentViewerList[currentViewerIndex + 1].id, currentViewerContext, currentViewerIndex + 1, 'next');
             }
         });
-
-        $('#viewer-prev-btn').on('click', function() {
+$('#viewer-prev-btn').on('click', function() {
             if (!viewerButtonsClickable) return;
             if (!$(this).is(':disabled') && currentViewerList && currentViewerIndex > 0) {
                 openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1, 'prev');
             }
         });
-    });
+});
         // ================== Event Handlers ==================
         function bindNav(ds){
             $('#home-btn').click(()=>{ds();$('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');show('master');autoCollapseSidebar()});
-            $('#nav-favorites').click(()=>{ds();$('#nav-favorites').addClass('selected');show('favorites')});
+$('#nav-favorites').click(()=>{ds();$('#nav-favorites').addClass('selected');show('favorites')});
             $('#nav-plays').click(()=>{ds();$('#nav-plays').addClass('selected');show('plays')});
             $('#nav-recordings').click(()=>{ds();$('#nav-recordings').addClass('selected');show('recordings')});
             $('#nav-energy').click(()=>{ds();$('#nav-energy').addClass('selected');show('energy')});
@@ -1907,22 +2094,22 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#back-to-venue-btn').click(()=>{if(cameFromVenue){renderVenueSetlists(cameFromVenue);show('venue-setlists')}});
             $('#toggle-setlists').click(()=>$('#setlists-container').slideToggle(150));
             $(document).on('click','#setlist-details-toggle',function(){$(this).toggleClass('open');$('#setlist-details-content').slideToggle(200,function(){if($(this).is(':visible'))$(this).css('display','flex')})});
-            $('#add-setlist-btn').click(()=>{const n=$('#new-setlist-name').val().trim();if(!n)return alert('Enter a name');if(setlists[n])return alert('Name exists');setlists[n]={songs:[],date:"",venue:""};$('#new-setlist-name').val('');renderLeftSetlists();save()});
+$('#add-setlist-btn').click(()=>{const n=$('#new-setlist-name').val().trim();if(!n)return alert('Enter a name');if(setlists[n])return alert('Name exists');setlists[n]={songs:[],date:"",venue:""};$('#new-setlist-name').val('');renderLeftSetlists();save()});
             $('#upload-master-btn').click(()=>$('#master-upload').click());
             $('#master-upload').on('change',handleMasterUpload);
             $('#search').on('input',renderMaster);
             $('#setlist-search-add').on('input',renderAddSongsPanel);
             $('#sort-dropdown, #favorites-sort-dropdown, #genre-sort-dropdown').on('change',function(){const v=$('main > section:visible').attr('id');if(v==='master-view')renderMaster();else if(v==='favorites-view')renderFavorites();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)});
             $('#genre-filter-button').on('click',()=>$('#genre-filter-dropdown').toggleClass('hidden'));
-            $(document).on('change','#genre-filter-dropdown input[type="checkbox"]',function(){masterSelectedGenres=$('#genre-filter-dropdown input:checked').map(function(){return $(this).val()}).get();updateGenreFilterButtonText('#genre-filter-button',masterSelectedGenres);renderMaster()});
+$(document).on('change','#genre-filter-dropdown input[type="checkbox"]',function(){masterSelectedGenres=$('#genre-filter-dropdown input:checked').map(function(){return $(this).val()}).get();updateGenreFilterButtonText('#genre-filter-button',masterSelectedGenres);renderMaster()});
             $('#setlist-sort-filter-dropdown').on('change',renderSetlist);
             $(document).on('click',function(e){if(!$(e.target).closest('#genre-filter-container').length)$('#genre-filter-dropdown').addClass('hidden');if(!$(e.target).closest('.relative').has('#share-setlist-btn').length)$('#share-options').addClass('hidden')});
             $('#reset-plays').click(()=>{if(confirm('Reset all plays?')){playCounts={};masterSongs.forEach(s=>s.lastPlayed=null);renderPlays();updateTopLeast();save()}});
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
-            $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
+$('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
-            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style></head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
-            $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
+$('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style></head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
+$('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
             $('#share-email').on('click',e=>{e.preventDefault();shareSetlist('email')});
             $('#share-gmail').on('click',e=>{e.preventDefault();shareSetlist('gmail')});
@@ -1931,82 +2118,108 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $(document).on('dragenter dragover',function(e){e.preventDefault();e.stopPropagation();if($('#master-view').is(':visible'))$('#master-drop-overlay').removeClass('hidden')}).on('dragleave drop',function(e){e.preventDefault();e.stopPropagation();$('#master-drop-overlay').addClass('hidden');if(e.type==='drop'&&$('#master-view').is(':visible')){const f=e.originalEvent.dataTransfer?.files;if(f?.length>0){handleMasterUpload({target:{files:f}})}}});
             $(document).on('click','.favorite-star-container',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(s){s.favorite=!s.favorite;save();$(`li[id="${s.id}"]`).find('.favorite-star-container').toggleClass('favorited',s.favorite);if($('#favorites-view').is(':visible'))renderFavorites()}});
             $('main').on('input','.artist-input, .notes-input, .duration-input',function(e){const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(s){s[$(this).attr('class').match(/(\w+)-input/)[1]]=e.target.value;save()}});
-            $('main').on('click','.delete-btn',function(e){e.stopPropagation();const i=$(this).closest('li').attr('id'),s=masterSongs.find(s=>s.id===i);if(!s)return;const c=$(this).text().toLowerCase();if(c==='delete'){if(confirm(`Permanently delete "${s.name}"?`)){if(s.file)URL.revokeObjectURL(s.file);removeFromAllSetlists([i]);masterSongs=masterSongs.filter(x=>x.id!==i);renderAll()}}else{setlists[currentSetlist].songs=setlists[currentSetlist].songs.filter(id=>id!==i);renderSetlist();save()}});
+$('main').on('click','.delete-btn',function(e){e.stopPropagation();const i=$(this).closest('li').attr('id'),s=masterSongs.find(s=>s.id===i);if(!s)return;const c=$(this).text().toLowerCase();if(c==='delete'){if(confirm(`Permanently delete "${s.name}"?`)){if(s.file)URL.revokeObjectURL(s.file);removeFromAllSetlists([i]);masterSongs=masterSongs.filter(x=>x.id!==i);renderAll()}}else{setlists[currentSetlist].songs=setlists[currentSetlist].songs.filter(id=>id!==i);renderSetlist();save()}});
             $('#setlist-date').on('input',function(){$('#date-placeholder').toggle(!$(this).val())})}
         async function shareSetlist(m){if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),t=`${escapeHtml(currentSetlist)} - ${escapeHtml(s.date)} @ ${escapeHtml(s.venue)}\n${o.map((s,i)=>`${i+1}. ${escapeHtml(s.name)}`).join('\n')}`,j=`Setlist: ${currentSetlist}`;if(m==='native'&&navigator.share){const f=[];for(let s of o){if(s.fileInfo?.data){try{const b=dataURItoBlob(s.fileInfo.data);f.push(new File([b],s.name+'.pdf',{type:'application/pdf'}))}catch(e){console.error("Could not process file for sharing:",s.name,e)}}}try{await navigator.share({title:currentSetlist,text:t,files:f})}catch(err){console.error('Share failed:',err)}}else if(m==='email'){window.location.href=`mailto:?subject=${encodeURIComponent(j)}&body=${encodeURIComponent(t)}`}else if(m==='gmail'){window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(j)}&body=${encodeURIComponent(t)}`,'_blank')}else{fallbackCopy(t)}$('#share-options').addClass('hidden')}
         function fallbackCopy(t){if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>{$('#copy-feedback').css('opacity',1);setTimeout(()=>$('#copy-feedback').css('opacity',0),2000)})}}
-        async function handleMasterUpload(e){const f=e.target.files;for(let file of f){const n=file.name.replace(/\.[^/.]+$/,'');if(masterSongs.some(s=>s.name.toLowerCase()===n.toLowerCase())&&!confirm(`A file named "${n}" already exists. Add anyway?`))continue;const i='s_'+Math.random().toString(36).slice(2,9);try{const fi=await storeFile(file);masterSongs.push({id:i,name:n,artist:'',genre:'',notes:'',duration:'',energy:0,favorite:!1,fileInfo:fi,lastPlayed:null});playCounts[i]=0}catch(err){console.error('Error processing file:',file.name,err);alert(`Failed to process file: ${file.name}`)}}renderAll()}
-        function createSongItem(s,i,c){const f=s.favorite?'favorited':'',t=`<div class="w-8 flex-shrink-0 flex justify-center items-center favorite-star-container ${f}" title="Toggle Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></div>`,d=`<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span></div>`,g=`<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${s.energy||0}">${energyIcons[s.energy||0]}</div>`,b=['master','favorites','genre'].includes(c)?'Delete':'Remove',n=`<div class="song-details-container"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(s.artist||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(s.notes||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(s.duration||'')}"><button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${b}</button></div>`,v=c==='setlist'&&viewedSongsInSetlist.has(s.id)?'viewed-index':'';return $(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable"><div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${v}">${i+1}</span></div>${t}${d}${g}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium" data-song-id="${s.id}"><span class="song-name-text" data-song-id="${s.id}">${escapeHtml(s.name)}</span></div>${n}</li>`)}
+        async function handleMasterUpload(e){const f=e.target.files;for(let file of f){const n=file.name.replace(/\.[^/.]+$/,'');if(masterSongs.some(s=>s.name.toLowerCase()===n.toLowerCase())&&!confirm(`A file named "${n}" already exists.
+Add anyway?`))continue;const i='s_'+Math.random().toString(36).slice(2,9);try{const fi=await storeFile(file);masterSongs.push({id:i,name:n,artist:'',genre:'',notes:'',duration:'',energy:0,favorite:!1,fileInfo:fi,lastPlayed:null});playCounts[i]=0}catch(err){console.error('Error processing file:',file.name,err);alert(`Failed to process file: ${file.name}`)}}renderAll()}
+        function createSongItem(s,i,c){const f=s.favorite?'favorited':'',t=`<div class="w-8 flex-shrink-0 flex justify-center items-center favorite-star-container ${f}" title="Toggle Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></div>`,d=`<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span></div>`,g=`<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${s.energy||0}">${energyIcons[s.energy||0]}</div>`,b=['master','favorites','genre'].includes(c)?'Delete':'Remove',n=`<div class="song-details-container"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(s.artist||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(s.notes||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(s.duration||'')}"><button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${b}</button></div>`,v=c==='setlist'&&viewedSongsInSetlist.has(s.id)?'viewed-index':'';return $(`<li 
+id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable"><div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${v}">${i+1}</span></div>${t}${d}${g}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium" data-song-id="${s.id}"><span class="song-name-text" data-song-id="${s.id}">${escapeHtml(s.name)}</span></div>${n}</li>`)}
         const draggableOptions={appendTo:'body',revert:'invalid',cursorAt:{left:10,top:10},helper:'clone',start:function(e,ui){const i=$(this),c=i.parent().children('.item-selected').length,h=c>1?`Dragging ${c} items`:i.find('.song-name').text();ui.helper.empty().html(h).css({'background-color':'#3b82f6','color':'white','padding':'0.5rem 1rem','height':'auto','width':'auto','white-space':'nowrap','box-shadow':'0 5px 15px rgba(0,0,0,0.3)','z-index':9999,'border-radius':'0.5rem','font-weight':'600'})}};
-        function renderMaster(){const q=$('#search').val().toLowerCase();let l=masterSongs.filter(s=>(q?(s.name.toLowerCase().includes(q)||(s.artist||'').toLowerCase().includes(q)):!0)&&(masterSelectedGenres.length>0?masterSelectedGenres.includes(s.genre):!0));const m=$('#sort-dropdown').val();l.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentMasterViewSongs=l;const u=$('#master-list').empty();if(l.length===0)u.append(`<li class="p-8 text-center text-gray-500 italic">${(q||masterSelectedGenres.length>0)?'No songs match your current filters.':'No songs yet. <br> Drag & drop PDF files onto the page or use the "Add files" button!'}</li>`);else l.forEach((s,i)=>u.append(createSongItem(s,i,'master')));$('#master-list .draggable').draggable(draggableOptions)}
+function renderMaster(){const q=$('#search').val().toLowerCase();let l=masterSongs.filter(s=>(q?(s.name.toLowerCase().includes(q)||(s.artist||'').toLowerCase().includes(q)):!0)&&(masterSelectedGenres.length>0?masterSelectedGenres.includes(s.genre):!0));const m=$('#sort-dropdown').val();l.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentMasterViewSongs=l;const u=$('#master-list').empty();if(l.length===0)u.append(`<li class="p-8 text-center text-gray-500 italic">${(q||masterSelectedGenres.length>0)?'No songs match your current filters.':'No songs yet. <br> Drag & drop PDF files onto the page or use the "Add files" button!'}</li>`);else l.forEach((s,i)=>u.append(createSongItem(s,i,'master')));$('#master-list .draggable').draggable(draggableOptions)}
         function renderAddSongsPanel(){const q=$('#setlist-search-add').val().toLowerCase();let l=masterSongs.filter(s=>q?s.name.toLowerCase().includes(q):!0);l.sort((a,b)=>a.name.localeCompare(b.name));const u=$('#setlist-add-songs-list').empty(),c=setlists[currentSetlist]?.songs||[];l.forEach(s=>{const i=c.includes(s.id),li=$(`<li class="add-song-item" data-song-id="${s.id}"><label for="add-${s.id}" class="flex items-center w-full cursor-pointer"><input type="checkbox" id="add-${s.id}" class="sr-only custom-checkbox-input" ${i?'checked':''}><div class="custom-checkbox-box"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></div><span class="ml-3 flex-grow">${escapeHtml(s.name)}</span></label></li>`);li.find('input').on('change',function(){const i=$(this).closest('.add-song-item').data('song-id');if(this.checked){if(!setlists[currentSetlist].songs.includes(i))setlists[currentSetlist].songs.push(i)}else{setlists[currentSetlist].songs=setlists[currentSetlist].songs.filter(id=>id!==i)}renderSetlist();save()});u.append(li)})}
         function removeFromAllSetlists(i){Object.values(setlists).forEach(s=>{s.songs=s.songs.filter(id=>!i.includes(id))})}
-        function renderLeftSetlists(){const c=$('#setlists-container').empty();Object.keys(setlists).forEach(n=>{const e=$(`<div class="p-2 mb-1 rounded-lg cursor-pointer setlist-item bg-gray-700" data-name="${escapeHtml(n)}"><div class="flex items-center"><button class="del-setlist" title="Delete setlist"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg></button><span class="setlist-name">${escapeHtml(n)}</span></div></div>`);e.find('.del-setlist').click(ev=>{ev.stopPropagation();if(confirm('Delete '+n+'?')){delete setlists[n];recordings=recordings.filter(r=>r.setlist!==n);if(currentSetlist===n){currentSetlist=null;$('#home-btn').trigger('click')}renderLeftSetlists();save()}});e.on('dblclick',function(){const i=$('<input class="edit-input w-full bg-gray-600 p-1 rounded-md" value="'+escapeHtml(n)+'">');$(this).find('.setlist-name').replaceWith(i);i.focus().on('blur keypress',function(ev){if(ev.type==='keypress'&&ev.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==n&&!setlists[newName]){setlists[newName]=setlists[n];recordings.forEach(r=>{if(r.setlist===n)r.setlist=newName});delete setlists[n];if(currentSetlist===n){currentSetlist=newName;$('#setlist-title').text(newName)}}renderLeftSetlists();save()})});c.append(e)});$('.setlist-item').droppable({accept:'.draggable',hoverClass:'drag-hover-setlist',drop:function(e,ui){const s=setlists[$(this).data('name')];let a=!1;const i=ui.draggable.hasClass('item-selected')?$(`#${ui.draggable.parent().attr('id')} .item-selected`):ui.draggable;i.each(function(){const d=$(this).attr('id');if(d&&!s.songs.includes(d)){s.songs.push(d);a=!0}});if(a){save();if(currentSetlist===$(this).data('name'))renderSetlist()}}});$('#setlists-container').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=$(this).sortable('toArray',{attribute:'data-name'}),n={};o.forEach(i=>{if(setlists[i])n[i]=setlists[i]});setlists=n;save()}})}
-        function renderSetlist(){if(!currentSetlist){$('#setlist-view').hide();return}$('#setlist-details-toggle').removeClass('open');$('#setlist-details-content').hide();$('#back-to-venue-btn').toggle(!!cameFromVenue);const s=setlists[currentSetlist];$('#setlist-title').text(currentSetlist);$('#setlist-date').val(s.date||'');$('#date-placeholder').toggle(!s.date);$('#setlist-venue').val(s.venue||'');renderAddSongsPanel();$('#setlist-recordings').empty();const r=recordings.filter(r=>r.setlist===currentSetlist);if(r.length>0){const c=$('<div class="p-2 bg-gray-100 rounded-lg dark:bg-gray-700"></div>').append('<h4 class="font-semibold text-sm mb-2">Recordings for this Setlist:</h4>');r.forEach(r=>{c.append($(`<div class="flex items-center justify-between p-2 mb-1 bg-white rounded-lg shadow-sm dark:bg-gray-600"><span>${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</span><audio controls src="${r.audioData}" style="height:30px;"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition" data-id="${r.id}">Delete</button></div>`).on('click','button',function(){if(confirm('Delete this recording?')){recordings=recordings.filter(rec=>rec.id!==$(this).data('id'));save();renderSetlist()}}))});$('#setlist-recordings').append(c)}let o=(s.songs||[]).map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean);const m=$('#setlist-sort-filter-dropdown').val();if(m!=='custom')o.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='name'?a.name.localeCompare(b.name):m==='energy'?(b.energy||0)-(a.energy||0):m==='genre'?(a.genre||'').localeCompare(b.genre||''):0);$('#setlist-total-duration').text(`Runtime: ${o.reduce((a,s)=>a+(parseInt(s.duration,10)||0),0)} min`);$('#setlist-song-count').text(`${o.length} songs`);window.currentSetlistViewSongs=o;const u=$('#setlist-list').empty();o.forEach((s,i)=>{u.append(createSongItem(s,i,'setlist'))});if($('#setlist-list').hasClass('ui-sortable'))$('#setlist-list').sortable('destroy');$('#setlist-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){$('#setlist-sort-filter-dropdown').val('custom');setlists[currentSetlist].songs=$(this).sortable('toArray');$('#setlist-list .index-number').each((i,el)=>$(el).text(i+1));save()}}).disableSelection()}
-        function renderPlays(){const u=$('#plays-list').empty();if(masterSongs.length===0){u.append('<li class="p-8 text-center text-gray-500 italic">Add songs to start tracking plays.</li>');return}const s=masterSongs.slice().sort((a,b)=>(playCounts[b.id]||0)-(playCounts[a.id]||0));window.currentPlaysViewSongs=s;if(Object.values(playCounts).every(c=>c===0)){u.append('<li class="p-8 text-center text-gray-500 italic">No songs played yet. Click a song to log a play.</li>');return}s.forEach(s=>{const l=$(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable pl-4"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);l.find('button').click(()=>{playCounts[s.id]=0;renderPlays();updateTopLeast();save()});u.append(l)});$('#plays-list .draggable').draggable(draggableOptions)}
+        function renderLeftSetlists(){const c=$('#setlists-container').empty();Object.keys(setlists).forEach(n=>{const e=$(`<div class="p-2 mb-1 
+rounded-lg cursor-pointer setlist-item bg-gray-700" data-name="${escapeHtml(n)}"><div class="flex items-center"><button class="del-setlist" title="Delete setlist"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg></button><span class="setlist-name">${escapeHtml(n)}</span></div></div>`);e.find('.del-setlist').click(ev=>{ev.stopPropagation();if(confirm('Delete '+n+'?')){delete setlists[n];recordings=recordings.filter(r=>r.setlist!==n);if(currentSetlist===n){currentSetlist=null;$('#home-btn').trigger('click')}renderLeftSetlists();save()}});e.on('dblclick',function(){const i=$('<input class="edit-input w-full bg-gray-600 p-1 rounded-md" value="'+escapeHtml(n)+'">');$(this).find('.setlist-name').replaceWith(i);i.focus().on('blur keypress',function(ev){if(ev.type==='keypress'&&ev.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==n&&!setlists[newName]){setlists[newName]=setlists[n];recordings.forEach(r=>{if(r.setlist===n)r.setlist=newName});delete setlists[n];if(currentSetlist===n){currentSetlist=newName;$('#setlist-title').text(newName)}}renderLeftSetlists();save()})});c.append(e)});$('.setlist-item').droppable({accept:'.draggable',hoverClass:'drag-hover-setlist',drop:function(e,ui){const s=setlists[$(this).data('name')];let a=!1;const i=ui.draggable.hasClass('item-selected')?$(`#${ui.draggable.parent().attr('id')} .item-selected`):ui.draggable;i.each(function(){const d=$(this).attr('id');if(d&&!s.songs.includes(d)){s.songs.push(d);a=!0}});if(a){save();if(currentSetlist===$(this).data('name'))renderSetlist()}}});$('#setlists-container').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=$(this).sortable('toArray',{attribute:'data-name'}),n={};o.forEach(i=>{if(setlists[i])n[i]=setlists[i]});setlists=n;save()}})}
+        function renderSetlist(){if(!currentSetlist){$('#setlist-view').hide();return}$('#setlist-details-toggle').removeClass('open');$('#setlist-details-content').hide();$('#back-to-venue-btn').toggle(!!cameFromVenue);const s=setlists[currentSetlist];$('#setlist-title').text(currentSetlist);$('#setlist-date').val(s.date||'');$('#date-placeholder').toggle(!s.date);$('#setlist-venue').val(s.venue||'');renderAddSongsPanel();$('#setlist-recordings').empty();const r=recordings.filter(r=>r.setlist===currentSetlist);if(r.length>0){const 
+c=$('<div class="p-2 bg-gray-100 rounded-lg dark:bg-gray-700"></div>').append('<h4 class="font-semibold text-sm mb-2">Recordings for this Setlist:</h4>');r.forEach(r=>{c.append($(`<div class="flex items-center justify-between p-2 mb-1 bg-white rounded-lg shadow-sm dark:bg-gray-600"><span>${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</span><audio controls src="${r.audioData}" style="height:30px;"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition" data-id="${r.id}">Delete</button></div>`).on('click','button',function(){if(confirm('Delete this recording?')){recordings=recordings.filter(rec=>rec.id!==$(this).data('id'));save();renderSetlist()}}))});$('#setlist-recordings').append(c)}let o=(s.songs||[]).map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean);const m=$('#setlist-sort-filter-dropdown').val();if(m!=='custom')o.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='name'?a.name.localeCompare(b.name):m==='energy'?(b.energy||0)-(a.energy||0):m==='genre'?(a.genre||'').localeCompare(b.genre||''):0);$('#setlist-total-duration').text(`Runtime: ${o.reduce((a,s)=>a+(parseInt(s.duration,10)||0),0)} min`);$('#setlist-song-count').text(`${o.length} songs`);window.currentSetlistViewSongs=o;const u=$('#setlist-list').empty();o.forEach((s,i)=>{u.append(createSongItem(s,i,'setlist'))});if($('#setlist-list').hasClass('ui-sortable'))$('#setlist-list').sortable('destroy');$('#setlist-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){$('#setlist-sort-filter-dropdown').val('custom');setlists[currentSetlist].songs=$(this).sortable('toArray');$('#setlist-list .index-number').each((i,el)=>$(el).text(i+1));save()}}).disableSelection()}
+        function renderPlays(){const u=$('#plays-list').empty();if(masterSongs.length===0){u.append('<li class="p-8 text-center text-gray-500 italic">Add songs to start tracking plays.</li>');return}const s=masterSongs.slice().sort((a,b)=>(playCounts[b.id]||0)-(playCounts[a.id]||0));window.currentPlaysViewSongs=s;if(Object.values(playCounts).every(c=>c===0)){u.append('<li class="p-8 text-center text-gray-500 italic">No songs played yet.
+Click a song to log a play.</li>');return}s.forEach(s=>{const l=$(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable pl-4"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);l.find('button').click(()=>{playCounts[s.id]=0;renderPlays();updateTopLeast();save()});u.append(l)});$('#plays-list .draggable').draggable(draggableOptions)}
         function renderRecordings(){const u=$('#recordings-list').empty();if(recordings.length===0){u.append('<li class="p-8 text-center text-gray-500 italic">No recordings saved.</li>');return}recordings.forEach(r=>{const l=$(`<li class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"><div class="flex-1">${escapeHtml(r.setlist)} - ${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</div><audio controls src="${r.audioData}"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-rec" data-id="${r.id}">Delete</button></li>`);l.find('.delete-rec').click(()=>{recordings=recordings.filter(rec=>rec.id!==r.id);renderRecordings();save()});u.append(l)})}
         function renderFavorites(){let f=masterSongs.filter(s=>s.favorite);const m=$('#favorites-sort-dropdown').val();f.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentFavoritesViewSongs=f;const u=$('#favorites-list').empty();f.forEach((s,i)=>{u.append(createSongItem(s,i,'favorites'))});$('#favorites-list .draggable').draggable(draggableOptions)}
-        function renderGenreView(n){currentGenre=n;$('#genre-view-title').text(`Genre: ${n}`);let s=masterSongs.filter(s=>s.genre&&s.genre.toLowerCase()===n.toLowerCase());const m=$('#genre-sort-dropdown').val();s.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentGenreViewSongs=s;const u=$('#genre-song-list').empty();s.forEach((s,i)=>{u.append(createSongItem(s,i,'genre'))});$('#genre-song-list .draggable').draggable(draggableOptions)}
+        function renderGenreView(n){currentGenre=n;$('#genre-view-title').text(`Genre: ${n}`);let s=masterSongs.filter(s=>s.genre&&s.genre.toLowerCase()===n.toLowerCase());const m=$('#genre-sort-dropdown').val();s.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentGenreViewSongs=s;const 
+u=$('#genre-song-list').empty();s.forEach((s,i)=>{u.append(createSongItem(s,i,'genre'))});$('#genre-song-list .draggable').draggable(draggableOptions)}
         function renderEnergyLevels(){const c=$('#energy-level-container').empty();[1,2,3].forEach(l=>{const s=masterSongs.filter(s=>s.energy===l).sort((a,b)=>a.name.localeCompare(b.name)),e=$(`<div class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg"><div class="flex justify-center mb-2">${energyIcons[l]}</div><ul class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto"></ul></div>`),u=e.find('ul');if(s.length>0)s.forEach(s=>u.append(`<li id="${s.id}" class="p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer draggable">${escapeHtml(s.name)}</li>`));else u.append(`<li class="p-2 text-sm text-gray-500 italic">No songs in this category.</li>`);c.append(e)});$('#energy-level-container .draggable').draggable(draggableOptions)}
         function renderGenres(ds){$('#genre-list').empty();genres.forEach(g=>{const e=$(`<div class="sidebar-item genre-item" data-name="${escapeHtml(g.name)}"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-genre, .genre-edit-input').length>0)return;ds();$(this).addClass('selected');currentGenre=g.name;show('genre-view')});e.find('.delete-genre').click(ev=>{ev.stopPropagation();if(confirm(`Delete genre "${g.name}"?`)){genres=genres.filter(gn=>gn.name!==g.name);masterSongs.forEach(s=>{if(s.genre===g.name)s.genre=''});renderAll();save()}});e.find('.genre-name').on('dblclick',function(ev){ev.stopPropagation();const o=$(this).text(),i=$('<input class="w-full bg-gray-600 p-1 rounded-md" type="text" value="'+o+'">');$(this).replaceWith(i);i.focus().select().on('blur keypress',function(e){if(e.type==='keypress'&&e.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==o){const gn=genres.find(gn=>gn.name===o);if(gn)gn.name=newName;masterSongs.forEach(s=>{if(s.genre===o)s.genre=newName})}renderAll();save()})});$('#genre-list').append(e)});updateGenreFilters('#genre-filter-dropdown',masterSelectedGenres);$('#genre-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#genre-list .genre-item').each(function(){const n=$(this).data('name'),g=genres.find(g=>g.name===n);if(g)o.push(g)});genres=o;save()}})}
-        function renderVenues(ds){$('#venue-list').empty();venues.forEach(v=>{const e=$(`<div class="sidebar-item venue-item" data-name="${escapeHtml(v.name)}"><div class="venue-name text-sm">${escapeHtml(v.name)}</div><span class="delete-venue" title="Delete venue">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-venue').length)return;ds();$(this).addClass('selected');renderVenueSetlists(v.name);show('venue-setlists')});e.find('.delete-venue').click(ev=>{ev.stopPropagation();venues=venues.filter(vn=>vn.name!==v.name);Object.values(setlists).forEach(sl=>{if(sl.venue===v.name)sl.venue=''});recordings.forEach(r=>{if(r.venue===v.name)r.venue=''});renderVenues(ds);if(currentSetlist)renderSetlist();if($('#venue-setlists-view').is(':visible'))$('#home-btn').trigger('click');save()});$('#venue-list').append(e)});$('#venue-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#venue-list .venue-item').each(function(){const n=$(this).data('name'),v=venues.find(v=>v.name===n);if(v)o.push(v)});venues=o;save()}})}
+        function renderVenues(ds){$('#venue-list').empty();venues.forEach(v=>{const e=$(`<div class="sidebar-item venue-item" data-name="${escapeHtml(v.name)}"><div class="venue-name text-sm">${escapeHtml(v.name)}</div><span class="delete-venue" title="Delete venue">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-venue').length)return;ds();$(this).addClass('selected');renderVenueSetlists(v.name);show('venue-setlists')});e.find('.delete-venue').click(ev=>{ev.stopPropagation();venues=venues.filter(vn=>vn.name!==v.name);Object.values(setlists).forEach(sl=>{if(sl.venue===v.name)sl.venue=''});recordings.forEach(r=>{if(r.venue===v.name)r.venue=''});renderVenues(ds);if(currentSetlist)renderSetlist();if($('#venue-setlists-view').is(':visible'))$('#home-btn').trigger('click');save()});$('#venue-list').append(e)});$('#venue-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#venue-list .venue-item').each(function(){const 
+n=$(this).data('name'),v=venues.find(v=>v.name===n);if(v)o.push(v)});venues=o;save()}})}
         function renderVenueSetlists(n){$('#venue-setlists-title').html(`Setlists for: <span class="text-blue-600">${escapeHtml(n)}</span>`);const u=$('#venue-setlists-list').empty(),m=Object.entries(setlists).filter(([_,d])=>d.venue===n);if(m.length===0){u.append('<li class="p-4 text-center text-gray-500">No setlists found for this venue.</li>');return}m.forEach(([n,d])=>{u.append(`<li class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" data-setlist-name="${escapeHtml(n)}"><div class="font-medium">${escapeHtml(n)}</div><div class="text-sm text-gray-500">${escapeHtml(d.date)||'No date'}</div></li>`)})}
         function updateGenreFilters(s,l){const d=$(s).empty();if(genres.length===0){d.append('<div class="p-2 text-sm text-gray-500">No genres created.</div>');return}genres.forEach(g=>{d.append(`<label class="flex items-center p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"><input type="checkbox" value="${escapeHtml(g.name)}" class="form-checkbox h-4 w-4 text-blue-600 rounded-md mr-2" ${l.includes(g.name)?'checked':''}>${escapeHtml(g.name)}</label>`)})}
         function updateGenreFilterButtonText(s,l,d='Select Genres'){const b=$(s);if(l.length===0)b.text(d);else if(l.length===1)b.text(escapeHtml(l[0]));else b.text(`${l.length} genres`)}
         function getGenreColor(n){return genres.find(x=>x.name===n)?.color||'#cbd5e1'}
         function escapeHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-        function updateTopLeast(){const p=Object.entries(playCounts).filter(([i])=>masterSongs.find(s=>s.id===i)).sort((a,b)=>b[1]-a[1]),v=p.filter(([_,c])=>c>0);if(v.length===0){$('.stats-container').hide();return}$('.stats-container').show();$('#top-played, #least-played').empty();v.slice(0,5).forEach(([i,c])=>{const s=masterSongs.find(x=>x.id===i);if(s)$('#top-played').append(`<li>${escapeHtml(s.name)}: ${c}</li>`)});v.slice(-5).reverse().forEach(([i,c])=>{const s=masterSongs.find(x=>x.id===i);if(s)$('#least-played').append(`<li>${escapeHtml(s.name)}: ${c}</li>`)})}
+      
+  function updateTopLeast(){const p=Object.entries(playCounts).filter(([i])=>masterSongs.find(s=>s.id===i)).sort((a,b)=>b[1]-a[1]),v=p.filter(([_,c])=>c>0);if(v.length===0){$('.stats-container').hide();return}$('.stats-container').show();$('#top-played, #least-played').empty();v.slice(0,5).forEach(([i,c])=>{const s=masterSongs.find(x=>x.id===i);if(s)$('#top-played').append(`<li>${escapeHtml(s.name)}: ${c}</li>`)});v.slice(-5).reverse().forEach(([i,c])=>{const s=masterSongs.find(x=>x.id===i);if(s)$('#least-played').append(`<li>${escapeHtml(s.name)}: ${c}</li>`)})}
         function renderAll(){renderLeftSetlists();renderGenres();renderVenues();renderMaster();if(currentSetlist)renderSetlist();renderPlays();renderRecordings();renderFavorites();renderEnergyLevels();if(currentGenre)renderGenreView(currentGenre);updateTopLeast()}
         
         function openSongInContext(songId, context, index = -1, direction = 'none') {
-            const song = masterSongs.find(s => s.id === songId); if (!song) return;
-            if (direction === 'none') { playCounts[song.id] = (playCounts[song.id] || 0) + 1; song.lastPlayed = new Date().toISOString().split('T')[0]; updateTopLeast(); save(); }
+            const song = masterSongs.find(s => s.id === songId);
+if (!song) return;
+            if (direction === 'none') { playCounts[song.id] = (playCounts[song.id] || 0) + 1; song.lastPlayed = new Date().toISOString().split('T')[0]; updateTopLeast();
+save(); }
             currentViewerList = (context==='master')?window.currentMasterViewSongs||[]:(context==='setlist')?window.currentSetlistViewSongs||[]:(context==='plays')?window.currentPlaysViewSongs||[]:(context==='favorites')?window.currentFavoritesViewSongs||[]:(context==='genre')?window.currentGenreViewSongs||[]:masterSongs;
             currentViewerContext = context;
-            currentViewerIndex = (index === -1) ? currentViewerList.findIndex(s => s.id === songId) : index;
-            if (context === 'setlist') { viewedSongsInSetlist.add(songId); $(`#setlist-list li[id="${songId}"] .index-number`).addClass('viewed-index'); }
-            const url = getFileURL(song); if (!url) { alert('File not available for this song.'); return; }
+currentViewerIndex = (index === -1) ? currentViewerList.findIndex(s => s.id === songId) : index;
+            if (context === 'setlist') { viewedSongsInSetlist.add(songId);
+$(`#setlist-list li[id="${songId}"] .index-number`).addClass('viewed-index'); }
+            const url = getFileURL(song);
+if (!url) { alert('File not available for this song.'); return;
+}
             
             (function(){
                 const scroller = showPdfOverlay();
                 (async () => {
                     try {
-                        await renderPDFInto(scroller, url);
+                 
+       await renderPDFInto(scroller, url);
                     } catch (e) {
                         console.error('PDF render failed, opening natively', e);
                         destroyPdfOverlay();
-                        try { window.open(url, '_blank'); } catch(_) {}
+               
+         try { window.open(url, '_blank'); } catch(_) {}
                     }
                 })();
             })();
-            const $wrapper = $('#doc-iframe-wrapper');
+const $wrapper = $('#doc-iframe-wrapper');
             const $oldContainer = $wrapper.find('.current');
             const $newContainer = $(`<div class="doc-iframe-container"><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
-            if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20); } 
-            else if (direction === 'prev') { $newContainer.addClass('prev'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-prev').removeClass('current'); $newContainer.addClass('current incoming-prev').removeClass('prev'); }, 20); } 
-            else { $newContainer.addClass('current'); $wrapper.html($newContainer); }
+if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20);
+} 
+            else if (direction === 'prev') { $newContainer.addClass('prev');
+$wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-prev').removeClass('current'); $newContainer.addClass('current incoming-prev').removeClass('prev'); }, 20); } 
+            else { $newContainer.addClass('current');
+$wrapper.html($newContainer); }
             setTimeout(() => $oldContainer.remove(), 800);
-            
-            (function(){
+(function(){
                 const pdfContainer = $newContainer.find('.pdfjs-container')[0];
                 if (pdfContainer) { renderPDFWithPDFJS(url, pdfContainer); }
             })();
-            
-            if (direction === 'none') { 
+if (direction === 'none') { 
                 $('body').addClass('doc-viewer-active');
-                $('html').addClass('doc-viewer-active');
+$('html').addClass('doc-viewer-active');
                 $('#doc-view').addClass('doc-view-fullscreen').show(); 
             }
             // The new setupScrollHandlers will handle showing the buttons and setting their state.
-            setupScrollHandlers();
+setupScrollHandlers();
         }
 
         function saveRecording(b){const r=new FileReader();r.readAsDataURL(b);r.onloadend=()=>{const s=setlists[currentSetlist];recordings.push({id:'r_'+Math.random().toString(36).slice(2,9),setlist:currentSetlist,date:s.date,venue:s.venue,audioData:r.result});save();if($('#recordings-view').is(':visible'))renderRecordings();if(currentSetlist)renderSetlist()}}
         
         // This function shows controls and ensures their state (enabled/disabled) is correct.
         function showNavButtonsAndCheckState() {
-            const isPrevDisabled = currentViewerIndex <= 0;
-            const isNextDisabled = !currentViewerList || currentViewerIndex >= currentViewerList.length - 1;
+            // Explicitly define button states to avoid potential evaluation errors
+            let isPrevDisabled = true;
+            if (currentViewerIndex > 0) {
+                isPrevDisabled = false;
+            }
+
+            let isNextDisabled = true;
+            if (currentViewerList && currentViewerList.length > 0) {
+                if (currentViewerIndex < currentViewerList.length - 1) {
+                    isNextDisabled = false;
+                }
+            }
             
             $('#viewer-prev-btn').prop('disabled', isPrevDisabled);
             $('#viewer-next-btn').prop('disabled', isNextDisabled);
@@ -2014,60 +2227,54 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#viewer-controls').removeClass('opacity-0');
             
             viewerButtonsClickable = false;
-            setTimeout(() => {
+setTimeout(() => {
                 if (!$('#viewer-controls').hasClass('opacity-0')) {
                     viewerButtonsClickable = true;
                 }
             }, 250);
-
-            startInactivityTimer();
+startInactivityTimer();
         }
 
         function hideNavButtons() {
             $('#viewer-controls').addClass('opacity-0');
-            viewerButtonsClickable = false;
+viewerButtonsClickable = false;
         }
         
         // This timer will hide the controls after a period of inactivity.
-        function startInactivityTimer() {
+function startInactivityTimer() {
             clearTimeout(inactivityTimer);
             inactivityTimer = setTimeout(hideNavButtons, 3000);
-        }
+}
 
         // This function sets up all the event listeners for the document viewer.
         function setupScrollHandlers() {
             resetScrollHandlers();
             const $viewArea = $('#pdf-overlay-scroll');
-            if ($viewArea.length === 0) return;
+if ($viewArea.length === 0) return;
 
-            // 1. Show controls on scroll to top.
+            // 1. Hide controls on scroll down. They are shown again via the 'pointerdown' event.
             $viewArea.on('scroll.viewer', function() {
-                if (this.scrollTop < 5) {
-                    if ($('#viewer-controls').hasClass('opacity-0')) {
-                        showNavButtonsAndCheckState();
-                    }
-                } else {
+                if (this.scrollTop > 5) {
                     hideNavButtons();
                 }
             });
-
-            // 2. Show controls on tap at top of viewer, but don't trigger buttons.
-            $viewArea.on('pointerdown.viewer', function(e) {
+// 2. Show controls on tap at top of viewer, but don't trigger buttons.
+$viewArea.on('pointerdown.viewer', function(e) {
                  if ($(e.target).closest('.viewer-btn').length > 0) {
                     return;
                 }
                 if (e.clientY < 80) {
-                    if ($('#viewer-controls').hasClass('opacity-0')) {
+                    if 
+($('#viewer-controls').hasClass('opacity-0')) {
                          showNavButtonsAndCheckState();
                     }
                 }
             });
-
-            // 3. Refined swipe functionality for navigation.
+// 3. Refined swipe functionality for navigation.
             let touchstartX = 0;
             let touchstartY = 0;
-            const swipeThresholdX = 80; 
-            const swipeThresholdY = 40;
+            const swipeThresholdX = 80;
+const swipeThresholdY = 40;
 
             $viewArea.on('touchstart.viewer', e => {
                 if (e.originalEvent.touches) {
@@ -2075,43 +2282,44 @@ const s=$('.left-col');s.toggleClass('collapsed');
                     touchstartY = e.originalEvent.touches[0].screenY;
                 }
             });
-            $viewArea.on('touchend.viewer', e => {
+$viewArea.on('touchend.viewer', e => {
                 if (e.originalEvent.changedTouches) {
                     const touchendX = e.originalEvent.changedTouches[0].screenX;
                     const touchendY = e.originalEvent.changedTouches[0].screenY;
                     const deltaX = touchendX - touchstartX;
-                    const deltaY = touchendY - touchstartY;
+        
+            const deltaY = touchendY - startY;
 
                     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > swipeThresholdX) {
                         if (deltaX < 0) { 
-                           if(viewerButtonsClickable) $('#viewer-next-btn').trigger('click');
+                          
+ if(viewerButtonsClickable) $('#viewer-next-btn').trigger('click');
                         } else { 
                            if(viewerButtonsClickable) $('#viewer-prev-btn').trigger('click');
                         }
-                    }
+                   
+ }
                 }
             });
-
-            // Initially check if we should show the buttons.
+// Initially check if we should show the buttons.
             if ($viewArea.length > 0 && $viewArea[0].scrollTop < 5) {
                 showNavButtonsAndCheckState();
-            }
+}
         }
 
 
         function resetScrollHandlers() {
             $('#pdf-overlay-scroll').off('.viewer');
-            $('#doc-view, #pdf-overlay-scroll').off('mousemove pointerdown touchstart touchend'); 
+$('#doc-view, #pdf-overlay-scroll').off('mousemove pointerdown touchstart touchend'); 
             clearTimeout(inactivityTimer);
         }
 
         function showNavButtons() {
             showNavButtonsAndCheckState();
-        }
+}
 
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
     </script>
-    <!-- Left-edge custom scrollbar (visible only when sidebar is collapsed) -->
     <div id="edge-scrollbar" class="hidden" aria-hidden="true">
         <div id="edge-thumb"></div>
     </div>
@@ -2127,97 +2335,96 @@ const s=$('.left-col');s.toggleClass('collapsed');
   if (!stats || !aside || !rail || !thumb) return;
 
   // Show the rail
-  rail.style.display = 'block';
+  rail.style.display 
+= 'block';
 
   // Helpers
   function rect(el){
     const r = el.getBoundingClientRect();
-    return {top:r.top, left:r.left, width:r.width, height:r.height, bottom:r.bottom};
+return {top:r.top, left:r.left, width:r.width, height:r.height, bottom:r.bottom};
   }
 
   // Position rail to match stats vertical position and height, locked to the far right inside the aside
   function layout(){
     const a = rect(aside);
-    const s = rect(stats);
+const s = rect(stats);
     // Calculate offset of stats within aside
     const top = s.top - a.top;
-    const height = s.height;
+const height = s.height;
     // Place rail
     rail.style.top = top + 'px';
     rail.style.height = height + 'px';
-    // Keep at far right
+// Keep at far right
     rail.style.right = '0px';
-  }
+}
 
   // Update thumb size & position based on scroll
   function updateThumb(){
     const content = stats.scrollHeight;
-    const visible = stats.clientHeight;
+const visible = stats.clientHeight;
     if (content <= visible + 1) {
       thumb.style.display = 'none';
       return;
-    }
+}
     thumb.style.display = 'block';
     const railH = rail.clientHeight;
     const ratio = visible / content;
-    const thumbH = Math.max(24, Math.round(railH * ratio));
+const thumbH = Math.max(24, Math.round(railH * ratio));
     const maxScroll = content - visible;
     const scrollTop = stats.scrollTop;
-    const trackSpace = railH - thumbH;
+const trackSpace = railH - thumbH;
     const thumbTop = maxScroll > 0 ? Math.round((scrollTop / maxScroll) * trackSpace) : 0;
-    thumb.style.height = thumbH + 'px';
+thumb.style.height = thumbH + 'px';
     thumb.style.top = thumbTop + 'px';
-  }
+}
 
   // Scroll sync from stats -> thumb
   stats.addEventListener('scroll', updateThumb, {passive:true});
-
-  // Drag handling for thumb -> stats
+// Drag handling for thumb -> stats
   let dragging = false;
   let dragStartY = 0;
   let startTop = 0;
-
-  function onDown(e){
+function onDown(e){
     dragging = true;
     dragStartY = (e.touches ? e.touches[0].clientY : e.clientY);
-    startTop = parseInt(window.getComputedStyle(thumb).top, 10) || 0;
+    startTop = parseInt(window.getComputedStyle(thumb).top, 10) ||
+0;
     e.preventDefault();
   }
   function onMove(e){
     if (!dragging) return;
     const railH = rail.clientHeight;
     const thumbH = thumb.clientHeight;
-    const maxThumbTop = railH - thumbH;
+const maxThumbTop = railH - thumbH;
     const currentY = (e.touches ? e.touches[0].clientY : e.clientY);
-    let newTop = startTop + (currentY - dragStartY);
+let newTop = startTop + (currentY - dragStartY);
     newTop = Math.max(0, Math.min(maxThumbTop, newTop));
     thumb.style.top = newTop + 'px';
-    // Map back to scrollTop
+// Map back to scrollTop
     const content = stats.scrollHeight;
     const visible = stats.clientHeight;
-    const maxScroll = content - visible;
+const maxScroll = content - visible;
     const ratio = newTop / maxThumbTop;
     stats.scrollTop = Math.round(maxScroll * ratio);
-  }
+}
   function onUp(){ dragging = false; }
 
   thumb.addEventListener('mousedown', onDown);
   thumb.addEventListener('touchstart', onDown, {passive:false});
   window.addEventListener('mousemove', onMove, {passive:false});
   window.addEventListener('touchmove', onMove, {passive:false});
-  window.addEventListener('mouseup', onUp);
+window.addEventListener('mouseup', onUp);
   window.addEventListener('touchend', onUp);
 
   // Re-layout on resize and when fonts/images load
   const ro = new ResizeObserver(() => { layout(); updateThumb(); });
-  ro.observe(aside);
+ro.observe(aside);
   ro.observe(stats);
   window.addEventListener('resize', () => { layout(); updateThumb(); });
 
   // Initial layout
   requestAnimationFrame(() => { layout(); updateThumb(); });
 })();
-
 // === Long-press (2s) to rename song titles across the app (iPad-friendly) ===
 (function(){
     let holdTimer = null;
@@ -2229,7 +2436,8 @@ const s=$('.left-col');s.toggleClass('collapsed');
         if (e.touches && e.touches.length) return {x: e.touches[0].clientX, y: e.touches[0].clientY};
         if (e.changedTouches && e.changedTouches.length) return {x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY};
         return {x: e.clientX || 0, y: e.clientY || 0};
-    }
+    
+}
     function cancelTimer(){ if (holdTimer){ clearTimeout(holdTimer); holdTimer = null; } }
 
     // Start hold on the visible song title content
@@ -2239,9 +2447,10 @@ const s=$('.left-col');s.toggleClass('collapsed');
         cancelTimer();
         holdTimer = setTimeout(()=>{
             const songId = $target.data('song-id');
-            if (!songId) return;
+       
+     if (!songId) return;
             beginInlineRename($target, songId);
-        }, HOLD_MS);
+}, HOLD_MS);
     });
 
     // Cancel if the finger/mouse moves significantly (scroll gesture)
@@ -2252,42 +2461,40 @@ const s=$('.left-col');s.toggleClass('collapsed');
             cancelTimer();
         }
     });
-    // Cancel on release
+// Cancel on release
     $(document).on('touchend mouseup touchcancel', function(){ cancelTimer(); });
-
-    function beginInlineRename($textEl, songId){
+function beginInlineRename($textEl, songId){
         // Avoid duplicate editors
         if ($textEl.closest('.song-name').find('input.edit-input').length) return;
-
-        const current = $textEl.text();
+const current = $textEl.text();
         const $input = $('<input type="text" class="edit-input" />').val(current);
-        // Replace only the text span (preserves layout around it)
+// Replace only the text span (preserves layout around it)
         $textEl.replaceWith($input);
         $input.focus();
-        // Make typing legible in dark mode
+// Make typing legible in dark mode
         $input.addClass('bg-white text-black');
-
-        function commit(save){
+function commit(save){
             const song = masterSongs.find(s => s.id === songId);
-            if (!song){ renderAll(); return; }
+if (!song){ renderAll(); return; }
             if (save){
                 const newName = String($input.val() || '').trim();
-                if (newName && newName !== song.name){
+if (newName && newName !== song.name){
                     song.name = newName;
-                    save(); // persist
+save(); // persist
                 }
             }
-            renderAll(); // re-render everywhere that references this song
+            renderAll();
+// re-render everywhere that references this song
         }
 
         $input.on('keydown', function(ev){
             if (ev.key === 'Enter') commit(true);
             else if (ev.key === 'Escape') commit(false);
         });
-        $input.on('blur', function(){ commit(true); });
+$input.on('blur', function(){ commit(true); });
         // Prevent accidental drags while editing
         $input.on('touchstart mousedown', function(ev){ ev.stopPropagation(); });
-    }
+}
 })();
 
 </script>
@@ -2305,7 +2512,8 @@ function loadPDFJSLib() {
           window['pdfjsLib'].GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
           resolve(window['pdfjsLib']);
         } else reject(new Error('pdfjsLib not found'));
-      } catch(e){ reject(e); }
+      } catch(e){ 
+reject(e); }
     };
     s.onerror = reject;
     document.head.appendChild(s);
@@ -2313,48 +2521,50 @@ function loadPDFJSLib() {
 }
 async function renderPDFWithPDFJS(url, containerEl) {
   try {
-    // Blob fetch to bypass CORS; fallback to direct URL
+    // Blob fetch to bypass CORS;
+fallback to direct URL
     let dataURL = url, revoke = null;
-    try {
+try {
       const resp = await fetch(url, { credentials: 'include' });
-      if (resp.ok) {
+if (resp.ok) {
         const blob = await resp.blob();
         dataURL = URL.createObjectURL(blob);
-        revoke = dataURL;
+revoke = dataURL;
       }
     } catch(_e){}
     const pdfjsLib = await loadPDFJSLib();
-    const pdf = await pdfjsLib.getDocument(dataURL).promise;
+const pdf = await pdfjsLib.getDocument(dataURL).promise;
     containerEl.innerHTML = '';
     const dpr = window.devicePixelRatio || 1;
-    for (let p=1; p<=pdf.numPages; p++) {
+for (let p=1; p<=pdf.numPages; p++) {
       const page = await pdf.getPage(p);
-      const base = page.getViewport({ scale: 1 });
+const base = page.getViewport({ scale: 1 });
       const fitWidth = containerEl.clientWidth || base.width;
       let scale = fitWidth / base.width;
-      scale = Math.max(0.8, Math.min(2.0, scale));
+scale = Math.max(0.8, Math.min(2.0, scale));
       const viewport = page.getViewport({ scale });
       const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d', { alpha:false });
+const ctx = canvas.getContext('2d', { alpha:false });
       canvas.width = Math.floor(viewport.width * dpr);
       canvas.height = Math.floor(viewport.height * dpr);
-      canvas.style.width = viewport.width + 'px';
+canvas.style.width = viewport.width + 'px';
       canvas.style.height = viewport.height + 'px';
       const holder = document.createElement('div');
       holder.className = 'pdfjs-page';
       holder.appendChild(canvas);
       containerEl.appendChild(holder);
-      const renderContext = { canvasContext: ctx, viewport, transform: [dpr,0,0,dpr,0,0] };
+const renderContext = { canvasContext: ctx, viewport, transform: [dpr,0,0,dpr,0,0] };
       await page.render(renderContext).promise;
-    }
+}
     if (revoke) setTimeout(() => URL.revokeObjectURL(revoke), 30000);
-    // Tap/pointerdown should reveal nav buttons
-    const showBar = () => { try { if (window.showNavButtons) window.showNavButtons(); } catch(e){} };
+// Tap/pointerdown should reveal nav buttons
+    const showBar = () => { try { if (window.showNavButtons) window.showNavButtons();
+} catch(e){} };
     containerEl.addEventListener('touchstart', showBar, {passive:true});
     containerEl.addEventListener('pointerdown', showBar, {passive:true});
   } catch (err) {
     console.error('PDF.js render error:', err);
-    try { window.open(url, '_blank'); } catch(e){}
+try { window.open(url, '_blank'); } catch(e){}
   }
 }
 </script>
@@ -2389,36 +2599,38 @@ function loadPDFJSLib() {
         resolve(window.pdfjsLib);
       } catch(e){ reject(e); }
     };
-    s.onerror = reject;
+   
+ s.onerror = reject;
     document.head.appendChild(s);
   });
 }
 async function renderPDFInto(containerEl, url) {
   let src = url, revoke = null;
-  try {
+try {
     const r = await fetch(url, { credentials: 'include' });
-    if (r.ok) { const b = await r.blob(); src = URL.createObjectURL(b); revoke = src; }
+if (r.ok) { const b = await r.blob(); src = URL.createObjectURL(b); revoke = src;
+}
   } catch(e) {}
   const lib = await loadPDFJSLib();
   const pdf = await lib.getDocument(src).promise;
   containerEl.innerHTML = '';
-  const dpr = window.devicePixelRatio || 1;
+const dpr = window.devicePixelRatio || 1;
   for (let i=1; i<=pdf.numPages; i++) {
     const page = await pdf.getPage(i);
-    const base = page.getViewport({ scale: 1 });
+const base = page.getViewport({ scale: 1 });
     const fit = containerEl.clientWidth || base.width;
-    let scale = Math.max(0.8, Math.min(2.0, fit / base.width));
+let scale = Math.max(0.8, Math.min(2.0, fit / base.width));
     const viewport = page.getViewport({ scale });
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d', { alpha:false });
+const ctx = canvas.getContext('2d', { alpha:false });
     canvas.width  = Math.floor(viewport.width  * dpr);
     canvas.height = Math.floor(viewport.height * dpr);
-    canvas.style.width  = viewport.width  + 'px';
+canvas.style.width  = viewport.width  + 'px';
     canvas.style.height = viewport.height + 'px';
     const holder = document.createElement('div');
     holder.className = 'pdfjs-page';
     holder.appendChild(canvas);
-    containerEl.appendChild(holder);
+containerEl.appendChild(holder);
     await page.render({ canvasContext: ctx, viewport, transform:[dpr,0,0,dpr,0,0] }).promise;
   }
   if (revoke) setTimeout(() => URL.revokeObjectURL(revoke), 30000);
@@ -2431,7 +2643,7 @@ function ensurePdfOverlay() {
   if (!ov) {
     ov = document.createElement('div');
     ov.id = 'pdf-overlay';
-    ov.innerHTML = '<div id="pdf-overlay-scroll" class="pdfjs-scroll"></div>';
+ov.innerHTML = '<div id="pdf-overlay-scroll" class="pdfjs-scroll"></div>';
     document.body.appendChild(ov);
   }
   return ov;
@@ -2440,9 +2652,10 @@ function showPdfOverlay() {
   document.documentElement.classList.add('pdf-overlay-active');
   document.body.classList.add('pdf-overlay-active');
   const ov = ensurePdfOverlay();
-  ov.style.display = 'block';
+ov.style.display = 'block';
   const scroller = document.getElementById('pdf-overlay-scroll');
-  const showBar = () => { try { if (window.showNavButtons) window.showNavButtons(); } catch(e){} };
+  const showBar = () => { try { if (window.showNavButtons) window.showNavButtons();
+} catch(e){} };
   scroller.addEventListener('touchstart', showBar, {passive:true});
   scroller.addEventListener('pointerdown', showBar, {passive:true});
   return scroller;
@@ -2450,7 +2663,7 @@ function showPdfOverlay() {
 function destroyPdfOverlay() {
   document.documentElement.classList.remove('pdf-overlay-active');
   document.body.classList.remove('pdf-overlay-active');
-  const ov = document.getElementById('pdf-overlay');
+const ov = document.getElementById('pdf-overlay');
   if (ov) ov.style.display = 'none';
   const sc = document.getElementById('pdf-overlay-scroll');
   if (sc) sc.innerHTML = '';
@@ -2468,7 +2681,8 @@ function destroyPdfOverlay() {
       try {
         if (typeof context !== 'undefined') window.currentViewerContext = context;
         if (typeof index   === 'number')     window.currentViewerIndex   = index;
-        if (context && Array.isArray(context.list)) window.currentViewerList = context.list;
+        if (context 
+&& Array.isArray(context.list)) window.currentViewerList = context.list;
       } catch(e){}
       return orig.apply(this, arguments);
     }
@@ -2477,7 +2691,6 @@ function destroyPdfOverlay() {
   }
   install(); document.addEventListener('DOMContentLoaded', install); setTimeout(install, 500); setTimeout(install, 1500);
 })();
-
 /* wrap openDocViewer v1 */
 (function(){
   if (window.__wrapOpenDocViewer_v1) return; window.__wrapOpenDocViewer_v1 = true;
@@ -2489,7 +2702,8 @@ function destroyPdfOverlay() {
         var args = Array.prototype.slice.call(arguments);
         var ctx = (args.length > 1 && typeof args[1] === 'object') ? args[1] : (window.currentViewerContext || null);
         if (ctx) window.currentViewerContext = ctx;
-        try { if (ctx && ctx.list && Array.isArray(ctx.list)) window.currentViewerList = ctx.list; } catch(e){}
+      
+  try { if (ctx && ctx.list && Array.isArray(ctx.list)) window.currentViewerList = ctx.list; } catch(e){}
         for (var i=0;i<args.length;i++){ if (typeof args[i] === 'number') { window.currentViewerIndex = args[i]; break; } }
       } catch(e){}
       return orig.apply(this, arguments);
@@ -2497,7 +2711,8 @@ function destroyPdfOverlay() {
     wrapped.__wrapped = true;
     window.openDocViewer = wrapped;
   }
-  install(); document.addEventListener('DOMContentLoaded', install); setTimeout(install, 500); setTimeout(install, 1500);
+  install(); document.addEventListener('DOMContentLoaded', install); setTimeout(install, 500);
+setTimeout(install, 1500);
 })();
 
 /* Universal CLOSE for the PDF/file viewer — install once */
@@ -2513,7 +2728,8 @@ function destroyPdfOverlay() {
         var newBtn = document.getElementById('viewer-close-btn');
         if (newBtn && typeof newBtn.click === 'function') {
             newBtn.click();
-            closed = true;
+            
+closed = true;
         }
     } catch(_) {}
     
@@ -2528,19 +2744,19 @@ function destroyPdfOverlay() {
   }
 
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' || e.keyCode === 27) {
-      if (document.documentElement.classList.contains('pdf-overlay-active') || document.body.classList.contains('doc-viewer-active')) {
+    if (e.key === 'Escape' || 
+e.keyCode === 27) {
+      if (document.documentElement.classList.contains('pdf-overlay-active') ||
+document.body.classList.contains('doc-viewer-active')) {
         e.stopPropagation();
         universalCloseViewer();
       }
     }
   }, true);
-
-  window.universalCloseViewer = universalCloseViewer;
+window.universalCloseViewer = universalCloseViewer;
 })();
 
 
-<!-- Genre/Venue exact symmetry + centered placeholders (robust) -->
 <script>
 (function(){
   if (window.__GenreVenueSync_v2) return; window.__GenreVenueSync_v2 = true;
@@ -2558,7 +2774,8 @@ function destroyPdfOverlay() {
       var rect = g.getBoundingClientRect();
       var gs = getComputedStyle(g);
 
-      // Match box model and typography
+      // Match box model 
+and typography
       setImportant(v, 'box-sizing', gs.boxSizing || 'border-box');
       setImportant(v, 'padding-left', gs.paddingLeft);
       setImportant(v, 'padding-right', gs.paddingRight);
@@ -2567,129 +2784,127 @@ function destroyPdfOverlay() {
       setImportant(v, 'border-width', gs.borderWidth);
       setImportant(v, 'border-style', gs.borderStyle);
       setImportant(v, 'border-color', gs.borderColor);
-      setImportant(v, 'border-radius', gs.borderRadius);
+setImportant(v, 'border-radius', gs.borderRadius);
       setImportant(v, 'font', gs.font);
 
       // Ensure layout constraints don't override width
       setImportant(v, 'display', gs.display || 'block');
-      setImportant(v, 'flex', '0 0 auto');
+setImportant(v, 'flex', '0 0 auto');
       setImportant(v, 'max-width', rect.width + 'px');
       setImportant(v, 'min-width', rect.width + 'px');
       setImportant(v, 'width', rect.width + 'px');
-      setImportant(v, 'height', rect.height + 'px');
+setImportant(v, 'height', rect.height + 'px');
     } catch(_){}
   }
 
   function schedule(){
     setTimeout(syncVenueToGenre, 0);
     setTimeout(syncVenueToGenre, 250);
-    setTimeout(syncVenueToGenre, 800);
+setTimeout(syncVenueToGenre, 800);
     setTimeout(syncVenueToGenre, 1500);
   }
 
   window.addEventListener('load', schedule);
   window.addEventListener('resize', function(){ setTimeout(syncVenueToGenre, 0); });
-
-  // Observe genre size changes (e.g., theme/sidebar width changes)
+// Observe genre size changes (e.g., theme/sidebar width changes)
   try {
     var gObsTarget = document.getElementById('genre-name');
-    if (gObsTarget && window.ResizeObserver) {
+if (gObsTarget && window.ResizeObserver) {
       var ro = new ResizeObserver(function(){ syncVenueToGenre(); });
       ro.observe(gObsTarget);
-    }
+}
   } catch(_){}
 })();
 </script>
 
 
-<!-- Venue/Genre left-edge alignment + Pull-to-close v4 -->
 <script>
 (function(){
   /* =====  A) Perfect horizontal alignment for Genre/Venue rows  ===== */
   if (!window.__AlignGenreVenue_v1){
     window.__AlignGenreVenue_v1 = true;
-
-    function alignVenueRow(){
+function alignVenueRow(){
       try {
         var gInput = document.getElementById('genre-name');
-        var vInput = document.getElementById('venue-name');
+var vInput = document.getElementById('venue-name');
         var gAdd   = document.getElementById('add-genre');
         var vAdd   = document.getElementById('add-venue');
-
-        if (!gInput || !vInput) return;
+if (!gInput || !vInput) return;
 
         var gx = gInput.getBoundingClientRect().left;
         var vx = vInput.getBoundingClientRect().left;
 
         var deltaInput = gx - vx;
-        if (Math.abs(deltaInput) > 0.5) {
+if (Math.abs(deltaInput) > 0.5) {
           var current = parseFloat(getComputedStyle(vInput).marginLeft) || 0;
-          vInput.style.marginLeft = (current + deltaInput) + "px";
+vInput.style.marginLeft = (current + deltaInput) + "px";
         }
 
         if (gAdd && vAdd) {
           var gxB = gAdd.getBoundingClientRect().left;
-          var vxB = vAdd.getBoundingClientRect().left;
+var vxB = vAdd.getBoundingClientRect().left;
           var deltaBtn = gxB - vxB;
-          if (Math.abs(deltaBtn) > 0.5) {
-            var currentBtn = parseFloat(getComputedStyle(vAdd).marginLeft) || 0;
+if (Math.abs(deltaBtn) > 0.5) {
+            var currentBtn = parseFloat(getComputedStyle(vAdd).marginLeft) ||
+0;
             vAdd.style.marginLeft = (currentBtn + deltaBtn) + "px";
           }
         }
       } catch(_){}
     }
-    function schedule(){ setTimeout(alignVenueRow, 200); setTimeout(alignVenueRow, 600); }
+    function schedule(){ setTimeout(alignVenueRow, 200);
+setTimeout(alignVenueRow, 600); }
     window.addEventListener('load', schedule);
     window.addEventListener('resize', function(){ setTimeout(alignVenueRow, 0); });
-  }
+}
 
   /* =====  B) Pull-to-close v4: downward pull only, stronger threshold, must release  ===== */
   if (!window.__PullToClose_v4){
     window.__PullToClose_v4 = true;
-
-    function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
+function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
     var startY = null;
     var maxPullDown = 0;
     var active = false;
-    var THRESHOLD_DOWN = 150;
+var THRESHOLD_DOWN = 150;
 
     function onTouchStart(e){
       var t = e.touches && e.touches[0];
-      var sc = scroller();
+var sc = scroller();
       if (!t || !sc) return;
       active = (sc.scrollTop <= 2);
       startY = t.clientY;
       maxPullDown = 0;
-    }
+}
     function onTouchMove(e){
       if (!active) return;
       var t = e.touches && e.touches[0];
-      var sc = scroller();
+var sc = scroller();
       if (!t || !sc) return;
       var dy = t.clientY - (startY == null ? t.clientY : startY);
-      if (dy > maxPullDown) maxPullDown = dy;
+if (dy > maxPullDown) maxPullDown = dy;
     }
     function onTouchEnd(){
       try {
         if (!active) return;
-        var sc = scroller(); if (!sc) return;
+var sc = scroller(); if (!sc) return;
         if (sc.scrollTop <= 2 && maxPullDown > THRESHOLD_DOWN) {
           if (typeof window.universalCloseViewer === 'function') {
             window.universalCloseViewer();
-          }
+}
         }
       } finally {
-        active = false; startY = null; maxPullDown = 0;
+        active = false;
+startY = null; maxPullDown = 0;
       }
     }
 
     function bind(){
       var sc = scroller();
-      if (!sc || sc.__pullCloseV4Bound) return;
+if (!sc || sc.__pullCloseV4Bound) return;
       sc.__pullCloseV4Bound = true;
       sc.addEventListener('touchstart', onTouchStart, {passive:true});
       sc.addEventListener('touchmove',  onTouchMove,  {passive:true});
-      sc.addEventListener('touchend',   onTouchEnd,   {passive:true});
+sc.addEventListener('touchend',   onTouchEnd,   {passive:true});
     }
 
     bind();
@@ -2713,25 +2928,29 @@ function destroyPdfOverlay() {
         accept: '.draggable',
         tolerance: 'pointer',
         hoverClass: 'drag-hover-setlist', // blue highlight to match favorites/setlists
-        drop: function(event, ui){
+    
+    drop: function(event, ui){
           try {
             var songId = $(ui.draggable).attr('id');
             var genreName = $(this).data('name');
             if (!songId || !genreName) return;
             var s = masterSongs.find(function(x){ return String(x.id) === String(songId); });
             if (!s) return;
-            s.genre = genreName;
+   
+         s.genre = genreName;
             var g = (typeof genres!=='undefined') ? genres.find(function(x){ return x.name === genreName; }) : null;
-            if (g && !s.color) { s.color = g.color; } 
+            if (g && !s.color) { s.color = g.color;
+} 
             if (typeof save === 'function') save();
-            if ($('#master-view').is(':visible') && typeof renderMaster === 'function') renderMaster();
+if ($('#master-view').is(':visible') && typeof renderMaster === 'function') renderMaster();
             if ($('#setlist-view').is(':visible') && typeof renderSetlist === 'function') renderSetlist();
-            if ($('#genre-view').is(':visible') && currentGenre === genreName && typeof renderGenreView === 'function') renderGenreView(genreName);
-          } catch(e){ console.error('Genre drop error:', e); }
+if ($('#genre-view').is(':visible') && currentGenre === genreName && typeof renderGenreView === 'function') renderGenreView(genreName);
+          } catch(e){ console.error('Genre drop error:', e);
+}
         }
       });
     });
-  }
+}
 
   $(function(){
     attachGenreDroppables();
@@ -2777,7 +2996,8 @@ function destroyPdfOverlay() {
     ph.style.left = cx + 'px';
     ph.style.top  = cy + 'px';
     ph.style.transform = 'translate(-50%, -50%)';
-    ph.style.width = r.width + 'px';
+  
+  ph.style.width = r.width + 'px';
     ph.style.textAlign = 'center';
   }
 
@@ -2794,20 +3014,19 @@ function destroyPdfOverlay() {
   }
 
   window.addEventListener('resize', positionDatePlaceholder);
-  window.addEventListener('orientationchange', positionDatePlaceholder);
+window.addEventListener('orientationchange', positionDatePlaceholder);
   document.addEventListener('click', function(e){
     if (e.target && (e.target.id === 'setlist-details-toggle' || e.target.closest && e.target.closest('#setlist-details-toggle'))) {
       setTimeout(syncAll, 0);
     }
   }, true);
-  document.addEventListener('input', function(e){
+document.addEventListener('input', function(e){
     if (e.target && e.target.id === 'setlist-date') toggleDatePlaceholder();
   });
-  document.addEventListener('change', function(e){
+document.addEventListener('change', function(e){
     if (e.target && e.target.id === 'setlist-date') toggleDatePlaceholder();
   });
-
-  document.addEventListener('DOMContentLoaded', function(){
+document.addEventListener('DOMContentLoaded', function(){
     syncAll();
     setTimeout(syncAll, 250);
   });
@@ -2816,4 +3035,3 @@ function destroyPdfOverlay() {
 
 </body>
 </html>
-
