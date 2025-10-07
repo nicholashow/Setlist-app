@@ -2207,19 +2207,9 @@ setupScrollHandlers();
         function saveRecording(b){const r=new FileReader();r.readAsDataURL(b);r.onloadend=()=>{const s=setlists[currentSetlist];recordings.push({id:'r_'+Math.random().toString(36).slice(2,9),setlist:currentSetlist,date:s.date,venue:s.venue,audioData:r.result});save();if($('#recordings-view').is(':visible'))renderRecordings();if(currentSetlist)renderSetlist()}}
         
         // This function shows controls and ensures their state (enabled/disabled) is correct.
-        function showNavButtonsAndCheckState() {
-            // Explicitly define button states to avoid potential evaluation errors
-            let isPrevDisabled = true;
-            if (currentViewerIndex > 0) {
-                isPrevDisabled = false;
-            }
-
-            let isNextDisabled = true;
-            if (currentViewerList && currentViewerList.length > 0) {
-                if (currentViewerIndex < currentViewerList.length - 1) {
-                    isNextDisabled = false;
-                }
-            }
+function showNavButtonsAndCheckState() {
+            const isPrevDisabled = currentViewerIndex <= 0;
+const isNextDisabled = !currentViewerList || currentViewerIndex >= currentViewerList.length - 1;
             
             $('#viewer-prev-btn').prop('disabled', isPrevDisabled);
             $('#viewer-next-btn').prop('disabled', isNextDisabled);
@@ -2247,13 +2237,13 @@ function startInactivityTimer() {
 }
 
         // This function sets up all the event listeners for the document viewer.
-        function setupScrollHandlers() {
+function setupScrollHandlers() {
             resetScrollHandlers();
             const $viewArea = $('#pdf-overlay-scroll');
 if ($viewArea.length === 0) return;
 
             // 1. Hide controls on scroll down. They are shown again via the 'pointerdown' event.
-            $viewArea.on('scroll.viewer', function() {
+$viewArea.on('scroll.viewer', function() {
                 if (this.scrollTop > 5) {
                     hideNavButtons();
                 }
@@ -2288,7 +2278,7 @@ $viewArea.on('touchend.viewer', e => {
                     const touchendY = e.originalEvent.changedTouches[0].screenY;
                     const deltaX = touchendX - touchstartX;
         
-            const deltaY = touchendY - startY;
+            const deltaY = touchendY - touchstartY;
 
                     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > swipeThresholdX) {
                         if (deltaX < 0) { 
