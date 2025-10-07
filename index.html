@@ -4173,5 +4173,154 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<!-- ===== Nav Buttons Rework (non-destructive; replaces inner HTML & rebinds handlers) ===== -->
+<style id="nav-rework-css">
+  /* Modern, larger tap-targets; keep fixed top bar */
+  #doc-nav-buttons {
+    position: fixed;
+    top: env(safe-area-inset-top, 0);
+    left: 0; right: 0;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 2147483000; /* above overlay */
+  }
+  #doc-nav-buttons.hidden { display: none !important; }
+  .doc-btn {
+    appearance: none;
+    border: 0;
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-size: 16px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #111;
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,.25);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .doc-btn:active { transform: translateY(1px); }
+  .doc-btn[disabled] { opacity: .45; pointer-events: none; }
+  .doc-btn svg { width: 18px; height: 18px; }
+</style>
+
+<script id="nav-rework-js">
+(function(){
+  // Wait for DOM
+  function ready(fn){ if (document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+  ready(function(){
+
+    var bar = document.getElementById('doc-nav-buttons');
+    if (!bar) return;
+
+    // Replace inner HTML with a fresh, simple set (same IDs to stay compatible elsewhere)
+    bar.innerHTML = ''
+      + '<button class="doc-btn" id="prev-doc" aria-label="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg><span>Previous</span></button>'
+      + '<button class="doc-btn" id="next-doc" aria-label="Next"><span>Next</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>'
+      + '<button class="doc-btn" id="close-doc" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span>Close</span></button>';
+
+    // jQuery is used elsewhere; rely on it if present for consistency
+    var $ = window.jQuery || window.$;
+
+    function getState(){
+      // These globals exist in this build
+      var list   = window.currentViewerList || [];
+      var idx    = (typeof window.currentViewerIndex==='number') ? window.currentViewerIndex : -1;
+      var ctx    = window.currentViewerContext;
+      return {list:list, idx:idx, ctx:ctx};
+    }
+
+    function updateDisabled(){
+      var st = getState();
+      var prevB = document.getElementById('prev-doc');
+      var nextB = document.getElementById('next-doc');
+      if (!prevB || !nextB) return;
+      var atStart = !(st.idx > 0);
+      var atEnd   = !(st.list && st.idx >= 0 && st.idx < st.list.length-1);
+      prevB.toggleAttribute('disabled', atStart);
+      nextB.toggleAttribute('disabled', atEnd);
+      if ($) { $('#prev-doc').prop('disabled', atStart); $('#next-doc').prop('disabled', atEnd); }
+    }
+
+    function go(delta){
+      var st = getState();
+      if (!st.list || st.idx < 0) return;
+      var nextIdx = st.idx + delta;
+      if (nextIdx < 0 || nextIdx > st.list.length - 1) return;
+
+      // Use existing app function to open the target
+      if (typeof window.openSongInContext === 'function') {
+        window.openSongInContext(st.list[nextIdx], st.ctx, nextIdx, (delta>0?'next':'prev'));
+      }
+      // After navigation, disabled states will be updated by the viewer setup code,
+      // but also re-run here with a tiny delay to be safe.
+      setTimeout(updateDisabled, 50);
+    }
+
+    function closeViewer(){
+      // Prefer the app's existing close flow if available
+      if ($) {
+        // Mimic existing code seen in this version: hide viewer, reset handlers, empty iframe wrapper
+        try {
+          $('#doc-view').addClass('hidden');
+          $('body').removeClass('doc-viewer-active doc-view-fullscreen');
+          if (window.resetScrollHandlers) window.resetScrollHandlers();
+          $('#doc-iframe-wrapper').empty();
+        } catch(e){}
+      } else {
+        var dv = document.getElementById('doc-view');
+        if (dv) dv.classList.add('hidden');
+        document.body.classList.remove('doc-viewer-active','doc-view-fullscreen');
+        var wrap = document.getElementById('doc-iframe-wrapper');
+        if (wrap) wrap.innerHTML = '';
+      }
+      setTimeout(updateDisabled, 50);
+    }
+
+    // Remove any prior click handlers bound to these IDs to avoid double fires
+    if ($) {
+      $('#prev-doc').off('click');
+      $('#next-doc').off('click');
+      $('#close-doc').off('click');
+      $('#prev-doc').on('click', function(e){ e.stopPropagation(); go(-1); });
+      $('#next-doc').on('click', function(e){ e.stopPropagation(); go(+1); });
+      $('#close-doc').on('click', function(e){ e.stopPropagation(); closeViewer(); });
+    } else {
+      ['prev-doc','next-doc','close-doc'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (!el) return;
+        var clone = el.cloneNode(true);
+        el.parentNode.replaceChild(clone, el);
+      });
+      document.getElementById('prev-doc') .addEventListener('click', function(e){ e.stopPropagation(); go(-1); }, {passive:false});
+      document.getElementById('next-doc') .addEventListener('click', function(e){ e.stopPropagation(); go(+1); }, {passive:false});
+      document.getElementById('close-doc').addEventListener('click', function(e){ e.stopPropagation(); closeViewer(); }, {passive:false});
+    }
+
+    // Keep buttons responsive to app state
+    updateDisabled();
+    // In case the app updates currentViewerIndex dynamically, observe body class changes to refresh disabled state
+    var obs = new MutationObserver(function(){ updateDisabled(); });
+    obs.observe(document.body, {attributes:true, attributeFilter:['class']});
+
+    // Also refresh when the viewer section toggles hidden/visible
+    var dv = document.getElementById('doc-view');
+    if (dv) {
+      var obs2 = new MutationObserver(function(){ updateDisabled(); });
+      obs2.observe(dv, {attributes:true, attributeFilter:['class']});
+    }
+  });
+})();
+</script>
 </body>
 </html>
