@@ -416,13 +416,17 @@
         
         
 
+        
 
         
 
+        
 
         
 
+        
 
+        
         
         .del-setlist {
             background: #ef4444;
@@ -1798,17 +1802,17 @@ html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
     </div>
 
     <section class="hidden" id="doc-view">
-<!-- === Fresh viewer navigation (from scratch) === -->
-<div id="doc-nav" class="viewer-nav">
-  <button id="prev-doc" class="nav-btn" aria-label="Previous">
+<!-- ===== Brand-new viewer controls ===== -->
+<div id="viewer-controls" class="viewer-controls">
+  <button id="btnPrev" class="vc-btn" aria-label="Previous">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
     <span>Previous</span>
   </button>
-  <button id="next-doc" class="nav-btn" aria-label="Next">
+  <button id="btnNext" class="vc-btn" aria-label="Next">
     <span>Next</span>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
   </button>
-  <button id="close-doc" class="nav-btn close" aria-label="Close">
+  <button id="btnClose" class="vc-btn vc-close" aria-label="Close">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
     <span>Close</span>
   </button>
@@ -4108,8 +4112,8 @@ function destroyPdfOverlay() {
 
 
 <style>
-/* === Fresh viewer nav styles === */
-#doc-nav.viewer-nav {
+/* ===== Brand-new viewer controls styles ===== */
+#viewer-controls.viewer-controls {
   position: fixed;
   top: env(safe-area-inset-top, 0);
   left: 0; right: 0;
@@ -4119,17 +4123,17 @@ function destroyPdfOverlay() {
   justify-content: center;
   gap: 12px;
   padding: 8px 12px;
-  background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(0,0,0,0.50);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 2147483000;
 }
-#doc-nav.viewer-nav.hidden { display: none !important; }
-#doc-nav.viewer-nav .nav-btn {
+#viewer-controls.viewer-controls.hidden { display: none !important; }
+#viewer-controls.viewer-controls .vc-btn {
   appearance: none;
   border: 0;
   border-radius: 999px;
-  padding: 10px 16px;
+  padding: 12px 18px;
   font-size: 16px;
   line-height: 1;
   display: inline-flex;
@@ -4141,25 +4145,25 @@ function destroyPdfOverlay() {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
-#doc-nav.viewer-nav .nav-btn:active { transform: translateY(1px); }
-#doc-nav.viewer-nav .nav-btn[disabled] { opacity: .45; pointer-events: none; }
-#doc-nav.viewer-nav .nav-btn svg { width: 18px; height: 18px; }
-#doc-nav.viewer-nav .nav-btn.close { background: #2a2a2a; }
+#viewer-controls.viewer-controls .vc-btn:active { transform: translateY(1px); }
+#viewer-controls.viewer-controls .vc-btn[disabled] { opacity: .45; pointer-events: none; }
+#viewer-controls.viewer-controls .vc-btn svg { width: 18px; height: 18px; }
+#viewer-controls.viewer-controls .vc-btn.vc-close { background: #2a2a2a; }
 </style>
 <script>
-/* === Fresh viewer nav logic === */
+/* ===== Brand-new viewer controls logic ===== */
 (function(){
   function ready(fn){ if (document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
   ready(function(){
     var $ = window.jQuery || window.$;
 
-    var nav   = document.getElementById('doc-nav');
-    var prevB = document.getElementById('prev-doc');
-    var nextB = document.getElementById('next-doc');
-    var closeB= document.getElementById('close-doc');
+    var nav   = document.getElementById('viewer-controls');
+    var prevB = document.getElementById('btnPrev');
+    var nextB = document.getElementById('btnNext');
+    var closeB= document.getElementById('btnClose');
     if (!nav || !prevB || !nextB || !closeB) return;
 
-    function getState(){
+    function state(){
       return {
         list: window.currentViewerList || [],
         idx: (typeof window.currentViewerIndex==='number') ? window.currentViewerIndex : -1,
@@ -4167,25 +4171,29 @@ function destroyPdfOverlay() {
       };
     }
 
-    function updateDisabled(){
-      var st = getState();
+    function syncDisabled(){
+      var st = state();
       var atStart = !(st.idx > 0);
       var atEnd   = !(st.list && st.idx >= 0 && st.idx < st.list.length - 1);
       prevB.toggleAttribute('disabled', atStart);
       nextB.toggleAttribute('disabled', atEnd);
-      if ($) { $('#prev-doc').prop('disabled', atStart); $('#next-doc').prop('disabled', atEnd); }
+      if ($) { $('#btnPrev').prop('disabled', atStart); $('#btnNext').prop('disabled', atEnd); }
     }
 
-    function go(delta){
-      var st = getState();
+    function gotoDelta(delta){
+      var st = state();
       if (!st.list || st.idx < 0) return;
       var target = st.idx + delta;
       if (target < 0 || target >= st.list.length) return;
+
+      // Critically: update the global index FIRST
+      window.currentViewerIndex = target;
+
       if (typeof window.openSongInContext === 'function') {
         window.openSongInContext(st.list[target], st.ctx, target, (delta>0?'next':'prev'));
       }
-      // Let the viewer's own setup update globals, but ensure buttons reflect state ASAP
-      setTimeout(updateDisabled, 40);
+      // Refresh disabled state shortly after navigation
+      setTimeout(syncDisabled, 60);
     }
 
     function closeViewer(){
@@ -4203,35 +4211,36 @@ function destroyPdfOverlay() {
           if (wrap) wrap.innerHTML = '';
         }
       } catch(e){}
-      setTimeout(updateDisabled, 40);
+      setTimeout(syncDisabled, 60);
     }
 
-    // Ensure no legacy handlers remain by replacing nodes (clean-slate)
-    ['prev-doc','next-doc','close-doc'].forEach(function(id){
+    // Clear any legacy handlers on these IDs if someone reuses them later
+    ['btnPrev','btnNext','btnClose'].forEach(function(id){
       var el = document.getElementById(id);
       if (!el || !el.parentNode) return;
       var clone = el.cloneNode(true);
       el.parentNode.replaceChild(clone, el);
     });
-    // Fetch fresh refs
-    prevB = document.getElementById('prev-doc');
-    nextB = document.getElementById('next-doc');
-    closeB= document.getElementById('close-doc');
+    prevB = document.getElementById('btnPrev');
+    nextB = document.getElementById('btnNext');
+    closeB= document.getElementById('btnClose');
 
-    // Bind fresh listeners
-    prevB.addEventListener('click', function(e){ e.stopPropagation(); go(-1); }, {passive:false});
-    nextB.addEventListener('click', function(e){ e.stopPropagation(); go(+1); }, {passive:false});
+    prevB.addEventListener('click', function(e){ e.stopPropagation(); gotoDelta(-1); }, {passive:false});
+    nextB.addEventListener('click', function(e){ e.stopPropagation(); gotoDelta(+1); }, {passive:false});
     closeB.addEventListener('click', function(e){ e.stopPropagation(); closeViewer(); }, {passive:false});
 
-    // Keep in sync with viewer state changes
-    updateDisabled();
-    var obs = new MutationObserver(updateDisabled);
-    obs.observe(document.body, {attributes:true, attributeFilter:['class']});
+    // Keep in sync with app state
+    syncDisabled();
+    // Observe body/#doc-view class changes that accompany viewer navigation
+    var obs1 = new MutationObserver(syncDisabled);
+    obs1.observe(document.body, {attributes:true, attributeFilter:['class']});
     var dv = document.getElementById('doc-view');
     if (dv) {
-      var obs2 = new MutationObserver(updateDisabled);
+      var obs2 = new MutationObserver(syncDisabled);
       obs2.observe(dv, {attributes:true, attributeFilter:['class']});
     }
+    // Periodic backstop in case state changes aren't DOM-reflected
+    setInterval(syncDisabled, 500);
   });
 })();
 </script>
