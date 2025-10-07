@@ -14,34 +14,19 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>Setlist Manager - Enhanced</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Core libs moved BEFORE any inline $ usage -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+    <script defer src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script defer src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
 
-    <script>
+    <script>(function(start){
+  function run(){
+    if (!window.jQuery) { return setTimeout(run, 20); }
+    try{
+
         tailwind.config = {
             darkMode: 'class',
         }
-        // === Long-press (1s) before dragging files ===
-        let dragTimer = null;
-        $(document).on('mousedown touchstart', 'li.draggable', function(e) {
-            const item = $(this);
-            dragTimer = setTimeout(() => {
-                item.draggable('enable');
-            }, 1000); // 1 second hold
-            // disable dragging immediately until timer completes
-            item.draggable('disable');
-        }).on('mouseup mouseleave touchend touchcancel', 'li.draggable', function(e) {
-            clearTimeout(dragTimer);
-            // re-disable dragging so it requires hold again next time
-            $(this).draggable('disable');
-        });
-        // Initially disable all draggables until long-press
-        $(function() {
-            $('li.draggable').draggable('disable');
-        });
         // === Refined long-press-to-drag with movement threshold ===
         (function(){
             let dragTimer = null;
@@ -204,7 +189,14 @@
             }
         })();
 
-    </script>
+    
+    }catch(e){ console.error(e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})(Date.now());
+</script>
     <script>
         (function() {
             var ua = navigator.userAgent || navigator.vendor || window.opera;
@@ -215,13 +207,16 @@
         })();
     </script>
 
+    
+    
+    
     <style>
         html,
         body {
             height: 100%;
             width: 100%;
             overflow: hidden;
-            position: fixed; /* Prevents panning/scrolling on touch devices */
+            position: static; /* Prevents panning/scrolling on touch devices */
         }
         
         #app {
@@ -1584,7 +1579,7 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 
 #-webkit-date-text { color: #ffffff; } /* noop fallback */
 .dark #setlist-venue::placeholder { color: #ffffff !important; }
-#setlist-venue::placeholder { color: #ffffff !important; } /* ensure white in light mode too */
+# setlist-venue::placeholder { color: #ffffff !important; } /* ensure white in light mode too */
 
 #setlist-sort-filter-dropdown {
   text-align: center;
@@ -1876,7 +1871,11 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
         </div>
     </section>
 
-    <script>
+    <script>(function(start){
+  function run(){
+    if (!window.jQuery) { return setTimeout(run, 20); }
+    try{
+
         // ================== Disable Zoom on iPad ==================
         document.addEventListener('touchstart', (event) => {
           if (event.touches.length > 1) {
@@ -2133,14 +2132,25 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
         function showNavButtons() { $('#doc-nav-buttons').removeClass('hidden'); startInactivityTimer(); }
         function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000); }
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
-    </script>
+    
+    }catch(e){ console.error(e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})(Date.now());
+</script>
     <!-- Left-edge custom scrollbar (visible only when sidebar is collapsed) -->
     <div id="edge-scrollbar" class="hidden" aria-hidden="true">
         <div id="edge-thumb"></div>
     </div>
 
 
-<script>
+<script>(function(start){
+  function run(){
+    if (!window.jQuery) { return setTimeout(run, 20); }
+    try{
+
 (function(){
   // Find the stats container
   const stats = document.querySelector('.stats-container');
@@ -2313,6 +2323,13 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
     }
 })();
 
+
+    }catch(e){ console.error(e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})(Date.now());
 </script>
 
 
@@ -2552,7 +2569,11 @@ function destroyPdfOverlay() {
 })();
 </script>
 
-<script>
+<script>(function(start){
+  function run(){
+    if (!window.jQuery) { return setTimeout(run, 20); }
+    try{
+
 (function(){
   if (window.__pdfBtnsEnh2) return;
   window.__pdfBtnsEnh2 = true;
@@ -2666,6 +2687,13 @@ function destroyPdfOverlay() {
   setTimeout(syncOverlayButtons, 0);
   setTimeout(syncOverlayButtons, 500);
 })();
+
+    }catch(e){ console.error(e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})(Date.now());
 </script>
 
 <!-- Overlay PDF Button Bar -->
@@ -2676,7 +2704,11 @@ function destroyPdfOverlay() {
   <button id="pdf-btn-close" class="btn" type="button">CLOSE</button>
 </div>
 
-<script>
+<script>(function(start){
+  function run(){
+    if (!window.jQuery) { return setTimeout(run, 20); }
+    try{
+
 (function(){
   if (window.__pdfBtnsInstalled_v3) return;
   window.__pdfBtnsInstalled_v3 = true;
@@ -2804,9 +2836,20 @@ function destroyPdfOverlay() {
   setTimeout(syncState, 0);
   setTimeout(syncState, 400);
 })();
+
+    }catch(e){ console.error(e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})(Date.now());
 </script>
 
-<script>
+<script>(function(start){
+  function run(){
+    if (!window.jQuery) { return setTimeout(run, 20); }
+    try{
+
 (function(){
   if (window.__pdfBtnsInstalled_v4) return;
   window.__pdfBtnsInstalled_v4 = true;
@@ -2983,9 +3026,20 @@ function destroyPdfOverlay() {
   setTimeout(syncState, 0);
   setTimeout(syncState, 400);
 })();
+
+    }catch(e){ console.error(e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})(Date.now());
 </script>
 
-<script>
+<script>(function(start){
+  function run(){
+    if (!window.jQuery) { return setTimeout(run, 20); }
+    try{
+
 (function(){
   if (window.__pdfBtnsInstalled_v5) return;
   window.__pdfBtnsInstalled_v5 = true;
@@ -3164,6 +3218,13 @@ function destroyPdfOverlay() {
   setTimeout(syncState, 0);
   setTimeout(syncState, 400);
 })();
+
+    }catch(e){ console.error(e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})(Date.now());
 </script>
 
 <script>
@@ -3240,7 +3301,11 @@ function destroyPdfOverlay() {
 })();
 </script>
 
-<script>
+<script>(function(start){
+  function run(){
+    if (!window.jQuery) { return setTimeout(run, 20); }
+    try{
+
 (function(){
   if (window.__pdfBtnWire_v6) return;
   window.__pdfBtnWire_v6 = true;
@@ -3289,6 +3354,13 @@ function destroyPdfOverlay() {
   nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); callNext(); });
   closeB && closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
 })();
+
+    }catch(e){ console.error(e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})(Date.now());
 </script>
 
 <!-- Overlay PDF Top Bar (new safe IDs) -->
@@ -3732,7 +3804,11 @@ function destroyPdfOverlay() {
 
 
 <!-- Universal CLOSE for the PDF/file viewer — install once -->
-<script>
+<script>(function(start){
+  function run(){
+    if (!window.jQuery) { return setTimeout(run, 20); }
+    try{
+
 (function () {
   if (window.__UniversalClose_v1) return;
   window.__UniversalClose_v1 = true;
@@ -3797,6 +3873,13 @@ function destroyPdfOverlay() {
 
   window.universalCloseViewer = universalCloseViewer;
 })();
+
+    }catch(e){ console.error(e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})(Date.now());
 </script>
 
 
@@ -3867,7 +3950,11 @@ function destroyPdfOverlay() {
 
 
 <!-- Venue/Genre left-edge alignment + Pull-to-close v4 -->
-<script>
+<script>(function(start){
+  function run(){
+    if (!window.jQuery) { return setTimeout(run, 20); }
+    try{
+
 (function(){
   /* =====  A) Perfect horizontal alignment for Genre/Venue rows  =====
      We don't change widths/heights (already matched). We just align left-x
@@ -4001,10 +4088,21 @@ function destroyPdfOverlay() {
       .observe(document.body, {childList:true, subtree:true});
   }
 })();
+
+    }catch(e){ console.error(e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})(Date.now());
 </script>
 
 
-<script>
+<script>(function(start){
+  function run(){
+    if (!window.jQuery) { return setTimeout(run, 20); }
+    try{
+
 // === Drag into Genres: blue hover + assign song to genre ===
 (function(){
   function attachGenreDroppables(){
@@ -4060,10 +4158,21 @@ function destroyPdfOverlay() {
     $(document).on('app:renderGenres app:navigate', function(){ attachGenreDroppables(); });
   });
 })();
+
+    }catch(e){ console.error(e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})(Date.now());
 </script>
 
 
-<script>
+<script>(function(start){
+  function run(){
+    if (!window.jQuery) { return setTimeout(run, 20); }
+    try{
+
 // === Override: ensure Genre view shows songs dropped into that genre ===
 (function(){
   function safeEscape(t){ try { return (typeof escapeHtml==='function') ? escapeHtml(t) : String(t||'').replace(/[&<>"']/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[s])); } catch(e){ return String(t||''); } }
@@ -4096,10 +4205,21 @@ function destroyPdfOverlay() {
     }catch(e){ console.error('renderGenreView override error', e); }
   };
 })();
+
+    }catch(e){ console.error(e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})(Date.now());
 </script>
 
 
-<script>
+<script>(function(start){
+  function run(){
+    if (!window.jQuery) { return setTimeout(run, 20); }
+    try{
+
 // === Setlist Details: keep the date placeholder span visible only when empty ===
 (function(){
   function updateDatePlaceholder(){
@@ -4116,6 +4236,13 @@ function destroyPdfOverlay() {
   });
   $(function(){ updateDatePlaceholder(); });
 })();
+
+    }catch(e){ console.error(e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})(Date.now());
 </script>
 
 
@@ -4177,7 +4304,11 @@ function destroyPdfOverlay() {
 
 
 <!-- Unified Nav Buttons (Prev/Next/Close) — reentrancy lock + single wiring -->
-<script>
+<script>(function(start){
+  function run(){
+    if (!window.jQuery) { return setTimeout(run, 20); }
+    try{
+
 (function(){
   if (window.__NavUnify_v1) return; window.__NavUnify_v1 = true;
 
@@ -4247,6 +4378,13 @@ function destroyPdfOverlay() {
     try { if ((e.key === 'Escape' || e.keyCode === 27) && !navLocked){ handleClose(e); } } catch(_){}
   }, true);
 })();
+
+    }catch(e){ console.error(e); }
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else { run(); }
+})(Date.now());
 </script>
 
 </body>
