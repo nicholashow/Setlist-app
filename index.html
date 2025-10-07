@@ -427,7 +427,7 @@
             display: flex;
         }
 
-        .viewer-btn, .viewer-btn-close {
+        .viewer-btn {
             /* Frosted glass effect */
             background-color: rgba(30, 41, 59, 0.75); /* slate-800 with opacity */
             backdrop-filter: blur(10px);
@@ -442,15 +442,20 @@
             box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
         }
 
-        .viewer-btn-close:hover {
-            background-color: rgba(239, 68, 68, 0.8); /* red-500 with opacity */
-            transform: scale(1.1) rotate(90deg);
-        }
-
         .viewer-btn:disabled {
             background-color: rgba(75, 85, 99, 0.5); /* gray-600 with opacity */
             transform: none;
             box-shadow: none;
+        }
+
+        .viewer-btn-close {
+            background-color: rgba(239, 68, 68, 0.75); /* red-500 with opacity */
+        }
+
+        .viewer-btn-close:hover {
+            background-color: rgba(220, 38, 38, 0.8); /* red-600 with opacity */
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
         }
 
         .del-setlist {
@@ -1716,10 +1721,8 @@
          <div id="doc-iframe-wrapper"></div>
     </section>
 
-    <!-- NEW REDESIGNED VIEWER CONTROLS (now global) -->
-    <div id="viewer-controls" class="fixed top-0 left-0 right-0 h-20 z-[2147483647] p-4 flex justify-between items-center pointer-events-none transition-opacity duration-300 opacity-0">
-        <div class="w-10"></div> <!-- Spacer -->
-        <!-- Centered Navigation -->
+    <!-- VIEWER CONTROLS -->
+    <div id="viewer-controls" class="fixed top-0 left-0 right-0 h-20 z-[2147483647] p-4 flex justify-center items-center pointer-events-none transition-opacity duration-300 opacity-0">
         <div class="flex justify-center items-center gap-4">
             <button id="viewer-prev-btn" class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32">
                 <span>Previous</span>
@@ -1727,14 +1730,10 @@
             <button id="viewer-next-btn" class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32">
                 <span>Next</span>
             </button>
+            <button id="viewer-close-btn" class="viewer-btn viewer-btn-close pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 w-32">
+                <span>Close</span>
+            </button>
         </div>
-        
-        <!-- Close Button on the right -->
-        <button id="viewer-close-btn" class="viewer-btn-close pointer-events-auto flex items-center justify-center h-10 w-10 rounded-full text-white shadow-lg transition-all duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        </button>
     </div>
 
     <script>
@@ -1821,6 +1820,7 @@
         let recorder = null;
         let audioChunks = [];
         let cameFromVenue = null;
+        let viewerButtonsClickable = false;
         
         // ================== Persistent Storage ==================
         function save() {
@@ -1867,6 +1867,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
         
         // === NEW Redesigned Viewer Button Handlers ===
         $('#viewer-close-btn').on('click', function(e) {
+            if (!viewerButtonsClickable) return;
             e.stopPropagation();
             $('body').removeClass('doc-viewer-active');
             $('html').removeClass('doc-viewer-active pdf-overlay-active'); // ensure all viewer states are cleared
@@ -1880,12 +1881,14 @@ const s=$('.left-col');s.toggleClass('collapsed');
         });
 
         $('#viewer-next-btn').on('click', function() {
+            if (!viewerButtonsClickable) return;
             if (!$(this).is(':disabled') && currentViewerList && currentViewerIndex < currentViewerList.length - 1) {
                 openSongInContext(currentViewerList[currentViewerIndex + 1].id, currentViewerContext, currentViewerIndex + 1, 'next');
             }
         });
 
         $('#viewer-prev-btn').on('click', function() {
+            if (!viewerButtonsClickable) return;
             if (!$(this).is(':disabled') && currentViewerList && currentViewerIndex > 0) {
                 openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1, 'prev');
             }
@@ -2009,11 +2012,20 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#viewer-next-btn').prop('disabled', isNextDisabled);
             
             $('#viewer-controls').removeClass('opacity-0');
+            
+            viewerButtonsClickable = false;
+            setTimeout(() => {
+                if (!$('#viewer-controls').hasClass('opacity-0')) {
+                    viewerButtonsClickable = true;
+                }
+            }, 250);
+
             startInactivityTimer();
         }
 
         function hideNavButtons() {
             $('#viewer-controls').addClass('opacity-0');
+            viewerButtonsClickable = false;
         }
         
         // This timer will hide the controls after a period of inactivity.
@@ -2030,52 +2042,69 @@ const s=$('.left-col');s.toggleClass('collapsed');
 
             // 1. Show controls on scroll to top.
             $viewArea.on('scroll.viewer', function() {
-                if (this.scrollTop === 0) {
-                    showNavButtonsAndCheckState();
+                if (this.scrollTop < 5) {
+                    if ($('#viewer-controls').hasClass('opacity-0')) {
+                        showNavButtonsAndCheckState();
+                    }
                 } else {
-                    // Hide immediately when scrolling away from the top.
                     hideNavButtons();
-                    clearTimeout(inactivityTimer); // Cancel any pending hide timer.
                 }
             });
 
-            // 2. Show controls on tap at top of viewer.
-            // Using pointerdown as it's more universal than click.
+            // 2. Show controls on tap at top of viewer, but don't trigger buttons.
             $viewArea.on('pointerdown.viewer', function(e) {
-                // Check if tap is in the top 80px (the height of the control bar area).
+                 if ($(e.target).closest('.viewer-btn').length > 0) {
+                    return;
+                }
                 if (e.clientY < 80) {
-                    showNavButtonsAndCheckState();
+                    if ($('#viewer-controls').hasClass('opacity-0')) {
+                         showNavButtonsAndCheckState();
+                    }
                 }
             });
 
-            // 3. Keep swipe functionality for navigation.
+            // 3. Refined swipe functionality for navigation.
             let touchstartX = 0;
+            let touchstartY = 0;
+            const swipeThresholdX = 80; 
+            const swipeThresholdY = 40;
+
             $viewArea.on('touchstart.viewer', e => {
-                if (e.originalEvent.touches) touchstartX = e.originalEvent.touches[0].screenX;
+                if (e.originalEvent.touches) {
+                    touchstartX = e.originalEvent.touches[0].screenX;
+                    touchstartY = e.originalEvent.touches[0].screenY;
+                }
             });
             $viewArea.on('touchend.viewer', e => {
                 if (e.originalEvent.changedTouches) {
                     const touchendX = e.originalEvent.changedTouches[0].screenX;
-                    if (touchendX < touchstartX - 50) $('#viewer-next-btn').trigger('click');
-                    if (touchendX > touchstartX + 50) $('#viewer-prev-btn').trigger('click');
+                    const touchendY = e.originalEvent.changedTouches[0].screenY;
+                    const deltaX = touchendX - touchstartX;
+                    const deltaY = touchendY - touchstartY;
+
+                    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > swipeThresholdX) {
+                        if (deltaX < 0) { 
+                           if(viewerButtonsClickable) $('#viewer-next-btn').trigger('click');
+                        } else { 
+                           if(viewerButtonsClickable) $('#viewer-prev-btn').trigger('click');
+                        }
+                    }
                 }
             });
 
             // Initially check if we should show the buttons.
-            if ($viewArea.length > 0 && $viewArea[0].scrollTop === 0) {
+            if ($viewArea.length > 0 && $viewArea[0].scrollTop < 5) {
                 showNavButtonsAndCheckState();
             }
         }
 
+
         function resetScrollHandlers() {
-            // Use namespaced events for easy removal.
             $('#pdf-overlay-scroll').off('.viewer');
-            // Also remove old, non-namespaced handlers just in case.
             $('#doc-view, #pdf-overlay-scroll').off('mousemove pointerdown touchstart touchend'); 
             clearTimeout(inactivityTimer);
         }
 
-        // This is now the primary function to call to show controls.
         function showNavButtons() {
             showNavButtonsAndCheckState();
         }
@@ -2787,16 +2816,4 @@ function destroyPdfOverlay() {
 
 </body>
 </html>
-and am asking a query about/based on this code below.
-Instructions to follow:
-  * Don't output/edit the document if the query is Direct/Simple. For example, if the query asks for a simple explanation, output a direct answer.
-  * Make sure to **edit** the document if the query shows the intent of editing the document, in which case output the entire edited document, **not just that section or the edits**.
-    * Don't output the same document/empty document and say that you have edited it.
-    * Don't change unrelated code in the document.
-  * Don't output  and  in your final response.
-  * Any references like "this" or "selected code" refers to the code between  and  tags.
-  * Just acknowledge my request in the introduction.
-  * Make sure to refer to the document as "Canvas" in your response.
-
-you seemed to do none of what i asked in that code. 
 
