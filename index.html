@@ -1895,22 +1895,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
-            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style>
-<style>
-/* === Minimal patch: move existing bottom Previous/Next/Close bar to TOP without changing logic === */
-.moved-top-nav {
-  position: fixed !important;
-  top: 0 !important;
-  bottom: auto !important;
-  left: 0; right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  z-index: 2147483647; /* above overlay */
-}
-/* Keep original visual look; do NOT add padding to viewer to avoid layout side-effects */
-</style>
-</head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
+            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style></head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
             $('#share-email').on('click',e=>{e.preventDefault();shareSetlist('email')});
@@ -4221,95 +4206,6 @@ function destroyPdfOverlay() {
 
   // Expose tiny API
   window.NewDocNav = { show:()=>{show(); refresh();}, hide, next:doNext, prev:doPrev, close:doClose, rebuild:refresh };
-})();
-</script>
-
-
-
-<script>
-/* === Minimal patch: relocate the ORIGINAL bottom nav bar to the top ===
-   We do NOT recreate buttons or handlers — we move the existing container node.
-   This avoids breaking any event listeners already attached to the buttons. */
-(function(){
-  if (window.__moveBottomNavToTop__) return;
-  window.__moveBottomNavToTop__ = true;
-
-  // Try to detect when a PDF/file overlay is active.
-  function isOverlayActive(){
-    return document.documentElement.classList.contains('pdf-overlay-active') ||
-           document.body.classList.contains('pdf-overlay-active');
-  }
-
-  // Heuristic to find the existing bottom nav container that has the three buttons
-  function findBottomNav(){
-    // Strategy 1: look for a container having exactly three buttons with the right labels
-    const allButtons = Array.from(document.querySelectorAll('button'));
-    const triads = new Map();
-    for (const b of allButtons){
-      const label = (b.getAttribute('aria-label') || b.textContent || '').trim().toLowerCase();
-      if (!/^(previous|next|close)$/.test(label)) continue;
-      const parent = b.closest('div,nav,section,header,footer');
-      if (!parent) continue;
-      const key = parent;
-      if (!triads.has(key)) triads.set(key, new Set());
-      triads.get(key).add(label);
-    }
-    for (const [node, set] of triads){
-      if (set.has('previous') && set.has('next') && set.has('close')){
-        return node;
-      }
-    }
-    // Strategy 2: look for known ids/classes from older builds
-    const known = document.querySelector('#doc-nav-buttons, .doc-nav, #navbar-new, #pdf-bottombar, #pdf-bottom-bar');
-    return known || null;
-  }
-
-  let originalParent = null;
-  let moved = false;
-
-  function moveIfNeeded(){
-    try {
-      if (!isOverlayActive()) { return; }
-      if (moved) return;
-      const bar = findBottomNav();
-      if (!bar) return;
-      originalParent = bar.parentNode;
-      bar.classList.add('moved-top-nav');
-      // Ensure it sits at the top visually
-      document.body.appendChild(bar);
-      moved = true;
-    } catch(e){ /* no-op */ }
-  }
-
-  function maybeRestore(){
-    try {
-      if (moved && !isOverlayActive() && originalParent){
-        const bar = document.querySelector('.moved-top-nav');
-        if (bar){
-          originalParent.appendChild(bar);
-          bar.classList.remove('moved-top-nav');
-        }
-        moved = false;
-      }
-    } catch(e){ /* no-op */ }
-  }
-
-  const obs = new MutationObserver(function(){
-    moveIfNeeded();
-    maybeRestore();
-  });
-  obs.observe(document.documentElement, { attributes:true, attributeFilter:['class'], subtree:true });
-  obs.observe(document.body, { attributes:true, attributeFilter:['class'], subtree:false });
-
-  // Also poll briefly in case classes flip quickly
-  let tries = 0;
-  const id = setInterval(function(){
-    moveIfNeeded();
-    if (++tries > 50) clearInterval(id);
-  }, 100);
-
-  // Run once soon after load
-  window.addEventListener('load', function(){ setTimeout(moveIfNeeded, 200); });
 })();
 </script>
 
