@@ -414,60 +414,15 @@
             display: block; /* Fix potential extra space */
         }
         
-        .doc-nav-buttons {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            z-index: 103;
-            opacity: 1;
-            transition: opacity 0.3s;
-            background: rgba(30,30,30, 0.8);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
+        
 
-        .doc-nav-buttons.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
 
-        .doc-nav-button {
-            padding: 8px 16px;
-            background: #3b82f6;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 14px;
-            border: none;
-            transition: background-color 0.2s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            user-select: none;
-        }
+        
 
-        .doc-nav-button:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-        }
 
-        .doc-nav-close {
-            background: #ef4444;
-        }
+        
 
-        .doc-nav-button:not(:disabled):hover {
-            background-color: #2563eb;
-        }
 
-        .doc-nav-close:hover {
-            background-color: #dc2626;
-        }
         
         .del-setlist {
             background: #ef4444;
@@ -1372,24 +1327,12 @@
 /* === Overlay-integrated original nav (non-intrusive) === */
 html.pdf-overlay-active #doc-view { display: block !important; } /* unhide the section so nav exists */
 html.pdf-overlay-active #doc-iframe-wrapper { display: none !important; } /* keep old wrapper hidden to avoid any layout/scroll changes */
-html.pdf-overlay-active #doc-nav-buttons {
-  position: fixed !important;
-  top: 0; left: 0; right: 0;
-  z-index: 1000001 !important; /* above #pdf-overlay (999999) */
-  pointer-events: auto;
-}
 /* Do not modify overlay scroll area at all */
 
 
 /* === Ensure original nav is above overlay and not trapped in a transform context === */
 html.pdf-overlay-active #doc-view { display: block !important; transform: none !important; }
 html.pdf-overlay-active #doc-view * { transform: none !important; }
-html.pdf-overlay-active #doc-nav-buttons {
-  position: fixed !important;
-  top: 0; left: 0; right: 0;
-  z-index: 2147483000 !important; /* way above any overlay */
-  pointer-events: auto !important;
-}
 /* Make sure overlay stays below */
 #pdf-overlay { z-index: 2147482000 !important; }
 
@@ -1432,8 +1375,7 @@ html:not(.pdf-overlay-active) #pdf-btn-hit,
 html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
 
 
-/* === Ensure single button set & disabled visuals === */
-html.pdf-overlay-active #doc-nav-buttons { display: none !important; } /* avoid double bars */
+/* === Ensure single button set & disabled visuals === */ /* avoid double bars */
 #pdf-btn-bar .btn.disabled {
   opacity: 0.45;
   filter: grayscale(40%);
@@ -1495,7 +1437,6 @@ html:not(.pdf-overlay-active) #pdf-btn-hit,
 html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
 
 /* Hide the original bar while overlay is active so there is only one set */
-html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 
 
 
@@ -1857,21 +1798,24 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
     </div>
 
     <section class="hidden" id="doc-view">
+<!-- === Fresh viewer navigation (from scratch) === -->
+<div id="doc-nav" class="viewer-nav">
+  <button id="prev-doc" class="nav-btn" aria-label="Previous">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+    <span>Previous</span>
+  </button>
+  <button id="next-doc" class="nav-btn" aria-label="Next">
+    <span>Next</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+  </button>
+  <button id="close-doc" class="nav-btn close" aria-label="Close">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    <span>Close</span>
+  </button>
+</div>
+
          <div id="doc-iframe-wrapper"></div>
-        <div class="doc-nav-buttons" id="doc-nav-buttons">
-            <button class="doc-nav-button no-select" id="prev-doc">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                Previous
-            </button>
-            <button class="doc-nav-button no-select" id="next-doc">
-                Next
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-            </button>
-            <button class="doc-nav-button doc-nav-close no-select" id="close-doc">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                Close
-            </button>
-        </div>
+        
     </section>
 
     <script>
@@ -2025,8 +1969,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $(document).on('change','#genre-filter-dropdown input[type="checkbox"]',function(){masterSelectedGenres=$('#genre-filter-dropdown input:checked').map(function(){return $(this).val()}).get();updateGenreFilterButtonText('#genre-filter-button',masterSelectedGenres);renderMaster()});
             $('#setlist-sort-filter-dropdown').on('change',renderSetlist);
             $(document).on('click',function(e){if(!$(e.target).closest('#genre-filter-container').length)$('#genre-filter-dropdown').addClass('hidden');if(!$(e.target).closest('.relative').has('#share-setlist-btn').length)$('#share-options').addClass('hidden')});
-            $('#reset-plays').click(()=>{if(confirm('Reset all plays?')){playCounts={};masterSongs.forEach(s=>s.lastPlayed=null);renderPlays();updateTopLeast();save()}});
-            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
+            $('#reset-plays').click(()=>{if(confirm('Reset all plays?')){playCounts={};masterSongs.forEach(s=>s.lastPlayed=null);renderPlays();updateTopLeast();save()}}););
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
@@ -2115,9 +2058,7 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
                 const touchendX = e.originalEvent.changedTouches[0].screenX;
                 if (touchendX < touchstartX - 50) $('#next-doc').trigger('click'); // Swipe left
                 if (touchendX > touchstartX + 50) $('#prev-doc').trigger('click'); // Swipe right
-            });
-            $('#next-doc').on('click', function() { if (!$(this).is(':disabled') && currentViewerIndex < currentViewerList.length - 1) { openSongInContext(currentViewerList[currentViewerIndex + 1].id, currentViewerContext, currentViewerIndex + 1, 'next'); }});
-            $('#prev-doc').on('click', function() { if (!$(this).is(':disabled') && currentViewerIndex > 0) { openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1, 'prev'); }});
+            });});});
             startInactivityTimer();
         }
         function resetScrollHandlers() { $('#doc-view, #next-doc, #prev-doc').off('mousemove touchstart touchend click'); clearTimeout(inactivityTimer); 
@@ -3146,11 +3087,7 @@ function destroyPdfOverlay() {
     sc.addEventListener('touchmove', onTouchMove, {passive:true});
   }
 
-  // Keep state in sync after internal updates
-  ['prev-doc','next-doc','doc-nav-buttons'].forEach(function(id){
-    var node = $(id); if (!node) return;
-    try {
-      var mo = new MutationObserver(function(){ setTimeout(syncState, 0); setTimeout(syncState, 200); });
+  // Keep state in sync after internal updates);
       mo.observe(node, { attributes: true, attributeFilter: ['class', 'style', 'disabled', 'aria-disabled'] });
     } catch(e){}
   });
@@ -3440,11 +3377,7 @@ function destroyPdfOverlay() {
   bindScroller(scroller());
   new MutationObserver(function(){ bindScroller(scroller()); })
     .observe(document.body, {childList:true, subtree:true});
-
-  ['prev-doc','next-doc','doc-nav-buttons'].forEach(function(id){
-    var n = document.getElementById(id); if (!n) return;
-    try {
-      new MutationObserver(function(){ setTimeout(syncState, 0); setTimeout(syncState, 200); })
+)
         .observe(n, {attributes:true, attributeFilter:['class','style','disabled','aria-disabled']});
     } catch(e){}
   });
@@ -4174,79 +4107,70 @@ function destroyPdfOverlay() {
 </script>
 
 
-<!-- ===== Nav Buttons Rework (non-destructive; replaces inner HTML & rebinds handlers) ===== -->
-<style id="nav-rework-css">
-  /* Modern, larger tap-targets; keep fixed top bar */
-  #doc-nav-buttons {
-    position: fixed;
-    top: env(safe-area-inset-top, 0);
-    left: 0; right: 0;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 8px 12px;
-    background: rgba(0,0,0,0.45);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    z-index: 2147483000; /* above overlay */
-  }
-  #doc-nav-buttons.hidden { display: none !important; }
-  .doc-btn {
-    appearance: none;
-    border: 0;
-    border-radius: 999px;
-    padding: 10px 16px;
-    font-size: 16px;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: #111;
-    color: #fff;
-    box-shadow: 0 2px 10px rgba(0,0,0,.25);
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .doc-btn:active { transform: translateY(1px); }
-  .doc-btn[disabled] { opacity: .45; pointer-events: none; }
-  .doc-btn svg { width: 18px; height: 18px; }
+<style>
+/* === Fresh viewer nav styles === */
+#doc-nav.viewer-nav {
+  position: fixed;
+  top: env(safe-area-inset-top, 0);
+  left: 0; right: 0;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 2147483000;
+}
+#doc-nav.viewer-nav.hidden { display: none !important; }
+#doc-nav.viewer-nav .nav-btn {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 16px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #111;
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(0,0,0,.25);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+#doc-nav.viewer-nav .nav-btn:active { transform: translateY(1px); }
+#doc-nav.viewer-nav .nav-btn[disabled] { opacity: .45; pointer-events: none; }
+#doc-nav.viewer-nav .nav-btn svg { width: 18px; height: 18px; }
+#doc-nav.viewer-nav .nav-btn.close { background: #2a2a2a; }
 </style>
-
-<script id="nav-rework-js">
+<script>
+/* === Fresh viewer nav logic === */
 (function(){
-  // Wait for DOM
   function ready(fn){ if (document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
   ready(function(){
-
-    var bar = document.getElementById('doc-nav-buttons');
-    if (!bar) return;
-
-    // Replace inner HTML with a fresh, simple set (same IDs to stay compatible elsewhere)
-    bar.innerHTML = ''
-      + '<button class="doc-btn" id="prev-doc" aria-label="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg><span>Previous</span></button>'
-      + '<button class="doc-btn" id="next-doc" aria-label="Next"><span>Next</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>'
-      + '<button class="doc-btn" id="close-doc" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span>Close</span></button>';
-
-    // jQuery is used elsewhere; rely on it if present for consistency
     var $ = window.jQuery || window.$;
 
+    var nav   = document.getElementById('doc-nav');
+    var prevB = document.getElementById('prev-doc');
+    var nextB = document.getElementById('next-doc');
+    var closeB= document.getElementById('close-doc');
+    if (!nav || !prevB || !nextB || !closeB) return;
+
     function getState(){
-      // These globals exist in this build
-      var list   = window.currentViewerList || [];
-      var idx    = (typeof window.currentViewerIndex==='number') ? window.currentViewerIndex : -1;
-      var ctx    = window.currentViewerContext;
-      return {list:list, idx:idx, ctx:ctx};
+      return {
+        list: window.currentViewerList || [],
+        idx: (typeof window.currentViewerIndex==='number') ? window.currentViewerIndex : -1,
+        ctx: window.currentViewerContext
+      };
     }
 
     function updateDisabled(){
       var st = getState();
-      var prevB = document.getElementById('prev-doc');
-      var nextB = document.getElementById('next-doc');
-      if (!prevB || !nextB) return;
       var atStart = !(st.idx > 0);
-      var atEnd   = !(st.list && st.idx >= 0 && st.idx < st.list.length-1);
+      var atEnd   = !(st.list && st.idx >= 0 && st.idx < st.list.length - 1);
       prevB.toggleAttribute('disabled', atStart);
       nextB.toggleAttribute('disabled', atEnd);
       if ($) { $('#prev-doc').prop('disabled', atStart); $('#next-doc').prop('disabled', atEnd); }
@@ -4255,68 +4179,57 @@ function destroyPdfOverlay() {
     function go(delta){
       var st = getState();
       if (!st.list || st.idx < 0) return;
-      var nextIdx = st.idx + delta;
-      if (nextIdx < 0 || nextIdx > st.list.length - 1) return;
-
-      // Use existing app function to open the target
+      var target = st.idx + delta;
+      if (target < 0 || target >= st.list.length) return;
       if (typeof window.openSongInContext === 'function') {
-        window.openSongInContext(st.list[nextIdx], st.ctx, nextIdx, (delta>0?'next':'prev'));
+        window.openSongInContext(st.list[target], st.ctx, target, (delta>0?'next':'prev'));
       }
-      // After navigation, disabled states will be updated by the viewer setup code,
-      // but also re-run here with a tiny delay to be safe.
-      setTimeout(updateDisabled, 50);
+      // Let the viewer's own setup update globals, but ensure buttons reflect state ASAP
+      setTimeout(updateDisabled, 40);
     }
 
     function closeViewer(){
-      // Prefer the app's existing close flow if available
-      if ($) {
-        // Mimic existing code seen in this version: hide viewer, reset handlers, empty iframe wrapper
-        try {
+      try {
+        if ($) {
           $('#doc-view').addClass('hidden');
           $('body').removeClass('doc-viewer-active doc-view-fullscreen');
           if (window.resetScrollHandlers) window.resetScrollHandlers();
           $('#doc-iframe-wrapper').empty();
-        } catch(e){}
-      } else {
-        var dv = document.getElementById('doc-view');
-        if (dv) dv.classList.add('hidden');
-        document.body.classList.remove('doc-viewer-active','doc-view-fullscreen');
-        var wrap = document.getElementById('doc-iframe-wrapper');
-        if (wrap) wrap.innerHTML = '';
-      }
-      setTimeout(updateDisabled, 50);
+        } else {
+          var dv = document.getElementById('doc-view');
+          if (dv) dv.classList.add('hidden');
+          document.body.classList.remove('doc-viewer-active','doc-view-fullscreen');
+          var wrap = document.getElementById('doc-iframe-wrapper');
+          if (wrap) wrap.innerHTML = '';
+        }
+      } catch(e){}
+      setTimeout(updateDisabled, 40);
     }
 
-    // Remove any prior click handlers bound to these IDs to avoid double fires
-    if ($) {
-      $('#prev-doc').off('click');
-      $('#next-doc').off('click');
-      $('#close-doc').off('click');
-      $('#prev-doc').on('click', function(e){ e.stopPropagation(); go(-1); });
-      $('#next-doc').on('click', function(e){ e.stopPropagation(); go(+1); });
-      $('#close-doc').on('click', function(e){ e.stopPropagation(); closeViewer(); });
-    } else {
-      ['prev-doc','next-doc','close-doc'].forEach(function(id){
-        var el = document.getElementById(id);
-        if (!el) return;
-        var clone = el.cloneNode(true);
-        el.parentNode.replaceChild(clone, el);
-      });
-      document.getElementById('prev-doc') .addEventListener('click', function(e){ e.stopPropagation(); go(-1); }, {passive:false});
-      document.getElementById('next-doc') .addEventListener('click', function(e){ e.stopPropagation(); go(+1); }, {passive:false});
-      document.getElementById('close-doc').addEventListener('click', function(e){ e.stopPropagation(); closeViewer(); }, {passive:false});
-    }
+    // Ensure no legacy handlers remain by replacing nodes (clean-slate)
+    ['prev-doc','next-doc','close-doc'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el || !el.parentNode) return;
+      var clone = el.cloneNode(true);
+      el.parentNode.replaceChild(clone, el);
+    });
+    // Fetch fresh refs
+    prevB = document.getElementById('prev-doc');
+    nextB = document.getElementById('next-doc');
+    closeB= document.getElementById('close-doc');
 
-    // Keep buttons responsive to app state
+    // Bind fresh listeners
+    prevB.addEventListener('click', function(e){ e.stopPropagation(); go(-1); }, {passive:false});
+    nextB.addEventListener('click', function(e){ e.stopPropagation(); go(+1); }, {passive:false});
+    closeB.addEventListener('click', function(e){ e.stopPropagation(); closeViewer(); }, {passive:false});
+
+    // Keep in sync with viewer state changes
     updateDisabled();
-    // In case the app updates currentViewerIndex dynamically, observe body class changes to refresh disabled state
-    var obs = new MutationObserver(function(){ updateDisabled(); });
+    var obs = new MutationObserver(updateDisabled);
     obs.observe(document.body, {attributes:true, attributeFilter:['class']});
-
-    // Also refresh when the viewer section toggles hidden/visible
     var dv = document.getElementById('doc-view');
     if (dv) {
-      var obs2 = new MutationObserver(function(){ updateDisabled(); });
+      var obs2 = new MutationObserver(updateDisabled);
       obs2.observe(dv, {attributes:true, attributeFilter:['class']});
     }
   });
