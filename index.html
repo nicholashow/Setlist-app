@@ -4209,5 +4209,31 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<!-- === PATCH: Move bottom Previous/Next/Close button bar to TOP (no JS/function changes) === -->
+<style id="patch-move-nav-to-top">
+  /* Target common original nav containers used in this app */
+  #doc-nav-buttons, .doc-nav-buttons,
+  #doc-nav, .doc-nav,
+  #navbar, .navbar,
+  #pdf-bottombar, .pdf-bottombar {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: auto !important;
+    left: 0; right: 0;
+  }
+  /* Ensure any cloned/new nav with ids from recent builds also stay at top */
+  #nav-bar, .nav-bar, #navbuttons, .navbuttons {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: auto !important;
+    left: 0; right: 0;
+  }
+  /* Provide breathing room so the PDF page isn't obscured by the bar */
+  #pdf-overlay .pdfjs-scroll { padding-top: 64px !important; }
+  /* For the legacy doc wrapper path */
+  #doc-iframe-wrapper { padding-top: 64px; box-sizing: border-box; }
+</style>
+
 </body>
 </html>
