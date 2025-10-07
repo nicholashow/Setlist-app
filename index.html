@@ -414,60 +414,19 @@
             display: block; /* Fix potential extra space */
         }
         
-        .doc-nav-buttons {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            z-index: 103;
-            opacity: 1;
-            transition: opacity 0.3s;
-            background: rgba(30,30,30, 0.8);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
 
-        .doc-nav-buttons.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
 
-        .doc-nav-button {
-            padding: 8px 16px;
-            background: #3b82f6;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 14px;
-            border: none;
-            transition: background-color 0.2s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            user-select: none;
-        }
 
-        .doc-nav-button:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
-        }
 
-        .doc-nav-close {
-            background: #ef4444;
-        }
 
-        .doc-nav-button:not(:disabled):hover {
-            background-color: #2563eb;
-        }
 
-        .doc-nav-close:hover {
-            background-color: #dc2626;
-        }
+
+
+
+
+
+
+
         
         .del-setlist {
             background: #ef4444;
@@ -1372,130 +1331,49 @@
 /* === Overlay-integrated original nav (non-intrusive) === */
 html.pdf-overlay-active #doc-view { display: block !important; } /* unhide the section so nav exists */
 html.pdf-overlay-active #doc-iframe-wrapper { display: none !important; } /* keep old wrapper hidden to avoid any layout/scroll changes */
-html.pdf-overlay-active #doc-nav-buttons {
-  position: fixed !important;
-  top: 0; left: 0; right: 0;
-  z-index: 1000001 !important; /* above #pdf-overlay (999999) */
-  pointer-events: auto;
-}
+
 /* Do not modify overlay scroll area at all */
 
 
 /* === Ensure original nav is above overlay and not trapped in a transform context === */
 html.pdf-overlay-active #doc-view { display: block !important; transform: none !important; }
 html.pdf-overlay-active #doc-view * { transform: none !important; }
-html.pdf-overlay-active #doc-nav-buttons {
-  position: fixed !important;
-  top: 0; left: 0; right: 0;
-  z-index: 2147483000 !important; /* way above any overlay */
-  pointer-events: auto !important;
-}
+
 /* Make sure overlay stays below */
 #pdf-overlay { z-index: 2147482000 !important; }
 
 
 /* === PDF Top Buttons Overlay (non-intrusive) === */
-#pdf-btn-hit {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 56px;
-  z-index: 2147483600;
-  background: transparent;
-  pointer-events: auto;
-}
-#pdf-btn-bar {
-  position: fixed;
-  top: 6px; left: 50%;
-  transform: translateX(-50%);
-  z-index: 2147483601;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .2s ease;
-}
-#pdf-btn-bar.visible { opacity: 1; }
-#pdf-btn-bar .btn {
-  pointer-events: auto;
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-weight: 700;
-  border: none;
-  box-shadow: 0 2px 8px rgba(0,0,0,.35);
-  user-select: none;
-}
-#pdf-btn-prev, #pdf-btn-next { background: #2563eb; color: #fff; }
-#pdf-btn-close { background: #ef4444; color: #fff; }
-html:not(.pdf-overlay-active) #pdf-btn-hit,
-html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
+
+
+
+
+
+
+
 
 
 /* === Ensure single button set & disabled visuals === */
-html.pdf-overlay-active #doc-nav-buttons { display: none !important; } /* avoid double bars */
-#pdf-btn-bar .btn.disabled {
-  opacity: 0.45;
-  filter: grayscale(40%);
-  cursor: default;
-  box-shadow: none;
-}
+ /* avoid double bars */
+
 
 
 /* === Overlay PDF Button Bar (top-center, non-intrusive) === */
-#pdf-btn-hit {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 72px;                 /* slightly taller tap zone for reliability */
-  z-index: 2147483600;
-  background: transparent;
-  pointer-events: auto;
-}
-#pdf-btn-bar {
-  position: fixed;
-  top: 18px;                    /* moved down a bit as requested */
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2147483601;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;         /* container doesn't block scroll */
-  opacity: 0;
-  transition: opacity .20s ease;
-}
-#pdf-btn-bar.visible { opacity: 1; }
-#pdf-btn-bar .btn {
-  pointer-events: auto;
-  padding: 9px 18px;
-  border-radius: 12px;
-  font-weight: 800;
-  border: none;
-  letter-spacing: .3px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.35);
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-#pdf-btn-prev, #pdf-btn-next { background: #2563eb; color: #fff; }
-#pdf-btn-close { background: #ef4444; color: #fff; }
+
+
+
+
+
+
 
 /* Disabled look for grey state */
-#pdf-btn-bar .btn.disabled {
-  background: #9ca3af !important; /* grey */
-  color: #fff !important;
-  opacity: 1;
-  filter: none;
-  cursor: default;
-  box-shadow: none;
-}
+
 
 /* Show only when overlay is active */
-html:not(.pdf-overlay-active) #pdf-btn-hit,
-html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
+
 
 /* Hide the original bar while overlay is active so there is only one set */
-html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
+
 
 
 
@@ -1858,20 +1736,7 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 
     <section class="hidden" id="doc-view">
          <div id="doc-iframe-wrapper"></div>
-        <div class="doc-nav-buttons" id="doc-nav-buttons">
-            <button class="doc-nav-button no-select" id="prev-doc">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                Previous
-            </button>
-            <button class="doc-nav-button no-select" id="next-doc">
-                Next
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-            </button>
-            <button class="doc-nav-button doc-nav-close no-select" id="close-doc">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                Close
-            </button>
-        </div>
+        
     </section>
 
     <script>
@@ -2128,8 +1993,8 @@ if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').a
       }
     }catch(e){}
 }
-        function showNavButtons() { $('#doc-nav-buttons').removeClass('hidden'); startInactivityTimer(); }
-        function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000); }
+        function showNavButtons() { startInactivityTimer(); }
+        function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { }, 3000); }
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
     </script>
     <!-- Left-edge custom scrollbar (visible only when sidebar is collapsed) -->
@@ -2479,24 +2344,15 @@ function destroyPdfOverlay() {
 </script>
 
 <!-- Non-intrusive PDF top buttons -->
-<div id="pdf-btn-hit"></div>
-<div id="pdf-btn-bar" aria-hidden="true">
-  <button id="pdf-btn-prev" class="btn" type="button">PREVIOUS</button>
-  <button id="pdf-btn-next" class="btn" type="button">NEXT</button>
-  <button id="pdf-btn-close" class="btn" type="button">CLOSE</button>
-</div>
+
+
 
 <script>
 (function(){
   if (window.__pdfBtnsInstalled) return;
   window.__pdfBtnsInstalled = true;
 
-  var bar   = document.getElementById('pdf-btn-bar');
-  var hit   = document.getElementById('pdf-btn-hit');
-  var prevB = document.getElementById('pdf-btn-prev');
-  var nextB = document.getElementById('pdf-btn-next');
-  var closeB= document.getElementById('pdf-btn-close');
-  var hideTimer = null;
+  var bar   = var hit   = var prevB = var nextB = var closeB= var hideTimer = null;
 
   function forwardClick(id){
     try {
@@ -2667,12 +2523,8 @@ function destroyPdfOverlay() {
 </script>
 
 <!-- Overlay PDF Button Bar -->
-<div id="pdf-btn-hit"></div>
-<div id="pdf-btn-bar" aria-hidden="true">
-  <button id="pdf-btn-prev" class="btn" type="button">PREVIOUS</button>
-  <button id="pdf-btn-next" class="btn" type="button">NEXT</button>
-  <button id="pdf-btn-close" class="btn" type="button">CLOSE</button>
-</div>
+
+
 
 <script>
 (function(){
@@ -3214,8 +3066,7 @@ function destroyPdfOverlay() {
     sc.__overlayBound = true;
 
     // Reuse existing bar logic if present
-    var bar = document.getElementById('pdf-btn-bar');
-    function showBar(){
+    var bar = function showBar(){
       if (!bar) return;
       if (sc.scrollTop > 2) return;
       bar.classList.add('visible');
@@ -3764,8 +3615,7 @@ function destroyPdfOverlay() {
     try { document.body.classList.remove('pdf-overlay-active'); closed = true; } catch(_) {}
 
     try {
-      var bar = document.getElementById('pdf-topbar') || document.getElementById('pdf-btn-bar');
-      if (bar) bar.classList.remove('visible');
+      var bar = document.getElementById('pdf-topbar') || if (bar) bar.classList.remove('visible');
     } catch(_) {}
 
     return !!closed;
@@ -3773,12 +3623,7 @@ function destroyPdfOverlay() {
 
   function onDocClick(e) {
     var t = e.target;
-    var isClose = (t && t.id === 'pdf-close') || (t && t.closest && (t.closest('#pdf-close') || t.closest('#pdf-btn-close')));
-    if (isClose) {
-      e.stopPropagation();
-      e.preventDefault();
-      universalCloseViewer();
-    }
+
   }
   document.addEventListener('click', onDocClick, true);
 
@@ -4173,250 +4018,279 @@ function destroyPdfOverlay() {
 })();
 </script>
 
-</body>
-</html>
 
-
-<!-- ===== ReaderNav Patch v1.0 (non-destructive) =====
-- Adds robust Previous / Next / Close overlay controls that ONLY appear while a file is open.
-- Does not remove or edit your existing code; instead, it reuses your current handlers if present.
-- If your app exposes global functions like nextFile(), prevFile(), closeFile(), this will call them.
-- Otherwise it will try to click your existing hidden buttons by common selectors.
-- The patch auto-hides, supports edge tap zones, and tears down when overlay closes.
-
-You can safely move this <style> and <script> into your main HTML/JS bundle later.
-====================================================== -->
-<style id="reader-nav-style">
-  html.pdf-overlay-active .doc-nav-buttons { display: none !important; } /* hide any legacy top bars while our nav is active */
-  html.pdf-overlay-active #pdf-btn-bar,
-  html.pdf-overlay-active #pdf-btn-hit { display: none !important; }
-
-  #reader-nav {
-    position: fixed;
-    left: 50%;
-    bottom: 20px;
-    transform: translateX(-50%);
-    z-index: 2147483602;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: rgba(20,20,20,.85);
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 9999px;
-    padding: 10px 14px;
-    backdrop-filter: blur(4px);
-    box-shadow: 0 6px 24px rgba(0,0,0,.35);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .18s ease;
-  }
-  #reader-nav.visible { opacity: 1; pointer-events: auto; }
-  #reader-nav .btn {
-    border: none; padding: 10px 14px; border-radius: 9999px;
-    font-weight: 800; letter-spacing: .3px; user-select: none;
-    -webkit-tap-highlight-color: transparent; box-shadow: 0 2px 10px rgba(0,0,0,.25);
-  }
-  #reader-prev, #reader-next { background: #2563eb; color: #fff; }
-  #reader-close { background: #ef4444; color: #fff; }
-  #reader-nav .btn[disabled]{ background:#9ca3af !important; color:#fff !important; box-shadow:none; cursor:default; }
-  #reader-progress { font-weight: 700; font-size: 13px; color: #e5e7eb; padding: 0 8px; min-width: 64px; text-align: center; }
-
-  .reader-tap-zone {
-    position: fixed; top: 0; bottom: 0; width: 22vw;
-    z-index: 2147483601; background: transparent; pointer-events: auto;
-  }
-  #tap-left { left: 0; } #tap-right { right: 0; }
-  .reader-tap-zone:active { background: rgba(255,255,255,.03); }
-
-  #reader-scrub { -webkit-appearance: none; appearance: none; width: 160px; height: 4px; border-radius: 9999px; background: #4b5563; outline: none; }
-  #reader-scrub::-webkit-slider-thumb {
-    -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 9999px;
-    background: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,.6); margin-top: -7px;
-  }
-  #reader-scrub::-moz-range-thumb {
-    width: 18px; height: 18px; border-radius: 9999px; background: #fff; box-shadow: 0 0 0 4px rgba(37,99,235,.6);
-  }
+<!-- New file navigation toolbar -->
+<style id="nav-new-css">
+  .nav-new{position:fixed;left:0;right:0;top:0;display:flex;gap:.5rem;justify-content:center;
+    padding:.5rem;z-index:999999;background:rgba(17,17,17,.85);backdrop-filter:saturate(1.2) blur(6px);
+    -webkit-backdrop-filter:saturate(1.2) blur(6px);transform:translateY(-120%);transition:transform .28s ease;}
+  .nav-new.visible{transform:translateY(0)}
+  .nav-new.hidden{visibility:hidden}
+  .nav-new-btn{font:600 14px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+    padding:.6rem 1rem;border-radius:999px;border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.08);color:#fff;touch-action:manipulation}
+  .nav-new-btn:active{transform:translateY(1px)}
+  .nav-new-btn[disabled]{opacity:.45;pointer-events:none}
+  .nav-new-close{border-color:rgba(255,75,75,.35);}
+  @media (pointer:coarse){ .nav-new-btn{padding:.8rem 1.2rem;font-size:16px} }
 </style>
-
-<script id="reader-nav-script">
+<div id="navbar-new" class="nav-new hidden" aria-hidden="true">
+  <button id="nav-prev" type="button" class="nav-new-btn" aria-label="Previous file">Previous</button>
+  <button id="nav-next" type="button" class="nav-new-btn" aria-label="Next file">Next</button>
+  <button id="nav-close" type="button" class="nav-new-btn nav-new-close" aria-label="Close file">Close</button>
+</div>
+<script>
 (function(){
-  if (window.__ReaderNavPatched) return; window.__ReaderNavPatched = true;
+  if (window.__NewDocNavInjected) return;
+  window.__NewDocNavInjected = true;
 
+  function qsa(sel, root=document){ try { return Array.from(root.querySelectorAll(sel)); } catch(e){ return []; } }
+  function isVisible(el){
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    return rect.width>0 && rect.height>0 && !!(el.offsetParent || el === document.body);
+  }
   const state = {
-    visible: false,
-    index: null,
-    count: null,
-    idleTimer: null,
-    edgeZones: null,
-    navEl: null,
-    scrubEl: null,
-    progressEl: null
+    list: [], index: -1,
+    itemSelectors: ['[data-file]','[data-file-path]','[data-path]','a[href$=".pdf"]','a[data-type="pdf"]','.file-item','.song-item','.setlist-file'],
+    viewerSelectors: ['#pdfViewer','iframe[src$=".pdf"]','embed[type="application/pdf"]','object[type="application/pdf"]','.pdfViewer','.pdf-canvas','#file-viewer','.file-viewer','.viewer-overlay','.pdfjs-container']
   };
+  const bar = document.getElementById('navbar-new');
+  const btnPrev = document.getElementById('nav-prev');
+  const btnNext = document.getElementById('nav-next');
+  const btnClose = document.getElementById('nav-close');
 
-  // Utility: call global if exists, else click any known selector for that action
-  function callAction(type){
-    try {
-      if (type === "next"){
-        if (typeof window.nextFile === "function") return window.nextFile();
-      } else if (type === "prev"){
-        if (typeof window.prevFile === "function") return window.prevFile();
-      } else if (type === "close"){
-        if (typeof window.closeFile === "function") return window.closeFile();
+  function getNodeSelector(node){
+    if (!node || !node.parentElement) return null;
+    const parts = [];
+    let el = node;
+    while (el && el !== document.body){
+      let part = el.nodeName.toLowerCase();
+      if (el.id){ part += '#' + CSS.escape(el.id); parts.unshift(part); break; }
+      if (el.classList && el.classList.length){
+        part += '.' + Array.from(el.classList).map(c=>CSS.escape(c)).join('.');
       }
-    } catch(e){ /* fallthrough to clickers */ }
-
-    const selectorsByType = {
-      next: ['[data-action="next-file"]', '#nextFile', '.next-file', '#next', '.btn-next'],
-      prev: ['[data-action="prev-file"]', '#prevFile', '.prev-file', '#prev', '.btn-prev'],
-      close:['[data-action="close-file"]','#closeFile','.close-file','#close','.btn-close']
-    };
-    const sels = selectorsByType[type] || [];
-    for (const sel of sels){
-      const el = document.querySelector(sel);
-      if (el){ el.click(); return; }
+      const p = el.parentElement;
+      if (p){
+        const siblings = Array.from(p.children).filter(c => c.nodeName === el.nodeName);
+        if (siblings.length>1){
+          const idx = siblings.indexOf(el)+1;
+          part += `:nth-of-type(${idx})`;
+        }
+      }
+      parts.unshift(part);
+      el = el.parentElement;
+      if (parts.length>5) break;
     }
-    // As last resort, emit a custom event so app can listen
-    document.dispatchEvent(new CustomEvent("reader-nav:"+type));
+    return parts.join(' > ');
   }
 
-  // Discover index/count from common places (non-fatal if not found)
-  function refreshPosition(){
-    // 1) data attributes somewhere
-    let host = document.querySelector('[data-file-index][data-file-count]');
-    if (host){
-      state.index = parseInt(host.getAttribute('data-file-index'),10) || null;
-      state.count = parseInt(host.getAttribute('data-file-count'),10) || null;
-    }
-    // 2) inline text like "3 / 24"
-    if (state.index == null || state.count == null){
-      const txt = document.querySelector('#file-position, .file-position, .pdf-page-position');
-      if (txt && /(\d+)\s*\/\s*(\d+)/.test(txt.textContent)){
-        const m = txt.textContent.match(/(\d+)\s*\/\s*(\d+)/);
-        state.index = parseInt(m[1],10);
-        state.count = parseInt(m[2],10);
+  function buildList(){
+    const results = new Set();
+    for (const sel of state.itemSelectors){
+      for (const node of qsa(sel)){
+        let path = node.getAttribute('data-file') || node.getAttribute('data-file-path') || node.getAttribute('data-path') || node.getAttribute('href') || '';
+        if (!path) continue;
+        path = path.trim();
+        if (!path) continue;
+        results.add(JSON.stringify({ path, nodeSelector: getNodeSelector(node) }));
       }
     }
-    // update UI
-    if (state.progressEl){
-      let s = "";
-      if (state.index!=null && state.count!=null) s = state.index + " / " + state.count;
-      state.progressEl.textContent = s || "";
+    state.list = Array.from(results).map(s => JSON.parse(s)).filter(x => !!x.path);
+  }
+
+  function findViewer(){
+    for (const sel of state.viewerSelectors){
+      const nodes = qsa(sel);
+      for (const n of nodes){ if (isVisible(n)) return n; }
     }
-    if (state.navEl){
-      const prevBtn = state.navEl.querySelector('#reader-prev');
-      const nextBtn = state.navEl.querySelector('#reader-next');
-      if (prevBtn) prevBtn.disabled = (state.index!=null && state.index<=1);
-      if (nextBtn) nextBtn.disabled = (state.index!=null && state.count!=null && state.index>=state.count);
+    return null;
+  }
+  function currentViewerSrc(viewer){
+    if (!viewer) return null;
+    if ('src' in viewer && viewer.src) return viewer.src;
+    if (viewer.tagName === 'OBJECT' || viewer.tagName === 'EMBED'){
+      const da = viewer.getAttribute('data') || viewer.getAttribute('src');
+      if (da) return da;
     }
-    if (state.scrubEl && state.count){
-      state.scrubEl.max = String(state.count);
-      state.scrubEl.value = String(Math.max(1, Math.min(state.count, state.index || 1)));
+    const container = viewer.closest('[data-current-file]');
+    if (container) return container.getAttribute('data-current-file');
+    return null;
+  }
+  function normalizePath(p){ try { return new URL(p, window.location.href).href; } catch(e){ return p; } }
+  function detectIndex(){
+    const viewer = findViewer();
+    const vsrc = normalizePath(currentViewerSrc(viewer) || '');
+    if (!vsrc) { state.index = -1; return; }
+    let best = -1;
+    for (let i=0;i<state.list.length;i++){
+      const item = state.list[i];
+      const itemHref = normalizePath(item.path);
+      if (itemHref === vsrc || vsrc.endsWith(itemHref) || itemHref.indexOf(itemHref) >= 0 || itemHref.indexOf(vsrc) >= 0){
+        best = i; break;
+      }
+    }
+    state.index = best;
+  }
+  function openByIndex(nextIdx){
+    if (nextIdx < 0 || nextIdx >= state.list.length) return;
+    const target = state.list[nextIdx];
+    const path = target.path;
+    if (typeof window.openFileByPath === 'function') { window.openFileByPath(path); return; }
+    if (typeof window.openFile === 'function') { window.openFile(path); return; }
+    if (typeof window.App === 'object' && typeof window.App.openFile === 'function'){ window.App.openFile(path); return; }
+    const viewer = findViewer();
+    if (viewer){
+      if ('src' in viewer) { viewer.src = path; }
+      else if (viewer.tagName === 'OBJECT') { viewer.setAttribute('data', path); }
+      else if (viewer.tagName === 'EMBED') { viewer.setAttribute('src', path); }
+      const cont = viewer.closest('[data-current-file]');
+      if (cont) cont.setAttribute('data-current-file', path);
+    }
+    if (target.nodeSelector){
+      const node = document.querySelector(target.nodeSelector);
+      if (node) node.dispatchEvent(new MouseEvent('click', { bubbles:true, cancelable:true }));
     }
   }
-
-  function showNav(){
-    if (!state.navEl) buildNav();
-    state.visible = true;
-    state.navEl.classList.add('visible');
-    if (state.edgeZones){ state.edgeZones.forEach(z => z.style.display='block'); }
-    refreshPosition();
-    resetIdle();
-  }
-  function hideNav(){
-    if (!state.navEl) return;
-    state.visible = false;
-    state.navEl.classList.remove('visible');
-    if (state.edgeZones){ state.edgeZones.forEach(z => z.style.display='none'); }
-    clearTimeout(state.idleTimer);
-  }
-  function resetIdle(){
-    clearTimeout(state.idleTimer);
-    state.idleTimer = setTimeout(()=>{
-      if (!state.navEl) return;
-      state.navEl.classList.remove('visible');
-      if (state.edgeZones){ state.edgeZones.forEach(z => z.style.display='none'); }
-    }, 2500);
-  }
-
-  function buildNav(){
-    // tap zones
-    const left = document.createElement('div'); left.id = 'tap-left'; left.className='reader-tap-zone';
-    const right= document.createElement('div'); right.id= 'tap-right'; right.className='reader-tap-zone';
-    left.addEventListener('click', ()=>{ callAction('prev'); resetIdle(); });
-    right.addEventListener('click',()=>{ callAction('next'); resetIdle(); });
-    document.documentElement.appendChild(left);
-    document.documentElement.appendChild(right);
-    state.edgeZones = [left,right];
-
-    // bottom pill
-    const nav = document.createElement('div'); nav.id='reader-nav';
-    nav.innerHTML = `
-      <button id="reader-prev" class="btn" aria-label="Previous">Previous</button>
-      <span id="reader-progress"></span>
-      <input id="reader-scrub" type="range" min="1" value="1" />
-      <button id="reader-next" class="btn" aria-label="Next">Next</button>
-      <button id="reader-close" class="btn" aria-label="Close">Close</button>
-    `;
-    document.documentElement.appendChild(nav);
-    state.navEl = nav;
-    state.scrubEl = nav.querySelector('#reader-scrub');
-    state.progressEl = nav.querySelector('#reader-progress');
-
-    nav.querySelector('#reader-prev').addEventListener('click', ()=>{ callAction('prev'); resetIdle(); setTimeout(refreshPosition,120); });
-    nav.querySelector('#reader-next').addEventListener('click', ()=>{ callAction('next'); resetIdle(); setTimeout(refreshPosition,120); });
-    nav.querySelector('#reader-close').addEventListener('click',()=>{ callAction('close'); });
-
-    state.scrubEl.addEventListener('input', (e)=>{
-      // Try to jump by calling prev/next the required delta times.
-      const target = parseInt(e.target.value,10);
-      if (!state.count || state.index==null) return;
-      let delta = target - state.index;
-      const step = ()=>{
-        if (delta===0) return refreshPosition();
-        if (delta>0){ delta--; callAction('next'); }
-        else { delta++; callAction('prev'); }
-        setTimeout(step, 60);
-      };
-      step();
-    });
-
-    // show when user interacts
-    ['mousemove','mousedown','touchstart','touchmove','keydown','wheel'].forEach(evt=>{
-      document.addEventListener(evt, ()=>{ if (isFileOpen()) { showNav(); } }, {passive:true});
-    });
-  }
-
-  // Detect if a file is open: prefer html.pdf-overlay-active or visible #pdf-overlay
-  function isFileOpen(){
-    if (document.documentElement.classList.contains('pdf-overlay-active')) return true;
-    const o = document.querySelector('#pdf-overlay');
-    if (o){
-      const style = window.getComputedStyle(o);
-      if (style.display!=='none' && style.visibility!=='hidden' && style.opacity!=='0') return true;
+  function doPrev(){ if (state.index <= 0) return; openByIndex(state.index - 1); setTimeout(refresh, 60); }
+  function doNext(){ if (state.index >= state.list.length-1) return; openByIndex(state.index + 1); setTimeout(refresh, 60); }
+  function doClose(){
+    if (typeof window.closeFileViewer === 'function') { window.closeFileViewer(); hide(); return; }
+    if (typeof window.closeFile === 'function') { window.closeFile(); hide(); return; }
+    if (typeof window.App === 'object' && typeof window.App.closeFile === 'function'){ window.App.closeFile(); hide(); return; }
+    const candidates = ['[data-action="close-file"]','.close-file','#viewer-close','button[aria-label="Close"]'];
+    for (const sel of candidates){
+      const btn = document.querySelector(sel);
+      if (btn){ btn.click(); hide(); return; }
     }
-    // fallback: any fullscreen viewer containers you might use
-    if (document.querySelector('.file-viewer.open, .pdf-viewer.open, [data-viewer-open="true"]')) return true;
-    return false;
+    const viewer = findViewer();
+    if (viewer){
+      if ('src' in viewer) viewer.src = '';
+      else if (viewer.tagName === 'OBJECT') viewer.removeAttribute('data');
+      const overlay = viewer.closest('.viewer-overlay, #file-viewer, .file-viewer');
+      if (overlay) overlay.classList.add('hidden');
+    }
+    hide();
+    document.documentElement.classList.remove('file-open');
+    document.body.classList.remove('file-open');
+    window.dispatchEvent(new CustomEvent('file:close'));
   }
+  function show(){ bar.classList.remove('hidden'); requestAnimationFrame(()=>bar.classList.add('visible')); bar.setAttribute('aria-hidden','false'); }
+  function hide(){ bar.classList.remove('visible'); bar.setAttribute('aria-hidden','true'); setTimeout(()=>bar.classList.add('hidden'), 300); }
+  function refresh(){
+    buildList(); detectIndex();
+    const prevDis = (state.index <= 0);
+    const nextDis = (state.index < 0 || state.index >= state.list.length-1);
+    if (btnPrev) btnPrev.disabled = prevDis;
+    if (btnNext) btnNext.disabled = nextDis;
+  }
+  // Bind
+  if (btnPrev) btnPrev.addEventListener('click', doPrev);
+  if (btnNext) btnNext.addEventListener('click', doNext);
+  if (btnClose) btnClose.addEventListener('click', doClose);
 
-  // Observe overlay open/close
-  const obs = new MutationObserver(()=>{
-    if (isFileOpen()) showNav(); else hideNav();
-    refreshPosition();
-  });
-  obs.observe(document.documentElement, { attributes:true, attributeFilter:['class'] });
-  const overlay = document.querySelector('#pdf-overlay') || document.body;
-  const bodyObs = new MutationObserver(()=>{ if (isFileOpen()) showNav(); else hideNav(); refreshPosition(); });
-  bodyObs.observe(overlay, { attributes:true, childList:true, subtree:true });
+  function considerVisibility(){
+    const v = findViewer();
+    const open = !!v && isVisible(v);
+    if (open){ refresh(); show(); } else { hide(); }
+  }
+  window.addEventListener('file:open', considerVisibility);
+  window.addEventListener('pdf:opened', considerVisibility);
+  window.addEventListener('file:close', considerVisibility);
+  window.addEventListener('transitionend', considerVisibility);
+  window.addEventListener('hashchange', considerVisibility);
+  document.addEventListener('click', function(){ setTimeout(considerVisibility, 80); }, true);
+  const mo = new MutationObserver(() => setTimeout(considerVisibility, 20));
+  mo.observe(document.documentElement, { childList:true, subtree:true, attributes:true, attributeFilter:['class','style','src','data'] });
+  setTimeout(considerVisibility, 150);
 
-  // Kick once on load
-  window.addEventListener('load', ()=>{
-    setTimeout(()=>{
-      if (isFileOpen()) showNav(); else hideNav();
-      refreshPosition();
-    }, 60);
-  });
+  // Expose tiny API
+  window.NewDocNav = { show:()=>{show(); refresh();}, hide, next:doNext, prev:doPrev, close:doClose, rebuild:refresh };
 })();
 </script>
-<!-- ===== /ReaderNav Patch ===== -->
 
+
+
+<!-- ===== iPad/WebKit Safe Overrides (non-destructive; appended) ===== -->
+<style id="ipad-webkit-overrides">
+/* 1) Never globally lock scroll on iOS; override earlier html, body rules only on iOS */
+html.ios, html.ios body {
+  overflow: auto !important;
+  position: static !important;
+  height: 100% !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* 2) Ensure the document viewer uses a scrollable container on iOS */
+html.ios #doc-iframe-wrapper,
+html.ios .doc-iframe-container {
+  overflow: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  height: 100vh !important;
+}
+
+/* 3) Kill 3D transforms around embedded docs on iOS (prevents "single-page snapshot" bug) */
+html.ios #doc-view,
+html.ios #doc-iframe-wrapper,
+html.ios .doc-iframe-container,
+html.ios .incoming-next,
+html.ios .incoming-prev,
+html.ios .turning-next,
+html.ios .turning-prev {
+  transform: none !important;
+  perspective: none !important;
+  backface-visibility: visible !important;
+  filter: none !important;
+}
+
+/* 4) Keep the document/nav layer above overlays; avoid black screen */
+#pdf-overlay { z-index: 2147482000 !important; }
+#doc-view    { z-index: 2147483000 !important; }
+html.pdf-overlay-active #doc-view {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: none !important;
+}
+
+/* 5) Make main content & key lists momentum-scroll on iOS */
+main,
+#master-list, #setlist-list, #setlist-add-songs-list, #favorites-list, #genre-song-list, #plays-list {
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+}
+
+/* 6) Ensure embedded object/iframe fills container */
+html.ios #doc-object,
+html.ios .doc-iframe-container iframe,
+html.ios .doc-iframe-container embed,
+html.ios .doc-iframe-container object {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+</style>
+
+<script id="ipad-webkit-scoped-touch">
+// 7) Scoped zoom/touch behavior: neutralize global blockers ONLY when not viewing a document.
+// We can't remove anonymous listeners that were added earlier, but we can prevent them from firing
+// by capturing and stopping propagation when the doc viewer is NOT active.
+(function(){
+  try {
+    function allowDefaultIfNotViewer(ev){
+      var isViewer = document.body.classList.contains('doc-viewer-active');
+      if (!isViewer) {
+        // Stop later bubble listeners (including any 'preventDefault' ones added earlier)
+        ev.stopImmediatePropagation();
+        // Do NOT preventDefault here; we want native behavior (scroll, tap, etc.)
+      }
+    }
+    // Capture phase so this runs before previously attached bubble listeners
+    // Note: we deliberately DO NOT prevent default here; we only gate other handlers.
+    window.addEventListener('touchstart', allowDefaultIfNotViewer, {capture:true, passive:true});
+    window.addEventListener('touchend',   allowDefaultIfNotViewer, {capture:true, passive:true});
+  } catch(e){}
+})();
+</script>
+
+</body>
+</html>
