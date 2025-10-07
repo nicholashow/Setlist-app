@@ -2747,5 +2747,65 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<!-- ADDITIVE PATCH: Center, equal-size controls; red Close button -->
+<style id="controls-equalize-center-additive">
+  /* Center the trio as a group without relying on replacing markup */
+  #viewer-controls { display: flex; align-items: center; justify-content: center; }
+  #viewer-controls > * { pointer-events: auto; }
+  /* Try common button IDs/classes used by this app */
+  #viewer-prev-btn, #viewer-next-btn, #viewer-close-btn,
+  .viewer-btn, .control-btn {
+    min-width: 140px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1.25rem;
+  }
+  /* Make Close button red regardless of prior styles */
+  #viewer-close-btn,
+  .control-btn--close {
+    background-color: #ef4444 !important; /* red-500 */
+    color: #fff !important;
+  }
+  #viewer-close-btn:hover,
+  .control-btn--close:hover {
+    background-color: #dc2626 !important; /* red-600 */
+  }
+</style>
+<script id="controls-label-fix-additive">
+(function(){
+  function ready(f){ if (document.readyState !== 'loading') f(); else document.addEventListener('DOMContentLoaded', f); }
+  ready(function(){
+    // Ensure labels exist and "Close" is spelled as requested
+    var closeBtn = document.getElementById('viewer-close-btn');
+    if (closeBtn){
+      // Replace visible text with "Close" while preserving icons
+      var hasSpan = false;
+      Array.from(closeBtn.childNodes).forEach(function(n){
+        if (n.nodeType === 3) { n.textContent=''; } // remove stray text nodes
+        if (n.nodeType === 1 && n.tagName === 'SPAN') { n.textContent = 'Close'; hasSpan = true; }
+      });
+      if (!hasSpan){
+        var s = document.createElement('span');
+        s.textContent = 'Close';
+        closeBtn.appendChild(s);
+      }
+      closeBtn.classList.add('control-btn--close');
+    }
+    // If buttons are wrapped elsewhere, still try to center group
+    var vc = document.getElementById('viewer-controls');
+    if (vc){
+      vc.style.display = 'flex';
+      vc.style.alignItems = 'center';
+      vc.style.justifyContent = 'center';
+    }
+  });
+})();
+</script>
 </body>
 </html>
