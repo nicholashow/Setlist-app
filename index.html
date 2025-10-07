@@ -414,61 +414,45 @@
             display: block; /* Fix potential extra space */
         }
         
-        .doc-nav-buttons {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 50px;
+        /* === NEW Redesigned Viewer Controls === */
+        #viewer-controls {
+            /* Gradient background for better text visibility over content */
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+            /* Don't show by default */
+            display: none;
+        }
+        /* Show controls only when a viewer is active */
+        body.doc-viewer-active #viewer-controls,
+        html.pdf-overlay-active #viewer-controls {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            z-index: 103;
-            opacity: 1;
-            transition: opacity 0.3s;
-            background: rgba(30,30,30, 0.8);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
-        .doc-nav-buttons.hidden {
-            opacity: 0;
-            pointer-events: none;
+        .viewer-btn, .viewer-btn-close {
+            /* Frosted glass effect */
+            background-color: rgba(30, 41, 59, 0.75); /* slate-800 with opacity */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            will-change: transform, background-color; /* Perf hint */
         }
 
-        .doc-nav-button {
-            padding: 8px 16px;
-            background: #3b82f6;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 14px;
-            border: none;
-            transition: background-color 0.2s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            user-select: none;
+        .viewer-btn:not(:disabled):hover {
+            background-color: rgba(59, 130, 246, 0.8); /* blue-500 with opacity */
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
         }
 
-        .doc-nav-button:disabled {
-            background: #9ca3af;
-            cursor: not-allowed;
+        .viewer-btn-close:hover {
+            background-color: rgba(239, 68, 68, 0.8); /* red-500 with opacity */
+            transform: scale(1.1) rotate(90deg);
         }
 
-        .doc-nav-close {
-            background: #ef4444;
+        .viewer-btn:disabled {
+            background-color: rgba(75, 85, 99, 0.5); /* gray-600 with opacity */
+            transform: none;
+            box-shadow: none;
         }
 
-        .doc-nav-button:not(:disabled):hover {
-            background-color: #2563eb;
-        }
-
-        .doc-nav-close:hover {
-            background-color: #dc2626;
-        }
-        
         .del-setlist {
             background: #ef4444;
             border-radius: 4px;
@@ -1368,227 +1352,99 @@
           background: #fff; border-radius: 6px;
         }
 
+        /* === Setlist Details: unified centered placeholders (Date, Venue, Order) === */
+        #setlist-details-content input,
+        #setlist-details-content select {
+          height: 34px;
+          font-size: 14px;
+          font-weight: 600;
+          text-align: center;          /* center typed text */
+        }
 
-/* === Overlay-integrated original nav (non-intrusive) === */
-html.pdf-overlay-active #doc-view { display: block !important; } /* unhide the section so nav exists */
-html.pdf-overlay-active #doc-iframe-wrapper { display: none !important; } /* keep old wrapper hidden to avoid any layout/scroll changes */
-html.pdf-overlay-active #doc-nav-buttons {
-  position: fixed !important;
-  top: 0; left: 0; right: 0;
-  z-index: 1000001 !important; /* above #pdf-overlay (999999) */
-  pointer-events: auto;
-}
-/* Do not modify overlay scroll area at all */
+        /* Centered white placeholder for Venue */
+        #setlist-venue::placeholder {
+          color: #ffffff !important;
+          opacity: 1;
+          text-align: center;
+        }
 
+        /* Date "placeholder" is a sibling span because date inputs don't support ::placeholder reliably */
+        #setlist-date-container {
+          position: relative;
+        }
+        #date-placeholder {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 14px;
+          font-weight: 600;
+          color: #ffffff !important;   /* always white */
+          pointer-events: none;
+          white-space: nowrap;
+        }
 
-/* === Ensure original nav is above overlay and not trapped in a transform context === */
-html.pdf-overlay-active #doc-view { display: block !important; transform: none !important; }
-html.pdf-overlay-active #doc-view * { transform: none !important; }
-html.pdf-overlay-active #doc-nav-buttons {
-  position: fixed !important;
-  top: 0; left: 0; right: 0;
-  z-index: 2147483000 !important; /* way above any overlay */
-  pointer-events: auto !important;
-}
-/* Make sure overlay stays below */
-#pdf-overlay { z-index: 2147482000 !important; }
+        /* Ensure date input content is centered and text is visible */
+        #setlist-date {
+          text-align: center;
+          color: #ffffff;               /* typed date text white */
+        }
+        .dark #setlist-date {
+          color: #ffffff;
+        }
+        .dark #setlist-date::-webkit-calendar-picker-indicator {
+          filter: invert(1);
+        }
 
-
-/* === PDF Top Buttons Overlay (non-intrusive) === */
-#pdf-btn-hit {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 56px;
-  z-index: 2147483600;
-  background: transparent;
-  pointer-events: auto;
-}
-#pdf-btn-bar {
-  position: fixed;
-  top: 6px; left: 50%;
-  transform: translateX(-50%);
-  z-index: 2147483601;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity .2s ease;
-}
-#pdf-btn-bar.visible { opacity: 1; }
-#pdf-btn-bar .btn {
-  pointer-events: auto;
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-weight: 700;
-  border: none;
-  box-shadow: 0 2px 8px rgba(0,0,0,.35);
-  user-select: none;
-}
-#pdf-btn-prev, #pdf-btn-next { background: #2563eb; color: #fff; }
-#pdf-btn-close { background: #ef4444; color: #fff; }
-html:not(.pdf-overlay-active) #pdf-btn-hit,
-html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
-
-
-/* === Ensure single button set & disabled visuals === */
-html.pdf-overlay-active #doc-nav-buttons { display: none !important; } /* avoid double bars */
-#pdf-btn-bar .btn.disabled {
-  opacity: 0.45;
-  filter: grayscale(40%);
-  cursor: default;
-  box-shadow: none;
-}
-
-
-/* === Overlay PDF Button Bar (top-center, non-intrusive) === */
-#pdf-btn-hit {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 72px;                 /* slightly taller tap zone for reliability */
-  z-index: 2147483600;
-  background: transparent;
-  pointer-events: auto;
-}
-#pdf-btn-bar {
-  position: fixed;
-  top: 18px;                    /* moved down a bit as requested */
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2147483601;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;         /* container doesn't block scroll */
-  opacity: 0;
-  transition: opacity .20s ease;
-}
-#pdf-btn-bar.visible { opacity: 1; }
-#pdf-btn-bar .btn {
-  pointer-events: auto;
-  padding: 9px 18px;
-  border-radius: 12px;
-  font-weight: 800;
-  border: none;
-  letter-spacing: .3px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.35);
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-#pdf-btn-prev, #pdf-btn-next { background: #2563eb; color: #fff; }
-#pdf-btn-close { background: #ef4444; color: #fff; }
-
-/* Disabled look for grey state */
-#pdf-btn-bar .btn.disabled {
-  background: #9ca3af !important; /* grey */
-  color: #fff !important;
-  opacity: 1;
-  filter: none;
-  cursor: default;
-  box-shadow: none;
-}
-
-/* Show only when overlay is active */
-html:not(.pdf-overlay-active) #pdf-btn-hit,
-html:not(.pdf-overlay-active) #pdf-btn-bar { display: none !important; }
-
-/* Hide the original bar while overlay is active so there is only one set */
-html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
+        /* Order select: center displayed value text and keep it white */
+        #setlist-sort-filter-dropdown {
+          text-align: center;
+          text-align-last: center;      /* centers selected option in most browsers */
+          color: #ffffff !important;
+        }
+        .dark #setlist-sort-filter-dropdown {
+          color: #ffffff !important;
+        }
+        /* The dropdown arrow container color (so it doesn't clash) */
+        #setlist-details-content .pointer-events-none svg {
+          color: #ffffff;
+          fill: currentColor;
+        }
 
 
 
-/* === Setlist Details: unified centered placeholders (Date, Venue, Order) === */
-#setlist-details-content input,
-#setlist-details-content select {
-  height: 34px;
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;          /* center typed text */
-}
+        /* === Precise centering updates === */
+        #setlist-details-content input,
+        #setlist-details-content select {
+          height: 36px;                /* uniform control height */
+          line-height: 36px;           /* vertical centering for text & placeholders */
+          font-size: 15px;
+          font-weight: 600;
+          text-align: center;
+        }
 
-/* Centered white placeholder for Venue */
-#setlist-venue::placeholder {
-  color: #ffffff !important;
-  opacity: 1;
-  text-align: center;
-}
+        #date-placeholder {
+          position: absolute;
+          z-index: 2;
+          pointer-events: none;
+          font-size: 15px;
+          font-weight: 600;
+          color: #ffffff !important;
+          /* left/top set dynamically to the INPUT center */
+        }
 
-/* Date "placeholder" is a sibling span because date inputs don't support ::placeholder reliably */
-#setlist-date-container {
-  position: relative;
-}
-#date-placeholder {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 14px;
-  font-weight: 600;
-  color: #ffffff !important;   /* always white */
-  pointer-events: none;
-  white-space: nowrap;
-}
+        #-webkit-date-text { color: #ffffff; } /* noop fallback */
+        .dark #setlist-venue::placeholder { color: #ffffff !important; }
+        # setlist-venue::placeholder { color: #ffffff !important; } /* ensure white in light mode too */
 
-/* Ensure date input content is centered and text is visible */
-#setlist-date {
-  text-align: center;
-  color: #ffffff;               /* typed date text white */
-}
-.dark #setlist-date {
-  color: #ffffff;
-}
-.dark #setlist-date::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-}
-
-/* Order select: center displayed value text and keep it white */
-#setlist-sort-filter-dropdown {
-  text-align: center;
-  text-align-last: center;      /* centers selected option in most browsers */
-  color: #ffffff !important;
-}
-.dark #setlist-sort-filter-dropdown {
-  color: #ffffff !important;
-}
-/* The dropdown arrow container color (so it doesn't clash) */
-#setlist-details-content .pointer-events-none svg {
-  color: #ffffff;
-  fill: currentColor;
-}
-
-
-
-/* === Precise centering updates === */
-#setlist-details-content input,
-#setlist-details-content select {
-  height: 36px;                /* uniform control height */
-  line-height: 36px;           /* vertical centering for text & placeholders */
-  font-size: 15px;
-  font-weight: 600;
-  text-align: center;
-}
-
-#date-placeholder {
-  position: absolute;
-  z-index: 2;
-  pointer-events: none;
-  font-size: 15px;
-  font-weight: 600;
-  color: #ffffff !important;
-  /* left/top set dynamically to the INPUT center */
-}
-
-#-webkit-date-text { color: #ffffff; } /* noop fallback */
-.dark #setlist-venue::placeholder { color: #ffffff !important; }
-# setlist-venue::placeholder { color: #ffffff !important; } /* ensure white in light mode too */
-
-#setlist-sort-filter-dropdown {
-  text-align: center;
-  text-align-last: center;
-  color: #ffffff !important;
-}
+        #setlist-sort-filter-dropdown {
+          text-align: center;
+          text-align-last: center;
+          color: #ffffff !important;
+        }
+        
+        #genre-name::placeholder, #venue-name::placeholder { text-align: center; }
+        #genre-name, #venue-name { text-align: center; } /* helps iOS Safari */
 
 </style>
 </head>
@@ -1858,21 +1714,34 @@ html.pdf-overlay-active #doc-nav-buttons { display: none !important; }
 
     <section class="hidden" id="doc-view">
          <div id="doc-iframe-wrapper"></div>
-        <div class="doc-nav-buttons" id="doc-nav-buttons">
-            <button class="doc-nav-button no-select" id="prev-doc">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                Previous
+    </section>
+
+    <!-- NEW REDESIGNED VIEWER CONTROLS (now global) -->
+    <div id="viewer-controls" class="fixed top-0 left-0 right-0 h-20 z-[2147483647] p-4 flex justify-between items-center pointer-events-none transition-opacity duration-300 opacity-0">
+        <div class="w-10"></div> <!-- Spacer -->
+        <!-- Centered Navigation -->
+        <div class="flex justify-center items-center gap-4">
+             <button id="viewer-prev-btn" class="viewer-btn pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                <span>Previous</span>
             </button>
-            <button class="doc-nav-button no-select" id="next-doc">
-                Next
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-            </button>
-            <button class="doc-nav-button doc-nav-close no-select" id="close-doc">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                Close
+             <button id="viewer-next-btn" class="viewer-btn pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span>Next</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
             </button>
         </div>
-    </section>
+        
+        <!-- Close Button on the right -->
+        <button id="viewer-close-btn" class="viewer-btn-close pointer-events-auto flex items-center justify-center h-10 w-10 rounded-full text-white shadow-lg transition-all duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
 
     <script>
         // ================== Disable Zoom on iPad ==================
@@ -2001,7 +1870,33 @@ const s=$('.left-col');s.toggleClass('collapsed');
         });
 
         $('main').on('click','li.draggable',function(e){if($(e.target).closest('input, button, a, .genre-dot, .energy-icon, .favorite-star-container').length>0){return}const s=$(this).attr('id'),c=$('main > section:visible').attr('id').replace('-view','');openSongInContext(s,c)});
+        
+        // === NEW Redesigned Viewer Button Handlers ===
+        $('#viewer-close-btn').on('click', function(e) {
+            e.stopPropagation();
+            $('body').removeClass('doc-viewer-active');
+            $('html').removeClass('doc-viewer-active pdf-overlay-active'); // ensure all viewer states are cleared
+            $('#doc-view').removeClass('doc-view-fullscreen').hide();
+            resetScrollHandlers();
+            $('#viewer-controls').addClass('opacity-0'); // Hide controls
+            $('#doc-iframe-wrapper').empty();
+            if (typeof destroyPdfOverlay === 'function') {
+                destroyPdfOverlay();
+            }
         });
+
+        $('#viewer-next-btn').on('click', function() {
+            if (!$(this).is(':disabled') && currentViewerList && currentViewerIndex < currentViewerList.length - 1) {
+                openSongInContext(currentViewerList[currentViewerIndex + 1].id, currentViewerContext, currentViewerIndex + 1, 'next');
+            }
+        });
+
+        $('#viewer-prev-btn').on('click', function() {
+            if (!$(this).is(':disabled') && currentViewerList && currentViewerIndex > 0) {
+                openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1, 'prev');
+            }
+        });
+    });
         // ================== Event Handlers ==================
         function bindNav(ds){
             $('#home-btn').click(()=>{ds();$('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');show('master');autoCollapseSidebar()});
@@ -2026,7 +1921,6 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#setlist-sort-filter-dropdown').on('change',renderSetlist);
             $(document).on('click',function(e){if(!$(e.target).closest('#genre-filter-container').length)$('#genre-filter-dropdown').addClass('hidden');if(!$(e.target).closest('.relative').has('#share-setlist-btn').length)$('#share-options').addClass('hidden')});
             $('#reset-plays').click(()=>{if(confirm('Reset all plays?')){playCounts={};masterSongs.forEach(s=>s.lastPlayed=null);renderPlays();updateTopLeast();save()}});
-            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
@@ -2066,6 +1960,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
         function escapeHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
         function updateTopLeast(){const p=Object.entries(playCounts).filter(([i])=>masterSongs.find(s=>s.id===i)).sort((a,b)=>b[1]-a[1]),v=p.filter(([_,c])=>c>0);if(v.length===0){$('.stats-container').hide();return}$('.stats-container').show();$('#top-played, #least-played').empty();v.slice(0,5).forEach(([i,c])=>{const s=masterSongs.find(x=>x.id===i);if(s)$('#top-played').append(`<li>${escapeHtml(s.name)}: ${c}</li>`)});v.slice(-5).reverse().forEach(([i,c])=>{const s=masterSongs.find(x=>x.id===i);if(s)$('#least-played').append(`<li>${escapeHtml(s.name)}: ${c}</li>`)})}
         function renderAll(){renderLeftSetlists();renderGenres();renderVenues();renderMaster();if(currentSetlist)renderSetlist();renderPlays();renderRecordings();renderFavorites();renderEnergyLevels();if(currentGenre)renderGenreView(currentGenre);updateTopLeast()}
+        
         function openSongInContext(songId, context, index = -1, direction = 'none') {
             const song = masterSongs.find(s => s.id === songId); if (!song) return;
             if (direction === 'none') { playCounts[song.id] = (playCounts[song.id] || 0) + 1; song.lastPlayed = new Date().toISOString().split('T')[0]; updateTopLeast(); save(); }
@@ -2075,20 +1970,19 @@ const s=$('.left-col');s.toggleClass('collapsed');
             if (context === 'setlist') { viewedSongsInSetlist.add(songId); $(`#setlist-list li[id="${songId}"] .index-number`).addClass('viewed-index'); }
             const url = getFileURL(song); if (!url) { alert('File not available for this song.'); return; }
             
-        (function(){
-            const scroller = showPdfOverlay();
-            (async () => {
-                try {
-                    await renderPDFInto(scroller, url);
-                    if (window.showNavButtons) window.showNavButtons();
-                } catch (e) {
-                    console.error('PDF render failed, opening natively', e);
-                    destroyPdfOverlay();
-                    try { window.open(url, '_blank'); } catch(_) {}
-                }
+            (function(){
+                const scroller = showPdfOverlay();
+                (async () => {
+                    try {
+                        await renderPDFInto(scroller, url);
+                    } catch (e) {
+                        console.error('PDF render failed, opening natively', e);
+                        destroyPdfOverlay();
+                        try { window.open(url, '_blank'); } catch(_) {}
+                    }
+                })();
             })();
-        })();
-        const $wrapper = $('#doc-iframe-wrapper');
+            const $wrapper = $('#doc-iframe-wrapper');
             const $oldContainer = $wrapper.find('.current');
             const $newContainer = $(`<div class="doc-iframe-container"><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
             if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20); } 
@@ -2096,40 +1990,58 @@ const s=$('.left-col');s.toggleClass('collapsed');
             else { $newContainer.addClass('current'); $wrapper.html($newContainer); }
             setTimeout(() => $oldContainer.remove(), 800);
             
-            // Start PDF.js rendering (all platforms)
             (function(){
                 const pdfContainer = $newContainer.find('.pdfjs-container')[0];
                 if (pdfContainer) { renderPDFWithPDFJS(url, pdfContainer); }
             })();
-if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
-            $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
-            $('#next-doc').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
+            
+            if (direction === 'none') { 
+                $('body').addClass('doc-viewer-active');
+                $('html').addClass('doc-viewer-active');
+                $('#doc-view').addClass('doc-view-fullscreen').show(); 
+            }
+            $('#viewer-prev-btn').prop('disabled', currentViewerIndex <= 0);
+            $('#viewer-next-btn').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
+            setupScrollHandlers();
+            showNavButtons();
         }
+
         function saveRecording(b){const r=new FileReader();r.readAsDataURL(b);r.onloadend=()=>{const s=setlists[currentSetlist];recordings.push({id:'r_'+Math.random().toString(36).slice(2,9),setlist:currentSetlist,date:s.date,venue:s.venue,audioData:r.result});save();if($('#recordings-view').is(':visible'))renderRecordings();if(currentSetlist)renderSetlist()}}
+        
         function setupScrollHandlers() {
             resetScrollHandlers();
-            $('#doc-view').on('mousemove', showNavButtons);
+            const $viewArea = $('#doc-view, #pdf-overlay-scroll');
+
+            $viewArea.on('mousemove pointerdown touchstart', showNavButtons);
+
             let touchstartX = 0;
-            $('#doc-view').on('touchstart', e => { touchstartX = e.originalEvent.touches[0].screenX; });
-            $('#doc-view').on('touchend', e => {
-                const touchendX = e.originalEvent.changedTouches[0].screenX;
-                if (touchendX < touchstartX - 50) $('#next-doc').trigger('click'); // Swipe left
-                if (touchendX > touchstartX + 50) $('#prev-doc').trigger('click'); // Swipe right
+            $viewArea.on('touchstart', e => { 
+                if (e.originalEvent.touches) touchstartX = e.originalEvent.touches[0].screenX; 
             });
-            $('#next-doc').on('click', function() { if (!$(this).is(':disabled') && currentViewerIndex < currentViewerList.length - 1) { openSongInContext(currentViewerList[currentViewerIndex + 1].id, currentViewerContext, currentViewerIndex + 1, 'next'); }});
-            $('#prev-doc').on('click', function() { if (!$(this).is(':disabled') && currentViewerIndex > 0) { openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1, 'prev'); }});
+            $viewArea.on('touchend', e => {
+                if (e.originalEvent.changedTouches) {
+                    const touchendX = e.originalEvent.changedTouches[0].screenX;
+                    if (touchendX < touchstartX - 50) $('#viewer-next-btn').trigger('click');
+                    if (touchendX > touchstartX + 50) $('#viewer-prev-btn').trigger('click');
+                }
+            });
+            
             startInactivityTimer();
         }
-        function resetScrollHandlers() { $('#doc-view, #next-doc, #prev-doc').off('mousemove touchstart touchend click'); clearTimeout(inactivityTimer); 
-    try{
-      if (window.__docTapCapture) {
-        document.removeEventListener('touchstart', window.__docTapCapture, {capture:true});
-        document.removeEventListener('pointerdown', window.__docTapCapture, {capture:true});
-      }
-    }catch(e){}
-}
-        function showNavButtons() { $('#doc-nav-buttons').removeClass('hidden'); startInactivityTimer(); }
-        function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000); }
+
+        function resetScrollHandlers() { 
+            $('#doc-view, #pdf-overlay-scroll').off('mousemove pointerdown touchstart touchend'); 
+            clearTimeout(inactivityTimer); 
+        }
+
+        function showNavButtons() { 
+            $('#viewer-controls').removeClass('opacity-0'); 
+            startInactivityTimer(); 
+        }
+        function startInactivityTimer() { 
+            clearTimeout(inactivityTimer); 
+            inactivityTimer = setTimeout(() => { $('#viewer-controls').addClass('opacity-0'); }, 3000); 
+        }
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
     </script>
     <!-- Left-edge custom scrollbar (visible only when sidebar is collapsed) -->
@@ -2478,827 +2390,6 @@ function destroyPdfOverlay() {
 }
 </script>
 
-<!-- Non-intrusive PDF top buttons -->
-<div id="pdf-btn-hit"></div>
-<div id="pdf-btn-bar" aria-hidden="true">
-  <button id="pdf-btn-prev" class="btn" type="button">PREVIOUS</button>
-  <button id="pdf-btn-next" class="btn" type="button">NEXT</button>
-  <button id="pdf-btn-close" class="btn" type="button">CLOSE</button>
-</div>
-
-<script>
-(function(){
-  if (window.__pdfBtnsInstalled) return;
-  window.__pdfBtnsInstalled = true;
-
-  var bar   = document.getElementById('pdf-btn-bar');
-  var hit   = document.getElementById('pdf-btn-hit');
-  var prevB = document.getElementById('pdf-btn-prev');
-  var nextB = document.getElementById('pdf-btn-next');
-  var closeB= document.getElementById('pdf-btn-close');
-  var hideTimer = null;
-
-  function forwardClick(id){
-    try {
-      var el = document.getElementById(id);
-      if (el) el.click();
-    } catch(e){ console.warn('Forward click failed for', id, e); }
-  }
-
-  prevB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('prev-doc'); });
-  nextB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('next-doc'); });
-  closeB.addEventListener('click', function(e){ e.stopPropagation(); forwardClick('close-doc'); });
-
-  function showBar(){
-    if (!bar) return;
-    bar.classList.add('visible');
-    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-    hideTimer = setTimeout(function(){ bar.classList.remove('visible'); }, 2000);
-  }
-  function hideBarNow(){
-    if (!bar) return;
-    bar.classList.remove('visible');
-    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-  }
-
-  function onTopTap(e){ showBar(); }
-  hit.addEventListener('touchstart', onTopTap, {passive:true});
-  hit.addEventListener('mousedown', onTopTap);
-  hit.addEventListener('pointerdown', onTopTap, {passive:true});
-
-  var lastActive = document.documentElement.classList.contains('pdf-overlay-active');
-  if (lastActive) { setTimeout(showBar, 0); }
-  var mo = new MutationObserver(function(){
-    var active = document.documentElement.classList.contains('pdf-overlay-active');
-    if (active && !lastActive) {
-      setTimeout(showBar, 0);
-    } else if (!active && lastActive) {
-      hideBarNow();
-    }
-    lastActive = active;
-  });
-  mo.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-
-  document.addEventListener('touchstart', function(ev){
-    try {
-      var t = ev.touches && ev.touches[0];
-      if (!t) return;
-      if (t.clientY <= 56 && document.documentElement.classList.contains('pdf-overlay-active')) showBar();
-    } catch(e){}
-  }, {passive:true});
-
-})();
-</script>
-
-<script>
-(function(){
-  if (window.__pdfBtnsEnh2) return;
-  window.__pdfBtnsEnh2 = true;
-
-  function $(id){ return document.getElementById(id); }
-  var bar   = $('pdf-btn-bar');
-  var hit   = $('pdf-btn-hit');
-  var prevB = $('pdf-btn-prev');
-  var nextB = $('pdf-btn-next');
-  var closeB= $('pdf-btn-close');
-  var hideTimer = null;
-
-  function forwardClick(id){
-    try {
-      var el = $(id);
-      if (el) el.click();
-    } catch(e){ console.warn('Forward click failed for', id, e); }
-  }
-
-  function isDisabled(el){
-    if (!el) return true;
-    var s = window.getComputedStyle(el);
-    var cls = (el.className||'').toLowerCase();
-    return !!( el.hasAttribute('disabled')
-            || el.getAttribute('aria-disabled') === 'true'
-            || /disabled|inactive|hidden/.test(cls)
-            || s.display === 'none'
-            || s.visibility === 'hidden'
-            || s.pointerEvents === 'none');
-  }
-
-  function syncOverlayButtons(){
-    try {
-      var prevOrig = $('prev-doc');
-      var nextOrig = $('next-doc');
-      // Grey & disable PREVIOUS if original indicates no previous
-      var prevDisabled = isDisabled(prevOrig);
-      prevB.classList.toggle('disabled', prevDisabled);
-      prevB.tabIndex = prevDisabled ? -1 : 0;
-
-      // Grey & disable NEXT if original indicates no next
-      var nextDisabled = isDisabled(nextOrig);
-      nextB.classList.toggle('disabled', nextDisabled);
-      nextB.tabIndex = nextDisabled ? -1 : 0;
-    } catch(e){}
-  }
-
-  function showBar(){
-    if (!bar) return;
-    bar.classList.add('visible');
-    syncOverlayButtons(); // keep state fresh when showing
-    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-    hideTimer = setTimeout(function(){
-      bar.classList.remove('visible');
-    }, 2000);
-  }
-  function hideBarNow(){
-    if (!bar) return;
-    bar.classList.remove('visible');
-    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-  }
-
-  // Prevent clicks when disabled
-  function guard(evt, id, isDisabledFn){
-    evt.stopPropagation();
-    if (isDisabledFn && isDisabledFn()) return;
-    forwardClick(id);
-  }
-  prevB.addEventListener('click', function(e){ guard(e, 'prev-doc', function(){ return prevB.classList.contains('disabled'); }); });
-  nextB.addEventListener('click', function(e){ guard(e, 'next-doc', function(){ return nextB.classList.contains('disabled'); }); });
-  closeB.addEventListener('click', function(e){ guard(e, 'close-doc', null); });
-
-  // Reveal on top tap
-  function onTopTap(){ showBar(); }
-  if (hit){
-    hit.addEventListener('touchstart', onTopTap, {passive:true});
-    hit.addEventListener('mousedown', onTopTap);
-    hit.addEventListener('pointerdown', onTopTap, {passive:true});
-  }
-
-  // Respond to overlay activation/deactivation
-  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
-  if (wasActive) { setTimeout(showBar, 0); }
-  var mo = new MutationObserver(function(){
-    var active = document.documentElement.classList.contains('pdf-overlay-active');
-    if (active && !wasActive) {
-      setTimeout(showBar, 0);
-    } else if (!active && wasActive) {
-      hideBarNow();
-    }
-    wasActive = active;
-  });
-  mo.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
-
-  // Keep state in sync when original buttons change (e.g., after navigating songs)
-  var watchTargets = [ $('prev-doc'), $('next-doc'), $('doc-nav-buttons') ].filter(Boolean);
-  watchTargets.forEach(function(t){
-    try {
-      var mo2 = new MutationObserver(syncOverlayButtons);
-      mo2.observe(t, { attributes: true, attributeFilter: ['class', 'style', 'disabled', 'aria-disabled'], childList: false, subtree: false });
-    } catch(e){}
-  });
-
-  // Also resync on clicks and after small delay (in case app updates after handler)
-  document.addEventListener('click', function(){
-    setTimeout(syncOverlayButtons, 100);
-    setTimeout(syncOverlayButtons, 400);
-  }, true);
-
-  // Initial sync
-  setTimeout(syncOverlayButtons, 0);
-  setTimeout(syncOverlayButtons, 500);
-})();
-</script>
-
-<!-- Overlay PDF Button Bar -->
-<div id="pdf-btn-hit"></div>
-<div id="pdf-btn-bar" aria-hidden="true">
-  <button id="pdf-btn-prev" class="btn" type="button">PREVIOUS</button>
-  <button id="pdf-btn-next" class="btn" type="button">NEXT</button>
-  <button id="pdf-btn-close" class="btn" type="button">CLOSE</button>
-</div>
-
-<script>
-(function(){
-  if (window.__pdfBtnsInstalled_v3) return;
-  window.__pdfBtnsInstalled_v3 = true;
-
-  var $ = function(id){ return document.getElementById(id); };
-  var bar   = $('pdf-btn-bar');
-  var hit   = $('pdf-btn-hit');
-  var prevB = $('pdf-btn-prev');
-  var nextB = $('pdf-btn-next');
-  var closeB= $('pdf-btn-close');
-  var hideTimer = null;
-
-  // Helper: try multiple ways to navigate for reliability
-  function forward(id, fallbacks){
-    try {
-      var el = $(id);
-      if (el) { el.click(); return; }
-    } catch(e){}
-    if (fallbacks && fallbacks.length){
-      for (var i=0;i<fallbacks.length;i++){
-        var fn = fallbacks[i];
-        try {
-          if (typeof window[fn] === 'function') { window[fn](); return; }
-        } catch(e){}
-      }
-    }
-  }
-
-  // Disabled state detection
-  function isInactive(el){
-    if (!el) return true;
-    try {
-      var s = window.getComputedStyle(el);
-      var cls = (el.className||'').toLowerCase();
-      return !!( el.hasAttribute('disabled')
-              || el.getAttribute('aria-disabled') === 'true'
-              || /disabled|inactive|hidden/.test(cls)
-              || s.display === 'none'
-              || s.visibility === 'hidden'
-              || s.pointerEvents === 'none');
-    } catch(e){ return false; }
-  }
-
-  function syncState(){
-    try {
-      var prevOrig = $('prev-doc');
-      var nextOrig = $('next-doc');
-      var prevDis = isInactive(prevOrig);
-      var nextDis = isInactive(nextOrig);
-      prevB.classList.toggle('disabled', prevDis);
-      nextB.classList.toggle('disabled', nextDis);
-      prevB.tabIndex = prevDis ? -1 : 0;
-      nextB.tabIndex = nextDis ? -1 : 0;
-    } catch(e){}
-  }
-
-  function showBar(){
-    if (!bar) return;
-    bar.classList.add('visible');
-    syncState();
-    if (hideTimer) clearTimeout(hideTimer);
-    hideTimer = setTimeout(function(){
-      bar.classList.remove('visible');
-    }, 2000);
-  }
-  function hideBarNow(){
-    if (!bar) return;
-    bar.classList.remove('visible');
-    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-  }
-
-  // Clicks (guard against disabled)
-  prevB.addEventListener('click', function(e){
-    e.stopPropagation();
-    if (prevB.classList.contains('disabled')) return;
-    forward('prev-doc', ['goPrev','prevSong','previousSong']);
-  });
-  nextB.addEventListener('click', function(e){
-    e.stopPropagation();
-    if (nextB.classList.contains('disabled')) return;
-    forward('next-doc', ['goNext','nextSong']);
-  });
-  closeB.addEventListener('click', function(e){
-    e.stopPropagation();
-    forward('close-doc', ['closeDocViewer','hideOverlay','closeViewer']);
-  });
-
-  // Reveal when tapping the very top strip
-  function onTopTap(){ showBar(); }
-  if (hit){
-    hit.addEventListener('touchstart', onTopTap, {passive:true});
-    hit.addEventListener('mousedown', onTopTap);
-    hit.addEventListener('pointerdown', onTopTap, {passive:true});
-  }
-
-  // Auto-show when overlay activates; hide when it deactivates
-  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
-  if (wasActive) setTimeout(showBar, 0);
-
-  var moRoot = new MutationObserver(function(){
-    var active = document.documentElement.classList.contains('pdf-overlay-active');
-    if (active && !wasActive) setTimeout(showBar, 0);
-    else if (!active && wasActive) hideBarNow();
-    wasActive = active;
-  });
-  moRoot.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
-
-  // Keep state synced if the app toggles original buttons after navigation
-  var prevOrig = $('prev-doc'), nextOrig = $('next-doc'), origNav = $('doc-nav-buttons');
-  [prevOrig, nextOrig, origNav].forEach(function(node){
-    if (!node) return;
-    try {
-      var mo = new MutationObserver(function(){ setTimeout(syncState, 0); setTimeout(syncState, 200); });
-      mo.observe(node, { attributes: true, attributeFilter: ['class', 'style', 'disabled', 'aria-disabled'], childList: false, subtree: false });
-    } catch(e){}
-  });
-
-  // Also resync on any click (after handlers run)
-  document.addEventListener('click', function(){
-    setTimeout(syncState, 60);
-    setTimeout(syncState, 300);
-  }, true);
-
-  // Initial states
-  setTimeout(syncState, 0);
-  setTimeout(syncState, 400);
-})();
-</script>
-
-<script>
-(function(){
-  if (window.__pdfBtnsInstalled_v4) return;
-  window.__pdfBtnsInstalled_v4 = true;
-
-  var $ = function(id){ return document.getElementById(id); };
-  var bar   = $('pdf-btn-bar');
-  var hit   = $('pdf-btn-hit');
-  var prevB = $('pdf-btn-prev');
-  var nextB = $('pdf-btn-next');
-  var closeB= $('pdf-btn-close');
-  var hideTimer = null;
-
-  function scroller(){ return $('pdf-overlay-scroll'); }
-
-  // Robust forward + fallback + overlay teardown for close
-  function forward(id, fallbacks, alsoTeardown){
-    try {
-      var el = $(id);
-      if (el) { el.click(); }
-      else if (fallbacks && fallbacks.length){
-        for (var i=0;i<fallbacks.length;i++){
-          var fn = fallbacks[i];
-          try { if (typeof window[fn] === 'function') { window[fn](); break; } } catch(e){}
-        }
-      }
-    } catch(e){}
-    if (alsoTeardown){
-      try { if (typeof window.destroyPdfOverlay === 'function') window.destroyPdfOverlay(); } catch(e){}
-      try { document.documentElement.classList.remove('pdf-overlay-active'); } catch(e){}
-    }
-  }
-
-  function isInactive(el){
-    if (!el) return true;
-    try {
-      var s = window.getComputedStyle(el);
-      var cls = (el.className||'').toLowerCase();
-      return !!( el.hasAttribute('disabled')
-              || el.getAttribute('aria-disabled') === 'true'
-              || /disabled|inactive|hidden/.test(cls)
-              || s.display === 'none'
-              || s.visibility === 'hidden'
-              || s.pointerEvents === 'none');
-    } catch(e){ return false; }
-  }
-
-  function syncState(){
-    try {
-      var prevOrig = $('prev-doc');
-      var nextOrig = $('next-doc');
-      var prevDis = isInactive(prevOrig);
-      var nextDis = isInactive(nextOrig);
-      prevB.classList.toggle('disabled', prevDis);
-      nextB.classList.toggle('disabled', nextDis);
-      prevB.tabIndex = prevDis ? -1 : 0;
-      nextB.tabIndex = nextDis ? -1 : 0;
-    } catch(e){}
-  }
-
-  function showBar(){
-    if (!bar) return;
-    // Only show when at top of the document
-    var sc = scroller();
-    if (sc && sc.scrollTop > 2) return;
-    bar.classList.add('visible');
-    syncState();
-    if (hideTimer) clearTimeout(hideTimer);
-    hideTimer = setTimeout(function(){ bar.classList.remove('visible'); }, 2000);
-  }
-  function hideBarNow(){
-    if (!bar) return;
-    bar.classList.remove('visible');
-    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-  }
-
-  // Button clicks with guards
-  prevB.addEventListener('click', function(e){
-    e.stopPropagation();
-    if (prevB.classList.contains('disabled')) return;
-    forward('prev-doc', ['goPrev','prevSong','previousSong'], false);
-  });
-  nextB.addEventListener('click', function(e){
-    e.stopPropagation();
-    if (nextB.classList.contains('disabled')) return;
-    forward('next-doc', ['goNext','nextSong'], false);
-  });
-  closeB.addEventListener('click', function(e){
-    e.stopPropagation();
-    // Close should always work: forward + explicit teardown
-    forward('close-doc', ['closeDocViewer','hideOverlay','closeViewer'], true);
-  });
-
-  // Reappear when tapping top ONLY if scroller is at top
-  function onTopTap(){
-    var sc = scroller();
-    if (!sc || sc.scrollTop <= 2) showBar();
-  }
-  if (hit){
-    hit.addEventListener('touchstart', onTopTap, {passive:true});
-    hit.addEventListener('mousedown', onTopTap);
-    hit.addEventListener('pointerdown', onTopTap, {passive:true});
-  }
-
-  // Show when overlay first activates
-  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
-  if (wasActive) setTimeout(showBar, 0);
-  var moRoot = new MutationObserver(function(){
-    var active = document.documentElement.classList.contains('pdf-overlay-active');
-    if (active && !wasActive) setTimeout(showBar, 0);
-    else if (!active && wasActive) hideBarNow();
-    wasActive = active;
-  });
-  moRoot.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
-
-  // Auto-show when scrolled to top; hide when leaving the top
-  var lastTopState = null;
-  function onScroll(){
-    var sc = scroller();
-    if (!sc) return;
-    var atTop = sc.scrollTop <= 2;
-    if (atTop !== lastTopState){
-      lastTopState = atTop;
-      if (atTop) showBar();
-      else hideBarNow();
-    }
-  }
-  var sc = scroller();
-  if (sc){
-    sc.addEventListener('scroll', onScroll, {passive:true});
-    // Initial top check
-    setTimeout(onScroll, 0);
-  }
-
-  // At top: pull down (scroll up gesture) closes the file
-  var startY = null;
-  function onTouchStart(e){
-    var t = e.touches && e.touches[0];
-    if (!t) return;
-    startY = t.clientY;
-  }
-  function onTouchMove(e){
-    var t = e.touches && e.touches[0];
-    if (!t) return;
-    var sc = scroller();
-    if (!sc) return;
-    var atTop = sc.scrollTop <= 2;
-    var dy = t.clientY - (startY==null? t.clientY : startY);
-    // if at top and user pulls down > 40px, close
-    if (atTop && dy > 40){
-      forward('close-doc', ['closeDocViewer','hideOverlay','closeViewer'], true);
-      startY = t.clientY; // reset to avoid repeat
-    }
-  }
-  if (sc){
-    sc.addEventListener('touchstart', onTouchStart, {passive:true});
-    sc.addEventListener('touchmove', onTouchMove, {passive:true});
-  }
-
-  // Keep state in sync
-  var prevOrig = $('prev-doc'), nextOrig = $('next-doc'), origNav = $('doc-nav-buttons');
-  [prevOrig, nextOrig, origNav].forEach(function(node){
-    if (!node) return;
-    try {
-      var mo = new MutationObserver(function(){ setTimeout(syncState, 0); setTimeout(syncState, 200); });
-      mo.observe(node, { attributes: true, attributeFilter: ['class', 'style', 'disabled', 'aria-disabled'], childList: false, subtree: false });
-    } catch(e){}
-  });
-  document.addEventListener('click', function(){
-    setTimeout(syncState, 60);
-    setTimeout(syncState, 300);
-  }, true);
-
-  // Initial sync
-  setTimeout(syncState, 0);
-  setTimeout(syncState, 400);
-})();
-</script>
-
-<script>
-(function(){
-  if (window.__pdfBtnsInstalled_v5) return;
-  window.__pdfBtnsInstalled_v5 = true;
-
-  var $ = function(id){ return document.getElementById(id); };
-  var bar   = $('pdf-btn-bar');
-  var hit   = $('pdf-btn-hit');
-  var prevB = $('pdf-btn-prev');
-  var nextB = $('pdf-btn-next');
-  var closeB= $('pdf-btn-close');
-  var hideTimer = null;
-
-  function scroller(){ return $('pdf-overlay-scroll'); }
-
-  function canPrev(){ try { return (window.currentViewerIndex > 0); } catch(e){ return false; } }
-  function canNext(){ try { return (window.currentViewerList && window.currentViewerIndex < window.currentViewerList.length - 1); } catch(e){ return false; } }
-
-  function callPrev() {
-    try {
-      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex > 0) {
-        var idx = window.currentViewerIndex - 1;
-        var id = window.currentViewerList[idx].id;
-        window.openSongInContext(id, window.currentViewerContext, idx, 'prev');
-        return true;
-      }
-    } catch(e){}
-    // fallback: click original
-    try { var el = $('prev-doc'); if (el) { el.click(); return true; } } catch(e){}
-    // fallback: jQuery trigger
-    try { if (window.$) { $('#prev-doc').trigger('click'); return true; } } catch(e){}
-    return false;
-  }
-  function callNext() {
-    try {
-      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex < window.currentViewerList.length - 1) {
-        var idx = window.currentViewerIndex + 1;
-        var id = window.currentViewerList[idx].id;
-        window.openSongInContext(id, window.currentViewerContext, idx, 'next');
-        return true;
-      }
-    } catch(e){}
-    try { var el = $('next-doc'); if (el) { el.click(); return true; } } catch(e){}
-    try { if (window.$) { $('#next-doc').trigger('click'); return true; } } catch(e){}
-    return false;
-  }
-  function callClose() {
-    var ok = false;
-    try { var el = $('close-doc'); if (el) { el.click(); ok = true; } } catch(e){}
-    try { if (window.$) { $('#close-doc').trigger('click'); ok = true; } } catch(e){}
-    // force overlay teardown
-    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); ok = true; } } catch(e){}
-    try { document.documentElement.classList.remove('pdf-overlay-active'); ok = true; } catch(e){}
-    return ok;
-  }
-
-  function isInactive(el){
-    if (!el) return true;
-    try {
-      var s = window.getComputedStyle(el);
-      var cls = (el.className||'').toLowerCase();
-      return !!( el.hasAttribute('disabled')
-              || el.getAttribute('aria-disabled') === 'true'
-              || /disabled|inactive|hidden/.test(cls)
-              || s.display === 'none'
-              || s.visibility === 'hidden'
-              || s.pointerEvents === 'none');
-    } catch(e){ return false; }
-  }
-
-  function syncState(){
-    try {
-      var prevDis = !canPrev() || isInactive($('prev-doc'));
-      var nextDis = !canNext() || isInactive($('next-doc'));
-      prevB.classList.toggle('disabled', prevDis);
-      nextB.classList.toggle('disabled', nextDis);
-      prevB.tabIndex = prevDis ? -1 : 0;
-      nextB.tabIndex = nextDis ? -1 : 0;
-    } catch(e){}
-  }
-
-  function showBar(){
-    var sc = scroller();
-    if (sc && sc.scrollTop > 2) return; // only at top
-    bar && bar.classList.add('visible');
-    syncState();
-    if (hideTimer) clearTimeout(hideTimer);
-    hideTimer = setTimeout(function(){ bar && bar.classList.remove('visible'); }, 2000);
-  }
-  function hideBarNow(){
-    bar && bar.classList.remove('visible');
-    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-  }
-
-  prevB && prevB.addEventListener('click', function(e){
-    e.stopPropagation();
-    if (prevB.classList.contains('disabled')) return;
-    callPrev();
-  });
-  nextB && nextB.addEventListener('click', function(e){
-    e.stopPropagation();
-    if (nextB.classList.contains('disabled')) return;
-    callNext();
-  });
-  closeB && closeB.addEventListener('click', function(e){
-    e.stopPropagation();
-    callClose();
-  });
-
-  function onTopTap(){
-    var sc = scroller();
-    if (!sc || sc.scrollTop <= 2) showBar();
-  }
-  var hit = $('pdf-btn-hit');
-  if (hit){
-    hit.addEventListener('touchstart', onTopTap, {passive:true});
-    hit.addEventListener('mousedown', onTopTap);
-    hit.addEventListener('pointerdown', onTopTap, {passive:true});
-  }
-
-  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
-  if (wasActive) setTimeout(showBar, 0);
-  var moRoot = new MutationObserver(function(){
-    var active = document.documentElement.classList.contains('pdf-overlay-active');
-    if (active && !wasActive) setTimeout(showBar, 0);
-    else if (!active && wasActive) hideBarNow();
-    wasActive = active;
-  });
-  moRoot.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
-
-  var lastTopState = null;
-  function onScroll(){
-    var sc = scroller();
-    if (!sc) return;
-    var atTop = sc.scrollTop <= 2;
-    if (atTop !== lastTopState){
-      lastTopState = atTop;
-      if (atTop) showBar(); else hideBarNow();
-    }
-  }
-  var sc = scroller();
-  if (sc){
-    sc.addEventListener('scroll', onScroll, {passive:true});
-    setTimeout(onScroll, 0);
-  }
-
-  // Pull-down to close at top
-  var startY = null;
-  function onTouchStart(e){ var t = e.touches && e.touches[0]; if (t) startY = t.clientY; }
-  function onTouchMove(e){
-    var t = e.touches && e.touches[0];
-    if (!t) return;
-    var sc = scroller();
-    if (!sc) return;
-    var atTop = sc.scrollTop <= 2;
-    var dy = t.clientY - (startY==null? t.clientY : startY);
-    if (atTop && dy > 40){ callClose(); startY = t.clientY; }
-  }
-  if (sc){
-    sc.addEventListener('touchstart', onTouchStart, {passive:true});
-    sc.addEventListener('touchmove', onTouchMove, {passive:true});
-  }
-
-  // Keep state in sync after internal updates
-  ['prev-doc','next-doc','doc-nav-buttons'].forEach(function(id){
-    var node = $(id); if (!node) return;
-    try {
-      var mo = new MutationObserver(function(){ setTimeout(syncState, 0); setTimeout(syncState, 200); });
-      mo.observe(node, { attributes: true, attributeFilter: ['class', 'style', 'disabled', 'aria-disabled'] });
-    } catch(e){}
-  });
-  document.addEventListener('click', function(){
-    setTimeout(syncState, 60);
-    setTimeout(syncState, 300);
-  }, true);
-
-  setTimeout(syncState, 0);
-  setTimeout(syncState, 400);
-})();
-</script>
-
-<script>
-(function(){
-  if (window.__wrapOpenSongInContext_v1) return;
-  window.__wrapOpenSongInContext_v1 = true;
-
-  function installWrapper(){
-    if (!window.openSongInContext) return false;
-    if (window.openSongInContext.__wrapped) return true;
-
-    var original = window.openSongInContext;
-    function wrappedOpenSongInContext(songId, context, index, dir){
-      try {
-        // Ensure globals are always up to date for overlay nav across the app
-        if (typeof context !== 'undefined') window.currentViewerContext = context;
-        if (typeof index === 'number') window.currentViewerIndex = index;
-        // If list exists on context, mirror it to the expected global shape
-        try {
-          if (context && context.list && Array.isArray(context.list)) {
-            window.currentViewerList = context.list;
-          }
-        } catch(e){}
-      } catch(e){}
-      return original.apply(this, arguments);
-    }
-    wrappedOpenSongInContext.__wrapped = true;
-    window.openSongInContext = wrappedOpenSongInContext;
-    return true;
-  }
-
-  // Try immediately, then again after load, and once when user first opens something
-  if (!installWrapper()){
-    document.addEventListener('DOMContentLoaded', installWrapper);
-    setTimeout(installWrapper, 500);
-    setTimeout(installWrapper, 1500);
-  }
-})();
-</script>
-
-<script>
-(function(){
-  if (window.__bindPdfScroller_v2) return;
-  window.__bindPdfScroller_v2 = true;
-
-  function bind(){
-    var sc = document.getElementById('pdf-overlay-scroll');
-    if (!sc) return false;
-    if (sc.__overlayBound) return true;
-    sc.__overlayBound = true;
-
-    // Reuse existing bar logic if present
-    var bar = document.getElementById('pdf-btn-bar');
-    function showBar(){
-      if (!bar) return;
-      if (sc.scrollTop > 2) return;
-      bar.classList.add('visible');
-      setTimeout(function(){ bar.classList.remove('visible'); }, 2000);
-    }
-    function onScroll(){
-      if (sc.scrollTop <= 2) showBar(); else bar && bar.classList.remove('visible');
-    }
-    sc.addEventListener('scroll', onScroll, {passive:true});
-    setTimeout(onScroll, 0);
-    return true;
-  }
-
-  // Bind now and observe DOM changes to bind later too
-  var ok = bind();
-  var mo = new MutationObserver(function(){
-    if (!bind()) return;
-  });
-  mo.observe(document.body, { childList: true, subtree: true });
-})();
-</script>
-
-<script>
-(function(){
-  if (window.__pdfBtnWire_v6) return;
-  window.__pdfBtnWire_v6 = true;
-
-  function $(id){ return document.getElementById(id); }
-  var prevB = $('pdf-btn-prev');
-  var nextB = $('pdf-btn-next');
-  var closeB= $('pdf-btn-close');
-
-  function callPrev(){
-    try {
-      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex > 0) {
-        var idx = window.currentViewerIndex - 1;
-        var id  = window.currentViewerList[idx].id;
-        window.openSongInContext(id, window.currentViewerContext, idx, 'prev');
-        return true;
-      }
-    } catch(e){}
-    try { var el = $('prev-doc'); if (el) { el.click(); return true; } } catch(e){}
-    try { if (window.$) { $('#prev-doc').trigger('click'); return true; } } catch(e){}
-    return false;
-  }
-  function callNext(){
-    try {
-      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex < window.currentViewerList.length - 1) {
-        var idx = window.currentViewerIndex + 1;
-        var id  = window.currentViewerList[idx].id;
-        window.openSongInContext(id, window.currentViewerContext, idx, 'next');
-        return true;
-      }
-    } catch(e){}
-    try { var el = $('next-doc'); if (el) { el.click(); return true; } } catch(e){}
-    try { if (window.$) { $('#next-doc').trigger('click'); return true; } } catch(e){}
-    return false;
-  }
-  function callClose(){
-    var ok = false;
-    try { var el = $('close-doc'); if (el) { el.click(); ok = true; } } catch(e){}
-    try { if (window.$) { $('#close-doc').trigger('click'); ok = true; } } catch(e){}
-    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); ok = true; } } catch(e){}
-    try { document.documentElement.classList.remove('pdf-overlay-active'); ok = true; } catch(e){}
-    return ok;
-  }
-
-  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); callPrev(); });
-  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); callNext(); });
-  closeB && closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
-})();
-</script>
-
-<!-- Overlay PDF Top Bar (new safe IDs) -->
-<div id="pdf-top-hit"></div>
-<div id="pdf-topbar" aria-hidden="true">
-  <button id="pdf-prev"  class="btn" type="button">PREVIOUS</button>
-  <button id="pdf-next"  class="btn" type="button">NEXT</button>
-  <button id="pdf-close" class="btn" type="button">CLOSE</button>
-</div>
-
-
-<!-- Topbar V7 wiring -->
 <script>
 /* Universal viewer wiring so buttons work on Songs, Setlists, Favorites */
 (function wrapOpenSongInContext(){
@@ -3320,146 +2411,7 @@ function destroyPdfOverlay() {
   install(); document.addEventListener('DOMContentLoaded', install); setTimeout(install, 500); setTimeout(install, 1500);
 })();
 
-/* Top bar behavior (no scroll changes) */
-(function(){
-  if (window.__TopBarV7) return; window.__TopBarV7 = true;
-  var $ = function(id){ return document.getElementById(id); };
-  var bar = $('pdf-topbar'), hit = $('pdf-top-hit');
-  var prevB = $('pdf-prev'), nextB = $('pdf-next'), closeB = $('pdf-close');
-  var hideTimer = null;
-
-  function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
-  function atTop(){ var sc = scroller(); return sc && sc.scrollTop <= 2; }
-
-  function canPrev(){
-    try {
-      if (typeof window.currentViewerIndex === 'number' && window.currentViewerIndex > 0) return true;
-      var el = document.getElementById('prev-doc');
-      if (el){ var s = getComputedStyle(el); if (s.display!=='none' && s.visibility!=='hidden' && !el.disabled) return true; }
-    } catch(e){}
-    return false;
-  } catch(e){ return false; } }
-  function canNext(){
-    try {
-      if (window.currentViewerList && typeof window.currentViewerIndex === 'number' && window.currentViewerIndex < window.currentViewerList.length - 1) return true;
-      var el = document.getElementById('next-doc');
-      if (el){ var s = getComputedStyle(el); if (s.display!=='none' && s.visibility!=='hidden' && !el.disabled) return true; }
-    } catch(e){}
-    return false;
-  } catch(e){ return false; } }
-
-  function syncState(){
-    try {
-      prevB.classList.toggle('disabled', !canPrev());
-      nextB.classList.toggle('disabled', !canNext());
-      prevB.tabIndex = prevB.classList.contains('disabled') ? -1 : 0;
-      nextB.tabIndex = nextB.classList.contains('disabled') ? -1 : 0;
-    } catch(e){}
-  }
-
-  function showBar(){
-    if (!bar) return;
-    if (!atTop()) return;
-    bar.classList.add('visible');
-    syncState();
-    if (hideTimer) clearTimeout(hideTimer);
-    hideTimer = setTimeout(function(){ bar.classList.remove('visible'); }, 2000);
-  }
-  function hideBarNow(){
-    bar && bar.classList.remove('visible');
-    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-  }
-
-  function callPrev(){
-    try {
-      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex > 0){
-        var idx = window.currentViewerIndex - 1, id = window.currentViewerList[idx].id;
-        window.openSongInContext(id, window.currentViewerContext, idx, 'prev'); return;
-      }
-    } catch(e){}
-    var el = document.getElementById('prev-doc'); if (el) { el.click(); return; }
-    if (window.$) try { $('#prev-doc').trigger('click'); } catch(e){}
-  }
-  function callNext(){
-    try {
-      if (window.openSongInContext && window.currentViewerList && window.currentViewerIndex < window.currentViewerList.length - 1){
-        var idx = window.currentViewerIndex + 1, id = window.currentViewerList[idx].id;
-        window.openSongInContext(id, window.currentViewerContext, idx, 'next'); return;
-      }
-    } catch(e){}
-    var el = document.getElementById('next-doc'); if (el) { el.click(); return; }
-    if (window.$) try { $('#next-doc').trigger('click'); } catch(e){}
-  }
-  function callClose(){
-    var ok = false;
-    var el = document.getElementById('close-doc'); if (el) { try { el.click(); ok = true; } catch(e){} }
-    if (window.$) try { $('#close-doc').trigger('click'); ok = true; } catch(e){}
-    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); ok = true; } } catch(e){}
-    try { document.documentElement.classList.remove('pdf-overlay-active'); ok = true; } catch(e){}
-    return ok;
-  }
-
-  prevB.addEventListener('click', function(e){ e.stopPropagation(); if (!prevB.classList.contains('disabled')) callPrev(); });
-  nextB.addEventListener('click', function(e){ e.stopPropagation(); if (!nextB.classList.contains('disabled')) callNext(); });
-  closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
-
-  function onTopTap(){ if (atTop()) showBar(); }
-  hit.addEventListener('touchstart', onTopTap, {passive:true});
-  hit.addEventListener('mousedown', onTopTap);
-  hit.addEventListener('pointerdown', onTopTap, {passive:true});
-
-  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
-  if (wasActive) setTimeout(showBar, 0);
-  new MutationObserver(function(){
-    var active = document.documentElement.classList.contains('pdf-overlay-active');
-    if (active && !wasActive) setTimeout(showBar, 0);
-    else if (!active && wasActive) hideBarNow();
-    wasActive = active;
-  }).observe(document.documentElement, {attributes:true, attributeFilter:['class']});
-
-  function bindScroller(sc){
-    if (!sc || sc.__tbBound) return;
-    sc.__tbBound = true;
-    var lastTop = null, startY = null;
-
-    function onScroll(){
-      var top = sc.scrollTop <= 2;
-      if (top !== lastTop){ lastTop = top; if (top) showBar(); else hideBarNow(); }
-    }
-    sc.addEventListener('scroll', onScroll, {passive:true});
-    setTimeout(onScroll, 0);
-
-    function onTS(e){ var t = e.touches && e.touches[0]; if (t) startY = t.clientY; }
-    function onTM(e){
-      var t = e.touches && e.touches[0]; if (!t) return;
-      if (sc.scrollTop <= 2 && startY != null && (t.clientY - startY) > 90){ callClose(); startY = t.clientY; }
-    }
-    sc.addEventListener('touchstart', onTS, {passive:true});
-    sc.addEventListener('touchmove',  onTM, {passive:true});
-  }
-  bindScroller(scroller());
-  new MutationObserver(function(){ bindScroller(scroller()); })
-    .observe(document.body, {childList:true, subtree:true});
-
-  ['prev-doc','next-doc','doc-nav-buttons'].forEach(function(id){
-    var n = document.getElementById(id); if (!n) return;
-    try {
-      new MutationObserver(function(){ setTimeout(syncState, 0); setTimeout(syncState, 200); })
-        .observe(n, {attributes:true, attributeFilter:['class','style','disabled','aria-disabled']});
-    } catch(e){}
-  });
-  document.addEventListener('click', function(){ setTimeout(syncState, 60); setTimeout(syncState, 300); }, true);
-
-  setTimeout(syncState, 0);
-  setTimeout(syncState, 400);
-})();
-
-  window.addEventListener('pdfTopbarSync', function(){ try { syncState(); } catch(e){} });
-</script>
-
-
-<!-- wrap openDocViewer v1 -->
-<script>
+/* wrap openDocViewer v1 */
 (function(){
   if (window.__wrapOpenDocViewer_v1) return; window.__wrapOpenDocViewer_v1 = true;
   function install(){
@@ -3480,257 +2432,8 @@ function destroyPdfOverlay() {
   }
   install(); document.addEventListener('DOMContentLoaded', install); setTimeout(install, 500); setTimeout(install, 1500);
 })();
-</script>
 
-<!-- pdfTopbarSync init -->
-<script>
-(function(){
-  try {
-    if (document.documentElement.classList.contains('pdf-overlay-active')) {
-      var e=new Event('pdfTopbarSync'); window.dispatchEvent(e);
-    }
-  } catch(e){}
-})();
-</script>
-
-<!-- FINAL overlay topbar -->
-<div id="pdf-top-hit"></div>
-<div id="pdf-topbar" aria-hidden="true">
-  <button id="pdf-prev"  class="btn" type="button">PREVIOUS</button>
-  <button id="pdf-next"  class="btn" type="button">NEXT</button>
-  <button id="pdf-close" class="btn" type="button">CLOSE</button>
-</div>
-
-
-<!-- FINAL topbar wiring -->
-<script>
-/* Keep viewer globals in sync across all open paths */
-(function(){
-  if (window.__wrapViewers_final) return; window.__wrapViewers_final = true;
-
-  function wrapOpen(name){
-    try {
-      var fn = window[name];
-      if (!fn || fn.__wrapped_final) return;
-      var orig = fn;
-      function wrapped(/* dynamic args */){
-        try {
-          var args = Array.prototype.slice.call(arguments);
-          // try to find context object & index in args
-          for (var i=0;i<args.length;i++){
-            var a = args[i];
-            if (a && typeof a === 'object' && (a.list || a.context || a.type)) { window.currentViewerContext = a; break; }
-          }
-          for (var j=0;j<args.length;j++){
-            var b = args[j];
-            if (typeof b === 'number') { window.currentViewerIndex = b; break; }
-          }
-          // if context has a list, mirror to global
-          try { if (window.currentViewerContext && Array.isArray(window.currentViewerContext.list)) window.currentViewerList = window.currentViewerContext.list; } catch(_){}
-        } catch(_){}
-        return orig.apply(this, arguments);
-      }
-      wrapped.__wrapped_final = true;
-      window[name] = wrapped;
-    } catch(_){}
-  }
-
-  ['openSongInContext', 'openDocViewer'].forEach(wrapOpen);
-  // Retry after load in case functions are defined later
-  document.addEventListener('DOMContentLoaded', function(){ ['openSongInContext','openDocViewer'].forEach(wrapOpen); });
-  setTimeout(function(){ ['openSongInContext','openDocViewer'].forEach(wrapOpen); }, 500);
-  setTimeout(function(){ ['openSongInContext','openDocViewer'].forEach(wrapOpen); }, 1500);
-})();
-
-/* Top bar behavior (no scroll modifications) */
-(function(){
-  if (window.__TopBar_final) return; window.__TopBar_final = true;
-  var $ = function(id){ return document.getElementById(id); };
-  var bar = $('pdf-topbar'), hit = $('pdf-top-hit');
-  var prevB = $('pdf-prev'), nextB = $('pdf-next'), closeB = $('pdf-close');
-  var hideTimer = null;
-
-  function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
-  function atTop(){ var sc = scroller(); return sc && sc.scrollTop <= 2; }
-
-  // Robust ID normalization for list items across app sections
-  function getDocId(item){
-    if (!item || typeof item !== 'object') return null;
-    return item.id ?? item.docId ?? item.songId ?? item.fileId ?? item.pdfId ?? null;
-  }
-
-  function canPrev(){
-    try {
-      if (typeof window.currentViewerIndex === 'number' && window.currentViewerIndex > 0) return true;
-      var el = document.getElementById('prev-doc');
-      if (el){ var s = getComputedStyle(el); if (s.display!=='none' && s.visibility!=='hidden' && !el.disabled) return true; }
-    } catch(_){}
-    return false;
-  }
-  function canNext(){
-    try {
-      if (window.currentViewerList && typeof window.currentViewerIndex === 'number' && window.currentViewerIndex < window.currentViewerList.length - 1) return true;
-      var el = document.getElementById('next-doc');
-      if (el){ var s = getComputedStyle(el); if (s.display!=='none' && s.visibility!=='hidden' && !el.disabled) return true; }
-    } catch(_){}
-    return false;
-  }
-  function syncState(){
-    try {
-      prevB.classList.toggle('disabled', !canPrev());
-      nextB.classList.toggle('disabled', !canNext());
-      prevB.tabIndex = prevB.classList.contains('disabled') ? -1 : 0;
-      nextB.tabIndex = nextB.classList.contains('disabled') ? -1 : 0;
-    } catch(_){}
-  }
-
-  function showBar(){
-    if (!bar) return;
-    if (!atTop()) return;
-    bar.classList.add('visible');
-    syncState();
-    if (hideTimer) clearTimeout(hideTimer);
-    hideTimer = setTimeout(function(){ bar.classList.remove('visible'); }, 2000);
-  }
-  function hideBarNow(){
-    bar && bar.classList.remove('visible');
-    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-  }
-
-  function callPrev(){
-    try {
-      var list = window.currentViewerList || [];
-      var i = Number(window.currentViewerIndex || 0);
-      var item = list[i - 1];
-      var id = getDocId(item);
-      if (id != null && typeof window.openSongInContext === 'function'){
-        window.currentViewerIndex = i - 1;
-        return window.openSongInContext(id, window.currentViewerContext, i - 1, 'prev');
-      }
-    } catch(_){}
-    var el = document.getElementById('prev-doc'); if (el) { try { el.click(); return; } catch(_){ } }
-    if (window.$) try { $('#prev-doc').trigger('click'); } catch(_){}
-  }
-  function callNext(){
-    try {
-      var list = window.currentViewerList || [];
-      var i = Number(window.currentViewerIndex || 0);
-      var item = list[i + 1];
-      var id = getDocId(item);
-      if (id != null && typeof window.openSongInContext === 'function'){
-        window.currentViewerIndex = i + 1;
-        return window.openSongInContext(id, window.currentViewerContext, i + 1, 'next');
-      }
-    } catch(_){}
-    var el = document.getElementById('next-doc'); if (el) { try { el.click(); return; } catch(_){ } }
-    if (window.$) try { $('#next-doc').trigger('click'); } catch(_){}
-  }
-  function callClose(){
-    var ok = false;
-    var el = document.getElementById('close-doc'); if (el) { try { el.click(); ok = true; } catch(_){} }
-    if (window.$) try { $('#close-doc').trigger('click'); ok = true; } catch(_){}
-    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); ok = true; } } catch(_){}
-    try { document.documentElement.classList.remove('pdf-overlay-active'); ok = true; } catch(_){}
-    return ok;
-  }
-
-  prevB && prevB.addEventListener('click', function(e){ e.stopPropagation(); if (!prevB.classList.contains('disabled')) callPrev(); });
-  nextB && nextB.addEventListener('click', function(e){ e.stopPropagation(); if (!nextB.classList.contains('disabled')) callNext(); });
-  closeB && closeB.addEventListener('click', function(e){ e.stopPropagation(); callClose(); });
-
-  function onTopTap(){ if (atTop()) showBar(); }
-  hit.addEventListener('touchstart', onTopTap, {passive:true});
-  hit.addEventListener('mousedown', onTopTap);
-  hit.addEventListener('pointerdown', onTopTap, {passive:true});
-
-  var wasActive = document.documentElement.classList.contains('pdf-overlay-active');
-  if (wasActive) setTimeout(showBar, 0);
-  new MutationObserver(function(){
-    var active = document.documentElement.classList.contains('pdf-overlay-active');
-    if (active && !wasActive) setTimeout(showBar, 0);
-    else if (!active && wasActive) hideBarNow();
-    wasActive = active;
-  }).observe(document.documentElement, {attributes:true, attributeFilter:['class']});
-
-  function bindScroller(sc){
-    if (!sc || sc.__tbBoundFinal) return;
-    sc.__tbBoundFinal = true;
-    var lastTop = null, startY = null;
-
-    function onScroll(){
-      var top = sc.scrollTop <= 2;
-      if (top !== lastTop){ lastTop = top; if (top) showBar(); else hideBarNow(); }
-    }
-    sc.addEventListener('scroll', onScroll, {passive:true});
-    setTimeout(onScroll, 0);
-
-    function onTS(e){ var t = e.touches && e.touches[0]; if (t) startY = t.clientY; }
-    function onTM(e){
-      var t = e.touches && e.touches[0]; if (!t) return;
-      // Require intentional pull: 90px
-      if (sc.scrollTop <= 2 && startY != null && (t.clientY - startY) > 90){ callClose(); startY = t.clientY; }
-    }
-    sc.addEventListener('touchstart', onTS, {passive:true});
-    sc.addEventListener('touchmove',  onTM, {passive:true});
-  }
-  bindScroller(scroller());
-  new MutationObserver(function(){ bindScroller(scroller()); })
-    .observe(document.body, {childList:true, subtree:true});
-
-  // Allow other parts of app to force a state refresh if needed
-  window.addEventListener('pdfTopbarSync', function(){ try { syncState(); } catch(_){ } });
-
-  // Initial sync
-  setTimeout(syncState, 0);
-  setTimeout(syncState, 400);
-})();
-</script>
-
-
-<!-- Venue size matcher -->
-<script>
-(function(){
-  if (window.__venueSizeMatch) return; window.__venueSizeMatch = true;
-  function matchVenueSize(){
-    try {
-      var genre = document.getElementById('genre-name');
-      var venue = document.getElementById('venue-name');
-      if (!genre || !venue) return;
-      var gs = window.getComputedStyle(genre);
-      // Copy width/height exactly as rendered
-      var w = genre.getBoundingClientRect().width;
-      var h = genre.getBoundingClientRect().height;
-      venue.style.width  = w + 'px';
-      venue.style.height = h + 'px';
-      // Match padding/border/font for perfect symmetry
-      venue.style.paddingLeft   = gs.paddingLeft;
-      venue.style.paddingRight  = gs.paddingRight;
-      venue.style.paddingTop    = gs.paddingTop;
-      venue.style.paddingBottom = gs.paddingBottom;
-      venue.style.borderWidth   = gs.borderWidth;
-      venue.style.borderStyle   = gs.borderStyle;
-      venue.style.borderColor   = gs.borderColor;
-      venue.style.borderRadius  = gs.borderRadius;
-      venue.style.font          = gs.font;
-      venue.style.boxSizing     = gs.boxSizing || 'border-box';
-    } catch(e){}
-  }
-  // Run on load and after small delay to catch Tailwind/layout
-  window.addEventListener('load', function(){ setTimeout(matchVenueSize, 0); setTimeout(matchVenueSize, 250); });
-  // If sidebar opens/closes, layout may change; observe size changes
-  var ro = new ResizeObserver(function(){ matchVenueSize(); });
-  window.addEventListener('DOMContentLoaded', function(){
-    var g = document.getElementById('genre-name');
-    var v = document.getElementById('venue-name');
-    if (g) ro.observe(g);
-    if (v) ro.observe(v);
-  });
-})();
-</script>
-
-
-<!-- Universal CLOSE for the PDF/file viewer — install once -->
-<script>
+/* Universal CLOSE for the PDF/file viewer — install once */
 (function () {
   if (window.__UniversalClose_v1) return;
   window.__UniversalClose_v1 = true;
@@ -3738,71 +2441,39 @@ function destroyPdfOverlay() {
   function universalCloseViewer() {
     var closed = false;
 
+    // Use the new single close button's logic
     try {
-      var nativeBtn = document.getElementById('close-doc');
-      if (nativeBtn && typeof nativeBtn.click === 'function') {
-        nativeBtn.click();
-        closed = true;
-      }
-      if (window.$ && !closed) { try { $('#close-doc').trigger('click'); closed = true; } catch(_){} }
+        var newBtn = document.getElementById('viewer-close-btn');
+        if (newBtn && typeof newBtn.click === 'function') {
+            newBtn.click();
+            closed = true;
+        }
     } catch(_) {}
+    
+    if (closed) return true;
 
+    // Fallback logic just in case
     try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); closed = true; } } catch(_) {}
-
-    try {
-      var roots = [
-        document.getElementById('pdf-overlay'),
-        document.querySelector('.pdf-overlay'),
-        document.getElementById('pdf-viewer'),
-        document.querySelector('.viewer-overlay')
-      ].filter(Boolean);
-      roots.forEach(function (el) { el.style.display = 'none'; });
-      if (roots.length) closed = true;
-    } catch(_) {}
-
     try { document.documentElement.classList.remove('pdf-overlay-active'); closed = true; } catch(_) {}
     try { document.body.classList.remove('pdf-overlay-active'); closed = true; } catch(_) {}
-
-    try {
-      var bar = document.getElementById('pdf-topbar') || document.getElementById('pdf-btn-bar');
-      if (bar) bar.classList.remove('visible');
-    } catch(_) {}
 
     return !!closed;
   }
 
-  function onDocClick(e) {
-    var t = e.target;
-    var isClose = (t && t.id === 'pdf-close') || (t && t.closest && (t.closest('#pdf-close') || t.closest('#pdf-btn-close')));
-    if (isClose) {
-      e.stopPropagation();
-      e.preventDefault();
-      universalCloseViewer();
-    }
-  }
-  document.addEventListener('click', onDocClick, true);
-
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' || e.keyCode === 27) {
-      if (document.documentElement.classList.contains('pdf-overlay-active')) {
+      if (document.documentElement.classList.contains('pdf-overlay-active') || document.body.classList.contains('doc-viewer-active')) {
         e.stopPropagation();
         universalCloseViewer();
       }
     }
   }, true);
 
-  new MutationObserver(function () {}).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-
   window.universalCloseViewer = universalCloseViewer;
 })();
-</script>
 
 
 <!-- Genre/Venue exact symmetry + centered placeholders (robust) -->
-<style>
-#genre-name::placeholder, #venue-name::placeholder { text-align: center; }
-#genre-name, #venue-name { text-align: center; } /* helps iOS Safari */
-</style>
 <script>
 (function(){
   if (window.__GenreVenueSync_v2) return; window.__GenreVenueSync_v2 = true;
@@ -3867,10 +2538,7 @@ function destroyPdfOverlay() {
 <!-- Venue/Genre left-edge alignment + Pull-to-close v4 -->
 <script>
 (function(){
-  /* =====  A) Perfect horizontal alignment for Genre/Venue rows  =====
-     We don't change widths/heights (already matched). We just align left-x
-     of the Venue input and Venue Add button to equal the Genre row's left-x.
-  */
+  /* =====  A) Perfect horizontal alignment for Genre/Venue rows  ===== */
   if (!window.__AlignGenreVenue_v1){
     window.__AlignGenreVenue_v1 = true;
 
@@ -3878,25 +2546,20 @@ function destroyPdfOverlay() {
       try {
         var gInput = document.getElementById('genre-name');
         var vInput = document.getElementById('venue-name');
-        // Attempt to find the "Add" buttons near each input; adjust selectors to your markup if needed
-        var gAdd   = document.getElementById('add-genre-btn')  || document.querySelector('[data-add="genre"], #add-genre, .add-genre-btn');
-        var vAdd   = document.getElementById('add-venue-btn')  || document.querySelector('[data-add="venue"], #add-venue, .add-venue-btn');
+        var gAdd   = document.getElementById('add-genre');
+        var vAdd   = document.getElementById('add-venue');
 
         if (!gInput || !vInput) return;
 
-        // compute current left positions
         var gx = gInput.getBoundingClientRect().left;
         var vx = vInput.getBoundingClientRect().left;
 
-        // We adjust only the venue input's margin-left to match genre's left edge
         var deltaInput = gx - vx;
         if (Math.abs(deltaInput) > 0.5) {
-          // apply margin-left delta without affecting layout above it
           var current = parseFloat(getComputedStyle(vInput).marginLeft) || 0;
           vInput.style.marginLeft = (current + deltaInput) + "px";
         }
 
-        // If we have genre/venue add buttons, align them too
         if (gAdd && vAdd) {
           var gxB = gAdd.getBoundingClientRect().left;
           var vxB = vAdd.getBoundingClientRect().left;
@@ -3908,32 +2571,9 @@ function destroyPdfOverlay() {
         }
       } catch(_){}
     }
-
-    // Run after layout + a few retries for dynamic UI
-    function schedule(){
-      setTimeout(alignVenueRow, 0);
-      setTimeout(alignVenueRow, 200);
-      setTimeout(alignVenueRow, 600);
-      setTimeout(alignVenueRow, 1200);
-    }
+    function schedule(){ setTimeout(alignVenueRow, 200); setTimeout(alignVenueRow, 600); }
     window.addEventListener('load', schedule);
     window.addEventListener('resize', function(){ setTimeout(alignVenueRow, 0); });
-    // Observe venue/genre nodes for size/position changes and re-align
-    var obsTargets = ['genre-name','venue-name'];
-    if (window.ResizeObserver){
-      obsTargets.forEach(function(id){
-        var el = document.getElementById(id);
-        if (el){
-          try {
-            var ro = new ResizeObserver(function(){ alignVenueRow(); });
-            ro.observe(el);
-          } catch(_){}
-        }
-      });
-    }
-    // If sidebar open/close toggles classes on html/body, re-run
-    new MutationObserver(function(){ alignVenueRow(); })
-      .observe(document.documentElement, {attributes:true, attributeFilter:['class']});
   }
 
   /* =====  B) Pull-to-close v4: downward pull only, stronger threshold, must release  ===== */
@@ -3944,13 +2584,12 @@ function destroyPdfOverlay() {
     var startY = null;
     var maxPullDown = 0;
     var active = false;
-    var THRESHOLD_DOWN = 150;  // stronger than v3 (prevents accidental close on slight gestures)
+    var THRESHOLD_DOWN = 150;
 
     function onTouchStart(e){
       var t = e.touches && e.touches[0];
       var sc = scroller();
       if (!t || !sc) return;
-      // only arm at absolute top
       active = (sc.scrollTop <= 2);
       startY = t.clientY;
       maxPullDown = 0;
@@ -3961,27 +2600,19 @@ function destroyPdfOverlay() {
       var sc = scroller();
       if (!t || !sc) return;
       var dy = t.clientY - (startY == null ? t.clientY : startY);
-      // Only count downward pulls
       if (dy > maxPullDown) maxPullDown = dy;
     }
     function onTouchEnd(){
       try {
         if (!active) return;
         var sc = scroller(); if (!sc) return;
-        // Close ONLY if at top and downward pull exceeded strong threshold
         if (sc.scrollTop <= 2 && maxPullDown > THRESHOLD_DOWN) {
           if (typeof window.universalCloseViewer === 'function') {
             window.universalCloseViewer();
-          } else {
-            var btn = document.getElementById('close-doc');
-            if (btn && typeof btn.click === 'function') btn.click();
-            if (window.$) try { $('#close-doc').trigger('click'); } catch(_){}
           }
         }
       } finally {
-        active = false;
-        startY = null;
-        maxPullDown = 0;
+        active = false; startY = null; maxPullDown = 0;
       }
     }
 
@@ -3995,8 +2626,7 @@ function destroyPdfOverlay() {
     }
 
     bind();
-    new MutationObserver(function(){ bind(); })
-      .observe(document.body, {childList:true, subtree:true});
+    new MutationObserver(function(){ bind(); }).observe(document.body, {childList:true, subtree:true});
   }
 })();
 </script>
@@ -4021,32 +2651,21 @@ function destroyPdfOverlay() {
             var songId = $(ui.draggable).attr('id');
             var genreName = $(this).data('name');
             if (!songId || !genreName) return;
-            // Find song and genre objects
             var s = masterSongs.find(function(x){ return String(x.id) === String(songId); });
             if (!s) return;
             s.genre = genreName;
             var g = (typeof genres!=='undefined') ? genres.find(function(x){ return x.name === genreName; }) : null;
-            if (g && !s.color) { s.color = g.color; } // keep color in sync if app uses it
-            // Persist and refresh views
+            if (g && !s.color) { s.color = g.color; } 
             if (typeof save === 'function') save();
-            if ($('#genre-view').is(':visible')) {
-              if (typeof currentGenre !== 'undefined' && currentGenre === genreName && typeof renderGenreView === 'function') {
-                renderGenreView(genreName);
-              }
-            }
-            if ($('#master-view').is(':visible') && typeof renderMaster === 'function') {
-              renderMaster();
-            }
-            if ($('#setlist-view').is(':visible') && typeof renderSetlist === 'function') {
-              renderSetlist();
-            }
+            if ($('#master-view').is(':visible') && typeof renderMaster === 'function') renderMaster();
+            if ($('#setlist-view').is(':visible') && typeof renderSetlist === 'function') renderSetlist();
+            if ($('#genre-view').is(':visible') && currentGenre === genreName && typeof renderGenreView === 'function') renderGenreView(genreName);
           } catch(e){ console.error('Genre drop error:', e); }
         }
       });
     });
   }
 
-  // Observe dynamic changes to the genre list so droppable stays attached
   $(function(){
     attachGenreDroppables();
     var gl = document.getElementById('genre-list');
@@ -4054,48 +2673,9 @@ function destroyPdfOverlay() {
       var obs = new MutationObserver(function(){ attachGenreDroppables(); });
       obs.observe(gl, {childList:true});
     }
-    // Re-attach after any known re-renders
-    $(document).on('app:renderGenres app:navigate', function(){ attachGenreDroppables(); });
   });
 })();
 </script>
-
-
-<script>
-// === Override: ensure Genre view shows songs dropped into that genre ===
-(function(){
-  function safeEscape(t){ try { return (typeof escapeHtml==='function') ? escapeHtml(t) : String(t||'').replace(/[&<>"']/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[s])); } catch(e){ return String(t||''); } }
-  window.renderGenreView = function(n){
-    try{
-      currentGenre = n;
-      $('#genre-view-title').text(n);
-      var list = $('#genre-song-list').empty();
-      var songs = (masterSongs||[]).filter(function(s){ return (s.genre||'').toLowerCase() === String(n||'').toLowerCase(); });
-      // Build compact, consistent list items that remain draggable + clickable
-      songs.forEach(function(s, i){
-        var g = (typeof genres!=='undefined') ? genres.find(function(x){ return x.name === n; }) : null;
-        var color = g ? g.color : (s.color||'');
-        var dot = '<span class="genre-dot inline-block w-2.5 h-2.5 rounded-full mr-2 align-middle" style="background:'+ (color||'transparent') +';"></span>';
-        var fav = s.favorite ? '<span class="favorite-star-container ml-2">★</span>' : '<span class="favorite-star-container ml-2">☆</span>';
-        var $li = $('<li/>', {
-          id: String(s.id),
-          class: 'draggable flex items-center px-2 py-1 hover:bg-gray-50 dark:hover:bg-gray-800 rounded'
-        }).append(dot)
-          .append('<span class="truncate flex-1">'+ safeEscape(s.name||'Untitled') +'</span>')
-          .append(fav);
-        list.append($li);
-      });
-      // Re-enable dragging with your existing options
-      if (typeof draggableOptions !== 'undefined') {
-        $('#genre-song-list .draggable').draggable(draggableOptions);
-      }
-      // Make sure the view is visible
-      if (typeof show === 'function') show('genre');
-    }catch(e){ console.error('renderGenreView override error', e); }
-  };
-})();
-</script>
-
 
 <script>
 // === Setlist Details: keep the date placeholder span visible only when empty ===
@@ -4109,7 +2689,6 @@ function destroyPdfOverlay() {
   }
   $(document).on('change input', '#setlist-date', updateDatePlaceholder);
   $(document).on('click', '#setlist-details-toggle', function(){
-    // When expanding/collapsing, re-evaluate placeholder visibility
     setTimeout(updateDatePlaceholder, 0);
   });
   $(function(){ updateDatePlaceholder(); });
@@ -4126,13 +2705,11 @@ function destroyPdfOverlay() {
     if (!cont || !input || !ph) return;
     var r = input.getBoundingClientRect();
     var c = cont.getBoundingClientRect();
-    // Compute center of INPUT relative to container
     var cx = (r.left - c.left) + (r.width / 2);
     var cy = (r.top - c.top) + (r.height / 2);
     ph.style.left = cx + 'px';
     ph.style.top  = cy + 'px';
     ph.style.transform = 'translate(-50%, -50%)';
-    // Match width to input so long strings stay centered visually
     ph.style.width = r.width + 'px';
     ph.style.textAlign = 'center';
   }
@@ -4149,7 +2726,6 @@ function destroyPdfOverlay() {
     positionDatePlaceholder();
   }
 
-  // Reposition on resize, orientation change, open/close of details
   window.addEventListener('resize', positionDatePlaceholder);
   window.addEventListener('orientationchange', positionDatePlaceholder);
   document.addEventListener('click', function(e){
@@ -4164,164 +2740,12 @@ function destroyPdfOverlay() {
     if (e.target && e.target.id === 'setlist-date') toggleDatePlaceholder();
   });
 
-  // Initial
   document.addEventListener('DOMContentLoaded', function(){
     syncAll();
-    // Also run once more after layout settles
-    setTimeout(syncAll, 0);
+    setTimeout(syncAll, 250);
   });
 })();
 </script>
 
-
-<!-- ===== NAV HOTFIX (additive, iPad-safe; no removals) ===== -->
-<style id="nav-hotfix-css">
-  /* Ensure top nav stays tappable over overlays on iOS without altering layout elsewhere */
-  .doc-nav-buttons { z-index: 2147483601 !important; }
-  .doc-nav-button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-  /* Safe area padding if needed */
-  html.ios .doc-nav-buttons { top: env(safe-area-inset-top, 0) !important; }
-</style>
-
-<script id="nav-hotfix-js">
-(function(){
-  // Avoid double-initializing
-  if (window.__navHotfixInstalled) return; window.__navHotfixInstalled = true;
-
-  function ready(fn){ if (document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
-
-  ready(function(){
-    var $ = window.jQuery || window.$;
-
-    function getState(){
-      return {
-        list: window.currentViewerList || [],
-        idx: (typeof window.currentViewerIndex==='number') ? window.currentViewerIndex : -1,
-        ctx: window.currentViewerContext
-      };
-    }
-
-    function updateDisabled(prevB, nextB){
-      try {
-        var st = getState();
-        var atStart = !(st.idx > 0);
-        var atEnd   = !(st.list && st.idx >= 0 && st.idx < st.list.length - 1);
-        if (prevB) { prevB.toggleAttribute('disabled', atStart); if ($) $(prevB).prop('disabled', atStart); }
-        if (nextB) { nextB.toggleAttribute('disabled', atEnd);   if ($) $(nextB).prop('disabled', atEnd);   }
-      } catch(e){}
-    }
-
-    function gotoDelta(delta){
-      var st = getState();
-      if (!st.list || st.idx < 0) return;
-      var target = st.idx + delta;
-      if (target < 0 || target >= st.list.length) return;
-      // Update index FIRST so downstream code reads the new position
-      window.currentViewerIndex = target;
-      if (typeof window.openSongInContext === 'function') {
-        window.openSongInContext(st.list[target], st.ctx, target, (delta>0 ? 'next' : 'prev'));
-      }
-      setTimeout(function(){
-        var pb = document.getElementById('prev-doc');
-        var nb = document.getElementById('next-doc');
-        updateDisabled(pb, nb);
-      }, 50);
-    }
-
-    function closeViewer(){
-      try {
-        if ($) {
-          $('#doc-view').addClass('hidden');
-          $('body').removeClass('doc-viewer-active doc-view-fullscreen');
-          if (window.resetScrollHandlers) window.resetScrollHandlers();
-          $('#doc-iframe-wrapper').empty();
-        } else {
-          var dv = document.getElementById('doc-view');
-          if (dv) dv.classList.add('hidden');
-          document.body.classList.remove('doc-viewer-active','doc-view-fullscreen');
-          var wrap = document.getElementById('doc-iframe-wrapper');
-          if (wrap) wrap.innerHTML = '';
-        }
-      } catch(e){}
-      setTimeout(function(){
-        var pb = document.getElementById('prev-doc');
-        var nb = document.getElementById('next-doc');
-        updateDisabled(pb, nb);
-      }, 50);
-    }
-
-    function wireButtons(){
-      var prevB = document.getElementById('prev-doc');
-      var nextB = document.getElementById('next-doc');
-      var closeB= document.getElementById('close-doc');
-
-      // If the app hasn't injected them yet, try once more shortly
-      if (!prevB || !nextB || !closeB) {
-        setTimeout(wireButtons, 60);
-        return;
-      }
-
-      // Add capture-phase handlers that take precedence over legacy/broken ones,
-      // without removing them. We stopImmediatePropagation to avoid double actions.
-      function bind(el, fn){
-        if (!el) return;
-        if (!el.__navHotfixBound){
-          el.addEventListener('click', function(e){
-            try {
-              e.stopImmediatePropagation();
-              e.stopPropagation();
-              e.preventDefault();
-            } catch(_) {}
-            fn();
-          }, {capture:true, passive:false});
-          el.__navHotfixBound = true;
-        }
-      }
-
-      bind(prevB, function(){ gotoDelta(-1); });
-      bind(nextB, function(){ gotoDelta(+1); });
-      bind(closeB,function(){ closeViewer(); });
-
-      // Initial disabled state
-      updateDisabled(prevB, nextB);
-    }
-
-    // Watch for viewer activation to (re)wire buttons when the doc actually opens
-    var lastActive = false;
-    function checkViewerActive(){
-      var active = document.body.classList.contains('doc-viewer-active') || (function(){
-        var dv = document.getElementById('doc-view');
-        return dv && !dv.classList.contains('hidden');
-      })();
-      if (active && !lastActive){
-        // Just opened -> wire buttons
-        wireButtons();
-      }
-      lastActive = active;
-    }
-
-    // Observe body and #doc-view class changes
-    var obs = new MutationObserver(checkViewerActive);
-    obs.observe(document.body, {attributes:true, attributeFilter:['class']});
-    var dv = document.getElementById('doc-view');
-    if (dv) {
-      var obs2 = new MutationObserver(checkViewerActive);
-      obs2.observe(dv, {attributes:true, attributeFilter:['class']});
-    }
-
-    // Backstop timer in case state changes aren't reflected via classes
-    setInterval(function(){
-      checkViewerActive();
-      // Keep disabled state honest
-      var pb = document.getElementById('prev-doc');
-      var nb = document.getElementById('next-doc');
-      if (pb || nb) updateDisabled(pb, nb);
-    }, 500);
-
-    // First-run
-    checkViewerActive();
-  });
-})();
-</script>
 </body>
 </html>
