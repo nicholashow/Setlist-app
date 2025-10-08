@@ -2871,5 +2871,101 @@ function destroyPdfOverlay() {
   });
 })();
 </script>
+
+<style id="viewer-nav-behavior-tweaks">
+/* 1) Do NOT move buttons on hover/active */
+#viewer-prev-btn:not(:disabled):hover,
+#viewer-next-btn:not(:disabled):hover,
+#viewer-prev-btn:active,
+#viewer-next-btn:active,
+#viewer-close-btn:not(:disabled):hover,
+#viewer-close-btn:active {
+  transform: none !important;
+  box-shadow: none !important; /* optional: avoid 'lift' illusion */
+}
+
+/* 2) Keep Close button RED on hover/hold; never turn blue */
+#viewer-close-btn,
+#viewer-close-btn:hover,
+#viewer-close-btn:focus,
+#viewer-close-btn:active {
+  background-color: rgba(239, 68, 68, 0.85) !important; /* red-500/600 */
+  color: #ffffff !important;
+  border-color: rgba(239, 68, 68, 0.85) !important;
+}
+</style>
+<script>
+/* 3) Reappearance rule: only when tap near TOP or scroll to TOP */
+(function(){
+  if (window.__ViewerReappearRules_v1) return;
+  window.__ViewerReappearRules_v1 = true;
+
+  var TOP_TAP_PX = 64; // threshold from top edge
+
+  function controlsEl(){ return document.getElementById('viewer-controls'); }
+  function overlayEl(){
+    return document.getElementById('pdf-overlay-scroll') || document.getElementById('doc-view');
+  }
+
+  function showControls(){
+    try {
+      if (typeof window.showNavButtonsAndCheckState === 'function') {
+        window.showNavButtonsAndCheckState();
+      } else {
+        controlsEl() && controlsEl().classList.remove('opacity-0');
+      }
+    } catch(e){}
+  }
+  function hideControls(){
+    try { controlsEl() && controlsEl().classList.add('opacity-0'); } catch(e){}
+  }
+
+  // Only reappear when tapping the top region OR when scrolled to top
+  function shouldShowForEvent(ev){
+    var y = null;
+    if (typeof ev.clientY === 'number') y = ev.clientY;
+    else if (ev.touches && ev.touches[0]) y = ev.touches[0].clientY;
+    else if (ev.changedTouches && ev.changedTouches[0]) y = ev.changedTouches[0].clientY;
+    if (y !== null && y <= TOP_TAP_PX) return true;
+
+    var ov = overlayEl();
+    if (ov && ov.scrollTop <= 5) return true;
+    return false;
+  }
+
+  // Capture pointerdown so we can enforce after app logic runs
+  document.addEventListener('pointerdown', function(ev){
+    var ov = overlayEl();
+    if (!ov) return;
+    if (!ov.contains(ev.target)) return;
+
+    // Let app handlers run; then correct visibility
+    setTimeout(function(){
+      if (shouldShowForEvent(ev)) showControls();
+      else hideControls();
+    }, 0);
+  }, true);
+
+  // When scrolling: show at very top, hide otherwise
+  function onScroll(){
+    var ov = overlayEl();
+    if (!ov) return;
+    if (ov.scrollTop <= 5) showControls();
+    else hideControls();
+  }
+
+  // Attach scroll listeners (including passive touch scrolling)
+  var attachT = setInterval(function(){
+    var ov = overlayEl();
+    if (ov){
+      ov.addEventListener('scroll', onScroll, { passive: true });
+      // Initial state on load
+      onScroll();
+      clearInterval(attachT);
+    }
+  }, 100);
+})();
+</script>
+
 </body>
 </html>
