@@ -2814,66 +2814,21 @@ function destroyPdfOverlay() {
 })();
 </script>
 
-<style id="viewer-nav-blue-style">
-/* Make prev/next BLUE whenever they are enabled (not :disabled) */
+<style id="viewer-css-only-fix">
+/* Make Prev/Next BLUE whenever they are enabled (no JS, no handler changes) */
 #viewer-prev-btn:not(:disabled),
 #viewer-next-btn:not(:disabled) {
   background-color: rgba(59, 130, 246, 0.9) !important; /* blue-500 */
   color: #ffffff !important;
   border-color: rgba(59, 130, 246, 0.9) !important;
 }
-</style>
-<script>
-/* Ensure correct disabled state is applied *before* controls appear on first open */
-(function(){
-  if (window.__NavFirstOpenFix_v1) return;
-  window.__NavFirstOpenFix_v1 = true;
 
-  function computeNav(){
-    try {
-      var list = window.currentViewerList;
-      var idx  = window.currentViewerIndex;
-      if (!Array.isArray(list) || typeof idx !== 'number') return null;
-      return { hasPrev: idx > 0, hasNext: idx < (list.length - 1) };
-    } catch(e){ return null; }
-  }
-
-  function setButtonsFromState(){
-    var st = computeNav();
-    var prev = document.getElementById('viewer-prev-btn');
-    var next = document.getElementById('viewer-next-btn');
-    if (!st || !prev || !next) return;
-    prev.disabled = !st.hasPrev;
-    next.disabled = !st.hasNext;
-  }
-
-  // Wrap showPdfOverlay so we correct *right as the overlay is created*
-  (function wrapShow(){
-    var fn = window.showPdfOverlay;
-    if (typeof fn !== 'function' || fn.__navwrap_v1) return;
-    function wrapped(){
-      // At this point, openSongInContext has already set list+index
-      // so we can safely set the correct disabled state BEFORE controls show.
-      // We also queue a couple tiny follow-ups for timing jitter.
-      setButtonsFromState();
-      setTimeout(setButtonsFromState, 0);
-      setTimeout(setButtonsFromState, 100);
-      return fn.apply(this, arguments);
-    }
-    wrapped.__navwrap_v1 = true;
-    window.showPdfOverlay = wrapped;
-  })();
-
-  // As a fallback, if overlay is already active when this loads
-  document.addEventListener('DOMContentLoaded', function(){
-    setButtonsFromState();
-    setTimeout(setButtonsFromState, 50);
-  });
-})();
-</script>
-
-<style id="viewer-nav-behavior-tweaks">
-/* 1) Do NOT move buttons on hover/active */
+/* Stop buttons from "moving" on hover/press */
+#viewer-prev-btn,
+#viewer-next-btn,
+#viewer-close-btn {
+  transform: none !important;
+}
 #viewer-prev-btn:not(:disabled):hover,
 #viewer-next-btn:not(:disabled):hover,
 #viewer-prev-btn:active,
@@ -2881,10 +2836,10 @@ function destroyPdfOverlay() {
 #viewer-close-btn:not(:disabled):hover,
 #viewer-close-btn:active {
   transform: none !important;
-  box-shadow: none !important; /* optional: avoid 'lift' illusion */
+  box-shadow: none !important;
 }
 
-/* 2) Keep Close button RED on hover/hold; never turn blue */
+/* Keep Close button RED on hover/hold; never turn blue */
 #viewer-close-btn,
 #viewer-close-btn:hover,
 #viewer-close-btn:focus,
@@ -2894,178 +2849,5 @@ function destroyPdfOverlay() {
   border-color: rgba(239, 68, 68, 0.85) !important;
 }
 </style>
-<script>
-/* 3) Reappearance rule: only when tap near TOP or scroll to TOP */
-(function(){
-  if (window.__ViewerReappearRules_v1) return;
-  window.__ViewerReappearRules_v1 = true;
-
-  var TOP_TAP_PX = 64; // threshold from top edge
-
-  function controlsEl(){ return document.getElementById('viewer-controls'); }
-  function overlayEl(){
-    return document.getElementById('pdf-overlay-scroll') || document.getElementById('doc-view');
-  }
-
-  function showControls(){
-    try {
-      if (typeof window.showNavButtonsAndCheckState === 'function') {
-        window.showNavButtonsAndCheckState();
-      } else {
-        controlsEl() && controlsEl().classList.remove('opacity-0');
-      }
-    } catch(e){}
-  }
-  function hideControls(){
-    try { controlsEl() && controlsEl().classList.add('opacity-0'); } catch(e){}
-  }
-
-  // Only reappear when tapping the top region OR when scrolled to top
-  function shouldShowForEvent(ev){
-    var y = null;
-    if (typeof ev.clientY === 'number') y = ev.clientY;
-    else if (ev.touches && ev.touches[0]) y = ev.touches[0].clientY;
-    else if (ev.changedTouches && ev.changedTouches[0]) y = ev.changedTouches[0].clientY;
-    if (y !== null && y <= TOP_TAP_PX) return true;
-
-    var ov = overlayEl();
-    if (ov && ov.scrollTop <= 5) return true;
-    return false;
-  }
-
-  // Capture pointerdown so we can enforce after app logic runs
-  document.addEventListener('pointerdown', function(ev){
-    var ov = overlayEl();
-    if (!ov) return;
-    if (!ov.contains(ev.target)) return;
-
-    // Let app handlers run; then correct visibility
-    setTimeout(function(){
-      if (shouldShowForEvent(ev)) showControls();
-      else hideControls();
-    }, 0);
-  }, true);
-
-  // When scrolling: show at very top, hide otherwise
-  function onScroll(){
-    var ov = overlayEl();
-    if (!ov) return;
-    if (ov.scrollTop <= 5) showControls();
-    else hideControls();
-  }
-
-  // Attach scroll listeners (including passive touch scrolling)
-  var attachT = setInterval(function(){
-    var ov = overlayEl();
-    if (ov){
-      ov.addEventListener('scroll', onScroll, { passive: true });
-      // Initial state on load
-      onScroll();
-      clearInterval(attachT);
-    }
-  }, 100);
-})();
-</script>
-
-
-<style id="viewer-no-select-zoom">
-/* Disable text selection and touch callout in viewer and controls */
-#pdf-overlay-scroll, #doc-view, #viewer-controls, #viewer-controls *,
-.viewer-btn, .viewer-btn * {
-  -webkit-user-select: none !important;
-  user-select: none !important;
-  -webkit-touch-callout: none !important;
-}
-
-/* iOS sometimes applies highlight on long press; remove it */
-#pdf-overlay-scroll *, #doc-view *, #viewer-controls * {
-  -webkit-tap-highlight-color: transparent;
-}
-</style>
-<script>
-(function(){
-  if (window.__ViewerInputTaming_v1) return;
-  window.__ViewerInputTaming_v1 = true;
-
-  function controlsEl(){ return document.getElementById('viewer-controls'); }
-  function overlayEl(){
-    return document.getElementById('pdf-overlay-scroll') || document.getElementById('doc-view');
-  }
-
-  // 1) Prevent double-tap zoom and pinch-zoom within overlay region
-  (function preventZooming(){
-    var ov = overlayEl();
-    var lastTouchEnd = 0;
-
-    function onTouchEnd(e){
-      var now = Date.now();
-      if (now - lastTouchEnd <= 300) {
-        e.preventDefault();
-      }
-      lastTouchEnd = now;
-    }
-    function onGestureStart(e){
-      e.preventDefault();
-    }
-    function attach(){
-      ov = overlayEl();
-      if (!ov) return false;
-      ov.addEventListener('touchend', onTouchEnd, { passive: false });
-      ov.addEventListener('gesturestart', onGestureStart, { passive: false });
-      return true;
-    }
-    if (!attach()){
-      var t = setInterval(function(){ if (attach()) clearInterval(t); }, 100);
-    }
-  })();
-
-  // 2) Reappearance only at top: allow taps ANYWHERE at the top (including sidebar)
-  var TOP_TAP_PX = 64;
-  function showControls(){
-    try {
-      if (typeof window.showNavButtonsAndCheckState === 'function') {
-        window.showNavButtonsAndCheckState();
-      } else {
-        controlsEl() && controlsEl().classList.remove('opacity-0');
-      }
-    } catch(e){}
-  }
-  function hideControls(){
-    try { controlsEl() && controlsEl().classList.add('opacity-0'); } catch(e){}
-  }
-
-  function isTopTap(ev){
-    var y = null;
-    if (typeof ev.clientY === 'number') y = ev.clientY;
-    else if (ev.touches && ev.touches[0]) y = ev.touches[0].clientY;
-    else if (ev.changedTouches && ev.changedTouches[0]) y = ev.changedTouches[0].clientY;
-    return (y !== null) && (y <= TOP_TAP_PX);
-  }
-
-  // Global pointerdown: if tap is within top band anywhere, show; else defer to scroll logic
-  document.addEventListener('pointerdown', function(ev){
-    setTimeout(function(){
-      if (isTopTap(ev)) showControls();
-    }, 0);
-  }, true);
-
-  // Keep scroll-based rule: show only when scrolled to top; hide otherwise
-  function onScroll(){
-    var ov = overlayEl();
-    if (!ov) return;
-    if (ov.scrollTop <= 5) showControls();
-    else hideControls();
-  }
-  var attachScroll = setInterval(function(){
-    var ov = overlayEl();
-    if (ov){
-      ov.addEventListener('scroll', onScroll, { passive: true });
-      onScroll();
-      clearInterval(attachScroll);
-    }
-  }, 100);
-})();
-</script>
-
 </body>
 </html>
