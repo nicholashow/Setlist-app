@@ -2849,5 +2849,59 @@ function destroyPdfOverlay() {
   border-color: rgba(239, 68, 68, 0.85) !important;
 }
 </style>
+
+<style id="viewer-no-highlight">
+/* A) Remove long-press blue highlight/selection ONLY in the viewer & controls */
+#pdf-overlay-scroll, #pdf-overlay-scroll *,
+#doc-view, #doc-view *,
+#viewer-controls, #viewer-controls * {
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+</style>
+<script>
+/* B) Reappear buttons when tapping the very top (<=64px) of the open file area */
+(function(){
+  if (window.__TopTapReveal_v1) return;
+  window.__TopTapReveal_v1 = true;
+
+  var TOP_BAND = 64; // px from top of screen
+
+  function overlayEl(){
+    return document.getElementById('pdf-overlay-scroll') || document.getElementById('doc-view');
+  }
+
+  function showControls(){
+    try {
+      if (typeof window.showNavButtonsAndCheckState === 'function') {
+        window.showNavButtonsAndCheckState();
+      } else {
+        var c = document.getElementById('viewer-controls');
+        if (c) c.classList.remove('opacity-0');
+      }
+    } catch(e){}
+  }
+
+  function onPointerDown(ev){
+    var ov = overlayEl();
+    if (!ov) return;
+    if (!ov.contains(ev.target)) return;
+
+    var y = (typeof ev.clientY === 'number') ? ev.clientY
+            : (ev.touches && ev.touches[0] ? ev.touches[0].clientY
+            : (ev.changedTouches && ev.changedTouches[0] ? ev.changedTouches[0].clientY : null));
+    if (y !== null && y <= TOP_BAND) {
+      // Defer to avoid racing other handlers; no preventDefault to keep scrolling behavior intact
+      setTimeout(showControls, 0);
+    }
+  }
+
+  // Attach listener without touching existing handlers
+  document.addEventListener('pointerdown', onPointerDown, true);
+})();
+</script>
+
 </body>
 </html>
