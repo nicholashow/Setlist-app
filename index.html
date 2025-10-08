@@ -3145,197 +3145,184 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 
 
-<style id="notes-fast-and-setlist-drag">
-/* Faster feel: nothing visual here; JS handles instant open */
-/* Name-only helper when dragging outside of setlist list */
-.drag-name-only {
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: rgba(31, 41, 55, 0.95); /* gray-800 */
-  color: #e5e7eb;
-  font-size: 14px;
-  line-height: 1.2;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-  pointer-events: none;
+<style id="setlist-export-chip-styles">
+/* Visual for name-only chip while exporting from a setlist */
+.ui-sortable-helper.name-only-helper {
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+  background: rgba(31, 41, 55, 0.95) !important; /* gray-800 */
+  color: #e5e7eb !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
   max-width: 60vw;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.08);
+}
+/* Keep placeholder invisible when exporting (no reorder placeholder dancing) */
+.ui-sortable-placeholder.setlist-exporting {
+  visibility: hidden !important;
 }
 </style>
 <script>
-/* --- 1) Notes popover: make it *even faster* and avoid any focus flash --- */
+/* Setlist drag behavior:
+   - Inside setlist container: normal sortable (reorder)
+   - When pointer leaves setlist container bounds during drag:
+       * helper switches to name-only chip
+       * sortable is temporarily disabled (position won't change)
+   - When pointer re-enters: revert helper and re-enable sortable
+   - All Songs page behavior stays untouched.
+*/
 (function(){
-  if (window.__NotesPopoverSpeed_v2) return;
-  window.__NotesPopoverSpeed_v2 = true;
+  if (window.__SetlistExportBehavior_v2) return;
+  window.__SetlistExportBehavior_v2 = true;
 
-  function fastHook(selector, handler){
-    // Prioritize touchstart/mousedown before click
-    document.addEventListener('touchstart', function(ev){
-      var el = ev.target.closest && ev.target.closest(selector);
-      if (!el) return;
-      handler(ev, el);
-    }, { capture: true, passive: false });
-    document.addEventListener('mousedown', function(ev){
-      var el = ev.target.closest && ev.target.closest(selector);
-      if (!el) return;
-      handler(ev, el);
-    }, true);
+  function $jq(){ return window.jQuery || window.$; }
+  function getSetlistContainers(){
+    var $ = $jq(); if (!$) return null;
+    // Try common selectors; non-destructive: only attach if sortable is present
+    return $('#setlist-list, .setlist-list, [data-role="setlist-list"]');
   }
 
-  // Reuse existing open function if present from previous patch
-  var openNotesFrom = window.__openNotesPopoverFrom;
-  if (!openNotesFrom) {
-    // fallback: hook into the same notes popover elements we injected
-    var pop     = document.getElementById('notes-popover');
-    var overlay = document.getElementById('notes-popover-overlay');
-    var close   = document.getElementById('notes-popover-close');
-    var area    = document.getElementById('notes-popover-text');
-    var activeSource = null;
+  function getItemName($item){
+    var name = '';
+    try {
+      var $name = $item.find('.song-name-text').first();
+      name = ($name.text() || '').trim();
+      if (!name) name = ($item.text() || '').trim();
+    } catch(e){}
+    return name || 'Untitled';
+  }
 
-    function viewportCaps(){ return { maxW: Math.floor(window.innerWidth * 0.80), maxH: Math.floor(window.innerHeight * 0.70) }; }
-    function estimateWidthPx(text){
-      var lines = String(text||'').split('\n');
-      var longest = 0;
-      for (var i=0;i<lines.length;i++){ if (lines[i].length > longest) longest = lines[i].length; }
-      return Math.ceil(longest * 7.2) + 28;
+  function withinRect(pt, rect){
+    return pt.x >= rect.left && pt.x <= rect.right && pt.y >= rect.top && pt.y <= rect.bottom;
+  }
+
+  function pointerXY(e){
+    if (e && typeof e.clientX === 'number') return { x: e.clientX, y: e.clientY };
+    var t = (e && (e.touches && e.touches[0])) || (e && e.originalEvent && e.originalEvent.touches && e.originalEvent.touches[0]);
+    if (t) return { x: t.clientX, y: t.clientY };
+    return null;
+  }
+
+  function attach($list){
+    var $ = $jq(); if (!$) return;
+
+    var exporting = false;
+    var rect = null;
+    var $currentItem = null;
+    var $placeholder = null;
+
+    // Helper to switch to name-only
+    function makeHelperNameOnly(){
+      try {
+        var $helper = $('.ui-sortable-helper');
+        if (!$helper.length) return;
+        $helper.addClass('name-only-helper');
+        // Replace contents with just the name (once)
+        var name = getItemName($currentItem || $helper);
+        $helper.text(name);
+      } catch(e){}
     }
-    function autoSizeAndPosition(src){
-      var rect = src.getBoundingClientRect();
-      var caps = viewportCaps();
-      var contentW = estimateWidthPx(area.value);
-      var width = Math.min(Math.max(Math.ceil(rect.width), Math.min(contentW, caps.maxW)), caps.maxW);
-      area.style.height = 'auto';
-      area.style.width = (width - 20) + 'px';
-      var contentH = area.scrollHeight + 16;
-      var headerH = 34;
-      var height = Math.min(Math.max(contentH, 60), caps.maxH);
-      pop.style.width = width + 'px';
-      area.style.height = Math.max(40, (height - (headerH + 16))) + 'px';
-      var left = Math.min(rect.left, window.innerWidth - width - 8);
-      var top  = Math.min(rect.top,  window.innerHeight - height - 8);
-      pop.style.left = Math.max(8, left) + 'px';
-      pop.style.top  = Math.max(8, top) + 'px';
+    function revertHelper(){
+      try {
+        var $helper = $('.ui-sortable-helper');
+        if (!$helper.length) return;
+        $helper.removeClass('name-only-helper');
+        // We won't attempt to reconstruct original HTML; as soon as we re-enter,
+        // jQuery UI keeps the original clone content already.
+        // If text was overridden, let your existing sortable 'change' refresh it on next drag frame.
+      } catch(e){}
     }
-    openNotesFrom = function(el){
-      area.value = (el.value != null ? el.value : (el.innerText || ''));
-      document.documentElement.classList.add('notes-popover-open');
-      document.body.classList.add('notes-popover-open');
-      overlay.style.display = 'block';
-      pop.style.display = 'block';
-      autoSizeAndPosition(el);
-      area.focus({ preventScroll: true });
-      try { var len = area.value.length; area.setSelectionRange(len, len); } catch(e){}
-    };
-    window.__openNotesPopoverFrom = openNotesFrom;
-    overlay && overlay.addEventListener('click', function(){
-      // Save on outside click
-      var val = area.value;
-      if (window.__notesActiveSource) {
-        var el = window.__notesActiveSource;
-        if ('value' in el) el.value = val; else el.innerText = val;
-        try { el.dispatchEvent(new Event('input', { bubbles:true })); el.dispatchEvent(new Event('change', { bubbles:true })); } catch(e){}
-      }
-      pop.style.display = 'none';
-      overlay.style.display = 'none';
-      document.documentElement.classList.remove('notes-popover-open');
-      document.body.classList.remove('notes-popover-open');
-      window.__notesActiveSource = null;
+
+    // Wrap existing handlers non-destructively
+    var opts = $list.data('ui-sortable') || $list.data('sortable');
+    if (!opts) return; // not sortable
+
+    // Preserve any original callbacks
+    var origStart = $list.sortable('option', 'start');
+    var origSort  = $list.sortable('option', 'sort');
+    var origStop  = $list.sortable('option', 'stop');
+    var origChange= $list.sortable('option', 'change');
+    var origOver  = $list.sortable('option', 'over');
+    var origOut   = $list.sortable('option', 'out');
+
+    $list.sortable('option', 'start', function(e, ui){
+      rect = $list.get(0).getBoundingClientRect();
+      exporting = false;
+      $currentItem = ui.item;
+      $placeholder = ui.placeholder;
+      if ($placeholder) $placeholder.addClass('setlist-exporting'); // hide if needed
+      if (origStart) origStart.call(this, e, ui);
     });
-    close && close.addEventListener('click', function(){
-      // Save on close
-      var val = area.value;
-      if (window.__notesActiveSource) {
-        var el = window.__notesActiveSource;
-        if ('value' in el) el.value = val; else el.innerText = val;
-        try { el.dispatchEvent(new Event('input', { bubbles:true })); el.dispatchEvent(new Event('change', { bubbles:true })); } catch(e){}
-      }
-      pop.style.display = 'none';
-      overlay.style.display = 'none';
-      document.documentElement.classList.remove('notes-popover-open');
-      document.body.classList.remove('notes-popover-open');
-      window.__notesActiveSource = null;
-    });
-  }
 
-  fastHook('.notes-input', function(ev, el){
-    // Open instantly and suppress the input's own focus/flash
-    ev.preventDefault();
-    window.__notesActiveSource = el;
-    openNotesFrom(el);
-  });
-})();
-
-/* --- 2) Setlist dragging: switch to name-only when leaving setlist box; do not reorder outside --- */
-(function(){
-  if (window.__SetlistDragNameOnly_v1) return;
-  window.__SetlistDragNameOnly_v1 = true;
-
-  function getSetlistRect(){
-    var el = document.getElementById('setlist-list');
-    return el ? el.getBoundingClientRect() : null;
-  }
-
-  function isInsideRect(pt, rect){
-    return rect && pt.x >= rect.left && pt.x <= rect.right && pt.y >= rect.top && pt.y <= rect.bottom;
-  }
-
-  // Attach a jQuery UI draggable specifically for setlist items, without touching existing sortables
-  function init(){
-    var $list = window.jQuery && window.jQuery('#setlist-list');
-    if (!$list || !$list.length) return;
-
-    // Delegate to dynamic items
-    $list.on('mousedown touchstart', '.setlist-item', function(){
-      var $item = window.jQuery(this);
-      if ($item.data('hasExportDrag')) return; // only once
-      $item.data('hasExportDrag', true);
-
-      $item.draggable({
-        helper: function(){
-          var name = ($item.find('.song-name-text').text() || $item.text() || '').trim();
-          var $h = window.jQuery('<div class="drag-helper drag-name-only draggable">'+name+'</div>');
-          $h.data('name', name);
-          return $h;
-        },
-        appendTo: 'body',
-        containment: 'document',
-        distance: 4,
-        zIndex: 2147483645,
-        start: function(e, ui){
-          $item.data('exporting', false);
-          $item.addClass('dragging-from-setlist');
-          $list.sortable('enable'); // ensure enabled at start
-          $item.data('setlistRect', getSetlistRect());
-        },
-        drag: function(e, ui){
-          var rect = $item.data('setlistRect') || getSetlistRect();
-          var pt = { x: (e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX) || ui.position.left),
-                     y: (e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY) || ui.position.top) };
-          var inside = isInsideRect(pt, rect);
-          if (!inside && !$item.data('exporting')){
-            // Leaving setlist: switch to name-only visual and DISABLE reordering
-            $item.data('exporting', true);
-            try { $list.sortable('disable'); } catch(err){}
-            ui.helper.addClass('drag-name-only');
-          } else if (inside && $item.data('exporting')){
-            // Back inside: allow reordering again
-            $item.data('exporting', false);
-            try { $list.sortable('enable'); } catch(err){}
-            ui.helper.removeClass('drag-name-only').text(ui.helper.data('name'));
-          }
-        },
-        stop: function(e, ui){
-          // Always re-enable sortable to keep in-list reordering perfect
+    // Track pointer, flip modes on boundary
+    function handleMove(e, ui){
+      try {
+        var pt = pointerXY(e);
+        if (!pt) return;
+        var inside = withinRect(pt, rect);
+        if (!inside && !exporting){
+          exporting = true;
+          try { $list.sortable('disable'); } catch(err){}
+          makeHelperNameOnly();
+        } else if (inside && exporting){
+          exporting = false;
           try { $list.sortable('enable'); } catch(err){}
-          $item.removeClass('dragging-from-setlist').data('exporting', false);
+          revertHelper();
         }
-      });
+      } catch(err){}
+    }
+
+    $list.sortable('option', 'sort', function(e, ui){
+      handleMove(e, ui);
+      if (origSort) origSort.call(this, e, ui);
+    });
+    $list.sortable('option', 'change', function(e, ui){
+      // If exporting, ensure placeholder doesn't shift items
+      if (exporting && $placeholder) $placeholder.addClass('setlist-exporting');
+      if (origChange) origChange.call(this, e, ui);
+    });
+    $list.sortable('option', 'over', function(e, ui){
+      // When helper re-enters the list (e.g., from outside), restore reorder mode
+      if (exporting){
+        exporting = false;
+        try { $list.sortable('enable'); } catch(err){}
+        revertHelper();
+      }
+      if (origOver) origOver.call(this, e, ui);
+    });
+    $list.sortable('option', 'out', function(e, ui){
+      // When helper exits via sortable's own detection, switch to export mode
+      if (!exporting){
+        exporting = true;
+        try { $list.sortable('disable'); } catch(err){}
+        makeHelperNameOnly();
+      }
+      if (origOut) origOut.call(this, e, ui);
+    });
+
+    $list.sortable('option', 'stop', function(e, ui){
+      // Always re-enable for future drags and clean flags
+      try { $list.sortable('enable'); } catch(err){}
+      exporting = false;
+      if ($placeholder) $placeholder.removeClass('setlist-exporting');
+      $currentItem = null;
+      $placeholder = null;
+      if (origStop) origStop.call(this, e, ui);
     });
   }
 
-  // Try now and retry a few times for late DOM
+  function init(){
+    var $ = $jq(); if (!$) return;
+    var $lists = getSetlistContainers();
+    if (!$lists || !$lists.length) return;
+    $lists.each(function(){ attach($(this)); });
+  }
+
+  // Try now and retry a few times for late init
   init();
   var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
 })();
