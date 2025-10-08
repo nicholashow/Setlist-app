@@ -2823,10 +2823,10 @@ function destroyPdfOverlay() {
 }
 </style>
 <script>
-/* Minimal, safe: only toggles a class for blue state (no disabling, no layout changes) */
+/* v2 Minimal & robust: only toggles a class for blue state; no disabling. */
 (function(){
-  if (window.__ViewerNavBlue_v1) return;
-  window.__ViewerNavBlue_v1 = true;
+  if (window.__ViewerNavBlue_v2) return;
+  window.__ViewerNavBlue_v2 = true;
 
   function getNavState(){
     try {
@@ -2843,8 +2843,7 @@ function destroyPdfOverlay() {
       var next = document.getElementById('viewer-next-btn');
       if (!prev || !next) return;
       var st = getNavState();
-      if (!st) { 
-        // If state unknown, remove hints to avoid lying
+      if (!st) {
         prev.classList.remove('nav-blue');
         next.classList.remove('nav-blue');
         return;
@@ -2854,49 +2853,68 @@ function destroyPdfOverlay() {
     } catch(e){ /* no-op */ }
   }
 
-  function wrapOpen(){
+  // Fire several times in a short burst to ensure FIRST OPEN is correct
+  function syncBurst(){
+    var times = [0, 40, 120, 250, 500, 900];
+    for (var i=0;i<times.length;i++){
+      setTimeout(applyNavBlue, times[i]);
+    }
+  }
+
+  // If your app exposes openSongInContext, wrap it to sync after any open
+  function wrapOpenIfPresent(){
     var fn = window.openSongInContext;
-    if (!fn || fn.__navblue_wrapped) return;
+    if (!fn || fn.__navblue_wrapped_v2) return;
     function wrapped(){
       var ret = fn.apply(this, arguments);
-      // After viewer opens and globals are set, sync visual state
-      requestAnimationFrame(applyNavBlue);
-      setTimeout(applyNavBlue, 0);
+      syncBurst();
       return ret;
     }
-    wrapped.__navblue_wrapped = true;
+    wrapped.__navblue_wrapped_v2 = true;
     window.openSongInContext = wrapped;
   }
 
-  function observeControls(){
+  // Watch for the viewer controls mounting; sync immediately and with a burst
+  function observeViewerControls(){
     try {
-      if (document.getElementById('viewer-controls')) applyNavBlue();
-      var mo = new MutationObserver(function(){
-        if (document.getElementById('viewer-controls')) applyNavBlue();
+      // Immediate check
+      if (document.getElementById('viewer-controls')) syncBurst();
+      var mo = new MutationObserver(function(muts){
+        for (var i=0;i<muts.length;i++){
+          var a = muts[i].addedNodes || [];
+          for (var j=0;j<a.length;j++){
+            var n = a[j];
+            if (n.nodeType === 1){
+              if (n.id === 'viewer-controls' || n.querySelector && n.querySelector('#viewer-controls')){
+                syncBurst();
+                return;
+              }
+            }
+          }
+        }
       });
-      mo.observe(document.body, { childList: true, subtree: true });
+      mo.observe(document.body || document.documentElement, {childList:true, subtree:true});
     } catch(e){ /* no-op */ }
   }
 
-  document.addEventListener('DOMContentLoaded', function(){
-    wrapOpen();
-    observeControls();
-    applyNavBlue();
-  });
-
-  // After clicking Prev/Next, update again (the index will have changed)
+  // Also re-sync after actual Prev/Next clicks
   document.addEventListener('click', function(ev){
-    var target = ev.target;
-    var btn = target && (target.id ? target : (target.closest ? target.closest('button') : null));
-    var id = btn && btn.id;
+    var t = ev.target;
+    var id = (t && t.id) || (t && t.closest && t.closest('button') && t.closest('button').id);
     if (id === 'viewer-prev-btn' || id === 'viewer-next-btn') {
-      setTimeout(applyNavBlue, 25);
-      setTimeout(applyNavBlue, 250);
+      syncBurst();
     }
+  }, true);
+
+  document.addEventListener('DOMContentLoaded', function(){
+    wrapOpenIfPresent();
+    observeViewerControls();
+    // small initial attempt in case viewer already open
+    syncBurst();
   });
 
-  // Expose a manual updater if other code wants to call it
-  window.updateViewerNavBlue = applyNavBlue;
+  // Optional manual trigger
+  window.updateViewerNavBlue = function(){ syncBurst(); };
 })();
 </script>
 </body>
