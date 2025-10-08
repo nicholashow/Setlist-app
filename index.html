@@ -2814,70 +2814,115 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+<style id="viewer-nav-blue-style">
+/* Visual hint for enabled nav buttons */
+.viewer-btn.nav-blue {
+  background-color: rgba(59, 130, 246, 0.9) !important; /* blue-500 */
+  color: #ffffff !important;
+  border-color: rgba(59, 130, 246, 0.9) !important;
+}
+</style>
 <script>
-/* Final minimal fix: wrap showNavButtonsAndCheckState so the LAST word on disabled state
-   matches currentViewerList/currentViewerIndex. No other behaviors touched. */
 (function(){
-  if (window.__NavButtonsCorrector_v1) return;
-  window.__NavButtonsCorrector_v1 = true;
+  if (window.__NavBlueRobust_v1) return;
+  window.__NavBlueRobust_v1 = true;
 
-  function correctDisabledFromGlobals(){
+  function computeNav(){
     try {
       var list = window.currentViewerList;
       var idx  = window.currentViewerIndex;
-      var $prev = window.jQuery && window.jQuery('#viewer-prev-btn');
-      var $next = window.jQuery && window.jQuery('#viewer-next-btn');
-      if (!$prev || !$next) return;
-      if (!Array.isArray(list) || typeof idx !== 'number') return;
-
-      var hasPrev = idx > 0;
-      var hasNext = idx < (list.length - 1);
-
-      // Set the true final disabled states (blue when enabled, grey when disabled)
-      $prev.prop('disabled', !hasPrev);
-      $next.prop('disabled', !hasNext);
-    } catch(e){ /* no-op */ }
+      if (!Array.isArray(list) || typeof idx !== 'number') return null;
+      return { hasPrev: idx > 0, hasNext: idx < (list.length - 1) };
+    } catch(e){ return null; }
   }
 
-  function scheduleCorrections(){
-    var times = [0, 10, 50, 150, 400];
+  function applyNav(){
+    try {
+      var prev = document.getElementById('viewer-prev-btn');
+      var next = document.getElementById('viewer-next-btn');
+      var st = computeNav();
+      if (!prev || !next || !st) return;
+
+      // Set disabled props to drive your built-in styles
+      prev.disabled = !st.hasPrev;
+      next.disabled = !st.hasNext;
+
+      // Add explicit blue hint for enabled
+      prev.classList.toggle('nav-blue', !!st.hasPrev);
+      next.classList.toggle('nav-blue', !!st.hasNext);
+    } catch(e){}
+  }
+
+  function burst(){
+    var times = [0, 10, 40, 100, 200, 400, 700];
     for (var i=0;i<times.length;i++){
-      setTimeout(correctDisabledFromGlobals, times[i]);
+      setTimeout(applyNav, times[i]);
     }
   }
 
-  // Wrap the app's own function so after any call, we correct the final state
-  if (typeof window.showNavButtonsAndCheckState === 'function' && !window.showNavButtonsAndCheckState.__corrected) {
-    var orig = window.showNavButtonsAndCheckState;
-    function wrapped(){
-      var ret = orig.apply(this, arguments);
-      scheduleCorrections();
-      return ret;
-    }
-    wrapped.__corrected = true;
-    window.showNavButtonsAndCheckState = wrapped;
-  }
-
-  // Also correct after opening a file
-  if (typeof window.openSongInContext === 'function' && !window.openSongInContext.__navfix) {
-    var o = window.openSongInContext;
-    function w(){
-      var r = o.apply(this, arguments);
-      scheduleCorrections();
-      return r;
-    }
-    w.__navfix = true;
-    window.openSongInContext = w;
-  }
-
-  // First-load attempt and when controls appear
-  document.addEventListener('DOMContentLoaded', scheduleCorrections);
+  // Observe when the overlay activates (class added to <html>)
   try {
-    var mo = new MutationObserver(function(){
-      if (document.getElementById('viewer-controls')) { scheduleCorrections(); }
+    var html = document.documentElement;
+    var lastHadOverlay = html.classList.contains('pdf-overlay-active');
+    var moAttr = new MutationObserver(function(){
+      var now = html.classList.contains('pdf-overlay-active');
+      if (now && !lastHadOverlay) {
+        // Overlay just turned on -> first render imminent
+        burst();
+      }
+      lastHadOverlay = now;
     });
-    mo.observe(document.body || document.documentElement, {childList:true, subtree:true});
+    moAttr.observe(html, { attributes: true, attributeFilter: ['class'] });
   } catch(e){}
+
+  // Keep trying to wrap functions until they're defined (but stop after success)
+  var wrapTries = 0, wrapTimer = setInterval(function(){
+    wrapTries++;
+    var wrapped = false;
+
+    // Wrap openSongInContext to ensure we sync right after any open
+    var o = window.openSongInContext;
+    if (typeof o === 'function' && !o.__navblue_wrapped_rb1) {
+      function w(){
+        var r = o.apply(this, arguments);
+        burst();
+        return r;
+      }
+      w.__navblue_wrapped_rb1 = true;
+      window.openSongInContext = w;
+      wrapped = true;
+    }
+
+    // Wrap showNavButtonsAndCheckState so our correction is the final word
+    var s = window.showNavButtonsAndCheckState;
+    if (typeof s === 'function' && !s.__navblue_wrapped_rb1) {
+      function sw(){
+        var r = s.apply(this, arguments);
+        burst();
+        return r;
+      }
+      sw.__navblue_wrapped_rb1 = true;
+      window.showNavButtonsAndCheckState = sw;
+      wrapped = true;
+    }
+
+    if (wrapped || wrapTries > 40) clearInterval(wrapTimer); // ~4s max
+  }, 100);
+
+  // Clicks on prev/next – re-evaluate after navigation
+  document.addEventListener('click', function(ev){
+    var b = ev.target.closest && ev.target.closest('button');
+    var id = b && b.id;
+    if (id === 'viewer-prev-btn' || id === 'viewer-next-btn') {
+      setTimeout(applyNav, 25);
+      setTimeout(applyNav, 200);
+    }
+  }, true);
+
+  // Initial attempts
+  document.addEventListener('DOMContentLoaded', function(){
+    burst();
+  });
 })();
 </script>
 </body>
