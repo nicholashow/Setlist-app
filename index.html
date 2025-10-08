@@ -3019,6 +3019,11 @@ html.dark #notes-popover-close:hover { background: rgba(255,255,255,0.08); }
   resize: none; /* auto-size handling */
 }
 html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-color: #4b5563; }
+
+/* Make source notes box NOT flash blue when tapped to open */
+.notes-input {
+  -webkit-tap-highlight-color: transparent;
+}
 </style>
 <div id="notes-popover-overlay" aria-hidden="true"></div>
 <div id="notes-popover" role="dialog" aria-modal="true" aria-labelledby="notes-popover-title">
@@ -3031,7 +3036,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   </div>
 </div>
 <script>
-/* Notes popover: expands in place over the clicked notes box, sizes to content */
+/* Notes popover (fast): instant open on pointerdown, no blue flash, anchored & autosized */
 (function(){
   if (window.__NotesPopover_v1) return;
   window.__NotesPopover_v1 = true;
@@ -3061,6 +3066,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
     // Height: fit content
     area.style.height = 'auto';
+    // Temporarily set width so scrollHeight is accurate
+    area.style.width = (width - 20) + 'px';
     var contentH = area.scrollHeight + 16; // padding
     var headerH = 34;
     var height = Math.min(Math.max(contentH, 60), caps.maxH);
@@ -3078,10 +3085,17 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   function openFrom(el){
     activeSource = el;
     area.value = (el.value != null ? el.value : (el.innerText || ''));
+    document.documentElement.classList.add('notes-popover-open');
+    document.body.classList.add('notes-popover-open');
     overlay.style.display = 'block';
     pop.style.display = 'block';
     autoSizeAndPosition(el);
-    setTimeout(function(){ area.focus(); area.setSelectionRange(area.value.length, area.value.length); }, 0);
+    // Focus ASAP without setTimeout lag; use rAF to ensure DOM is painted
+    requestAnimationFrame(function(){
+      area.focus();
+      var len = area.value.length;
+      try { area.setSelectionRange(len, len); } catch(e){}
+    });
   }
 
   function closePopover(save){
@@ -3096,18 +3110,27 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     }
     overlay.style.display = 'none';
     pop.style.display = 'none';
+    document.documentElement.classList.remove('notes-popover-open');
+    document.body.classList.remove('notes-popover-open');
     activeSource = null;
   }
 
-  // Only expand when content likely overflows the small notes box
-  document.addEventListener('click', function(ev){
-    var el = ev.target.closest && ev.target.closest('.notes-input');
+  // Instant open on pointerdown (captures before the source input gets focus)
+  function onPointerDown(ev){
+    var el = ev.target && ev.target.closest && ev.target.closest('.notes-input');
     if (!el) return;
+    // Determine if content likely overflows the small notes box
     var overflow = false;
-    try { overflow = el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2 || (el.value||'').length > 40; } catch(e){ overflow = true; }
+    try {
+      overflow = el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2 || (el.value||'').length > 40;
+    } catch(e){ overflow = true; }
     if (!overflow) return;
+    // Prevent the source from receiving focus/blue flash
+    try { ev.preventDefault(); } catch(e){}
     openFrom(el);
-  }, true);
+  }
+
+  document.addEventListener('pointerdown', onPointerDown, true);
 
   // Keep alignment on resize
   window.addEventListener('resize', function(){ if (activeSource) autoSizeAndPosition(activeSource); });
@@ -3118,6 +3141,203 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   document.addEventListener('keydown', function(e){
     if (pop.style.display === 'block' && e.key === 'Escape') { e.preventDefault(); closePopover(false); }
   });
+})();
+</script>
+
+
+<style id="notes-fast-and-setlist-drag">
+/* Faster feel: nothing visual here; JS handles instant open */
+/* Name-only helper when dragging outside of setlist list */
+.drag-name-only {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(31, 41, 55, 0.95); /* gray-800 */
+  color: #e5e7eb;
+  font-size: 14px;
+  line-height: 1.2;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  pointer-events: none;
+  max-width: 60vw;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+</style>
+<script>
+/* --- 1) Notes popover: make it *even faster* and avoid any focus flash --- */
+(function(){
+  if (window.__NotesPopoverSpeed_v2) return;
+  window.__NotesPopoverSpeed_v2 = true;
+
+  function fastHook(selector, handler){
+    // Prioritize touchstart/mousedown before click
+    document.addEventListener('touchstart', function(ev){
+      var el = ev.target.closest && ev.target.closest(selector);
+      if (!el) return;
+      handler(ev, el);
+    }, { capture: true, passive: false });
+    document.addEventListener('mousedown', function(ev){
+      var el = ev.target.closest && ev.target.closest(selector);
+      if (!el) return;
+      handler(ev, el);
+    }, true);
+  }
+
+  // Reuse existing open function if present from previous patch
+  var openNotesFrom = window.__openNotesPopoverFrom;
+  if (!openNotesFrom) {
+    // fallback: hook into the same notes popover elements we injected
+    var pop     = document.getElementById('notes-popover');
+    var overlay = document.getElementById('notes-popover-overlay');
+    var close   = document.getElementById('notes-popover-close');
+    var area    = document.getElementById('notes-popover-text');
+    var activeSource = null;
+
+    function viewportCaps(){ return { maxW: Math.floor(window.innerWidth * 0.80), maxH: Math.floor(window.innerHeight * 0.70) }; }
+    function estimateWidthPx(text){
+      var lines = String(text||'').split('\n');
+      var longest = 0;
+      for (var i=0;i<lines.length;i++){ if (lines[i].length > longest) longest = lines[i].length; }
+      return Math.ceil(longest * 7.2) + 28;
+    }
+    function autoSizeAndPosition(src){
+      var rect = src.getBoundingClientRect();
+      var caps = viewportCaps();
+      var contentW = estimateWidthPx(area.value);
+      var width = Math.min(Math.max(Math.ceil(rect.width), Math.min(contentW, caps.maxW)), caps.maxW);
+      area.style.height = 'auto';
+      area.style.width = (width - 20) + 'px';
+      var contentH = area.scrollHeight + 16;
+      var headerH = 34;
+      var height = Math.min(Math.max(contentH, 60), caps.maxH);
+      pop.style.width = width + 'px';
+      area.style.height = Math.max(40, (height - (headerH + 16))) + 'px';
+      var left = Math.min(rect.left, window.innerWidth - width - 8);
+      var top  = Math.min(rect.top,  window.innerHeight - height - 8);
+      pop.style.left = Math.max(8, left) + 'px';
+      pop.style.top  = Math.max(8, top) + 'px';
+    }
+    openNotesFrom = function(el){
+      area.value = (el.value != null ? el.value : (el.innerText || ''));
+      document.documentElement.classList.add('notes-popover-open');
+      document.body.classList.add('notes-popover-open');
+      overlay.style.display = 'block';
+      pop.style.display = 'block';
+      autoSizeAndPosition(el);
+      area.focus({ preventScroll: true });
+      try { var len = area.value.length; area.setSelectionRange(len, len); } catch(e){}
+    };
+    window.__openNotesPopoverFrom = openNotesFrom;
+    overlay && overlay.addEventListener('click', function(){
+      // Save on outside click
+      var val = area.value;
+      if (window.__notesActiveSource) {
+        var el = window.__notesActiveSource;
+        if ('value' in el) el.value = val; else el.innerText = val;
+        try { el.dispatchEvent(new Event('input', { bubbles:true })); el.dispatchEvent(new Event('change', { bubbles:true })); } catch(e){}
+      }
+      pop.style.display = 'none';
+      overlay.style.display = 'none';
+      document.documentElement.classList.remove('notes-popover-open');
+      document.body.classList.remove('notes-popover-open');
+      window.__notesActiveSource = null;
+    });
+    close && close.addEventListener('click', function(){
+      // Save on close
+      var val = area.value;
+      if (window.__notesActiveSource) {
+        var el = window.__notesActiveSource;
+        if ('value' in el) el.value = val; else el.innerText = val;
+        try { el.dispatchEvent(new Event('input', { bubbles:true })); el.dispatchEvent(new Event('change', { bubbles:true })); } catch(e){}
+      }
+      pop.style.display = 'none';
+      overlay.style.display = 'none';
+      document.documentElement.classList.remove('notes-popover-open');
+      document.body.classList.remove('notes-popover-open');
+      window.__notesActiveSource = null;
+    });
+  }
+
+  fastHook('.notes-input', function(ev, el){
+    // Open instantly and suppress the input's own focus/flash
+    ev.preventDefault();
+    window.__notesActiveSource = el;
+    openNotesFrom(el);
+  });
+})();
+
+/* --- 2) Setlist dragging: switch to name-only when leaving setlist box; do not reorder outside --- */
+(function(){
+  if (window.__SetlistDragNameOnly_v1) return;
+  window.__SetlistDragNameOnly_v1 = true;
+
+  function getSetlistRect(){
+    var el = document.getElementById('setlist-list');
+    return el ? el.getBoundingClientRect() : null;
+  }
+
+  function isInsideRect(pt, rect){
+    return rect && pt.x >= rect.left && pt.x <= rect.right && pt.y >= rect.top && pt.y <= rect.bottom;
+  }
+
+  // Attach a jQuery UI draggable specifically for setlist items, without touching existing sortables
+  function init(){
+    var $list = window.jQuery && window.jQuery('#setlist-list');
+    if (!$list || !$list.length) return;
+
+    // Delegate to dynamic items
+    $list.on('mousedown touchstart', '.setlist-item', function(){
+      var $item = window.jQuery(this);
+      if ($item.data('hasExportDrag')) return; // only once
+      $item.data('hasExportDrag', true);
+
+      $item.draggable({
+        helper: function(){
+          var name = ($item.find('.song-name-text').text() || $item.text() || '').trim();
+          var $h = window.jQuery('<div class="drag-helper drag-name-only draggable">'+name+'</div>');
+          $h.data('name', name);
+          return $h;
+        },
+        appendTo: 'body',
+        containment: 'document',
+        distance: 4,
+        zIndex: 2147483645,
+        start: function(e, ui){
+          $item.data('exporting', false);
+          $item.addClass('dragging-from-setlist');
+          $list.sortable('enable'); // ensure enabled at start
+          $item.data('setlistRect', getSetlistRect());
+        },
+        drag: function(e, ui){
+          var rect = $item.data('setlistRect') || getSetlistRect();
+          var pt = { x: (e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX) || ui.position.left),
+                     y: (e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY) || ui.position.top) };
+          var inside = isInsideRect(pt, rect);
+          if (!inside && !$item.data('exporting')){
+            // Leaving setlist: switch to name-only visual and DISABLE reordering
+            $item.data('exporting', true);
+            try { $list.sortable('disable'); } catch(err){}
+            ui.helper.addClass('drag-name-only');
+          } else if (inside && $item.data('exporting')){
+            // Back inside: allow reordering again
+            $item.data('exporting', false);
+            try { $list.sortable('enable'); } catch(err){}
+            ui.helper.removeClass('drag-name-only').text(ui.helper.data('name'));
+          }
+        },
+        stop: function(e, ui){
+          // Always re-enable sortable to keep in-list reordering perfect
+          try { $list.sortable('enable'); } catch(err){}
+          $item.removeClass('dragging-from-setlist').data('exporting', false);
+        }
+      });
+    });
+  }
+
+  // Try now and retry a few times for late DOM
+  init();
+  var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
 })();
 </script>
 
