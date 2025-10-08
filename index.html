@@ -2814,21 +2814,66 @@ function destroyPdfOverlay() {
 })();
 </script>
 
-<style id="viewer-css-only-fix">
-/* Make Prev/Next BLUE whenever they are enabled (no JS, no handler changes) */
+<style id="viewer-nav-blue-style">
+/* Make prev/next BLUE whenever they are enabled (not :disabled) */
 #viewer-prev-btn:not(:disabled),
 #viewer-next-btn:not(:disabled) {
   background-color: rgba(59, 130, 246, 0.9) !important; /* blue-500 */
   color: #ffffff !important;
   border-color: rgba(59, 130, 246, 0.9) !important;
 }
+</style>
+<script>
+/* Ensure correct disabled state is applied *before* controls appear on first open */
+(function(){
+  if (window.__NavFirstOpenFix_v1) return;
+  window.__NavFirstOpenFix_v1 = true;
 
-/* Stop buttons from "moving" on hover/press */
-#viewer-prev-btn,
-#viewer-next-btn,
-#viewer-close-btn {
-  transform: none !important;
-}
+  function computeNav(){
+    try {
+      var list = window.currentViewerList;
+      var idx  = window.currentViewerIndex;
+      if (!Array.isArray(list) || typeof idx !== 'number') return null;
+      return { hasPrev: idx > 0, hasNext: idx < (list.length - 1) };
+    } catch(e){ return null; }
+  }
+
+  function setButtonsFromState(){
+    var st = computeNav();
+    var prev = document.getElementById('viewer-prev-btn');
+    var next = document.getElementById('viewer-next-btn');
+    if (!st || !prev || !next) return;
+    prev.disabled = !st.hasPrev;
+    next.disabled = !st.hasNext;
+  }
+
+  // Wrap showPdfOverlay so we correct *right as the overlay is created*
+  (function wrapShow(){
+    var fn = window.showPdfOverlay;
+    if (typeof fn !== 'function' || fn.__navwrap_v1) return;
+    function wrapped(){
+      // At this point, openSongInContext has already set list+index
+      // so we can safely set the correct disabled state BEFORE controls show.
+      // We also queue a couple tiny follow-ups for timing jitter.
+      setButtonsFromState();
+      setTimeout(setButtonsFromState, 0);
+      setTimeout(setButtonsFromState, 100);
+      return fn.apply(this, arguments);
+    }
+    wrapped.__navwrap_v1 = true;
+    window.showPdfOverlay = wrapped;
+  })();
+
+  // As a fallback, if overlay is already active when this loads
+  document.addEventListener('DOMContentLoaded', function(){
+    setButtonsFromState();
+    setTimeout(setButtonsFromState, 50);
+  });
+})();
+</script>
+
+<style id="viewer-nav-behavior-tweaks">
+/* 1) Do NOT move buttons on hover/active */
 #viewer-prev-btn:not(:disabled):hover,
 #viewer-next-btn:not(:disabled):hover,
 #viewer-prev-btn:active,
@@ -2836,10 +2881,10 @@ function destroyPdfOverlay() {
 #viewer-close-btn:not(:disabled):hover,
 #viewer-close-btn:active {
   transform: none !important;
-  box-shadow: none !important;
+  box-shadow: none !important; /* optional: avoid 'lift' illusion */
 }
 
-/* Keep Close button RED on hover/hold; never turn blue */
+/* 2) Keep Close button RED on hover/hold; never turn blue */
 #viewer-close-btn,
 #viewer-close-btn:hover,
 #viewer-close-btn:focus,
@@ -2849,26 +2894,15 @@ function destroyPdfOverlay() {
   border-color: rgba(239, 68, 68, 0.85) !important;
 }
 </style>
-
-<style id="viewer-no-highlight">
-/* A) Remove long-press blue highlight/selection ONLY in the viewer & controls */
-#pdf-overlay-scroll, #pdf-overlay-scroll *,
-#doc-view, #doc-view *,
-#viewer-controls, #viewer-controls * {
-  -webkit-tap-highlight-color: transparent !important;
-  -webkit-touch-callout: none !important;
-  user-select: none !important;
-  -webkit-user-select: none !important;
-}
-</style>
 <script>
-/* B) Reappear buttons when tapping the very top (<=64px) of the open file area */
+/* 3) Reappearance rule: only when tap near TOP or scroll to TOP */
 (function(){
-  if (window.__TopTapReveal_v1) return;
-  window.__TopTapReveal_v1 = true;
+  if (window.__ViewerReappearRules_v1) return;
+  window.__ViewerReappearRules_v1 = true;
 
-  var TOP_BAND = 64; // px from top of screen
+  var TOP_TAP_PX = 64; // threshold from top edge
 
+  function controlsEl(){ return document.getElementById('viewer-controls'); }
   function overlayEl(){
     return document.getElementById('pdf-overlay-scroll') || document.getElementById('doc-view');
   }
@@ -2878,28 +2912,207 @@ function destroyPdfOverlay() {
       if (typeof window.showNavButtonsAndCheckState === 'function') {
         window.showNavButtonsAndCheckState();
       } else {
-        var c = document.getElementById('viewer-controls');
-        if (c) c.classList.remove('opacity-0');
+        controlsEl() && controlsEl().classList.remove('opacity-0');
       }
     } catch(e){}
   }
+  function hideControls(){
+    try { controlsEl() && controlsEl().classList.add('opacity-0'); } catch(e){}
+  }
 
-  function onPointerDown(ev){
+  // Only reappear when tapping the top region OR when scrolled to top
+  function shouldShowForEvent(ev){
+    var y = null;
+    if (typeof ev.clientY === 'number') y = ev.clientY;
+    else if (ev.touches && ev.touches[0]) y = ev.touches[0].clientY;
+    else if (ev.changedTouches && ev.changedTouches[0]) y = ev.changedTouches[0].clientY;
+    if (y !== null && y <= TOP_TAP_PX) return true;
+
+    var ov = overlayEl();
+    if (ov && ov.scrollTop <= 5) return true;
+    return false;
+  }
+
+  // Capture pointerdown so we can enforce after app logic runs
+  document.addEventListener('pointerdown', function(ev){
     var ov = overlayEl();
     if (!ov) return;
     if (!ov.contains(ev.target)) return;
 
-    var y = (typeof ev.clientY === 'number') ? ev.clientY
-            : (ev.touches && ev.touches[0] ? ev.touches[0].clientY
-            : (ev.changedTouches && ev.changedTouches[0] ? ev.changedTouches[0].clientY : null));
-    if (y !== null && y <= TOP_BAND) {
-      // Defer to avoid racing other handlers; no preventDefault to keep scrolling behavior intact
-      setTimeout(showControls, 0);
-    }
+    // Let app handlers run; then correct visibility
+    setTimeout(function(){
+      if (shouldShowForEvent(ev)) showControls();
+      else hideControls();
+    }, 0);
+  }, true);
+
+  // When scrolling: show at very top, hide otherwise
+  function onScroll(){
+    var ov = overlayEl();
+    if (!ov) return;
+    if (ov.scrollTop <= 5) showControls();
+    else hideControls();
   }
 
-  // Attach listener without touching existing handlers
-  document.addEventListener('pointerdown', onPointerDown, true);
+  // Attach scroll listeners (including passive touch scrolling)
+  var attachT = setInterval(function(){
+    var ov = overlayEl();
+    if (ov){
+      ov.addEventListener('scroll', onScroll, { passive: true });
+      // Initial state on load
+      onScroll();
+      clearInterval(attachT);
+    }
+  }, 100);
+})();
+</script>
+
+
+<style id="notes-modal-styles">
+/* Minimal, isolated styles for the expandable Notes modal */
+#notes-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: none;
+  z-index: 2147483646; /* just below viewer-controls which is 2147483647 */
+}
+#notes-modal {
+  position: fixed; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(92vw, 720px);
+  max-height: 80vh;
+  background: #ffffff;
+  color: #111827;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  display: none;
+  z-index: 2147483647;
+  overflow: hidden;
+}
+html.dark #notes-modal {
+  background: #1f2937; /* gray-800 */
+  color: #e5e7eb;
+}
+#notes-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; font-weight: 700; font-size: 14px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+html.dark #notes-modal-header {
+  border-bottom-color: rgba(255,255,255,0.12);
+}
+#notes-modal-close {
+  appearance: none; border: none; background: transparent;
+  font-size: 20px; line-height: 1; cursor: pointer;
+  padding: 4px 8px; border-radius: 8px; color: inherit;
+}
+#notes-modal-close:hover { background: rgba(0,0,0,0.06); }
+html.dark #notes-modal-close:hover { background: rgba(255,255,255,0.08); }
+#notes-modal-body {
+  padding: 12px;
+}
+#notes-modal-text {
+  width: 100%; height: 58vh; resize: vertical;
+  box-sizing: border-box; padding: 10px 12px;
+  border-radius: 8px; outline: none;
+  border: 1px solid #d1d5db; background: #ffffff; color: #111827;
+  font-size: 14px; line-height: 1.4; font-family: inherit;
+}
+html.dark #notes-modal-text {
+  background: #111827; color: #e5e7eb; border-color: #4b5563;
+}
+/* Prevent background selection while modal is open */
+html.notes-modal-open, body.notes-modal-open {
+  -webkit-user-select: none; user-select: none;
+  touch-action: none;
+}
+</style>
+<div id="notes-modal-overlay" aria-hidden="true"></div>
+<div id="notes-modal" role="dialog" aria-modal="true" aria-labelledby="notes-modal-title">
+  <div id="notes-modal-header">
+    <div id="notes-modal-title">Notes</div>
+    <button id="notes-modal-close" aria-label="Close notes">×</button>
+  </div>
+  <div id="notes-modal-body">
+    <textarea id="notes-modal-text" spellcheck="false"></textarea>
+  </div>
+</div>
+<script>
+/* Click-to-enlarge Notes: opens a modal with the full text and a close (×) */
+(function(){
+  if (window.__NotesExpand_v1) return;
+  window.__NotesExpand_v1 = true;
+
+  var overlay = document.getElementById('notes-modal-overlay');
+  var modal   = document.getElementById('notes-modal');
+  var closeBtn= document.getElementById('notes-modal-close');
+  var textarea= document.getElementById('notes-modal-text');
+  var activeSource = null;
+
+  function isOverflowing(el){
+    try {
+      // If it's a textarea or contenteditable, use scrollHeight/Width
+      var overY = el.scrollHeight > el.clientHeight + 2;
+      var overX = el.scrollWidth  > el.clientWidth  + 2;
+      // Heuristic fallback: long value likely overflows a small inline input
+      var longVal = (el.value || '').length > 40;
+      return overY || overX || longVal;
+    } catch(e){ return true; }
+  }
+
+  function openModalFrom(el){
+    activeSource = el;
+    textarea.value = (el.value != null ? el.value : (el.innerText || ""));
+    document.documentElement.classList.add('notes-modal-open');
+    document.body.classList.add('notes-modal-open');
+    overlay.style.display = 'block';
+    modal.style.display = 'block';
+    // Focus the big textarea at the end
+    setTimeout(function(){
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    }, 0);
+  }
+
+  function closeModal(save){
+    if (save && activeSource){
+      var val = textarea.value;
+      if ('value' in activeSource) activeSource.value = val;
+      else activeSource.innerText = val;
+      // Notify any listeners that value changed
+      try {
+        var evt = new Event('input', { bubbles: true });
+        activeSource.dispatchEvent(evt);
+        var chg = new Event('change', { bubbles: true });
+        activeSource.dispatchEvent(chg);
+      } catch(e){}
+    }
+    overlay.style.display = 'none';
+    modal.style.display = 'none';
+    document.documentElement.classList.remove('notes-modal-open');
+    document.body.classList.remove('notes-modal-open');
+    activeSource = null;
+  }
+
+  // Open when clicking a notes box that looks truncated
+  document.addEventListener('click', function(ev){
+    var el = ev.target.closest && ev.target.closest('.notes-input');
+    if (!el) return;
+    // Only enlarge if content likely doesn't fit the small box
+    if (!isOverflowing(el)) return;
+    // Do not prevent default; just open our modal
+    openModalFrom(el);
+  }, true);
+
+  // Close behaviors
+  overlay.addEventListener('click', function(){ closeModal(true); });
+  closeBtn.addEventListener('click', function(){ closeModal(true); });
+  document.addEventListener('keydown', function(e){
+    if (modal.style.display === 'block' && e.key === 'Escape') {
+      e.preventDefault();
+      closeModal(false); // escape: dismiss without saving
+    }
+  });
 })();
 </script>
 
