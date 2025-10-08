@@ -2815,61 +2815,69 @@ function destroyPdfOverlay() {
 </script>
 
 <script>
-/* Minimal: call the app's own showNavButtonsAndCheckState() exactly when needed */
+/* Final minimal fix: wrap showNavButtonsAndCheckState so the LAST word on disabled state
+   matches currentViewerList/currentViewerIndex. No other behaviors touched. */
 (function(){
-  if (window.__ViewerNavSync_v1) return;
-  window.__ViewerNavSync_v1 = true;
+  if (window.__NavButtonsCorrector_v1) return;
+  window.__NavButtonsCorrector_v1 = true;
 
-  function syncNavStateBurst(){
-    if (typeof window.showNavButtonsAndCheckState !== 'function') return;
-    var times = [0, 30, 120, 300, 600];
+  function correctDisabledFromGlobals(){
+    try {
+      var list = window.currentViewerList;
+      var idx  = window.currentViewerIndex;
+      var $prev = window.jQuery && window.jQuery('#viewer-prev-btn');
+      var $next = window.jQuery && window.jQuery('#viewer-next-btn');
+      if (!$prev || !$next) return;
+      if (!Array.isArray(list) || typeof idx !== 'number') return;
+
+      var hasPrev = idx > 0;
+      var hasNext = idx < (list.length - 1);
+
+      // Set the true final disabled states (blue when enabled, grey when disabled)
+      $prev.prop('disabled', !hasPrev);
+      $next.prop('disabled', !hasNext);
+    } catch(e){ /* no-op */ }
+  }
+
+  function scheduleCorrections(){
+    var times = [0, 10, 50, 150, 400];
     for (var i=0;i<times.length;i++){
-      setTimeout(function(){
-        try { window.showNavButtonsAndCheckState(); } catch(e){}
-      }, times[i]);
+      setTimeout(correctDisabledFromGlobals, times[i]);
     }
   }
 
-  // Wrap openSongInContext (if present) so first open is correct regardless of timing
-  function wrapOpenIfPresent(){
-    var fn = window.openSongInContext;
-    if (!fn || fn.__navsync_wrapped) return;
+  // Wrap the app's own function so after any call, we correct the final state
+  if (typeof window.showNavButtonsAndCheckState === 'function' && !window.showNavButtonsAndCheckState.__corrected) {
+    var orig = window.showNavButtonsAndCheckState;
     function wrapped(){
-      var ret = fn.apply(this, arguments);
-      syncNavStateBurst();
+      var ret = orig.apply(this, arguments);
+      scheduleCorrections();
       return ret;
     }
-    wrapped.__navsync_wrapped = true;
-    window.openSongInContext = wrapped;
+    wrapped.__corrected = true;
+    window.showNavButtonsAndCheckState = wrapped;
   }
 
-  function observeViewerControls(){
-    try {
-      if (document.getElementById('viewer-controls')) syncNavStateBurst();
-      var mo = new MutationObserver(function(muts){
-        for (var i=0;i<muts.length;i++){
-          var a = muts[i].addedNodes || [];
-          for (var j=0;j<a.length;j++){
-            var n = a[j];
-            if (n.nodeType === 1){
-              if (n.id === 'viewer-controls' || (n.querySelector && n.querySelector('#viewer-controls'))){
-                syncNavStateBurst();
-                return;
-              }
-            }
-          }
-        }
-      });
-      mo.observe(document.body || document.documentElement, {childList:true, subtree:true});
-    } catch(e){}
+  // Also correct after opening a file
+  if (typeof window.openSongInContext === 'function' && !window.openSongInContext.__navfix) {
+    var o = window.openSongInContext;
+    function w(){
+      var r = o.apply(this, arguments);
+      scheduleCorrections();
+      return r;
+    }
+    w.__navfix = true;
+    window.openSongInContext = w;
   }
 
-  document.addEventListener('DOMContentLoaded', function(){
-    wrapOpenIfPresent();
-    observeViewerControls();
-    // In case viewer is already open when this loads
-    syncNavStateBurst();
-  });
+  // First-load attempt and when controls appear
+  document.addEventListener('DOMContentLoaded', scheduleCorrections);
+  try {
+    var mo = new MutationObserver(function(){
+      if (document.getElementById('viewer-controls')) { scheduleCorrections(); }
+    });
+    mo.observe(document.body || document.documentElement, {childList:true, subtree:true});
+  } catch(e){}
 })();
 </script>
 </body>
