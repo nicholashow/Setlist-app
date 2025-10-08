@@ -2814,5 +2814,74 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+<script>
+/* Ensure Prev/Next reflect availability both on first open and after any open */
+(function () {
+  if (window.__NavStateFix_v2) return;
+  window.__NavStateFix_v2 = true;
+
+  function updateViewerNavButtons() {
+    try {
+      var list = window.currentViewerList || [];
+      var idx  = typeof window.currentViewerIndex === 'number' ? window.currentViewerIndex : -1;
+
+      var hasPrev = idx > 0;
+      var hasNext = Array.isArray(list) && idx >= 0 && idx < (list.length - 1);
+
+      // Enabled = blue (existing styles), disabled = grey
+      var $prev = $('#viewer-prev-btn');
+      var $next = $('#viewer-next-btn');
+
+      if ($prev.length) $prev.prop('disabled', !hasPrev);
+      if ($next.length) $next.prop('disabled', !hasNext);
+    } catch (e) { /* no-op */ }
+  }
+
+  function wrapOpen() {
+    if (!window.openSongInContext || window.openSongInContext.__navfix) return;
+    var orig = window.openSongInContext;
+    function wrapped() {
+      var ret = orig.apply(this, arguments);
+      // After state is set on open, sync buttons
+      updateViewerNavButtons();
+      return ret;
+    }
+    wrapped.__navfix = true;
+    window.openSongInContext = wrapped;
+  }
+
+  // Also detect the very first time the viewer controls mount,
+  // so Prev/Next are correct the moment the file opens.
+  function observeControlsMount() {
+    try {
+      // If controls already exist, update immediately
+      if (document.getElementById('viewer-controls')) {
+        updateViewerNavButtons();
+        return;
+      }
+      var mo = new MutationObserver(function(muts, obs) {
+        if (document.getElementById('viewer-controls')) {
+          updateViewerNavButtons();
+          obs.disconnect();
+        }
+      });
+      mo.observe(document.documentElement || document.body, { childList: true, subtree: true });
+    } catch (e) { /* no-op */ }
+  }
+
+  // Install hooks
+  wrapOpen();
+  document.addEventListener('DOMContentLoaded', function(){
+    wrapOpen();
+    observeControlsMount();
+    // A couple of delayed retries in case scripts load late
+    setTimeout(function(){ wrapOpen(); updateViewerNavButtons(); }, 300);
+    setTimeout(function(){ wrapOpen(); updateViewerNavButtons(); }, 1000);
+  });
+
+  // Expose manual trigger if you need it elsewhere
+  window.updateViewerNavButtons = updateViewerNavButtons;
+})();
+</script>
 </body>
 </html>
