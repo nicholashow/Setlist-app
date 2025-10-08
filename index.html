@@ -2968,150 +2968,155 @@ function destroyPdfOverlay() {
 </script>
 
 
-<style id="notes-modal-styles">
-/* Minimal, isolated styles for the expandable Notes modal */
-#notes-modal-overlay {
+<style id="notes-popover-styles">
+/* Anchored Notes popover: expands in place, only as large as needed */
+#notes-popover-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.55);
+  background: transparent; /* no dim; capture outside clicks */
   display: none;
-  z-index: 2147483646; /* just below viewer-controls which is 2147483647 */
+  z-index: 2147483646;
 }
-#notes-modal {
-  position: fixed; left: 50%; top: 50%;
-  transform: translate(-50%, -50%);
-  width: min(92vw, 720px);
-  max-height: 80vh;
-  background: #ffffff;
-  color: #111827;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+#notes-popover {
+  position: fixed; /* anchored at the source box position */
+  left: 0; top: 0;
   display: none;
   z-index: 2147483647;
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
   overflow: hidden;
 }
-html.dark #notes-modal {
-  background: #1f2937; /* gray-800 */
-  color: #e5e7eb;
-}
-#notes-modal-header {
+html.dark #notes-popover { background: #1f2937; color: #e5e7eb; border-color: #374151; }
+#notes-popover-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 12px; font-weight: 700; font-size: 14px;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  padding: 6px 8px; font-weight: 600; font-size: 13px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
-html.dark #notes-modal-header {
-  border-bottom-color: rgba(255,255,255,0.12);
-}
-#notes-modal-close {
+html.dark #notes-popover-header { border-bottom-color: rgba(255,255,255,0.08); }
+#notes-popover-close {
   appearance: none; border: none; background: transparent;
-  font-size: 20px; line-height: 1; cursor: pointer;
-  padding: 4px 8px; border-radius: 8px; color: inherit;
+  font-size: 18px; line-height: 1; cursor: pointer;
+  padding: 2px 6px; border-radius: 6px; color: inherit;
 }
-#notes-modal-close:hover { background: rgba(0,0,0,0.06); }
-html.dark #notes-modal-close:hover { background: rgba(255,255,255,0.08); }
-#notes-modal-body {
-  padding: 12px;
-}
-#notes-modal-text {
-  width: 100%; height: 58vh; resize: vertical;
-  box-sizing: border-box; padding: 10px 12px;
-  border-radius: 8px; outline: none;
-  border: 1px solid #d1d5db; background: #ffffff; color: #111827;
+#notes-popover-close:hover { background: rgba(0,0,0,0.06); }
+html.dark #notes-popover-close:hover { background: rgba(255,255,255,0.08); }
+#notes-popover-body { padding: 8px; }
+#notes-popover-text {
+  width: 100%;
+  min-width: 160px;
+  max-width: 80vw;
+  min-height: 60px;
+  max-height: 70vh;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 8px;
+  outline: none;
+  border: 1px solid #d1d5db;
+  background: #ffffff; color: #111827;
   font-size: 14px; line-height: 1.4; font-family: inherit;
+  resize: none; /* auto-size handling */
 }
-html.dark #notes-modal-text {
-  background: #111827; color: #e5e7eb; border-color: #4b5563;
-}
-/* Prevent background selection while modal is open */
-html.notes-modal-open, body.notes-modal-open {
-  -webkit-user-select: none; user-select: none;
-  touch-action: none;
-}
+html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-color: #4b5563; }
 </style>
-<div id="notes-modal-overlay" aria-hidden="true"></div>
-<div id="notes-modal" role="dialog" aria-modal="true" aria-labelledby="notes-modal-title">
-  <div id="notes-modal-header">
-    <div id="notes-modal-title">Notes</div>
-    <button id="notes-modal-close" aria-label="Close notes">×</button>
+<div id="notes-popover-overlay" aria-hidden="true"></div>
+<div id="notes-popover" role="dialog" aria-modal="true" aria-labelledby="notes-popover-title">
+  <div id="notes-popover-header">
+    <div id="notes-popover-title">Notes</div>
+    <button id="notes-popover-close" aria-label="Close notes">×</button>
   </div>
-  <div id="notes-modal-body">
-    <textarea id="notes-modal-text" spellcheck="false"></textarea>
+  <div id="notes-popover-body">
+    <textarea id="notes-popover-text" spellcheck="false"></textarea>
   </div>
 </div>
 <script>
-/* Click-to-enlarge Notes: opens a modal with the full text and a close (×) */
+/* Notes popover: expands in place over the clicked notes box, sizes to content */
 (function(){
-  if (window.__NotesExpand_v1) return;
-  window.__NotesExpand_v1 = true;
+  if (window.__NotesPopover_v1) return;
+  window.__NotesPopover_v1 = true;
 
-  var overlay = document.getElementById('notes-modal-overlay');
-  var modal   = document.getElementById('notes-modal');
-  var closeBtn= document.getElementById('notes-modal-close');
-  var textarea= document.getElementById('notes-modal-text');
+  var overlay = document.getElementById('notes-popover-overlay');
+  var pop     = document.getElementById('notes-popover');
+  var close   = document.getElementById('notes-popover-close');
+  var area    = document.getElementById('notes-popover-text');
   var activeSource = null;
 
-  function isOverflowing(el){
-    try {
-      // If it's a textarea or contenteditable, use scrollHeight/Width
-      var overY = el.scrollHeight > el.clientHeight + 2;
-      var overX = el.scrollWidth  > el.clientWidth  + 2;
-      // Heuristic fallback: long value likely overflows a small inline input
-      var longVal = (el.value || '').length > 40;
-      return overY || overX || longVal;
-    } catch(e){ return true; }
+  function viewportCaps(){ return { maxW: Math.floor(window.innerWidth * 0.80), maxH: Math.floor(window.innerHeight * 0.70) }; }
+
+  function estimateWidthPx(text){
+    var lines = String(text||'').split('\n');
+    var longest = 0;
+    for (var i=0;i<lines.length;i++){ if (lines[i].length > longest) longest = lines[i].length; }
+    return Math.ceil(longest * 7.2) + 28; // approx char width + paddings
   }
 
-  function openModalFrom(el){
+  function autoSizeAndPosition(src){
+    var rect = src.getBoundingClientRect();
+    var caps = viewportCaps();
+
+    // Width: at least source width; at most content/viewport cap
+    var contentW = estimateWidthPx(area.value);
+    var width = Math.min(Math.max(Math.ceil(rect.width), Math.min(contentW, caps.maxW)), caps.maxW);
+
+    // Height: fit content
+    area.style.height = 'auto';
+    var contentH = area.scrollHeight + 16; // padding
+    var headerH = 34;
+    var height = Math.min(Math.max(contentH, 60), caps.maxH);
+
+    pop.style.width = width + 'px';
+    area.style.height = Math.max(40, (height - (headerH + 16))) + 'px';
+
+    // Place over the original box (keep within viewport)
+    var left = Math.min(rect.left, window.innerWidth - width - 8);
+    var top  = Math.min(rect.top,  window.innerHeight - height - 8);
+    pop.style.left = Math.max(8, left) + 'px';
+    pop.style.top  = Math.max(8, top) + 'px';
+  }
+
+  function openFrom(el){
     activeSource = el;
-    textarea.value = (el.value != null ? el.value : (el.innerText || ""));
-    document.documentElement.classList.add('notes-modal-open');
-    document.body.classList.add('notes-modal-open');
+    area.value = (el.value != null ? el.value : (el.innerText || ''));
     overlay.style.display = 'block';
-    modal.style.display = 'block';
-    // Focus the big textarea at the end
-    setTimeout(function(){
-      textarea.focus();
-      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-    }, 0);
+    pop.style.display = 'block';
+    autoSizeAndPosition(el);
+    setTimeout(function(){ area.focus(); area.setSelectionRange(area.value.length, area.value.length); }, 0);
   }
 
-  function closeModal(save){
+  function closePopover(save){
     if (save && activeSource){
-      var val = textarea.value;
+      var val = area.value;
       if ('value' in activeSource) activeSource.value = val;
       else activeSource.innerText = val;
-      // Notify any listeners that value changed
       try {
-        var evt = new Event('input', { bubbles: true });
-        activeSource.dispatchEvent(evt);
-        var chg = new Event('change', { bubbles: true });
-        activeSource.dispatchEvent(chg);
+        activeSource.dispatchEvent(new Event('input', { bubbles: true }));
+        activeSource.dispatchEvent(new Event('change', { bubbles: true }));
       } catch(e){}
     }
     overlay.style.display = 'none';
-    modal.style.display = 'none';
-    document.documentElement.classList.remove('notes-modal-open');
-    document.body.classList.remove('notes-modal-open');
+    pop.style.display = 'none';
     activeSource = null;
   }
 
-  // Open when clicking a notes box that looks truncated
+  // Only expand when content likely overflows the small notes box
   document.addEventListener('click', function(ev){
     var el = ev.target.closest && ev.target.closest('.notes-input');
     if (!el) return;
-    // Only enlarge if content likely doesn't fit the small box
-    if (!isOverflowing(el)) return;
-    // Do not prevent default; just open our modal
-    openModalFrom(el);
+    var overflow = false;
+    try { overflow = el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2 || (el.value||'').length > 40; } catch(e){ overflow = true; }
+    if (!overflow) return;
+    openFrom(el);
   }, true);
 
-  // Close behaviors
-  overlay.addEventListener('click', function(){ closeModal(true); });
-  closeBtn.addEventListener('click', function(){ closeModal(true); });
+  // Keep alignment on resize
+  window.addEventListener('resize', function(){ if (activeSource) autoSizeAndPosition(activeSource); });
+
+  // Close handlers
+  overlay.addEventListener('click', function(){ closePopover(true); });
+  close.addEventListener('click', function(){ closePopover(true); });
   document.addEventListener('keydown', function(e){
-    if (modal.style.display === 'block' && e.key === 'Escape') {
-      e.preventDefault();
-      closeModal(false); // escape: dismiss without saving
-    }
+    if (pop.style.display === 'block' && e.key === 'Escape') { e.preventDefault(); closePopover(false); }
   });
 })();
 </script>
