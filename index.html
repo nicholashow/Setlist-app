@@ -2815,17 +2815,19 @@ function destroyPdfOverlay() {
 </script>
 
 <style id="viewer-nav-blue-style">
-/* Blue hint when a nav button is truly enabled */
-.viewer-btn.nav-blue {
-  background-color: rgba(59, 130, 246, 0.9) !important;
+/* Make prev/next BLUE whenever they are enabled (not :disabled) */
+#viewer-prev-btn:not(:disabled),
+#viewer-next-btn:not(:disabled) {
+  background-color: rgba(59, 130, 246, 0.9) !important; /* blue-500 */
   color: #ffffff !important;
   border-color: rgba(59, 130, 246, 0.9) !important;
 }
 </style>
 <script>
+/* Ensure correct disabled state is applied *before* controls appear on first open */
 (function(){
-  if (window.__NavButtonGuard_v1) return;
-  window.__NavButtonGuard_v1 = true;
+  if (window.__NavFirstOpenFix_v1) return;
+  window.__NavFirstOpenFix_v1 = true;
 
   function computeNav(){
     try {
@@ -2836,96 +2838,37 @@ function destroyPdfOverlay() {
     } catch(e){ return null; }
   }
 
-  function enforceNav(){
-    try {
-      var st = computeNav();
-      var prev = document.getElementById('viewer-prev-btn');
-      var next = document.getElementById('viewer-next-btn');
-      if (!prev || !next || !st) return;
-      // Set the TRUE state
-      prev.disabled = !st.hasPrev;
-      next.disabled = !st.hasNext;
-      prev.classList.toggle('nav-blue', !!st.hasPrev);
-      next.classList.toggle('nav-blue', !!st.hasNext);
-    } catch(e){}
-  }
-
-  // Debounced scheduler for rapid changes
-  var enforceTimer = null;
-  function scheduleEnforce(delay){
-    if (enforceTimer) cancelAnimationFrame(enforceTimer);
-    enforceTimer = requestAnimationFrame(function(){
-      setTimeout(enforceNav, delay || 0);
-    });
-  }
-
-  // Observe when controls/buttons appear, then attach attribute observers
-  function attachObservers(){
+  function setButtonsFromState(){
+    var st = computeNav();
     var prev = document.getElementById('viewer-prev-btn');
     var next = document.getElementById('viewer-next-btn');
-    if (prev && !prev.__navGuardObs){
-      var mo = new MutationObserver(function(muts){ scheduleEnforce(0); });
-      mo.observe(prev, { attributes: true });
-      prev.__navGuardObs = mo;
-    }
-    if (next && !next.__navGuardObs){
-      var mo2 = new MutationObserver(function(muts){ scheduleEnforce(0); });
-      mo2.observe(next, { attributes: true });
-      next.__navGuardObs = mo2;
-    }
-    // Immediate enforce whenever we attach
-    enforceNav();
+    if (!st || !prev || !next) return;
+    prev.disabled = !st.hasPrev;
+    next.disabled = !st.hasNext;
   }
 
-  // Watch the whole doc for the viewer controls/buttons to be added
-  try {
-    var moAll = new MutationObserver(function(muts){
-      for (var i=0;i<muts.length;i++){
-        var a = muts[i].addedNodes || [];
-        for (var j=0;j<a.length;j++){
-          var n = a[j];
-          if (n.nodeType !== 1) continue;
-          if (n.id === 'viewer-controls' || (n.querySelector && (n.querySelector('#viewer-prev-btn') || n.querySelector('#viewer-next-btn')))){
-            attachObservers();
-            scheduleEnforce(0);
-          }
-        }
-      }
-    });
-    moAll.observe(document.body || document.documentElement, { childList: true, subtree: true });
-  } catch(e){}
+  // Wrap showPdfOverlay so we correct *right as the overlay is created*
+  (function wrapShow(){
+    var fn = window.showPdfOverlay;
+    if (typeof fn !== 'function' || fn.__navwrap_v1) return;
+    function wrapped(){
+      // At this point, openSongInContext has already set list+index
+      // so we can safely set the correct disabled state BEFORE controls show.
+      // We also queue a couple tiny follow-ups for timing jitter.
+      setButtonsFromState();
+      setTimeout(setButtonsFromState, 0);
+      setTimeout(setButtonsFromState, 100);
+      return fn.apply(this, arguments);
+    }
+    wrapped.__navwrap_v1 = true;
+    window.showPdfOverlay = wrapped;
+  })();
 
-  // Also enforce on key lifecycle points
+  // As a fallback, if overlay is already active when this loads
   document.addEventListener('DOMContentLoaded', function(){
-    attachObservers();
-    // small bursts to cover first open timing
-    [0, 10, 40, 100, 200, 400, 700].forEach(function(t){ setTimeout(enforceNav, t); });
+    setButtonsFromState();
+    setTimeout(setButtonsFromState, 50);
   });
-
-  // If app exposes these, sync after they run
-  function wrap(fnName){
-    var fn = window[fnName];
-    if (typeof fn === 'function' && !fn.__navGuardWrap){
-      function w(){
-        var r = fn.apply(this, arguments);
-        [0, 20, 120, 300].forEach(function(t){ setTimeout(enforceNav, t); });
-        return r;
-      }
-      w.__navGuardWrap = true;
-      window[fnName] = w;
-    }
-  }
-  wrap('openSongInContext');
-  wrap('showNavButtonsAndCheckState');
-
-  // As a final safety net, re-enforce shortly after any click inside the overlay
-  document.addEventListener('click', function(ev){
-    var el = ev.target && (ev.target.closest ? ev.target.closest('#viewer-controls, #pdf-overlay-scroll, #doc-view') : null);
-    if (el) setTimeout(enforceNav, 30);
-  }, true);
-
-  // Expose manual trigger
-  window.enforceViewerNavButtons = enforceNav;
 })();
 </script>
 </body>
