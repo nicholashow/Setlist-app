@@ -2967,5 +2967,105 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<style id="viewer-no-select-zoom">
+/* Disable text selection and touch callout in viewer and controls */
+#pdf-overlay-scroll, #doc-view, #viewer-controls, #viewer-controls *,
+.viewer-btn, .viewer-btn * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+/* iOS sometimes applies highlight on long press; remove it */
+#pdf-overlay-scroll *, #doc-view *, #viewer-controls * {
+  -webkit-tap-highlight-color: transparent;
+}
+</style>
+<script>
+(function(){
+  if (window.__ViewerInputTaming_v1) return;
+  window.__ViewerInputTaming_v1 = true;
+
+  function controlsEl(){ return document.getElementById('viewer-controls'); }
+  function overlayEl(){
+    return document.getElementById('pdf-overlay-scroll') || document.getElementById('doc-view');
+  }
+
+  // 1) Prevent double-tap zoom and pinch-zoom within overlay region
+  (function preventZooming(){
+    var ov = overlayEl();
+    var lastTouchEnd = 0;
+
+    function onTouchEnd(e){
+      var now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        e.preventDefault();
+      }
+      lastTouchEnd = now;
+    }
+    function onGestureStart(e){
+      e.preventDefault();
+    }
+    function attach(){
+      ov = overlayEl();
+      if (!ov) return false;
+      ov.addEventListener('touchend', onTouchEnd, { passive: false });
+      ov.addEventListener('gesturestart', onGestureStart, { passive: false });
+      return true;
+    }
+    if (!attach()){
+      var t = setInterval(function(){ if (attach()) clearInterval(t); }, 100);
+    }
+  })();
+
+  // 2) Reappearance only at top: allow taps ANYWHERE at the top (including sidebar)
+  var TOP_TAP_PX = 64;
+  function showControls(){
+    try {
+      if (typeof window.showNavButtonsAndCheckState === 'function') {
+        window.showNavButtonsAndCheckState();
+      } else {
+        controlsEl() && controlsEl().classList.remove('opacity-0');
+      }
+    } catch(e){}
+  }
+  function hideControls(){
+    try { controlsEl() && controlsEl().classList.add('opacity-0'); } catch(e){}
+  }
+
+  function isTopTap(ev){
+    var y = null;
+    if (typeof ev.clientY === 'number') y = ev.clientY;
+    else if (ev.touches && ev.touches[0]) y = ev.touches[0].clientY;
+    else if (ev.changedTouches && ev.changedTouches[0]) y = ev.changedTouches[0].clientY;
+    return (y !== null) && (y <= TOP_TAP_PX);
+  }
+
+  // Global pointerdown: if tap is within top band anywhere, show; else defer to scroll logic
+  document.addEventListener('pointerdown', function(ev){
+    setTimeout(function(){
+      if (isTopTap(ev)) showControls();
+    }, 0);
+  }, true);
+
+  // Keep scroll-based rule: show only when scrolled to top; hide otherwise
+  function onScroll(){
+    var ov = overlayEl();
+    if (!ov) return;
+    if (ov.scrollTop <= 5) showControls();
+    else hideControls();
+  }
+  var attachScroll = setInterval(function(){
+    var ov = overlayEl();
+    if (ov){
+      ov.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+      clearInterval(attachScroll);
+    }
+  }, 100);
+})();
+</script>
+
 </body>
 </html>
