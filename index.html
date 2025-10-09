@@ -2969,22 +2969,39 @@ function destroyPdfOverlay() {
 
 
 <style id="setlist-export-chip-styles">
-  .ui-sortable-helper.name-only-helper{
-    padding:6px 10px!important;border-radius:8px!important;
-    background:rgba(31,41,55,.95)!important;color:#e5e7eb!important;
-    font-size:14px!important;line-height:1.2!important;
-    box-shadow:0 6px 16px rgba(0,0,0,.25)!important;
-    border:1px solid rgba(255,255,255,.08)!important;
-    max-width:60vw;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;
-  }
-  .ui-sortable-placeholder.setlist-exporting{visibility:hidden!important;}
+/* Blue name-only chip to mirror All Songs (fallback if builder not available) */
+.ui-sortable-helper.name-only-chip-blue{
+  padding:6px 10px!important;border-radius:8px!important;
+  background:rgba(59,130,246,.95)!important;color:#fff!important;
+  font-size:14px!important;line-height:1.2!important;
+  box-shadow:0 6px 16px rgba(0,0,0,.25)!important;
+  border:1px solid rgba(59,130,246,1)!important;
+  max-width:60vw;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;
+}
+/* Hide placeholder while exporting so in-list items don't shift */
+.ui-sortable-placeholder.setlist-exporting{visibility:hidden!important;}
 </style>
 <script>
+/* Setlist export behavior (STRICT): match All Songs visual only when outside the setlist */
 (function(){
-  if (window.__SetlistExportBehavior_v3) return;
-  window.__SetlistExportBehavior_v3 = true;
+  if (window.__SetlistExportBehavior_v6) return;
+  window.__SetlistExportBehavior_v6 = true;
 
   function $jq(){ return window.jQuery || window.$; }
+
+  // Prefer reusing All Songs' chip builder for a perfect match
+  function buildBlueChip(name){
+    try{
+      if (typeof window.buildAllSongsNameOnlyHelper === 'function'){
+        var el = window.buildAllSongsNameOnlyHelper(name, { color: 'blue' });
+        if (el) return el;
+      }
+    }catch(e){}
+    var div = document.createElement('div');
+    div.className = 'name-only-chip-blue';
+    div.textContent = name;
+    return div;
+  }
 
   function detectSetlists(){
     var $ = $jq(); if (!$) return $();
@@ -2998,7 +3015,7 @@ function destroyPdfOverlay() {
   }
 
   function getItemName($item){
-    var name = '';
+    var name='';
     try{
       var $name = $item.find('.song-name-text, .file-name, [data-role="song-name"]').first();
       name = ($name.text()||'').trim();
@@ -3007,45 +3024,18 @@ function destroyPdfOverlay() {
     return name || 'Untitled';
   }
 
-  function buildNameOnlyChip(name){
-    try{
-      if (typeof window.buildAllSongsNameOnlyHelper === 'function'){
-        var el = window.buildAllSongsNameOnlyHelper(name);
-        if (el) return el;
-      }
-    }catch(e){}
-    var div = document.createElement('div');
-    div.className = 'name-only-helper';
-    div.textContent = name;
-    return div;
-  }
-
-  function pointerXY(e){
-    if (e && typeof e.clientX === 'number') return {x:e.clientX, y:e.clientY};
-    var oe = (e && e.originalEvent) || e;
-    var t = (oe && oe.touches && oe.touches[0]) || (oe && oe.changedTouches && oe.changedTouches[0]);
-    if (t) return {x:t.clientX, y:t.clientY};
-    return null;
-  }
-  function withinRect(pt, rect){
-    return pt.x >= rect.left && pt.x <= rect.right && pt.y >= rect.top && pt.y <= rect.bottom;
-  }
-
-  function attachToList($list){
+  function attach($list){
     var $ = $jq(); if (!$) return;
     var inst = $list.data('ui-sortable') || $list.data('sortable');
     if (!inst) return;
 
     var exporting = false;
-    var rect = null;
     var $placeholder = null;
     var $currentItem = null;
-    var origHtml = null;
+    var savedHelperHTML = null;
 
     var orig = {
       start:  $list.sortable('option','start'),
-      sort:   $list.sortable('option','sort'),
-      change: $list.sortable('option','change'),
       over:   $list.sortable('option','over'),
       out:    $list.sortable('option','out'),
       stop:   $list.sortable('option','stop')
@@ -3057,10 +3047,10 @@ function destroyPdfOverlay() {
       try{ $list.sortable('disable'); }catch(e){}
       var $helper = $('.ui-sortable-helper');
       if ($helper.length){
-        if (origHtml == null) origHtml = $helper.html();
+        if (savedHelperHTML == null) savedHelperHTML = $helper.html();
         var name = getItemName($currentItem || $helper);
-        var built = buildNameOnlyChip(name);
-        $helper.empty().append(built).addClass('name-only-helper');
+        var chip = buildBlueChip(name);
+        $helper.empty().append(chip).addClass('name-only-chip-blue');
       }
       if ($placeholder) $placeholder.addClass('setlist-exporting');
     }
@@ -3070,56 +3060,43 @@ function destroyPdfOverlay() {
       exporting = false;
       try{ $list.sortable('enable'); }catch(e){}
       var $helper = $('.ui-sortable-helper');
-      if ($helper.length && origHtml != null){
-        $helper.removeClass('name-only-helper').html(origHtml);
+      if ($helper.length && savedHelperHTML != null){
+        $helper.removeClass('name-only-chip-blue').html(savedHelperHTML);
       }
       if ($placeholder) $placeholder.removeClass('setlist-exporting');
     }
 
     $list.sortable('option','start', function(e, ui){
-      rect = $list.get(0).getBoundingClientRect();
       exporting = false;
-      origHtml = null;
+      savedHelperHTML = null;
       $currentItem = ui.item;
       $placeholder = ui.placeholder;
       if (orig.start) orig.start.call(this, e, ui);
     });
 
-    function maybeFlip(e){
-      var pt = pointerXY(e);
-      if (!pt || !rect) return;
-      if (withinRect(pt, rect)) toReorderMode();
-      else toExportMode();
-    }
-
-    $list.sortable('option','sort', function(e, ui){
-      maybeFlip(e);
-      if (orig.sort) orig.sort.call(this, e, ui);
+    // Only flip when sortable itself says we left/entered (no pointer math jitter)
+    $list.sortable('option','out', function(e, ui){
+      toExportMode();
+      if (orig.out) orig.out.call(this, e, ui);
     });
     $list.sortable('option','over', function(e, ui){
       toReorderMode();
       if (orig.over) orig.over.call(this, e, ui);
     });
-    $list.sortable('option','out', function(e, ui){
-      toExportMode();
-      if (orig.out) orig.out.call(this, e, ui);
-    });
-    $list.sortable('option','change', function(e, ui){
-      if (exporting && $placeholder) $placeholder.addClass('setlist-exporting');
-      if (orig.change) orig.change.call(this, e, ui);
-    });
+
     $list.sortable('option','stop', function(e, ui){
       toReorderMode();
       try{ $list.sortable('enable'); }catch(e){}
-      rect = null; $placeholder = null; $currentItem = null; origHtml = null;
+      $placeholder = null; $currentItem = null; savedHelperHTML = null;
       if (orig.stop) orig.stop.call(this, e, ui);
     });
   }
 
   function init(){
     var $ = $jq(); if (!$) return;
-    detectSetlists().each(function(){ attachToList($(this)); });
+    detectSetlists().each(function(){ attach($(this)); });
   }
+
   init();
   var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
 })();
