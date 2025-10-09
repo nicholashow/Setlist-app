@@ -3102,5 +3102,181 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<style id="setlist-export-chip-styles">
+/* Blue name-only chip to mirror All Songs (fallback if builder not available) */
+.ui-sortable-helper.setlist-exporting-chip {
+  padding:6px 10px!important;border-radius:8px!important;
+  background:rgba(59,130,246,.95)!important;color:#fff!important;
+  font-size:14px!important;line-height:1.2!important;
+  box-shadow:0 6px 16px rgba(0,0,0,.25)!important;
+  border:1px solid rgba(59,130,246,1)!important;
+  max-width:60vw;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;
+}
+/* Hide placeholder while exporting so list items don't jump */
+.ui-sortable-placeholder.setlist-exporting{visibility:hidden!important;}
+</style>
+<script>
+/* Setlist export behavior (v7, robust):
+   - INSIDE setlist: full item helper, sortable enabled.
+   - OUTSIDE setlist: helper becomes a blue name-only chip (reusing All Songs builder if present),
+                      sortable disabled so order does not change.
+   - RE-ENTER: helper restored to original clone; sortable enabled.
+   - STOP (drop anywhere): cleanup to guarantee the original item is never left as "name only". */
+(function(){
+  if (window.__SetlistExportBehavior_v7) return;
+  window.__SetlistExportBehavior_v7 = true;
+
+  function $jq(){ return window.jQuery || window.$; }
+
+  // Try to use the exact All Songs chip builder if it exists
+  function buildBlueChip(name){
+    try{
+      if (typeof window.buildAllSongsNameOnlyHelper === 'function'){
+        var el = window.buildAllSongsNameOnlyHelper(name, { color:'blue' });
+        if (el) return el;
+      }
+      if (window.AllSongs && typeof window.AllSongs.buildNameChip === 'function'){
+        var el2 = window.AllSongs.buildNameChip(name);
+        if (el2) return el2;
+      }
+    }catch(e){}
+    var div = document.createElement('div');
+    div.className = 'drag-helper setlist-exporting-chip'; // class for fallback styling
+    div.textContent = name;
+    return div;
+  }
+
+  function detectSetlists(){
+    var $ = $jq(); if (!$) return $();
+    var $lists = $('#setlist-list, .setlist-list, [data-role="setlist-list"]');
+    if (!$lists.length){
+      $lists = $('.ui-sortable').filter(function(){
+        return !!$(this).find('.setlist-item, [data-type="setlist-item"]').length;
+      });
+    }
+    return $lists;
+  }
+
+  function getItemName($item){
+    var name = '';
+    try{
+      var $name = $item.find('.song-name-text, .file-name, [data-role="song-name"]').first();
+      name = ($name.text()||'').trim();
+      if (!name) name = ($item.text()||'').trim();
+    }catch(e){}
+    return name || 'Untitled';
+  }
+
+  function attach($list){
+    var $ = $jq(); if (!$) return;
+    var inst = $list.data('ui-sortable') || $list.data('sortable');
+    if (!inst) return;
+
+    var exporting = false;
+    var $placeholder = null;
+    var $currentItem = null;
+    var savedHelperHTML = null;  // HTML of helper clone (not the real item)
+    var savedHelperClasses = null;
+
+    var orig = {
+      start:  $list.sortable('option','start'),
+      over:   $list.sortable('option','over'),
+      out:    $list.sortable('option','out'),
+      stop:   $list.sortable('option','stop')
+    };
+
+    function toExportMode(){
+      if (exporting) return;
+      exporting = true;
+      try{ $list.sortable('disable'); }catch(e){}
+
+      var $helper = $('.ui-sortable-helper');
+      if ($helper.length){
+        // Save original helper HTML & classes once
+        if (savedHelperHTML == null) savedHelperHTML = $helper.html();
+        if (savedHelperClasses == null) savedHelperClasses = $helper.attr('class') || '';
+
+        // Replace helper content with a NAME-ONLY chip element
+        var name = getItemName($currentItem || $helper);
+        var chip = buildBlueChip(name);
+        $helper.empty().append(chip);
+
+        // Add our styling class (keeps helper sized/blue). Do NOT touch ui.item.
+        if (!$helper.hasClass('setlist-exporting-chip')){
+          $helper.addClass('setlist-exporting-chip');
+        }
+      }
+
+      if ($placeholder) $placeholder.addClass('setlist-exporting');
+    }
+
+    function toReorderMode(){
+      if (!exporting) return;
+      exporting = false;
+      try{ $list.sortable('enable'); }catch(e){}
+
+      var $helper = $('.ui-sortable-helper');
+      if ($helper.length && savedHelperHTML != null){
+        // Restore helper clone to original content & classes
+        $helper.removeClass('setlist-exporting-chip').html(savedHelperHTML);
+        if (savedHelperClasses != null) $helper.attr('class', savedHelperClasses);
+      }
+
+      if ($placeholder) $placeholder.removeClass('setlist-exporting');
+    }
+
+    function hardCleanup(){
+      // Called on 'stop' to guarantee nothing is left in a bad state
+      exporting = false;
+      var $helper = $('.ui-sortable-helper');
+      if ($helper.length && savedHelperHTML != null){
+        $helper.removeClass('setlist-exporting-chip').html(savedHelperHTML);
+        if (savedHelperClasses != null) $helper.attr('class', savedHelperClasses);
+      }
+      try{ $list.sortable('enable'); }catch(e){}
+      if ($placeholder) $placeholder.removeClass('setlist-exporting');
+      savedHelperHTML = null;
+      savedHelperClasses = null;
+      $placeholder = null;
+      $currentItem = null;
+    }
+
+    $list.sortable('option','start', function(e, ui){
+      exporting = false;
+      savedHelperHTML = null;
+      savedHelperClasses = null;
+      $currentItem = ui.item;
+      $placeholder = ui.placeholder;
+      if (orig.start) orig.start.call(this, e, ui);
+    });
+
+    // ONLY switch on sortable's own boundary signals (no pointer math)
+    $list.sortable('option','out', function(e, ui){
+      toExportMode();
+      if (orig.out) orig.out.call(this, e, ui);
+    });
+    $list.sortable('option','over', function(e, ui){
+      toReorderMode();
+      if (orig.over) orig.over.call(this, e, ui);
+    });
+
+    $list.sortable('option','stop', function(e, ui){
+      // Always restore original helper and re-enable sortable, even after outside drops
+      hardCleanup();
+      if (orig.stop) orig.stop.call(this, e, ui);
+    });
+  }
+
+  function init(){
+    var $ = $jq(); if (!$) return;
+    detectSetlists().each(function(){ attach($(this)); });
+  }
+
+  init();
+  var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
+})();
+</script>
+
 </body>
 </html>
