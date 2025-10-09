@@ -2968,135 +2968,374 @@ function destroyPdfOverlay() {
 </script>
 
 
-<style id="setlist-export-chip-styles">
-/* Blue name-only chip to mirror All Songs (fallback if builder not available) */
-.ui-sortable-helper.name-only-chip-blue{
-  padding:6px 10px!important;border-radius:8px!important;
-  background:rgba(59,130,246,.95)!important;color:#fff!important;
-  font-size:14px!important;line-height:1.2!important;
-  box-shadow:0 6px 16px rgba(0,0,0,.25)!important;
-  border:1px solid rgba(59,130,246,1)!important;
-  max-width:60vw;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;
+<style id="notes-popover-styles">
+/* Anchored Notes popover: expands in place, only as large as needed */
+#notes-popover-overlay {
+  position: fixed; inset: 0;
+  background: transparent; /* no dim; capture outside clicks */
+  display: none;
+  z-index: 2147483646;
 }
-/* Hide placeholder while exporting so in-list items don't shift */
-.ui-sortable-placeholder.setlist-exporting{visibility:hidden!important;}
+#notes-popover {
+  position: fixed; /* anchored at the source box position */
+  left: 0; top: 0;
+  display: none;
+  z-index: 2147483647;
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+html.dark #notes-popover { background: #1f2937; color: #e5e7eb; border-color: #374151; }
+#notes-popover-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 8px; font-weight: 600; font-size: 13px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+html.dark #notes-popover-header { border-bottom-color: rgba(255,255,255,0.08); }
+#notes-popover-close {
+  appearance: none; border: none; background: transparent;
+  font-size: 18px; line-height: 1; cursor: pointer;
+  padding: 2px 6px; border-radius: 6px; color: inherit;
+}
+#notes-popover-close:hover { background: rgba(0,0,0,0.06); }
+html.dark #notes-popover-close:hover { background: rgba(255,255,255,0.08); }
+#notes-popover-body { padding: 8px; }
+#notes-popover-text {
+  width: 100%;
+  min-width: 160px;
+  max-width: 80vw;
+  min-height: 60px;
+  max-height: 70vh;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 8px;
+  outline: none;
+  border: 1px solid #d1d5db;
+  background: #ffffff; color: #111827;
+  font-size: 14px; line-height: 1.4; font-family: inherit;
+  resize: none; /* auto-size handling */
+}
+html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-color: #4b5563; }
+
+/* Make source notes box NOT flash blue when tapped to open */
+.notes-input {
+  -webkit-tap-highlight-color: transparent;
+}
+</style>
+<div id="notes-popover-overlay" aria-hidden="true"></div>
+<div id="notes-popover" role="dialog" aria-modal="true" aria-labelledby="notes-popover-title">
+  <div id="notes-popover-header">
+    <div id="notes-popover-title">Notes</div>
+    <button id="notes-popover-close" aria-label="Close notes">×</button>
+  </div>
+  <div id="notes-popover-body">
+    <textarea id="notes-popover-text" spellcheck="false"></textarea>
+  </div>
+</div>
+<script>
+/* Notes popover (fast): instant open on pointerdown, no blue flash, anchored & autosized */
+(function(){
+  if (window.__NotesPopover_v1) return;
+  window.__NotesPopover_v1 = true;
+
+  var overlay = document.getElementById('notes-popover-overlay');
+  var pop     = document.getElementById('notes-popover');
+  var close   = document.getElementById('notes-popover-close');
+  var area    = document.getElementById('notes-popover-text');
+  var activeSource = null;
+
+  function viewportCaps(){ return { maxW: Math.floor(window.innerWidth * 0.80), maxH: Math.floor(window.innerHeight * 0.70) }; }
+
+  function estimateWidthPx(text){
+    var lines = String(text||'').split('\n');
+    var longest = 0;
+    for (var i=0;i<lines.length;i++){ if (lines[i].length > longest) longest = lines[i].length; }
+    return Math.ceil(longest * 7.2) + 28; // approx char width + paddings
+  }
+
+  function autoSizeAndPosition(src){
+    var rect = src.getBoundingClientRect();
+    var caps = viewportCaps();
+
+    // Width: at least source width; at most content/viewport cap
+    var contentW = estimateWidthPx(area.value);
+    var width = Math.min(Math.max(Math.ceil(rect.width), Math.min(contentW, caps.maxW)), caps.maxW);
+
+    // Height: fit content
+    area.style.height = 'auto';
+    // Temporarily set width so scrollHeight is accurate
+    area.style.width = (width - 20) + 'px';
+    var contentH = area.scrollHeight + 16; // padding
+    var headerH = 34;
+    var height = Math.min(Math.max(contentH, 60), caps.maxH);
+
+    pop.style.width = width + 'px';
+    area.style.height = Math.max(40, (height - (headerH + 16))) + 'px';
+
+    // Place over the original box (keep within viewport)
+    var left = Math.min(rect.left, window.innerWidth - width - 8);
+    var top  = Math.min(rect.top,  window.innerHeight - height - 8);
+    pop.style.left = Math.max(8, left) + 'px';
+    pop.style.top  = Math.max(8, top) + 'px';
+  }
+
+  function openFrom(el){
+    activeSource = el;
+    area.value = (el.value != null ? el.value : (el.innerText || ''));
+    document.documentElement.classList.add('notes-popover-open');
+    document.body.classList.add('notes-popover-open');
+    overlay.style.display = 'block';
+    pop.style.display = 'block';
+    autoSizeAndPosition(el);
+    // Focus ASAP without setTimeout lag; use rAF to ensure DOM is painted
+    requestAnimationFrame(function(){
+      area.focus();
+      var len = area.value.length;
+      try { area.setSelectionRange(len, len); } catch(e){}
+    });
+  }
+
+  function closePopover(save){
+    if (save && activeSource){
+      var val = area.value;
+      if ('value' in activeSource) activeSource.value = val;
+      else activeSource.innerText = val;
+      try {
+        activeSource.dispatchEvent(new Event('input', { bubbles: true }));
+        activeSource.dispatchEvent(new Event('change', { bubbles: true }));
+      } catch(e){}
+    }
+    overlay.style.display = 'none';
+    pop.style.display = 'none';
+    document.documentElement.classList.remove('notes-popover-open');
+    document.body.classList.remove('notes-popover-open');
+    activeSource = null;
+  }
+
+  // Instant open on pointerdown (captures before the source input gets focus)
+  function onPointerDown(ev){
+    var el = ev.target && ev.target.closest && ev.target.closest('.notes-input');
+    if (!el) return;
+    // Determine if content likely overflows the small notes box
+    var overflow = false;
+    try {
+      overflow = el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2 || (el.value||'').length > 40;
+    } catch(e){ overflow = true; }
+    if (!overflow) return;
+    // Prevent the source from receiving focus/blue flash
+    try { ev.preventDefault(); } catch(e){}
+    openFrom(el);
+  }
+
+  document.addEventListener('pointerdown', onPointerDown, true);
+
+  // Keep alignment on resize
+  window.addEventListener('resize', function(){ if (activeSource) autoSizeAndPosition(activeSource); });
+
+  // Close handlers
+  overlay.addEventListener('click', function(){ closePopover(true); });
+  close.addEventListener('click', function(){ closePopover(true); });
+  document.addEventListener('keydown', function(e){
+    if (pop.style.display === 'block' && e.key === 'Escape') { e.preventDefault(); closePopover(false); }
+  });
+})();
+</script>
+
+
+<style id="notes-fast-and-setlist-drag">
+/* Faster feel: nothing visual here; JS handles instant open */
+/* Name-only helper when dragging outside of setlist list */
+.drag-name-only {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(31, 41, 55, 0.95); /* gray-800 */
+  color: #e5e7eb;
+  font-size: 14px;
+  line-height: 1.2;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+  pointer-events: none;
+  max-width: 60vw;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+}
 </style>
 <script>
-/* Setlist export behavior (STRICT): match All Songs visual only when outside the setlist */
+/* --- 1) Notes popover: make it *even faster* and avoid any focus flash --- */
 (function(){
-  if (window.__SetlistExportBehavior_v6) return;
-  window.__SetlistExportBehavior_v6 = true;
+  if (window.__NotesPopoverSpeed_v2) return;
+  window.__NotesPopoverSpeed_v2 = true;
 
-  function $jq(){ return window.jQuery || window.$; }
-
-  // Prefer reusing All Songs' chip builder for a perfect match
-  function buildBlueChip(name){
-    try{
-      if (typeof window.buildAllSongsNameOnlyHelper === 'function'){
-        var el = window.buildAllSongsNameOnlyHelper(name, { color: 'blue' });
-        if (el) return el;
-      }
-    }catch(e){}
-    var div = document.createElement('div');
-    div.className = 'name-only-chip-blue';
-    div.textContent = name;
-    return div;
+  function fastHook(selector, handler){
+    // Prioritize touchstart/mousedown before click
+    document.addEventListener('touchstart', function(ev){
+      var el = ev.target.closest && ev.target.closest(selector);
+      if (!el) return;
+      handler(ev, el);
+    }, { capture: true, passive: false });
+    document.addEventListener('mousedown', function(ev){
+      var el = ev.target.closest && ev.target.closest(selector);
+      if (!el) return;
+      handler(ev, el);
+    }, true);
   }
 
-  function detectSetlists(){
-    var $ = $jq(); if (!$) return $();
-    var $lists = $('#setlist-list, .setlist-list, [data-role="setlist-list"]');
-    if (!$lists.length){
-      $lists = $('.ui-sortable').filter(function(){
-        return !!$(this).find('.setlist-item, [data-type="setlist-item"]').length;
-      });
+  // Reuse existing open function if present from previous patch
+  var openNotesFrom = window.__openNotesPopoverFrom;
+  if (!openNotesFrom) {
+    // fallback: hook into the same notes popover elements we injected
+    var pop     = document.getElementById('notes-popover');
+    var overlay = document.getElementById('notes-popover-overlay');
+    var close   = document.getElementById('notes-popover-close');
+    var area    = document.getElementById('notes-popover-text');
+    var activeSource = null;
+
+    function viewportCaps(){ return { maxW: Math.floor(window.innerWidth * 0.80), maxH: Math.floor(window.innerHeight * 0.70) }; }
+    function estimateWidthPx(text){
+      var lines = String(text||'').split('\n');
+      var longest = 0;
+      for (var i=0;i<lines.length;i++){ if (lines[i].length > longest) longest = lines[i].length; }
+      return Math.ceil(longest * 7.2) + 28;
     }
-    return $lists;
-  }
-
-  function getItemName($item){
-    var name='';
-    try{
-      var $name = $item.find('.song-name-text, .file-name, [data-role="song-name"]').first();
-      name = ($name.text()||'').trim();
-      if (!name) name = ($item.text()||'').trim();
-    }catch(e){}
-    return name || 'Untitled';
-  }
-
-  function attach($list){
-    var $ = $jq(); if (!$) return;
-    var inst = $list.data('ui-sortable') || $list.data('sortable');
-    if (!inst) return;
-
-    var exporting = false;
-    var $placeholder = null;
-    var $currentItem = null;
-    var savedHelperHTML = null;
-
-    var orig = {
-      start:  $list.sortable('option','start'),
-      over:   $list.sortable('option','over'),
-      out:    $list.sortable('option','out'),
-      stop:   $list.sortable('option','stop')
+    function autoSizeAndPosition(src){
+      var rect = src.getBoundingClientRect();
+      var caps = viewportCaps();
+      var contentW = estimateWidthPx(area.value);
+      var width = Math.min(Math.max(Math.ceil(rect.width), Math.min(contentW, caps.maxW)), caps.maxW);
+      area.style.height = 'auto';
+      area.style.width = (width - 20) + 'px';
+      var contentH = area.scrollHeight + 16;
+      var headerH = 34;
+      var height = Math.min(Math.max(contentH, 60), caps.maxH);
+      pop.style.width = width + 'px';
+      area.style.height = Math.max(40, (height - (headerH + 16))) + 'px';
+      var left = Math.min(rect.left, window.innerWidth - width - 8);
+      var top  = Math.min(rect.top,  window.innerHeight - height - 8);
+      pop.style.left = Math.max(8, left) + 'px';
+      pop.style.top  = Math.max(8, top) + 'px';
+    }
+    openNotesFrom = function(el){
+      area.value = (el.value != null ? el.value : (el.innerText || ''));
+      document.documentElement.classList.add('notes-popover-open');
+      document.body.classList.add('notes-popover-open');
+      overlay.style.display = 'block';
+      pop.style.display = 'block';
+      autoSizeAndPosition(el);
+      area.focus({ preventScroll: true });
+      try { var len = area.value.length; area.setSelectionRange(len, len); } catch(e){}
     };
-
-    function toExportMode(){
-      if (exporting) return;
-      exporting = true;
-      try{ $list.sortable('disable'); }catch(e){}
-      var $helper = $('.ui-sortable-helper');
-      if ($helper.length){
-        if (savedHelperHTML == null) savedHelperHTML = $helper.html();
-        var name = getItemName($currentItem || $helper);
-        var chip = buildBlueChip(name);
-        $helper.empty().append(chip).addClass('name-only-chip-blue');
+    window.__openNotesPopoverFrom = openNotesFrom;
+    overlay && overlay.addEventListener('click', function(){
+      // Save on outside click
+      var val = area.value;
+      if (window.__notesActiveSource) {
+        var el = window.__notesActiveSource;
+        if ('value' in el) el.value = val; else el.innerText = val;
+        try { el.dispatchEvent(new Event('input', { bubbles:true })); el.dispatchEvent(new Event('change', { bubbles:true })); } catch(e){}
       }
-      if ($placeholder) $placeholder.addClass('setlist-exporting');
-    }
-
-    function toReorderMode(){
-      if (!exporting) return;
-      exporting = false;
-      try{ $list.sortable('enable'); }catch(e){}
-      var $helper = $('.ui-sortable-helper');
-      if ($helper.length && savedHelperHTML != null){
-        $helper.removeClass('name-only-chip-blue').html(savedHelperHTML);
+      pop.style.display = 'none';
+      overlay.style.display = 'none';
+      document.documentElement.classList.remove('notes-popover-open');
+      document.body.classList.remove('notes-popover-open');
+      window.__notesActiveSource = null;
+    });
+    close && close.addEventListener('click', function(){
+      // Save on close
+      var val = area.value;
+      if (window.__notesActiveSource) {
+        var el = window.__notesActiveSource;
+        if ('value' in el) el.value = val; else el.innerText = val;
+        try { el.dispatchEvent(new Event('input', { bubbles:true })); el.dispatchEvent(new Event('change', { bubbles:true })); } catch(e){}
       }
-      if ($placeholder) $placeholder.removeClass('setlist-exporting');
-    }
-
-    $list.sortable('option','start', function(e, ui){
-      exporting = false;
-      savedHelperHTML = null;
-      $currentItem = ui.item;
-      $placeholder = ui.placeholder;
-      if (orig.start) orig.start.call(this, e, ui);
-    });
-
-    // Only flip when sortable itself says we left/entered (no pointer math jitter)
-    $list.sortable('option','out', function(e, ui){
-      toExportMode();
-      if (orig.out) orig.out.call(this, e, ui);
-    });
-    $list.sortable('option','over', function(e, ui){
-      toReorderMode();
-      if (orig.over) orig.over.call(this, e, ui);
-    });
-
-    $list.sortable('option','stop', function(e, ui){
-      toReorderMode();
-      try{ $list.sortable('enable'); }catch(e){}
-      $placeholder = null; $currentItem = null; savedHelperHTML = null;
-      if (orig.stop) orig.stop.call(this, e, ui);
+      pop.style.display = 'none';
+      overlay.style.display = 'none';
+      document.documentElement.classList.remove('notes-popover-open');
+      document.body.classList.remove('notes-popover-open');
+      window.__notesActiveSource = null;
     });
   }
 
+  fastHook('.notes-input', function(ev, el){
+    // Open instantly and suppress the input's own focus/flash
+    ev.preventDefault();
+    window.__notesActiveSource = el;
+    openNotesFrom(el);
+  });
+})();
+
+/* --- 2) Setlist dragging: switch to name-only when leaving setlist box; do not reorder outside --- */
+(function(){
+  if (window.__SetlistDragNameOnly_v1) return;
+  window.__SetlistDragNameOnly_v1 = true;
+
+  function getSetlistRect(){
+    var el = document.getElementById('setlist-list');
+    return el ? el.getBoundingClientRect() : null;
+  }
+
+  function isInsideRect(pt, rect){
+    return rect && pt.x >= rect.left && pt.x <= rect.right && pt.y >= rect.top && pt.y <= rect.bottom;
+  }
+
+  // Attach a jQuery UI draggable specifically for setlist items, without touching existing sortables
   function init(){
-    var $ = $jq(); if (!$) return;
-    detectSetlists().each(function(){ attach($(this)); });
+    var $list = window.jQuery && window.jQuery('#setlist-list');
+    if (!$list || !$list.length) return;
+
+    // Delegate to dynamic items
+    $list.on('mousedown touchstart', '.setlist-item', function(){
+      var $item = window.jQuery(this);
+      if ($item.data('hasExportDrag')) return; // only once
+      $item.data('hasExportDrag', true);
+
+      $item.draggable({
+        helper: function(){
+          var name = ($item.find('.song-name-text').text() || $item.text() || '').trim();
+          var $h = window.jQuery('<div class="drag-helper drag-name-only draggable">'+name+'</div>');
+          $h.data('name', name);
+          return $h;
+        },
+        appendTo: 'body',
+        containment: 'document',
+        distance: 4,
+        zIndex: 2147483645,
+        start: function(e, ui){
+          $item.data('exporting', false);
+          $item.addClass('dragging-from-setlist');
+          $list.sortable('enable'); // ensure enabled at start
+          $item.data('setlistRect', getSetlistRect());
+        },
+        drag: function(e, ui){
+          var rect = $item.data('setlistRect') || getSetlistRect();
+          var pt = { x: (e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX) || ui.position.left),
+                     y: (e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY) || ui.position.top) };
+          var inside = isInsideRect(pt, rect);
+          if (!inside && !$item.data('exporting')){
+            // Leaving setlist: switch to name-only visual and DISABLE reordering
+            $item.data('exporting', true);
+            try { $list.sortable('disable'); } catch(err){}
+            ui.helper.addClass('drag-name-only');
+          } else if (inside && $item.data('exporting')){
+            // Back inside: allow reordering again
+            $item.data('exporting', false);
+            try { $list.sortable('enable'); } catch(err){}
+            ui.helper.removeClass('drag-name-only').text(ui.helper.data('name'));
+          }
+        },
+        stop: function(e, ui){
+          // Always re-enable sortable to keep in-list reordering perfect
+          try { $list.sortable('enable'); } catch(err){}
+          $item.removeClass('dragging-from-setlist').data('exporting', false);
+        }
+      });
+    });
   }
 
+  // Try now and retry a few times for late DOM
   init();
   var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
 })();
@@ -3104,8 +3343,8 @@ function destroyPdfOverlay() {
 
 
 <style id="setlist-export-chip-styles">
-/* Blue name-only chip to mirror All Songs (fallback if builder not available) */
-.ui-sortable-helper.setlist-exporting-chip {
+/* Blue name-only chip (fallback) to match All Songs visual */
+.setlist-exporting-chip{
   padding:6px 10px!important;border-radius:8px!important;
   background:rgba(59,130,246,.95)!important;color:#fff!important;
   font-size:14px!important;line-height:1.2!important;
@@ -3113,23 +3352,25 @@ function destroyPdfOverlay() {
   border:1px solid rgba(59,130,246,1)!important;
   max-width:60vw;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;
 }
-/* Hide placeholder while exporting so list items don't jump */
-.ui-sortable-placeholder.setlist-exporting{visibility:hidden!important;}
+/* Keep list from jumping while we export */
+.ui-sortable-placeholder.setlist-exporting{visibility:hidden!important;height:0!important;margin:0!important;padding:0!important;border:0!important;}
+/* Make helper visible above everything when moved to <body> */
+.ui-sortable-helper.setlist-helper-patched{z-index:2147483646 !important; pointer-events:none !important;}
 </style>
+
 <script>
-/* Setlist export behavior (v7, robust):
-   - INSIDE setlist: full item helper, sortable enabled.
-   - OUTSIDE setlist: helper becomes a blue name-only chip (reusing All Songs builder if present),
-                      sortable disabled so order does not change.
-   - RE-ENTER: helper restored to original clone; sortable enabled.
-   - STOP (drop anywhere): cleanup to guarantee the original item is never left as "name only". */
+/* Setlist export behavior (strict v9):
+   - INSIDE #setlist-list: normal reorder + full item helper.
+   - OUTSIDE #setlist-list: helper turns into a BLUE name-only chip (reusing All Songs builder if present); sortable disabled.
+   - RE-ENTER: restore full helper + enable sortable.
+   - STOP: hard cleanup so original item never stays "name only".
+*/
 (function(){
-  if (window.__SetlistExportBehavior_v7) return;
-  window.__SetlistExportBehavior_v7 = true;
+  if (window.__SetlistExportBehavior_v9) return;
+  window.__SetlistExportBehavior_v9 = true;
 
   function $jq(){ return window.jQuery || window.$; }
 
-  // Try to use the exact All Songs chip builder if it exists
   function buildBlueChip(name){
     try{
       if (typeof window.buildAllSongsNameOnlyHelper === 'function'){
@@ -3137,31 +3378,20 @@ function destroyPdfOverlay() {
         if (el) return el;
       }
       if (window.AllSongs && typeof window.AllSongs.buildNameChip === 'function'){
-        var el2 = window.AllSongs.buildNameChip(name);
+        var el2 = window.AllSongs.buildNameChip(name, { color:'blue' });
         if (el2) return el2;
       }
     }catch(e){}
     var div = document.createElement('div');
-    div.className = 'drag-helper setlist-exporting-chip'; // class for fallback styling
+    div.className = 'setlist-exporting-chip';
     div.textContent = name;
     return div;
-  }
-
-  function detectSetlists(){
-    var $ = $jq(); if (!$) return $();
-    var $lists = $('#setlist-list, .setlist-list, [data-role="setlist-list"]');
-    if (!$lists.length){
-      $lists = $('.ui-sortable').filter(function(){
-        return !!$(this).find('.setlist-item, [data-type="setlist-item"]').length;
-      });
-    }
-    return $lists;
   }
 
   function getItemName($item){
     var name = '';
     try{
-      var $name = $item.find('.song-name-text, .file-name, [data-role="song-name"]').first();
+      var $name = $item.find('.song-name, .song-name-text, .file-name, [data-role=\"song-name\"]').first();
       name = ($name.text()||'').trim();
       if (!name) name = ($item.text()||'').trim();
     }catch(e){}
@@ -3174,105 +3404,126 @@ function destroyPdfOverlay() {
     if (!inst) return;
 
     var exporting = false;
-    var $placeholder = null;
-    var $currentItem = null;
-    var savedHelperHTML = null;  // HTML of helper clone (not the real item)
-    var savedHelperClasses = null;
+    var savedHelperHTML = null, savedHelperClass = null;
+    var $placeholder = null, $currentItem = null;
+    var rect = null;
 
+    // Preserve existing callbacks
     var orig = {
       start:  $list.sortable('option','start'),
+      sort:   $list.sortable('option','sort'),
       over:   $list.sortable('option','over'),
       out:    $list.sortable('option','out'),
       stop:   $list.sortable('option','stop')
     };
 
-    function toExportMode(){
+    function updateRect(){
+      var box = $list.get(0).getBoundingClientRect();
+      rect = { left: box.left + window.pageXOffset,
+               top: box.top + window.pageYOffset,
+               right: box.right + window.pageXOffset,
+               bottom: box.bottom + window.pageYOffset };
+    }
+    function inRect(pt){ return pt.x >= rect.left && pt.x <= rect.right && pt.y >= rect.top && pt.y <= rect.bottom; }
+    function pageXY(evt){
+      var e = evt && (evt.originalEvent || evt);
+      if (e && typeof e.pageX === 'number' && typeof e.pageY === 'number') return {x:e.pageX,y:e.pageY};
+      if (e && typeof e.clientX === 'number' && typeof e.clientY === 'number'){
+        var sx = window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft || 0;
+        var sy = window.pageYOffset || document.documentElement.scrollTop  || document.body.scrollTop  || 0;
+        return {x:e.clientX+sx, y:e.clientY+sy};
+      }
+      return null;
+    }
+
+    function toChip(){
       if (exporting) return;
       exporting = true;
       try{ $list.sortable('disable'); }catch(e){}
-
       var $helper = $('.ui-sortable-helper');
       if ($helper.length){
-        // Save original helper HTML & classes once
+        // Ensure helper isn't clipped
+        if (!$helper.hasClass('setlist-helper-patched')){
+          $helper.appendTo('body').addClass('setlist-helper-patched');
+        }
         if (savedHelperHTML == null) savedHelperHTML = $helper.html();
-        if (savedHelperClasses == null) savedHelperClasses = $helper.attr('class') || '';
-
-        // Replace helper content with a NAME-ONLY chip element
+        if (savedHelperClass == null) savedHelperClass = $helper.attr('class') || '';
         var name = getItemName($currentItem || $helper);
         var chip = buildBlueChip(name);
         $helper.empty().append(chip);
-
-        // Add our styling class (keeps helper sized/blue). Do NOT touch ui.item.
-        if (!$helper.hasClass('setlist-exporting-chip')){
-          $helper.addClass('setlist-exporting-chip');
-        }
       }
-
       if ($placeholder) $placeholder.addClass('setlist-exporting');
     }
 
-    function toReorderMode(){
+    function toFull(){
       if (!exporting) return;
       exporting = false;
       try{ $list.sortable('enable'); }catch(e){}
-
       var $helper = $('.ui-sortable-helper');
       if ($helper.length && savedHelperHTML != null){
-        // Restore helper clone to original content & classes
-        $helper.removeClass('setlist-exporting-chip').html(savedHelperHTML);
-        if (savedHelperClasses != null) $helper.attr('class', savedHelperClasses);
+        $helper.html(savedHelperHTML);
+        if (savedHelperClass != null) $helper.attr('class', savedHelperClass);
       }
-
       if ($placeholder) $placeholder.removeClass('setlist-exporting');
     }
 
     function hardCleanup(){
-      // Called on 'stop' to guarantee nothing is left in a bad state
       exporting = false;
+      try{ $list.sortable('enable'); }catch(e){}
       var $helper = $('.ui-sortable-helper');
       if ($helper.length && savedHelperHTML != null){
-        $helper.removeClass('setlist-exporting-chip').html(savedHelperHTML);
-        if (savedHelperClasses != null) $helper.attr('class', savedHelperClasses);
+        $helper.html(savedHelperHTML);
+        if (savedHelperClass != null) $helper.attr('class', savedHelperClass);
       }
-      try{ $list.sortable('enable'); }catch(e){}
       if ($placeholder) $placeholder.removeClass('setlist-exporting');
-      savedHelperHTML = null;
-      savedHelperClasses = null;
-      $placeholder = null;
-      $currentItem = null;
+      savedHelperHTML = null; savedHelperClass = null;
+      $placeholder = null; $currentItem = null; rect = null;
     }
 
     $list.sortable('option','start', function(e, ui){
       exporting = false;
-      savedHelperHTML = null;
-      savedHelperClasses = null;
-      $currentItem = ui.item;
+      savedHelperHTML = null; savedHelperClass = null;
       $placeholder = ui.placeholder;
+      $currentItem = ui.item;
+      updateRect();
       if (orig.start) orig.start.call(this, e, ui);
     });
 
-    // ONLY switch on sortable's own boundary signals (no pointer math)
-    $list.sortable('option','out', function(e, ui){
-      toExportMode();
-      if (orig.out) orig.out.call(this, e, ui);
+    $list.sortable('option','sort', function(e, ui){
+      var pt = pageXY(e);
+      if (pt && rect){
+        if (inRect(pt)) toFull();
+        else toChip();
+      }
+      if (orig.sort) orig.sort.call(this, e, ui);
     });
+
     $list.sortable('option','over', function(e, ui){
-      toReorderMode();
+      toFull();
       if (orig.over) orig.over.call(this, e, ui);
     });
 
+    $list.sortable('option','out', function(e, ui){
+      toChip();
+      if (orig.out) orig.out.call(this, e, ui);
+    });
+
     $list.sortable('option','stop', function(e, ui){
-      // Always restore original helper and re-enable sortable, even after outside drops
       hardCleanup();
       if (orig.stop) orig.stop.call(this, e, ui);
     });
+
+    window.addEventListener('scroll', function(){ if ($currentItem) updateRect(); }, { passive:true });
+    window.addEventListener('resize', function(){ if ($currentItem) updateRect(); }, { passive:true });
   }
 
   function init(){
     var $ = $jq(); if (!$) return;
-    detectSetlists().each(function(){ attach($(this)); });
+    var $list = $('#setlist-list');
+    if ($list.length){ attach($list); }
   }
 
+  // Run now and retry for late-mount UIs
   init();
   var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
 })();
