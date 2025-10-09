@@ -3343,7 +3343,6 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
 
 <style id="setlist-export-chip-styles">
-/* Blue name-only chip (fallback) to match All Songs visual */
 .setlist-exporting-chip{
   padding:6px 10px!important;border-radius:8px!important;
   background:rgba(59,130,246,.95)!important;color:#fff!important;
@@ -3352,22 +3351,18 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   border:1px solid rgba(59,130,246,1)!important;
   max-width:60vw;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;
 }
-/* Keep list from jumping while we export */
-.ui-sortable-placeholder.setlist-exporting{visibility:hidden!important;height:0!important;margin:0!important;padding:0!important;border:0!important;}
-/* Make helper visible above everything when moved to <body> */
-.ui-sortable-helper.setlist-helper-patched{z-index:2147483646 !important; pointer-events:none !important;}
+.ui-sortable-placeholder.setlist-exporting{
+  visibility:hidden!important;height:0!important;margin:0!important;padding:0!important;border:0!important;
+}
+.ui-sortable-helper.setlist-helper-patched{
+  z-index:2147483646 !important; pointer-events:none !important;
+  width:auto !important; height:auto !important;
+}
 </style>
-
 <script>
-/* Setlist export behavior (strict v9):
-   - INSIDE #setlist-list: normal reorder + full item helper.
-   - OUTSIDE #setlist-list: helper turns into a BLUE name-only chip (reusing All Songs builder if present); sortable disabled.
-   - RE-ENTER: restore full helper + enable sortable.
-   - STOP: hard cleanup so original item never stays "name only".
-*/
 (function(){
-  if (window.__SetlistExportBehavior_v9) return;
-  window.__SetlistExportBehavior_v9 = true;
+  if (window.__SetlistExportBehavior_v10) return;
+  window.__SetlistExportBehavior_v10 = true;
 
   function $jq(){ return window.jQuery || window.$; }
 
@@ -3406,14 +3401,15 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     var exporting = false;
     var savedHelperHTML = null, savedHelperClass = null;
     var $placeholder = null, $currentItem = null;
+    var startIndex = null;
     var rect = null;
 
-    // Preserve existing callbacks
     var orig = {
       start:  $list.sortable('option','start'),
       sort:   $list.sortable('option','sort'),
       over:   $list.sortable('option','over'),
       out:    $list.sortable('option','out'),
+      change: $list.sortable('option','change'),
       stop:   $list.sortable('option','stop')
     };
 
@@ -3439,15 +3435,13 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     function toChip(){
       if (exporting) return;
       exporting = true;
-      try{ $list.sortable('disable'); }catch(e){}
       var $helper = $('.ui-sortable-helper');
       if ($helper.length){
-        // Ensure helper isn't clipped
-        if (!$helper.hasClass('setlist-helper-patched')){
-          $helper.appendTo('body').addClass('setlist-helper-patched');
-        }
         if (savedHelperHTML == null) savedHelperHTML = $helper.html();
         if (savedHelperClass == null) savedHelperClass = $helper.attr('class') || '';
+        $helper.attr('class','ui-sortable-helper setlist-helper-patched');
+        $helper.css({width:'auto', height:'auto'});
+        $helper.appendTo('body');
         var name = getItemName($currentItem || $helper);
         var chip = buildBlueChip(name);
         $helper.empty().append(chip);
@@ -3458,7 +3452,6 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     function toFull(){
       if (!exporting) return;
       exporting = false;
-      try{ $list.sortable('enable'); }catch(e){}
       var $helper = $('.ui-sortable-helper');
       if ($helper.length && savedHelperHTML != null){
         $helper.html(savedHelperHTML);
@@ -3469,7 +3462,6 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
     function hardCleanup(){
       exporting = false;
-      try{ $list.sortable('enable'); }catch(e){}
       var $helper = $('.ui-sortable-helper');
       if ($helper.length && savedHelperHTML != null){
         $helper.html(savedHelperHTML);
@@ -3477,7 +3469,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       }
       if ($placeholder) $placeholder.removeClass('setlist-exporting');
       savedHelperHTML = null; savedHelperClass = null;
-      $placeholder = null; $currentItem = null; rect = null;
+      $placeholder = null; $currentItem = null; rect = null; startIndex = null;
     }
 
     $list.sortable('option','start', function(e, ui){
@@ -3485,6 +3477,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       savedHelperHTML = null; savedHelperClass = null;
       $placeholder = ui.placeholder;
       $currentItem = ui.item;
+      startIndex = ui.item.index();
       updateRect();
       if (orig.start) orig.start.call(this, e, ui);
     });
@@ -3496,6 +3489,20 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
         else toChip();
       }
       if (orig.sort) orig.sort.call(this, e, ui);
+    });
+
+    $list.sortable('option','change', function(e, ui){
+      if (exporting && $placeholder && startIndex != null){
+        var $children = $list.children(':visible');
+        if (startIndex >= 0 && startIndex < $children.length){
+          var $anchor = $children.eq(startIndex);
+          if ($anchor.length && !$placeholder.is($anchor.next())){
+            $placeholder.insertAfter($anchor);
+          }
+        }
+        $placeholder.addClass('setlist-exporting');
+      }
+      if (orig.change) orig.change.call(this, e, ui);
     });
 
     $list.sortable('option','over', function(e, ui){
@@ -3523,7 +3530,6 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     if ($list.length){ attach($list); }
   }
 
-  // Run now and retry for late-mount UIs
   init();
   var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
 })();
