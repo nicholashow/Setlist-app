@@ -3344,63 +3344,51 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
 <style id="setlist-export-chip-styles">
 /* Blue name-only ghost chip (separate overlay that follows cursor) */
-#setlist-export-ghost {
-  position: fixed;
-  top: 0; left: 0;
-  transform: translate(-9999px, -9999px);
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: rgba(59,130,246,.95); /* blue-500 */
-  color: #fff;
-  font-size: 14px;
-  line-height: 1.2;
-  box-shadow: 0 6px 16px rgba(0,0,0,.25);
-  border: 1px solid rgba(59,130,246,1);
-  max-width: 50vw;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 2147483646;
-  opacity: 0;
-  transition: opacity 60ms linear;
+#setlist-export-ghost{
+  position:fixed; top:0; left:0;
+  transform:translate(-9999px,-9999px);
+  padding:6px 10px; border-radius:8px;
+  background:rgba(59,130,246,.95); color:#fff;
+  font-size:14px; line-height:1.2;
+  box-shadow:0 6px 16px rgba(0,0,0,.25);
+  border:1px solid rgba(59,130,246,1);
+  max-width:50vw; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;
+  pointer-events:none; z-index:2147483646; opacity:0; transition:opacity 50ms linear;
 }
-/* Keep placeholder from jumping while "exporting" */
-.ui-sortable-placeholder.setlist-exporting {
-  visibility: hidden !important;
-  height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
+/* Keep placeholder from jumping while exporting */
+.ui-sortable-placeholder.setlist-exporting{
+  visibility:hidden!important; height:0!important; margin:0!important; padding:0!important; border:0!important;
+}
+/* Freeze the big helper at the edge (don’t let it move outside) */
+.ui-sortable-helper.setlist-helper-frozen{
+  position:fixed !important; pointer-events:none !important; z-index:2147483645 !important;
 }
 </style>
 
 <script>
-/* Setlist export behavior (v11): dual-visual
-   - Inside setlist: normal sortable helper (unchanged size/look), reorder enabled.
-   - Outside setlist: show separate BLUE name-only ghost that follows cursor;
-                      keep sortable enabled (no freezing), but lock placeholder to original index so order doesn't change.
-   - Re-enter: hide ghost; normal behavior resumes.
-   - Stop: full cleanup; item never remains "name-only".
+/* Setlist export behavior (v12 — dual-visual + frozen helper, non-destructive)
+   - Inside setlist: normal reorder + full-size helper (unchanged).
+   - When pointer leaves the setlist box: show BLUE name-only ghost that follows cursor; freeze the big helper at the boundary.
+   - While outside: keep sortable responsive; pin placeholder at the original index so the order doesn’t change.
+   - Re-enter: hide ghost + unfreeze helper.
+   - Stop: cleanup so nothing remains “name-only” or frozen.
 */
 (function(){
-  if (window.__SetlistExportBehavior_v11) return;
-  window.__SetlistExportBehavior_v11 = true;
+  if (window.__SetlistExportBehavior_v12) return;
+  window.__SetlistExportBehavior_v12 = true;
 
   function $jq(){ return window.jQuery || window.$; }
   var $ = $jq(); if (!$) return;
 
-  // Create a single ghost element we reuse
+  // Single reusable ghost
   var ghost = document.createElement('div');
   ghost.id = 'setlist-export-ghost';
   document.body.appendChild(ghost);
 
-  function setGhost(text){
-    ghost.textContent = text || '';
-  }
-  function showGhostAt(clientX, clientY){
-    ghost.style.transform = 'translate(' + (clientX + 8) + 'px,' + (clientY + 8) + 'px)';
-    ghost.style.opacity = '1';
+  function setGhost(text){ ghost.textContent = text || ''; }
+  function showGhostAt(cx, cy){
+    ghost.style.transform = 'translate(' + (cx + 8) + 'px,' + (cy + 8) + 'px)';
+    if (ghost.style.opacity !== '1') ghost.style.opacity = '1';
   }
   function hideGhost(){
     ghost.style.opacity = '0';
@@ -3411,11 +3399,12 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     var name = '';
     try{
       var $name = $item.find('.song-name, .song-name-text, .file-name, [data-role=\"song-name\"]').first();
-      name = ($name.text()||'').trim();
-      if (!name) name = ($item.text()||'').trim();
+      name = ($name.text()||'').trim(); if (!name) name = ($item.text()||'').trim();
     }catch(e){}
     return name || 'Untitled';
   }
+
+  function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
 
   function attach($list){
     var inst = $list.data('ui-sortable') || $list.data('sortable');
@@ -3425,8 +3414,9 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     var $placeholder = null, $currentItem = null;
     var startIndex = null;
     var rect = null;
+    var frozenAt = null; // client coords at boundary
 
-    // Preserve original callbacks
+    // Preserve existing callbacks
     var orig = {
       start:  $list.sortable('option','start'),
       sort:   $list.sortable('option','sort'),
@@ -3440,18 +3430,55 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       var box = $list.get(0).getBoundingClientRect();
       rect = { left: box.left, top: box.top, right: box.right, bottom: box.bottom };
     }
-    function inside(clientX, clientY){
-      return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
+    function inside(cx, cy){ return cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom; }
+
+    function eventClientXY(e){
+      var oe = (e && e.originalEvent) || e;
+      var t = (oe && oe.touches && oe.touches[0]) || (oe && oe.changedTouches && oe.changedTouches[0]);
+      if (t) return { x: t.clientX, y: t.clientY };
+      if (typeof e.clientX === 'number') return { x: e.clientX, y: e.clientY };
+      return { x: rect.left, y: rect.top };
     }
 
-    function toExportMode(e){
+    function freezeHelperAtEdge(cx, cy){
+      var $helper = $('.ui-sortable-helper');
+      if (!$helper.length) return;
+      // Freeze at nearest edge point
+      var fx = clamp(cx, rect.left, rect.right);
+      var fy = clamp(cy, rect.top, rect.bottom);
+      if (cx < rect.left)  fx = rect.left;
+      if (cx > rect.right) fx = rect.right;
+      if (cy < rect.top)   fy = rect.top;
+      if (cy > rect.bottom)fy = rect.bottom;
+      frozenAt = { x: fx, y: fy };
+      var w = $helper.outerWidth(), h = $helper.outerHeight();
+      $helper.addClass('setlist-helper-frozen')
+             .css({ left: (fx - Math.round(w/2)) + 'px', top: (fy - Math.round(h/2)) + 'px' });
+    }
+
+    function updateFrozenHelper(){
+      if (!frozenAt) return;
+      var $helper = $('.ui-sortable-helper');
+      if ($helper.length && $helper.hasClass('setlist-helper-frozen')){
+        var w = $helper.outerWidth(), h = $helper.outerHeight();
+        $helper.css({ left: (frozenAt.x - Math.round(w/2)) + 'px', top: (frozenAt.y - Math.round(h/2)) + 'px' });
+      }
+    }
+
+    function unfreezeHelper(){
+      var $helper = $('.ui-sortable-helper');
+      if ($helper.length){
+        $helper.removeClass('setlist-helper-frozen').css({ left:'', top:'' });
+      }
+      frozenAt = null;
+    }
+
+    function toExportMode(cx, cy){
       if (exporting) return;
       exporting = true;
-      // Show ghost chip with the filename, while keeping the original helper untouched
-      setGhost(getItemName($currentItem));
-      showGhostAt(e.clientX || 0, e.clientY || 0);
-      // Keep sortable enabled, but lock placeholder at original index so order doesn't move
+      setGhost(getItemName($currentItem)); showGhostAt(cx, cy);
       if ($placeholder) $placeholder.addClass('setlist-exporting');
+      freezeHelperAtEdge(cx, cy);
     }
 
     function toReorderMode(){
@@ -3459,13 +3486,13 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       exporting = false;
       hideGhost();
       if ($placeholder) $placeholder.removeClass('setlist-exporting');
+      unfreezeHelper();
     }
 
     function hardCleanup(){
-      exporting = false;
-      hideGhost();
+      exporting = false; hideGhost(); unfreezeHelper();
       if ($placeholder) $placeholder.removeClass('setlist-exporting');
-      $placeholder = null; $currentItem = null; startIndex = null; rect = null;
+      $placeholder = null; $currentItem = null; startIndex = null; rect = null; frozenAt = null;
     }
 
     function keepPlaceholderPinned(){
@@ -3474,31 +3501,28 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       if (!$children.length) return;
       var idx = Math.max(0, Math.min(startIndex, $children.length - 1));
       var $anchor = $children.eq(idx);
-      if ($anchor.length && !$placeholder.is($anchor.next())){
-        $placeholder.insertAfter($anchor);
-      }
+      if ($anchor.length && !$placeholder.is($anchor.next())){ $placeholder.insertAfter($anchor); }
+      $placeholder.addClass('setlist-exporting');
     }
 
     $list.sortable('option','start', function(e, ui){
       exporting = false;
-      $placeholder = ui.placeholder;
-      $currentItem = ui.item;
-      startIndex = ui.item.index();
-      updateRect();
-      hideGhost();
+      $placeholder = ui.placeholder; $currentItem = ui.item; startIndex = ui.item.index();
+      updateRect(); hideGhost(); unfreezeHelper();
       if (orig.start) orig.start.call(this, e, ui);
     });
 
     $list.sortable('option','sort', function(e, ui){
       if (!rect) updateRect();
-      var cx = (e.clientX != null) ? e.clientX : (e.originalEvent && e.originalEvent.touches && e.originalEvent.touches[0] && e.originalEvent.touches[0].clientX) || 0;
-      var cy = (e.clientY != null) ? e.clientY : (e.originalEvent && e.originalEvent.touches && e.originalEvent.touches[0] && e.originalEvent.touches[0].clientY) || 0;
-      if (inside(cx, cy)){
+      var p = eventClientXY(e);
+      if (inside(p.x, p.y)){
         toReorderMode();
       } else {
-        toExportMode({clientX: cx, clientY: cy});
+        if (!exporting) toExportMode(p.x, p.y);
+        showGhostAt(p.x, p.y);
+        updateFrozenHelper();
+        keepPlaceholderPinned();
       }
-      if (exporting){ showGhostAt(cx, cy); keepPlaceholderPinned(); }
       if (orig.sort) orig.sort.call(this, e, ui);
     });
 
@@ -3508,10 +3532,9 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     });
 
     $list.sortable('option','out', function(e, ui){
-      // If we have client coordinates, move the ghost immediately
-      var cx = (e.clientX != null) ? e.clientX : (e.originalEvent && e.originalEvent.clientX) || 0;
-      var cy = (e.clientY != null) ? e.clientY : (e.originalEvent && e.originalEvent.clientY) || 0;
-      toExportMode({clientX: cx, clientY: cy});
+      var p = eventClientXY(e);
+      if (!rect) updateRect();
+      toExportMode(p.x, p.y);
       if (orig.out) orig.out.call(this, e, ui);
     });
 
@@ -3530,12 +3553,11 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   }
 
   function init(){
-    var $list = $('#setlist-list'); // update here if your setlist uses a different selector
+    var $list = $('#setlist-list'); // adjust if your setlist uses a different selector
     if ($list.length){ attach($list); }
   }
 
   init();
-  // Retry for late-mount UIs
   var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
 })();
 </script>
