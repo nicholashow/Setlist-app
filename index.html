@@ -1479,20 +1479,13 @@ body.simple-view-on .drag-handle { display:none !important; }
 body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 
-/* === SAFE PATCH: Simple View keeps emblems visible === */
+/* === SAFE: Simple View shows 4 emblems (index, star, genre, lightning/energy) === */
 body.simple-view-on .index-number,
 body.simple-view-on .favorite-star-container,
 body.simple-view-on .genre-dot,
 body.simple-view-on .energy-chip,
 body.simple-view-on .bolt,
 body.simple-view-on .lightning { display: inline-flex !important; }
-
-
-/* === SAFE PATCH: Sidebar scrim during open/close (prevents visible compression) === */
-#left-sidebar, #sidebar, .left-col { position: relative; overflow: hidden; }
-#sidebar-scrim { position:absolute; inset:0; background: rgba(0,0,0,0.6); opacity:0; pointer-events:none; transition: opacity 180ms ease; }
-.dark #sidebar-scrim { background: rgba(0,0,0,0.8); }
-.sidebar-animating #sidebar-scrim { opacity: 1; }
 
 </style>
 </head>
@@ -1593,9 +1586,8 @@ body.simple-view-on .lightning { display: inline-flex !important; }
                     <div id="controls-row">
                         <div id="filters-group">
                             <select id="sort-dropdown" class="p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select">
-                                <option value="name">Sort by Name</option>
+                                <option value="name">Sort By</option>
                                 <option value="artist">Sort by Artist</option>
-                                <option value="lastPlayed">Sort by Last Played</option>
                                 <option value="energy">Sort by Energy</option>
                             </select>
                             <div id="genre-filter-container" class="relative">
@@ -1681,7 +1673,7 @@ body.simple-view-on .lightning { display: inline-flex !important; }
                             <div class="relative">
                                 <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                                     <option value="custom">Custom Order</option>
-                                    <option value="name">Sort by Name</option>
+                                    <option value="name">Sort By</option>
                                     <option value="artist">Sort by Artist</option>
                                     <option value="genre">Sort by Genre</option>
                                     <option value="energy">Sort by Energy</option>
@@ -1714,9 +1706,8 @@ body.simple-view-on .lightning { display: inline-flex !important; }
                      <h2 class="text-xl font-bold">Favorite Songs</h2>
                     <div class="relative">
                         <select id="favorites-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
-                            <option value="name">Sort by Name</option>
+                            <option value="name">Sort By</option>
                             <option value="artist">Sort by Artist</option>
-                            <option value="lastPlayed">Sort by Last Played</option>
                             <option value="energy">Sort by Energy</option>
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
@@ -1735,9 +1726,8 @@ body.simple-view-on .lightning { display: inline-flex !important; }
                      <h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
                     <div class="relative">
                         <select id="genre-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
-                            <option value="name">Sort by Name</option>
+                            <option value="name">Sort By</option>
                             <option value="artist">Sort by Artist</option>
-                            <option value="lastPlayed">Sort by Last Played</option>
                             <option value="energy">Sort by Energy</option>
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
@@ -3832,156 +3822,40 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 <script>
 
-        // === SAFE PATCH: Upgrade existing Sort menu in place ===
+        // === SAFE: Sort By + Genre tie-in (no DOM moves) ===
         (function(){
-            function findSortTrigger(){
-                var cands = Array.from(document.querySelectorAll('button,[role="button"],.dropdown-trigger,.sort-trigger,.chip,.badge'));
-                for (var i=0;i<cands.length;i++){
-                    var t = (cands[i].textContent||'').trim().toLowerCase();
-                    if (t === 'sort by name' || t.startsWith('sort by')) return cands[i];
-                }
-                return null;
-            }
-            function findSortMenu(trigger){
-                if (!trigger) return null;
-                var sib = trigger.nextElementSibling;
-                if (sib && sib.matches('.menu,.dropdown,.dropdown-menu,[role="menu"],.select-menu')) return sib;
-                var id = trigger.getAttribute('aria-controls');
-                if (id && document.getElementById(id)) return document.getElementById(id);
-                return (trigger.parentElement||document).querySelector('.menu,.dropdown,.dropdown-menu,[role="menu"],.select-menu');
-            }
-            function findGenreBlock(){
-                // Try elements labeled "Select genre" or selects with name/id containing 'genre'
-                var byLabel = Array.from(document.querySelectorAll('label, .genre-filter, .control')).find(el => ((el.textContent||'').trim().toLowerCase().startsWith('select genre')));
-                if (byLabel) return byLabel;
-                var sel = document.querySelector('select[name*="genre"], select[id*="genre"]');
-                if (sel) return sel.closest('label') || sel.parentElement || sel;
-                // Sidebar list as a fallback (won't move this one)
-                return null;
-            }
-            function removeLastPlayed(menu){
-                var killed = false;
-                Array.from(menu.querySelectorAll('*')).forEach(function(el){
-                    var t=(el.textContent||'').trim().toLowerCase();
-                    if (t==='last played' || t==='lastplayed'){
-                        el.parentNode && el.parentNode.removeChild(el);
-                        killed = true;
-                    }
-                });
-                return killed;
-            }
-            function onOpen(trigger, menu){
-                // Label change
-                if (trigger) trigger.textContent = 'Sort By';
-                // Remove Last played if present
-                removeLastPlayed(menu);
-                // Move existing "Select genre" UI into the menu (non-destructive: we move on open, restore on close)
-                var gb = findGenreBlock();
-                if (!gb) return;
-                if (menu._genreOriginalParent) return; // already moved
-                menu._genreOriginalParent = gb.parentElement;
-                menu._genreNextSibling = gb.nextSibling;
-                var holder = menu.querySelector('#genre-infuse-holder');
-                if (!holder){
-                    holder = document.createElement('div');
-                    holder.id = 'genre-infuse-holder';
-                    holder.style.marginTop = '0.5rem';
-                    holder.style.padding = '0.5rem';
-                    holder.style.border = '1px solid var(--tw-prose-borders, rgba(229,231,235,1))';
-                    holder.style.borderRadius = '0.5rem';
-                    holder.style.maxHeight = '11rem';
-                    holder.style.overflow = 'auto';
-                    var title = document.createElement('div');
-                    title.textContent = 'Genres';
-                    title.className = 'text-xs mb-1 text-gray-500 dark:text-gray-400';
-                    holder.appendChild(title);
-                    menu.appendChild(holder);
-                }
-                holder.appendChild(gb);
-            }
-            function onClose(menu){
-                // Restore genre block if we moved it
-                if (menu && menu._genreOriginalParent){
-                    var gb = menu.querySelector('#genre-infuse-holder label, #genre-infuse-holder select, #genre-infuse-holder .genre-filter, #genre-infuse-holder .control');
-                    if (gb){
-                        if (menu._genreNextSibling){
-                            menu._genreOriginalParent.insertBefore(gb, menu._genreNextSibling);
-                        } else {
-                            menu._genreOriginalParent.appendChild(gb);
+            function init(){
+                var sel = document.getElementById('sort-dropdown');
+                var genreBtn = document.getElementById('genre-filter-button');
+                var genreMenu = document.getElementById('genre-filter-dropdown');
+                if (!sel || !genreBtn || !genreMenu) return;
+                function update(){
+                    if (sel.value === 'genre'){
+                        // ensure genre dropdown is visible / opened
+                        genreMenu.classList.remove('hidden');
+                        // If your UI uses a class toggle, simulate a click to open
+                        // but only if dropdown is currently hidden
+                        if (genreMenu.style.display === 'none' || window.getComputedStyle(genreMenu).display === 'none'){
+                            genreBtn.click();
                         }
+                    } else {
+                        // close if open
+                        if (!genreMenu.classList.contains('hidden')) {
+                            genreBtn.click();
+                        }
+                        genreMenu.classList.add('hidden');
                     }
-                    delete menu._genreOriginalParent;
-                    delete menu._genreNextSibling;
                 }
-            }
-            function init(){
-                var trigger = findSortTrigger();
-                var menu = findSortMenu(trigger);
-                if (!trigger || !menu) return;
-                // Detect open/close by visibility or class toggles
-                function isOpen(){
-                    var style = window.getComputedStyle(menu);
-                    if (style.display !== 'none' && style.visibility !== 'hidden') return true;
-                    if (!menu.classList.contains('hidden')) return true;
-                    return false;
-                }
-                function handleToggle(){
-                    try {
-                        if (isOpen()) onOpen(trigger, menu); else onClose(menu);
-                    } catch(e){ /* no-op */ }
-                }
-                // Hook clicks
-                trigger.addEventListener('click', function(e){
-                    // small delay to let the menu toggle happen
-                    setTimeout(handleToggle, 0);
-                    setTimeout(handleToggle, 120);
+                sel.addEventListener('change', function(){
+                    // Keep default "name" when none chosen via other means
+                    if (!sel.value) sel.value = 'name';
+                    update();
                 });
-                // Observe class changes on menu
-                var obs = new MutationObserver(function(){ handleToggle(); });
-                obs.observe(menu, {attributes:true, attributeFilter:['class','style']});
-                // First run
-                setTimeout(handleToggle, 200);
+                // On first load, keep default to "name"
+                if (!sel.value) sel.value = 'name';
+                update();
             }
-            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
-        })();
-
-</script>
-<script>
-
-        // === SAFE PATCH: Sidebar scrim toggled briefly on open/close ===
-        (function(){
-            function ensureScrim(sidebar){
-                if (!sidebar) return null;
-                var scrim = sidebar.querySelector('#sidebar-scrim');
-                if (!scrim){
-                    scrim = document.createElement('div');
-                    scrim.id = 'sidebar-scrim';
-                    sidebar.appendChild(scrim);
-                }
-                return scrim;
-            }
-            function arm(sidebar){
-                if (!sidebar) return;
-                ensureScrim(sidebar);
-                function pulse(){
-                    sidebar.classList.add('sidebar-animating');
-                    clearTimeout(sidebar._t);
-                    sidebar._t = setTimeout(function(){
-                        sidebar.classList.remove('sidebar-animating');
-                    }, 220);
-                }
-                var obs = new MutationObserver(function(){ pulse(); });
-                obs.observe(sidebar, {attributes:true, attributeFilter:['class','style']});
-                ['sidebar-toggle','toggle-sidebar'].forEach(function(id){
-                    var btn=document.getElementById(id); if(btn) btn.addEventListener('click', pulse);
-                });
-                var dataBtn=document.querySelector('[data-action="toggle-sidebar"]'); if (dataBtn) dataBtn.addEventListener('click', pulse);
-            }
-            function init(){
-                var sidebar = document.getElementById('left-sidebar') || document.getElementById('sidebar') || document.querySelector('.left-col');
-                arm(sidebar);
-            }
-            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
+            if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
         })();
 
 </script>
