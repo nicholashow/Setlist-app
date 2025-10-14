@@ -1451,7 +1451,6 @@
         #genre-name::placeholder, #venue-name::placeholder { text-align: center; }
         #genre-name, #venue-name { text-align: center; } /* helps iOS Safari */
 
-
 /* === Toggle switches (green when ON + knob slide) === */
 #simple-view-container input:checked + .toggle-track,
 #simple-view-container-setlist input:checked + .toggle-track,
@@ -1462,8 +1461,9 @@
 #simple-view-container input:checked + .toggle-track + .dot,
 #simple-view-container-setlist input:checked + .toggle-track + .dot,
 #dark-mode-container input:checked + .toggle-track + .dot { transform: translateX(20px); }
-
-
+/* Fallbacks in case markup differs slightly */
+#dark-mode-container input:checked + div { background-color:#22c55e !important; }
+#dark-mode-container input:checked + div + .dot { transform: translateX(20px); }
 /* === Simple View (name-only) === */
 body.simple-view-on .song-details-container,
 body.simple-view-on .favorite-star-container,
@@ -1477,7 +1477,6 @@ body.simple-view-on .artist-name,
 body.simple-view-on .file-actions,
 body.simple-view-on .drag-handle { display:none !important; }
 body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
 </style>
 </head>
 
@@ -1551,8 +1550,7 @@ body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:h
                     <div id="search-container">
                         <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..." />
                         <datalist id="search-results"></datalist>
-                        
-                        <div id="simple-view-container" class="absolute right-[120px] top-1/2 -translate-y-1/2">
+                                                <div id="simple-view-container" class="absolute right-[120px] top-1/2 -translate-y-1/2">
                             <label for="simple-view-toggle" class="flex items-center cursor-pointer">
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
                                 <div class="relative">
@@ -1562,7 +1560,6 @@ body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:h
                                 </div>
                             </label>
                         </div>
-
                         <div id="dark-mode-container">
                              <label for="dark-mode-toggle" class="flex items-center cursor-pointer ml-4">
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark</span>
@@ -1622,7 +1619,6 @@ body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:h
                         <button id="print-setlist" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">Print Setlist</button>
                         <div class="relative inline-block">
                             <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Share Setlist</button>
-
                         <div id="simple-view-container-setlist" class="flex items-center ml-2">
                             <label for="simple-view-toggle-setlist" class="flex items-center cursor-pointer">
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
@@ -1633,7 +1629,6 @@ body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:h
                                 </div>
                             </label>
                         </div>
-
                             <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
                                 <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
                                 <a href="#" id="share-email" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Email (text only)</a>
@@ -3743,7 +3738,6 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 <script>
-
         // === Simple View toggles: sync + body class ===
         (function(){
             function setSimple(on){
@@ -3751,6 +3745,13 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
                 var a=document.getElementById('simple-view-toggle');
                 var b=document.getElementById('simple-view-toggle-setlist');
                 if(a) a.checked=!!on; if(b) b.checked=!!on;
+                // Fallback visual: ensure green track and knob slide in case CSS fails
+                [a,b].forEach(function(inp){
+                    if(!inp) return;
+                    var track=inp.nextElementSibling, dot=track?track.nextElementSibling:null;
+                    if(track) track.style.backgroundColor = inp.checked ? '#22c55e' : '';
+                    if(dot) dot.style.transform = inp.checked ? 'translateX(20px)' : '';
+                });
             }
             function init(){
                 var a=document.getElementById('simple-view-toggle');
@@ -3793,26 +3794,41 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
             if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
         })();
 
-        // === Enforce exact empty state for All Songs ===
+        // === Hide header Simple view toggle when Setlist view is visible ===
         (function(){
-            var LINE1='No songs yet';
-            var LINE2='Drag & drop PDF files onto this page or use the Add files button';
-            function enforce(){
-                var ul=document.getElementById('master-list');
-                if(!ul) return;
-                var hasItems=ul.querySelector('li');
-                if(hasItems) return;
-                ul.innerHTML = '<li class="p-4 text-center text-gray-500 dark:text-gray-400">'+LINE1+'</li>' +
-                               '<li class="pb-6 -mt-2 text-center text-sm text-gray-400 dark:text-gray-500">'+LINE2+'</li>';
+            function update(){
+                var header=document.getElementById('simple-view-container');
+                var setlist=document.getElementById('setlist-view');
+                if(!header || !setlist) return;
+                var isSetlistVisible = !setlist.classList.contains('hidden');
+                header.style.display = isSetlistVisible ? 'none' : '';
             }
-            function start(){
-                var ul=document.getElementById('master-list');
-                if(ul){ new MutationObserver(enforce).observe(ul,{childList:true}); }
-                enforce(); setTimeout(enforce,50); setTimeout(enforce,200); setTimeout(enforce,600);
+            function init(){
+                update();
+                // Observe class changes on #setlist-view
+                var setlist=document.getElementById('setlist-view');
+                if(!setlist) return;
+                var obs = new MutationObserver(update);
+                obs.observe(setlist, {attributes:true, attributeFilter:['class']});
+                // Also hook obvious buttons
+                var homeBtn=document.getElementById('home-btn');
+                var navSetlists=document.getElementById('nav-setlists');
+                if(homeBtn) homeBtn.addEventListener('click', function(){ setTimeout(update, 0); setTimeout(update, 200); });
+                if(navSetlists) navSetlists.addEventListener('click', function(){ setTimeout(update, 0); setTimeout(update, 200); });
             }
-            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',start);}else{start();}
+            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
         })();
-
 </script>
+
+        <script>
+        (function(){
+            function dedupe(id){
+                var nodes=document.querySelectorAll('#'+id);
+                for(var i=1;i<nodes.length;i++){ var n=nodes[i]; n.parentNode && n.parentNode.removeChild(n); }
+            }
+            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){dedupe('simple-view-container');});}else{dedupe('simple-view-container');}
+        })();
+        </script>
+
 </body>
 </html>
