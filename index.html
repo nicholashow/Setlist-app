@@ -1451,6 +1451,41 @@
         #genre-name::placeholder, #venue-name::placeholder { text-align: center; }
         #genre-name, #venue-name { text-align: center; } /* helps iOS Safari */
 
+
+/* === Simple View (name-only, compact items) === */
+body.simple-view-on #master-list > li,
+body.simple-view-on #setlist-list > li,
+body.simple-view-on #favorites-list > li,
+body.simple-view-on #genre-song-list > li,
+body.simple-view-on #plays-list > li {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+body.simple-view-on .song-details-container,
+body.simple-view-on .favorite-star-container,
+body.simple-view-on .genre-dot,
+body.simple-view-on .index-number,
+body.simple-view-on .delete-btn,
+body.simple-view-on .song-meta,
+body.simple-view-on .energy-chip,
+body.simple-view-on .duration-chip,
+body.simple-view-on .artist-name,
+body.simple-view-on .file-actions,
+body.simple-view-on .drag-handle {
+  display: none !important;
+}
+
+body.simple-view-on .song-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 </style>
 </head>
 
@@ -1524,6 +1559,18 @@
                     <div id="search-container">
                         <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..." />
                         <datalist id="search-results"></datalist>
+                        
+                        <div id="simple-view-container" class="absolute right-[120px] top-1/2 -translate-y-1/2">
+                            <label for="simple-view-toggle" class="flex items-center cursor-pointer">
+                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="simple-view-toggle" class="sr-only">
+                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+
                         <div id="dark-mode-container">
                              <label for="dark-mode-toggle" class="flex items-center cursor-pointer ml-4">
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark</span>
@@ -1553,6 +1600,17 @@
                             <button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow btn-master" id="upload-master-btn">Add files</button>
                             <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow btn-master" id="delete-all-btn">Delete All</button>
                         </div>
+                        <div id="simple-view-container-setlist" class="flex items-center ml-2">
+                            <label for="simple-view-toggle-setlist" class="flex items-center cursor-pointer">
+                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
+                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+
                     </div>
                 </div>
 
@@ -1591,6 +1649,17 @@
                             </div>
                             <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
                         </div>
+                        <div id="simple-view-container-setlist" class="flex items-center ml-2">
+                            <label for="simple-view-toggle-setlist" class="flex items-center cursor-pointer">
+                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
+                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+
                     </div>
                 </div>
                 
@@ -1624,6 +1693,17 @@
                                 </div>
                             </div>
                         </div>
+                        <div id="simple-view-container-setlist" class="flex items-center ml-2">
+                            <label for="simple-view-toggle-setlist" class="flex items-center cursor-pointer">
+                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
+                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+
                     </div>
                 </div>
 
@@ -1656,6 +1736,17 @@
                             <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                 <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                         </div>
+                        <div id="simple-view-container-setlist" class="flex items-center ml-2">
+                            <label for="simple-view-toggle-setlist" class="flex items-center cursor-pointer">
+                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
+                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+
                     </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
@@ -1677,6 +1768,17 @@
                             <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                 <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                         </div>
+                        <div id="simple-view-container-setlist" class="flex items-center ml-2">
+                            <label for="simple-view-toggle-setlist" class="flex items-center cursor-pointer">
+                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
+                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+
                     </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
@@ -3690,6 +3792,56 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   function init(){ var $list=$('#setlist-list'); if($list.length) attach($list); }
   init(); var tries=0, t=setInterval(function(){ tries++; init(); if(tries>20) clearInterval(t); }, 200);
 })();
+</script>
+<script>
+
+        // === Simple View toggle (compact, name-only items) ===
+        (function(){
+            function setSimple(on){
+                document.body.classList.toggle('simple-view-on', !!on);
+                var a = document.getElementById('simple-view-toggle');
+                var b = document.getElementById('simple-view-toggle-setlist');
+                if (a) a.checked = !!on;
+                if (b) b.checked = !!on;
+            }
+            function init(){
+                var a = document.getElementById('simple-view-toggle');
+                var b = document.getElementById('simple-view-toggle-setlist');
+                if (a) a.addEventListener('change', function(){ setSimple(a.checked); });
+                if (b) b.addEventListener('change', function(){ setSimple(b.checked); });
+                setSimple(document.body.classList.contains('simple-view-on'));
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+
+        // === Empty state: ensure All Songs shows only "No songs yet" when empty ===
+        (function(){
+            function enforceSimpleEmpty(){
+                var ul = document.getElementById('master-list');
+                if (!ul) return;
+                // If UL has no <li> or contains a placeholder mentioning "No songs yet", force our single-line placeholder
+                var hasItems = ul.querySelector('li');
+                if (hasItems) return;
+                ul.innerHTML = '<li class="p-4 text-center text-gray-500 dark:text-gray-400">No songs yet</li>';
+            }
+            var obs = new MutationObserver(function(){ enforceSimpleEmpty(); });
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function(){
+                    var ul = document.getElementById('master-list');
+                    if (ul) obs.observe(ul, {childList:true, subtree:false});
+                    enforceSimpleEmpty();
+                });
+            } else {
+                var ul = document.getElementById('master-list');
+                if (ul) obs.observe(ul, {childList:true, subtree:false});
+                enforceSimpleEmpty();
+            }
+        })();
+
 </script>
 </body>
 </html>
