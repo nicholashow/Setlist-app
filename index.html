@@ -1477,6 +1477,35 @@ body.simple-view-on .artist-name,
 body.simple-view-on .file-actions,
 body.simple-view-on .drag-handle { display:none !important; }
 body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* === Simple View emblem visibility fix === */
+/* Keep index number, favorite star, genre dot, and lightning/energy visible in Simple View */
+body.simple-view-on .index-number,
+body.simple-view-on .favorite-star-container,
+body.simple-view-on .genre-dot,
+body.simple-view-on .energy-chip,
+body.simple-view-on .bolt,
+body.simple-view-on .lightning {
+  display: inline-flex !important;
+}
+
+
+/* === Sidebar cover to mask content during open/close animation === */
+#left-sidebar, #sidebar {
+  position: relative;
+  overflow: hidden;
+}
+#sidebar-cover {
+  position: absolute;
+  inset: 0;
+  background: var(--sidebar-cover-bg, rgba(24,24,27,1));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+}
+.dark #sidebar-cover { background: rgba(17,17,19,1); }
+.sidebar-transitioning #sidebar-cover { opacity: 1; }
+
 </style>
 </head>
 
@@ -1560,6 +1589,44 @@ body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:h
                                 </div>
                             </label>
                         </div>
+                        
+                        <!-- Unified Sort By control -->
+                        <div id="sortby-container" class="relative inline-block mr-2">
+                            <button id="sortby-button" class="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-sm">
+                                Sort By
+                            </button>
+                            <div id="sortby-menu" class="hidden absolute mt-2 w-56 rounded-xl shadow-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 z-50">
+                                <div class="p-2 space-y-1">
+                                    <label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-800">
+                                        <input type="checkbox" class="sortby-opt" value="name">
+                                        <span>Name</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-800">
+                                        <input type="checkbox" class="sortby-opt" value="artist">
+                                        <span>Artist</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-800">
+                                        <input type="checkbox" class="sortby-opt" value="energy">
+                                        <span>Energy</span>
+                                    </label>
+                                    <div class="px-2 pt-1 pb-2">
+                                        <label class="flex items-center gap-2 px-0 py-1">
+                                            <input type="checkbox" class="sortby-opt" value="genre" id="sortby-genre">
+                                            <span>Genre</span>
+                                        </label>
+                                        <div id="genre-submenu" class="hidden mt-2 max-h-44 overflow-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2">
+                                            <!-- genre options populated at runtime -->
+                                            <div class="text-xs text-gray-400 dark:text-gray-500">No genres yet</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-end gap-2 px-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                                        <button id="sortby-clear" class="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-800">Clear</button>
+                                        <button id="sortby-apply" class="text-xs px-2 py-1 rounded bg-blue-600 text-white">Apply</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div id="dark-mode-container">
                              <label for="dark-mode-toggle" class="flex items-center cursor-pointer ml-4">
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark</span>
@@ -3830,5 +3897,237 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
         })();
         </script>
 
+<script>
+
+        // Hide legacy sort controls by button text (non-destructive)
+        (function(){
+            function hideLegacySortButtons(){
+                var candidates = Array.from(document.querySelectorAll('button, .btn, .chip, .badge'));
+                candidates.forEach(function(el){
+                    var t = (el.textContent||'').trim().toLowerCase();
+                    if (t === 'sort by name' || t === 'sort by genre'){
+                        el.style.display = 'none';
+                    }
+                });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', hideLegacySortButtons);
+            } else {
+                hideLegacySortButtons();
+            }
+        })();
+
+</script>
+<script>
+
+        // Unified Sort By (multi-criteria) + Genre sub-filter
+        (function(){
+            var selectedSorts = []; // e.g., ['name','artist','energy','genre']
+            var selectedGenres = new Set(); // genre names/keys
+
+            function getLiData(li){
+                function qs(sel){ return li.querySelector(sel); }
+                var nameEl   = qs('.song-name');
+                var artistEl = qs('.artist-name');
+                var energyEl = qs('.energy-chip, .energy, .bolt, .lightning');
+                var genreEl  = qs('.genre-dot, [data-genre]');
+                var genre = '';
+                if (genreEl){
+                    genre = genreEl.getAttribute('data-genre') || genreEl.getAttribute('title') || genreEl.textContent || '';
+                }
+                return {
+                    name:   (nameEl?nameEl.textContent:'').trim().toLowerCase(),
+                    artist: (artistEl?artistEl.textContent:'').trim().toLowerCase(),
+                    energy: parseInt((energyEl?energyEl.textContent:'' ).replace(/[^0-9]/g,'')) || 0,
+                    genre:  genre.trim().toLowerCase()
+                };
+            }
+
+            function compareBy(fields){
+                return function(a,b){
+                    var da = getLiData(a), db = getLiData(b);
+                    for (var i=0;i<fields.length;i++){
+                        var f = fields[i];
+                        var va = da[f], vb = db[f];
+                        if (f === 'energy'){ // numeric desc? keep asc for now
+                            if (va !== vb) return va - vb;
+                        }else{
+                            if (va < vb) return -1;
+                            if (va > vb) return 1;
+                        }
+                    }
+                    return 0;
+                };
+            }
+
+            function applySortAndFilter(){
+                var ul = document.getElementById('master-list');
+                if (!ul) return;
+                var items = Array.from(ul.querySelectorAll(':scope > li'));
+                // Filter by selected genres (if any)
+                if (selectedGenres.size > 0){
+                    items.forEach(function(li){
+                        var d = getLiData(li);
+                        li.style.display = selectedGenres.has(d.genre) ? '' : 'none';
+                    });
+                } else {
+                    items.forEach(function(li){ li.style.display = ''; });
+                }
+                // Sort visible items by selected fields (stable by re-append order)
+                var fields = selectedSorts.slice(); // in the order selected
+                if (fields.length > 0){
+                    var visible = items.filter(li => li.style.display !== 'none');
+                    visible.sort(compareBy(fields));
+                    visible.forEach(li => ul.appendChild(li));
+                }
+            }
+
+            function populateGenres(){
+                var box = document.getElementById('genre-submenu');
+                if (!box) return;
+                // Collect genres from existing UI (sidebar or tags on list items)
+                var genres = new Set();
+                var list = document.getElementById('master-list');
+                if (list){
+                    Array.from(list.querySelectorAll('.genre-dot,[data-genre]')).forEach(function(el){
+                        var g = el.getAttribute('data-genre') || el.getAttribute('title') || el.textContent;
+                        if (g) genres.add(g.trim());
+                    });
+                }
+                // Fallback: try sidebar genres
+                var side = document.getElementById('genres-list') || document.getElementById('sidebar-genres');
+                if (side){
+                    Array.from(side.querySelectorAll('[data-genre], .genre-item, li')).forEach(function(el){
+                        var g = el.getAttribute('data-genre') || el.textContent;
+                        if (g) genres.add(g.trim());
+                    });
+                }
+                box.innerHTML = '';
+                if (genres.size === 0){
+                    box.innerHTML = '<div class="text-xs text-gray-400 dark:text-gray-500 px-1 py-1">No genres yet</div>';
+                    return;
+                }
+                genres = Array.from(genres).sort((a,b)=>a.localeCompare(b));
+                genres.forEach(function(g){
+                    var id = 'genre-opt-' + g.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+                    var row = document.createElement('label');
+                    row.className = 'flex items-center gap-2 px-1 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-800';
+                    row.innerHTML = '<input type="checkbox" class="genre-opt" value="'+g+'"><span>'+g+'</span>';
+                    box.appendChild(row);
+                });
+            }
+
+            function initSortUI(){
+                var btn = document.getElementById('sortby-button');
+                var menu = document.getElementById('sortby-menu');
+                var chkGenre = document.getElementById('sortby-genre');
+                if (!btn || !menu) return;
+
+                btn.addEventListener('click', function(e){
+                    e.stopPropagation();
+                    menu.classList.toggle('hidden');
+                    if (!menu.classList.contains('hidden')){
+                        populateGenres();
+                    }
+                });
+                document.addEventListener('click', function(){ menu.classList.add('hidden'); });
+
+                // Toggle genre submenu visibility when the genre checkbox is toggled
+                function updateGenreSub(){
+                    var sub = document.getElementById('genre-submenu');
+                    if (!sub) return;
+                    sub.classList.toggle('hidden', !chkGenre.checked);
+                }
+                if (chkGenre){
+                    chkGenre.addEventListener('change', updateGenreSub);
+                }
+
+                // Clear & Apply
+                var clearBtn = document.getElementById('sortby-clear');
+                var applyBtn = document.getElementById('sortby-apply');
+                if (clearBtn) clearBtn.addEventListener('click', function(e){
+                    e.preventDefault();
+                    Array.from(menu.querySelectorAll('.sortby-opt')).forEach(cb => cb.checked = false);
+                    Array.from(menu.querySelectorAll('.genre-opt')).forEach(cb => cb.checked = false);
+                    selectedSorts = [];
+                    selectedGenres.clear();
+                    applySortAndFilter();
+                });
+                if (applyBtn) applyBtn.addEventListener('click', function(e){
+                    e.preventDefault();
+                    selectedSorts = Array.from(menu.querySelectorAll('.sortby-opt'))
+                        .filter(cb => cb.checked)
+                        .map(cb => cb.value);
+                    selectedGenres.clear();
+                    Array.from(menu.querySelectorAll('.genre-opt'))
+                        .filter(cb => cb.checked)
+                        .forEach(cb => selectedGenres.add(cb.value.trim().toLowerCase()));
+                    menu.classList.add('hidden');
+                    applySortAndFilter();
+                });
+
+                // Keep sorting reactive if list re-renders
+                var ul = document.getElementById('master-list');
+                if (ul){
+                    new MutationObserver(function(){ applySortAndFilter(); })
+                        .observe(ul,{childList:true});
+                }
+            }
+
+            function init(){
+                initSortUI();
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+
+</script>
+<script>
+
+        // Sidebar cover overlay: prevents visible compression/expansion artifacts
+        (function(){
+            function ensureCover(sidebar){
+                if (!sidebar) return;
+                if (!sidebar.querySelector('#sidebar-cover')){
+                    var cover = document.createElement('div');
+                    cover.id = 'sidebar-cover';
+                    sidebar.appendChild(cover);
+                }
+            }
+            function setup(sidebar, toggle){
+                ensureCover(sidebar);
+                var ro = new (window.ResizeObserver||function(cb){return {observe:function(){}, disconnect:function(){}}})(function(entries){
+                    entries.forEach(function(){
+                        // When width is changing, add class to show cover
+                        sidebar.classList.add('sidebar-transitioning');
+                        clearTimeout(sidebar._coverT);
+                        sidebar._coverT = setTimeout(function(){ sidebar.classList.remove('sidebar-transitioning'); }, 220);
+                    });
+                });
+                try{ ro.observe(sidebar); }catch(e){}
+                if (toggle){
+                    toggle.addEventListener('click', function(){
+                        sidebar.classList.add('sidebar-transitioning');
+                        clearTimeout(sidebar._coverT);
+                        sidebar._coverT = setTimeout(function(){ sidebar.classList.remove('sidebar-transitioning'); }, 220);
+                    });
+                }
+            }
+            function init(){
+                var sidebar = document.getElementById('sidebar') || document.getElementById('left-sidebar');
+                var toggle = document.getElementById('toggle-sidebar') || document.getElementById('sidebar-toggle') || document.querySelector('[data-action="toggle-sidebar"]');
+                if (sidebar){ setup(sidebar, toggle); }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+
+</script>
 </body>
 </html>
