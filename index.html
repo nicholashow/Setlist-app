@@ -1553,6 +1553,38 @@ body.simple-view-on .lightning { display: inline-flex !important; }
 .dark .left-col::after { background: rgba(0,0,0,1); }
 .left-col.is-animating::after { opacity: 1; }
 
+
+/* === PATCH: Sidebar OPEN animation refinement === */
+.left-col { position: relative; overflow: hidden; }
+.left-col.is-opening::after {
+  content: ""; position: absolute; inset: 0;
+  background: rgba(17,24,39,1); /* gray-900 */
+  opacity: 0.6; pointer-events: none;
+}
+.dark .left-col.is-opening::after { background: rgba(0,0,0,1); opacity: 0.65; }
+.left-col.is-opening > * { opacity: 0; }
+.left-col.is-opening.ready > * { opacity: 1; transition: opacity 200ms ease; }
+
+
+/* === PATCH: Simple View 40% smaller height for items (no width change) === */
+body.simple-view-on #master-list > li,
+body.simple-view-on #setlist-list > li,
+body.simple-view-on #favorites-list > li,
+body.simple-view-on #genre-song-list > li,
+body.simple-view-on #plays-list > li {
+  padding-top: 0.25rem !important;
+  padding-bottom: 0.25rem !important;
+  margin-top: 0.125rem;
+  margin-bottom: 0.125rem;
+}
+/* keep emblem visibility */
+body.simple-view-on .index-number,
+body.simple-view-on .favorite-star-container,
+body.simple-view-on .genre-dot,
+body.simple-view-on .energy-chip,
+body.simple-view-on .bolt,
+body.simple-view-on .lightning { display: inline-flex !important; }
+
 </style>
 </head>
 
@@ -4150,6 +4182,77 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
                 });
             }
             if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', arm); } else { arm(); }
+        })();
+
+</script>
+<script>
+
+        // === PATCH: Detect "opening" (width increase) and fade content in after slide ===
+        (function(){
+            function arm(){
+                var sb = document.querySelector('.left-col');
+                if (!sb) return;
+                var lastW = sb.getBoundingClientRect().width;
+                var ro = new ResizeObserver(function(){
+                    var w = sb.getBoundingClientRect().width;
+                    var delta = w - lastW;
+                    if (Math.abs(delta) < 1) return;
+                    if (delta > 0){ // opening
+                        sb.classList.add('is-opening');
+                        sb.classList.remove('ready');
+                        clearTimeout(sb._openT1);
+                        clearTimeout(sb._openT2);
+                        // give width time to expand, then reveal
+                        sb._openT1 = setTimeout(function(){ sb.classList.add('ready'); }, 140);
+                        sb._openT2 = setTimeout(function(){ sb.classList.remove('is-opening'); sb.classList.remove('ready'); }, 400);
+                    }
+                    lastW = w;
+                });
+                try{ ro.observe(sb); }catch(e){}
+            }
+            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', arm); } else { arm(); }
+        })();
+
+</script>
+<script>
+
+        // === PATCH: Show genres under Sort By when selecting Genre (holder already created in prior patch) ===
+        (function(){
+            function el(id){ return document.getElementById(id); }
+            function ensureHolder(){
+                var filters = el('filters-group'); if (!filters) return null;
+                var holder = el('sort-genre-holder');
+                if (!holder){
+                    holder = document.createElement('div');
+                    holder.id = 'sort-genre-holder';
+                    var inner = document.createElement('div');
+                    inner.className = 'infused';
+                    var title = document.createElement('div');
+                    title.className = 'title'; title.textContent = 'Genres';
+                    var slot = document.createElement('div'); slot.id = 'sort-genre-slot';
+                    inner.appendChild(title); inner.appendChild(slot); holder.appendChild(inner);
+                    filters.appendChild(holder);
+                }
+                return holder;
+            }
+            function wire(){
+                var select = el('sort-dropdown');
+                var holder = ensureHolder();
+                var dropdown = el('genre-filter-dropdown');
+                var external = el('genre-filter-container');
+                if (!select || !holder || !dropdown) return;
+                // Mount dropdown into slot permanently; hide external container if present
+                var slot = el('sort-genre-slot'); if (slot && !slot.contains(dropdown)) slot.appendChild(dropdown);
+                if (external) external.style.display='none';
+                function update(){
+                    if (select.value === 'genre'){ holder.style.display=''; dropdown.classList.remove('hidden'); }
+                    else { holder.style.display='none'; dropdown.classList.add('hidden'); }
+                }
+                select.addEventListener('change', update);
+                if (!select.value) select.value='name';
+                update();
+            }
+            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', wire); } else { wire(); }
         })();
 
 </script>
