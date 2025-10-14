@@ -1478,6 +1478,28 @@ body.simple-view-on .file-actions,
 body.simple-view-on .drag-handle { display:none !important; }
 body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
+
+/* === PATCH: Simple View must keep 4 emblems visible === */
+body.simple-view-on .index-number,
+body.simple-view-on .favorite-star-container,
+body.simple-view-on .genre-dot,
+body.simple-view-on .energy-chip,
+body.simple-view-on .bolt,
+body.simple-view-on .lightning { display: inline-flex !important; }
+
+
+/* === PATCH: Sidebar refined open/close animation (curtain + fade to avoid compress/expand) === */
+.left-col { position: relative; overflow: hidden; }
+.left-col::after {
+  content: ""; position: absolute; inset: 0; background: #1f2937; opacity: 0;
+  transform: translateX(-12%); transition: transform 280ms ease, opacity 180ms ease;
+  pointer-events: none;
+}
+.dark .left-col::after { background: #000; }
+.left-col.sidebar-transitioning::after { opacity: 1; transform: translateX(0); }
+.left-col.sidebar-transitioning .left-col-main-content,
+.left-col.sidebar-transitioning .stats-container { filter: blur(1px); opacity: 0.0; transition: opacity 160ms ease; }
+
 </style>
 </head>
 
@@ -1577,9 +1599,8 @@ body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:h
                     <div id="controls-row">
                         <div id="filters-group">
                             <select id="sort-dropdown" class="p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select">
-                                <option value="name">Sort by Name</option>
+                                <option value="name">Sort By</option>
                                 <option value="artist">Sort by Artist</option>
-                                <option value="lastPlayed">Sort by Last Played</option>
                                 <option value="energy">Sort by Energy</option>
                             </select>
                             <div id="genre-filter-container" class="relative">
@@ -1665,7 +1686,7 @@ body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:h
                             <div class="relative">
                                 <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                                     <option value="custom">Custom Order</option>
-                                    <option value="name">Sort by Name</option>
+                                    <option value="name">Sort By</option>
                                     <option value="artist">Sort by Artist</option>
                                     <option value="genre">Sort by Genre</option>
                                     <option value="energy">Sort by Energy</option>
@@ -1698,9 +1719,8 @@ body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:h
                      <h2 class="text-xl font-bold">Favorite Songs</h2>
                     <div class="relative">
                         <select id="favorites-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
-                            <option value="name">Sort by Name</option>
+                            <option value="name">Sort By</option>
                             <option value="artist">Sort by Artist</option>
-                            <option value="lastPlayed">Sort by Last Played</option>
                             <option value="energy">Sort by Energy</option>
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
@@ -1719,9 +1739,8 @@ body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:h
                      <h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
                     <div class="relative">
                         <select id="genre-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
-                            <option value="name">Sort by Name</option>
+                            <option value="name">Sort By</option>
                             <option value="artist">Sort by Artist</option>
-                            <option value="lastPlayed">Sort by Last Played</option>
                             <option value="energy">Sort by Energy</option>
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
@@ -3811,6 +3830,182 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
                 enforce(); setTimeout(enforce,50); setTimeout(enforce,200); setTimeout(enforce,600);
             }
             if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',start);}else{start();}
+        })();
+
+</script>
+<script>
+
+        // === PATCH: Sidebar transition helper (adds a 'sidebar-transitioning' class briefly) ===
+        (function(){
+            function arm(sidebar){
+                if (!sidebar) return;
+                function pulse(){
+                    sidebar.classList.add('sidebar-transitioning');
+                    clearTimeout(sidebar._st); sidebar._st = setTimeout(function(){
+                        sidebar.classList.remove('sidebar-transitioning');
+                    }, 260);
+                }
+                // Mutation on class/style -> pulse
+                var obs = new MutationObserver(function(){ pulse(); });
+                obs.observe(sidebar, {attributes:true, attributeFilter:['class','style']});
+                // Hook common toggle buttons
+                var toggles = [
+                    document.getElementById('sidebar-toggle'),
+                    document.getElementById('toggle-sidebar'),
+                    document.querySelector('[data-action="toggle-sidebar"]')
+                ].filter(Boolean);
+                toggles.forEach(function(btn){ btn.addEventListener('click', pulse); });
+            }
+            function init(){
+                arm(document.querySelector('.left-col'));
+            }
+            if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
+        })();
+
+</script>
+<script>
+
+        // === PATCH: Reuse existing Sort dropdown as "Sort By" multi-select with Genre infusion ===
+        (function(){
+            function el(id){ return document.getElementById(id); }
+            function create(tag, cls){ var e=document.createElement(tag); if(cls) e.className=cls; return e; }
+            function getGenres(){
+                var set = new Set();
+                var list = el('master-list');
+                if (list){
+                    list.querySelectorAll('.genre-dot,[data-genre]').forEach(function(g){
+                        var v = g.getAttribute('data-genre') || g.getAttribute('title') || (g.textContent||'');
+                        if (v) set.add(v.trim());
+                    });
+                }
+                var side = el('genre-list');
+                if (side){
+                    side.querySelectorAll('.genre-name, [data-genre], li').forEach(function(n){
+                        var v = n.getAttribute && (n.getAttribute('data-genre') || '') || n.textContent || '';
+                        if (v) set.add(v.trim());
+                    });
+                }
+                return Array.from(set).filter(Boolean).sort(function(a,b){return a.localeCompare(b);});
+            }
+            function ensureUI(){
+                var select = el('sort-dropdown');
+                if (!select || select._upgraded) return;
+                select._upgraded = true;
+                // Hide the old "Select Genres" trigger (we will integrate genres)
+                var genreBtn = el('genre-filter-button');
+                if (genreBtn) genreBtn.style.display='none';
+                // Build overlay button matching the select spot
+                var wrapper = select.parentElement || select;
+                wrapper.style.position = 'relative';
+                var btn = create('button', 'w-full text-left p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200');
+                btn.type='button'; btn.id='sortby-overlay-btn'; btn.textContent='Sort By';
+                btn.style.position='absolute'; btn.style.inset='0'; btn.style.zIndex='10';
+                wrapper.appendChild(btn);
+                // Menu
+                var menu = create('div', 'hidden absolute mt-1 w-64 bg-white rounded-xl shadow-lg z-50 dark:bg-gray-800 dark:border dark:border-gray-700');
+                menu.id='sortby-overlay-menu';
+                menu.style.left='0'; menu.style.top='100%';
+                menu.innerHTML = '' +
+                  '<div class="p-2 space-y-1">' +
+                  ' <label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700"><input type="checkbox" class="sortby-opt" value="name" checked><span>Name</span></label>' +
+                  ' <label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700"><input type="checkbox" class="sortby-opt" value="artist"><span>Artist</span></label>' +
+                  ' <label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700"><input type="checkbox" class="sortby-opt" value="energy"><span>Energy</span></label>' +
+                  ' <div class="px-2 pt-1 pb-2">' +
+                  '   <label class="flex items-center gap-2 px-0 py-1"><input type="checkbox" class="sortby-opt" value="genre" id="sortby-genre"><span>Genre</span></label>' +
+                  '   <div id="genre-submenu" class="hidden mt-2 max-h-44 overflow-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2 text-sm"></div>' +
+                  ' </div>' +
+                  ' <div class="flex justify-end gap-2 px-2 pt-2 border-t border-gray-100 dark:border-gray-700">' +
+                  '   <button id="sortby-clear" class="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700">Clear</button>' +
+                  '   <button id="sortby-apply" class="text-xs px-2 py-1 rounded bg-blue-600 text-white">Apply</button>' +
+                  ' </div>' +
+                  '</div>';
+                wrapper.appendChild(menu);
+                // Open/close
+                btn.addEventListener('click', function(e){
+                    e.stopPropagation();
+                    menu.classList.toggle('hidden');
+                    if (!menu.classList.contains('hidden')) {
+                        // populate genres each open
+                        var box = el('genre-submenu'); if (box){ box.innerHTML=''; var arr=getGenres();
+                            if (arr.length===0){ box.innerHTML='<div class="text-xs text-gray-400 dark:text-gray-500 px-1 py-1">No genres yet</div>'; }
+                            else { arr.forEach(function(g){ var row=create('label','flex items-center gap-2 px-1 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-800'); row.innerHTML='<input type="checkbox" class="genre-opt" value="'+g+'"><span>'+g+'</span>'; box.appendChild(row); }); }
+                        }
+                    }
+                });
+                document.addEventListener('click', function(){ menu.classList.add('hidden'); });
+                // Toggle genre submenu visibility
+                menu.addEventListener('change', function(e){
+                    var chk = el('sortby-genre'), sub = el('genre-submenu'); if (!chk || !sub) return;
+                    sub.classList.toggle('hidden', !chk.checked);
+                });
+                // Sorting/filtering logic
+                var selectedSorts = ['name'];
+                var selectedGenres = new Set();
+                function getLiData(li){
+                    function qs(s){ return li.querySelector(s); }
+                    var nameEl=qs('.song-name'), artistEl=qs('.artist-name');
+                    var energyEl=qs('.energy-chip, .energy, .bolt, .lightning');
+                    var genreEl=qs('.genre-dot,[data-genre]');
+                    var genre=''; if (genreEl) genre = genreEl.getAttribute('data-genre') || genreEl.getAttribute('title') || (genreEl.textContent||'');
+                    return {
+                        name:(nameEl?nameEl.textContent:'').trim().toLowerCase(),
+                        artist:(artistEl?artistEl.textContent:'').trim().toLowerCase(),
+                        energy: parseInt((energyEl?energyEl.textContent:'').replace(/[^0-9]/g,''))||0,
+                        genre:(genre||'').trim().toLowerCase()
+                    };
+                }
+                function compareBy(fields){
+                    return function(a,b){
+                        var da=getLiData(a), db=getLiData(b);
+                        for (var i=0;i<fields.length;i++){
+                            var f=fields[i], va=da[f], vb=db[f];
+                            if (f==='energy'){ if (va!==vb) return va - vb; }
+                            else { if (va<vb) return -1; if (va>vb) return 1; }
+                        }
+                        return 0;
+                    };
+                }
+                function applySortAndFilter(){
+                    var ul = document.getElementById('master-list'); if (!ul) return;
+                    var items = Array.from(ul.children);
+                    // Filter by genres if any
+                    if (selectedGenres.size>0){
+                        items.forEach(function(li){
+                            var d=getLiData(li); li.style.display = selectedGenres.has(d.genre) ? '' : 'none';
+                        });
+                    } else { items.forEach(function(li){ li.style.display=''; }); }
+                    // Sort visible items
+                    var fields = selectedSorts.slice();
+                    if (fields.length>0){
+                        var visible = items.filter(function(li){ return li.style.display !== 'none'; });
+                        visible.sort(compareBy(fields));
+                        visible.forEach(function(li){ ul.appendChild(li); });
+                    }
+                    // Keep native select in-sync (first sort as value for downstream code)
+                    select.value = (selectedSorts[0] || 'name');
+                }
+                // Buttons
+                menu.querySelector('#sortby-clear').addEventListener('click', function(e){
+                    e.preventDefault();
+                    menu.querySelectorAll('.sortby-opt').forEach(function(cb){ cb.checked=false; });
+                    menu.querySelectorAll('.genre-opt').forEach(function(cb){ cb.checked=false; });
+                    selectedSorts=['name']; selectedGenres.clear();
+                    // Ensure Name checked visibly
+                    var nameCb = menu.querySelector('input.sortby-opt[value="name"]'); if (nameCb) nameCb.checked=true;
+                    applySortAndFilter();
+                });
+                menu.querySelector('#sortby-apply').addEventListener('click', function(e){
+                    e.preventDefault();
+                    selectedSorts = Array.from(menu.querySelectorAll('.sortby-opt')).filter(cb=>cb.checked).map(cb=>cb.value);
+                    selectedGenres.clear();
+                    Array.from(menu.querySelectorAll('.genre-opt')).filter(cb=>cb.checked).forEach(cb=>selectedGenres.add(cb.value.trim().toLowerCase()));
+                    if (selectedSorts.length===0){ selectedSorts=['name']; } // default
+                    applySortAndFilter();
+                    menu.classList.add('hidden');
+                });
+            }
+            function init(){ ensureUI(); }
+            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
         })();
 
 </script>
