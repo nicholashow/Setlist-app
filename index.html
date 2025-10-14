@@ -1487,6 +1487,30 @@ body.simple-view-on .energy-chip,
 body.simple-view-on .bolt,
 body.simple-view-on .lightning { display: inline-flex !important; }
 
+
+/* === PATCH: Genre infusion under Sort By select === */
+#filters-group { position: relative; }
+#sort-genre-holder {
+  display: none;
+  position: relative;
+  margin-top: 0.5rem;
+}
+#sort-genre-holder .infused {
+  border: 1px solid var(--tw-prose-borders, rgba(229,231,235,1));
+  border-radius: 0.5rem;
+  max-height: 11rem;
+  overflow: auto;
+  padding: 0.5rem;
+  background: var(--tw-bg, #fff);
+}
+.dark #sort-genre-holder .infused { background: rgb(31, 41, 55); border-color: rgba(55,65,81,1); }
+#sort-genre-holder .title {
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+  color: rgba(107,114,128,1);
+}
+.dark #sort-genre-holder .title { color: rgba(156,163,175,1); }
+
 </style>
 </head>
 
@@ -3856,6 +3880,104 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
                 update();
             }
             if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
+        })();
+
+</script>
+<script>
+
+        // === PATCH: Integrate "Select Genres" beneath Sort By select ===
+        (function(){
+            function el(id){ return document.getElementById(id); }
+            function ensureHolder(){
+                var filters = el('filters-group');
+                if (!filters) return null;
+                var holder = el('sort-genre-holder');
+                if (!holder){
+                    holder = document.createElement('div');
+                    holder.id = 'sort-genre-holder';
+                    var inner = document.createElement('div');
+                    inner.className = 'infused';
+                    var title = document.createElement('div');
+                    title.className = 'title';
+                    title.textContent = 'Genres';
+                    inner.appendChild(title);
+                    var slot = document.createElement('div');
+                    slot.id = 'sort-genre-slot';
+                    inner.appendChild(slot);
+                    holder.appendChild(inner);
+                    filters.appendChild(holder);
+                }
+                return holder;
+            }
+            function integrate(){
+                var select = el('sort-dropdown');
+                var holder = ensureHolder();
+                var btn = el('genre-filter-button');
+                var dropdown = el('genre-filter-dropdown');
+                var container = el('genre-filter-container');
+                if (!select || !holder || !btn || !dropdown || !container) return;
+                // rename first option to "Sort By"; remove lastPlayed
+                var optName = select.querySelector('option[value="name"]');
+                if (optName) optName.textContent = 'Sort By';
+                var last = select.querySelector('option[value="lastPlayed"]');
+                if (last) last.parentNode.removeChild(last);
+
+                function showInfused(){
+                    // Move dropdown into holder slot
+                    var slot = el('sort-genre-slot');
+                    if (!slot) return;
+                    if (!slot.contains(dropdown)){
+                        slot.appendChild(dropdown);
+                    }
+                    // Reveal holder
+                    holder.style.display = '';
+                    // Hide the right-side button to prevent layout shift
+                    container.style.display = 'none';
+                    // Ensure dropdown is visible
+                    dropdown.classList.remove('hidden');
+                }
+                function hideInfused(){
+                    // Move back dropdown to original container
+                    if (!container.contains(dropdown)){
+                        container.appendChild(dropdown);
+                    }
+                    // Restore right-side button
+                    container.style.display = '';
+                    // Hide holder
+                    holder.style.display = 'none';
+                }
+                function update(){
+                    if (select.value === 'genre'){ showInfused(); }
+                    else { hideInfused(); }
+                }
+                // Bind
+                select.addEventListener('change', update);
+                // Initial
+                if (!select.value) select.value = 'name';
+                update();
+            }
+            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', integrate); } else { integrate(); }
+        })();
+
+</script>
+<script>
+
+        // === PATCH: Ensure setlist Simple View toggle is right of Share Setlist button ===
+        (function(){
+            function init(){
+                var toggle = document.getElementById('simple-view-container-setlist');
+                var share = document.getElementById('share-setlist-btn');
+                if (!toggle || !share) return;
+                // Move the whole toggle container immediately after the share button
+                if (share.nextSibling !== toggle){
+                    share.parentNode.insertBefore(toggle, share.nextSibling);
+                }
+                // Keep it inline without pushing other controls
+                toggle.style.display = 'inline-flex';
+                toggle.style.marginLeft = '0.5rem';
+                toggle.style.verticalAlign = 'middle';
+            }
+            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
         })();
 
 </script>
