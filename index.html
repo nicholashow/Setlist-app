@@ -1486,6 +1486,29 @@ body.simple-view-on .song-name {
   text-overflow: ellipsis;
 }
 
+
+/* === Toggle switches: checked (green) and draggable knob behavior === */
+#simple-view-container input:checked + .toggle-track,
+#simple-view-container-setlist input:checked + .toggle-track,
+#dark-mode-container input:checked + .toggle-track {
+  background-color: #22c55e !important; /* green-500 */
+}
+#simple-view-container input + .toggle-track + .dot,
+#simple-view-container-setlist input + .toggle-track + .dot,
+#dark-mode-container input + .toggle-track + .dot {
+  transition: transform 0.2s ease;
+}
+#simple-view-container input:checked + .toggle-track + .dot,
+#simple-view-container-setlist input:checked + .toggle-track + .dot,
+#dark-mode-container input:checked + .toggle-track + .dot {
+  transform: translateX(20px);
+}
+/* Make the whole label respond to clicks/drags */
+#simple-view-container label, #simple-view-container-setlist label, #dark-mode-container label {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 </style>
 </head>
 
@@ -1565,7 +1588,7 @@ body.simple-view-on .song-name {
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
                                 <div class="relative">
                                     <input type="checkbox" id="simple-view-toggle" class="sr-only">
-                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
                                     <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
                                 </div>
                             </label>
@@ -1576,7 +1599,7 @@ body.simple-view-on .song-name {
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark</span>
                                 <div class="relative">
                                     <input type="checkbox" id="dark-mode-toggle" class="dark-mode-toggle sr-only">
-                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
                                     <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
                                 </div>
                             </label>
@@ -1605,7 +1628,7 @@ body.simple-view-on .song-name {
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
                                 <div class="relative">
                                     <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
-                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
                                     <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
                                 </div>
                             </label>
@@ -1654,7 +1677,7 @@ body.simple-view-on .song-name {
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
                                 <div class="relative">
                                     <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
-                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
                                     <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
                                 </div>
                             </label>
@@ -1698,7 +1721,7 @@ body.simple-view-on .song-name {
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
                                 <div class="relative">
                                     <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
-                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
                                     <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
                                 </div>
                             </label>
@@ -1741,7 +1764,7 @@ body.simple-view-on .song-name {
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
                                 <div class="relative">
                                     <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
-                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
                                     <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
                                 </div>
                             </label>
@@ -1773,7 +1796,7 @@ body.simple-view-on .song-name {
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
                                 <div class="relative">
                                     <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
-                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
                                     <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
                                 </div>
                             </label>
@@ -3839,6 +3862,116 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
                 var ul = document.getElementById('master-list');
                 if (ul) obs.observe(ul, {childList:true, subtree:false});
                 enforceSimpleEmpty();
+            }
+        })();
+
+</script>
+<script>
+
+        // === De-duplicate any accidental duplicate Simple view containers ===
+        (function(){
+            function dedupeById(id){
+                var nodes = document.querySelectorAll('#'+id);
+                if (nodes.length > 1){
+                    for (var i=1; i<nodes.length; i++){ nodes[i].parentNode && nodes[i].parentNode.removeChild(nodes[i]); }
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function(){ dedupeById('simple-view-container'); dedupeById('simple-view-container-setlist'); });
+            } else {
+                dedupeById('simple-view-container'); dedupeById('simple-view-container-setlist');
+            }
+        })();
+
+</script>
+<script>
+
+        // === Drag-to-toggle behavior for switches ===
+        (function(){
+            function makeDraggableToggle(input){
+                if (!input) return;
+                var container = input.parentElement; // the wrapper with track + dot following input
+                var track = input.nextElementSibling;
+                var dot = track ? track.nextElementSibling : null;
+                var dragging = false, startX = 0, startChecked = false;
+
+                function onPointerDown(e){
+                    dragging = true;
+                    startX = (e.touches ? e.touches[0].clientX : e.clientX);
+                    startChecked = input.checked;
+                    document.addEventListener('pointermove', onPointerMove);
+                    document.addEventListener('pointerup', onPointerUp);
+                    document.addEventListener('touchmove', onPointerMove, {passive:false});
+                    document.addEventListener('touchend', onPointerUp);
+                }
+                function onPointerMove(e){
+                    if (!dragging) return;
+                    var x = (e.touches ? e.touches[0].clientX : e.clientX);
+                    var dx = x - startX;
+                    // threshold ~10px to toggle
+                    if (Math.abs(dx) > 10){
+                        input.checked = dx > 0 ? true : false;
+                        // reflect immediate visual state
+                        input.dispatchEvent(new Event('change', {bubbles:true}));
+                    }
+                    if (e.cancelable) e.preventDefault();
+                }
+                function onPointerUp(e){
+                    dragging = false;
+                    document.removeEventListener('pointermove', onPointerMove);
+                    document.removeEventListener('pointerup', onPointerUp);
+                    document.removeEventListener('touchmove', onPointerMove);
+                    document.removeEventListener('touchend', onPointerUp);
+                }
+                // attach to track and dot (bigger targets). Also keep default click behavior.
+                if (track) {
+                    track.style.cursor = 'pointer';
+                    track.addEventListener('pointerdown', onPointerDown);
+                    track.addEventListener('touchstart', onPointerDown, {passive:true});
+                }
+                if (dot) {
+                    dot.style.cursor = 'pointer';
+                    dot.addEventListener('pointerdown', onPointerDown);
+                    dot.addEventListener('touchstart', onPointerDown, {passive:true});
+                }
+            }
+            function init(){
+                var simpleA = document.getElementById('simple-view-toggle');
+                var simpleB = document.getElementById('simple-view-toggle-setlist');
+                var dark = document.getElementById('dark-mode-toggle') || (document.querySelector('#dark-mode-container input[type="checkbox"]'));
+                [simpleA, simpleB, dark].forEach(makeDraggableToggle);
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+
+</script>
+<script>
+
+        // === Empty state: "No songs yet" plus one instruction line ===
+        (function(){
+            var INSTRUCTION = 'Drag & drop PDF files onto this page or use the Add files button';
+            function enforceEmpty(){
+                var ul = document.getElementById('master-list');
+                if (!ul) return;
+                var hasItems = ul.querySelector('li');
+                if (hasItems) return;
+                ul.innerHTML = '<li class="p-4 text-center text-gray-500 dark:text-gray-400">No songs yet</li>'
+                             + '<li class="pb-6 -mt-2 text-center text-sm text-gray-400 dark:text-gray-500">'+INSTRUCTION+'</li>';
+            }
+            var obs = new MutationObserver(function(){ enforceEmpty(); });
+            function start(){
+                var ul = document.getElementById('master-list');
+                if (ul) obs.observe(ul, {childList:true});
+                enforceEmpty();
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', start);
+            } else {
+                start();
             }
         })();
 
