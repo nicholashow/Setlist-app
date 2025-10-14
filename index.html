@@ -1452,19 +1452,19 @@
         #genre-name, #venue-name { text-align: center; } /* helps iOS Safari */
 
 
-/* === Simple View (name-only, compact items) === */
-body.simple-view-on #master-list > li,
-body.simple-view-on #setlist-list > li,
-body.simple-view-on #favorites-list > li,
-body.simple-view-on #genre-song-list > li,
-body.simple-view-on #plays-list > li {
-  padding-top: 0.375rem;
-  padding-bottom: 0.375rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
+/* === Toggle switches (green when ON + knob slide) === */
+#simple-view-container input:checked + .toggle-track,
+#simple-view-container-setlist input:checked + .toggle-track,
+#dark-mode-container input:checked + .toggle-track { background-color:#22c55e !important; }
+#simple-view-container input + .toggle-track + .dot,
+#simple-view-container-setlist input + .toggle-track + .dot,
+#dark-mode-container input + .toggle-track + .dot { transition: transform 0.2s ease; }
+#simple-view-container input:checked + .toggle-track + .dot,
+#simple-view-container-setlist input:checked + .toggle-track + .dot,
+#dark-mode-container input:checked + .toggle-track + .dot { transform: translateX(20px); }
 
+
+/* === Simple View (name-only) === */
 body.simple-view-on .song-details-container,
 body.simple-view-on .favorite-star-container,
 body.simple-view-on .genre-dot,
@@ -1475,39 +1475,8 @@ body.simple-view-on .energy-chip,
 body.simple-view-on .duration-chip,
 body.simple-view-on .artist-name,
 body.simple-view-on .file-actions,
-body.simple-view-on .drag-handle {
-  display: none !important;
-}
-
-body.simple-view-on .song-name {
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-
-/* === Toggle switches: checked (green) and draggable knob behavior === */
-#simple-view-container input:checked + .toggle-track,
-#simple-view-container-setlist input:checked + .toggle-track,
-#dark-mode-container input:checked + .toggle-track {
-  background-color: #22c55e !important; /* green-500 */
-}
-#simple-view-container input + .toggle-track + .dot,
-#simple-view-container-setlist input + .toggle-track + .dot,
-#dark-mode-container input + .toggle-track + .dot {
-  transition: transform 0.2s ease;
-}
-#simple-view-container input:checked + .toggle-track + .dot,
-#simple-view-container-setlist input:checked + .toggle-track + .dot,
-#dark-mode-container input:checked + .toggle-track + .dot {
-  transform: translateX(20px);
-}
-/* Make the whole label respond to clicks/drags */
-#simple-view-container label, #simple-view-container-setlist label, #dark-mode-container label {
-  user-select: none;
-  -webkit-user-select: none;
-}
+body.simple-view-on .drag-handle { display:none !important; }
+body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 </style>
 </head>
@@ -1623,17 +1592,6 @@ body.simple-view-on .song-name {
                             <button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow btn-master" id="upload-master-btn">Add files</button>
                             <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow btn-master" id="delete-all-btn">Delete All</button>
                         </div>
-                        <div id="simple-view-container-setlist" class="flex items-center ml-2">
-                            <label for="simple-view-toggle-setlist" class="flex items-center cursor-pointer">
-                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
-                                <div class="relative">
-                                    <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
-                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
-                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
-                                </div>
-                            </label>
-                        </div>
-
                     </div>
                 </div>
 
@@ -1664,14 +1622,7 @@ body.simple-view-on .song-name {
                         <button id="print-setlist" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">Print Setlist</button>
                         <div class="relative inline-block">
                             <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Share Setlist</button>
-                            <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
-                                <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
-                                <a href="#" id="share-email" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Email (text only)</a>
-                                <a href="#" id="share-gmail" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Gmail (text only)</a>
-                                <a href="#" id="share-copy" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Copy to Clipboard (text only)</a>
-                            </div>
-                            <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
-                        </div>
+
                         <div id="simple-view-container-setlist" class="flex items-center ml-2">
                             <label for="simple-view-toggle-setlist" class="flex items-center cursor-pointer">
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
@@ -1683,6 +1634,14 @@ body.simple-view-on .song-name {
                             </label>
                         </div>
 
+                            <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
+                                <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
+                                <a href="#" id="share-email" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Email (text only)</a>
+                                <a href="#" id="share-gmail" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Gmail (text only)</a>
+                                <a href="#" id="share-copy" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Copy to Clipboard (text only)</a>
+                            </div>
+                            <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
+                        </div>
                     </div>
                 </div>
                 
@@ -1716,17 +1675,6 @@ body.simple-view-on .song-name {
                                 </div>
                             </div>
                         </div>
-                        <div id="simple-view-container-setlist" class="flex items-center ml-2">
-                            <label for="simple-view-toggle-setlist" class="flex items-center cursor-pointer">
-                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
-                                <div class="relative">
-                                    <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
-                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
-                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
-                                </div>
-                            </label>
-                        </div>
-
                     </div>
                 </div>
 
@@ -1759,17 +1707,6 @@ body.simple-view-on .song-name {
                             <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                 <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                         </div>
-                        <div id="simple-view-container-setlist" class="flex items-center ml-2">
-                            <label for="simple-view-toggle-setlist" class="flex items-center cursor-pointer">
-                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
-                                <div class="relative">
-                                    <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
-                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
-                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
-                                </div>
-                            </label>
-                        </div>
-
                     </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
@@ -1791,17 +1728,6 @@ body.simple-view-on .song-name {
                             <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                 <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
                         </div>
-                        <div id="simple-view-container-setlist" class="flex items-center ml-2">
-                            <label for="simple-view-toggle-setlist" class="flex items-center cursor-pointer">
-                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
-                                <div class="relative">
-                                    <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
-                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
-                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
-                                </div>
-                            </label>
-                        </div>
-
                     </div>
                 </div>
                 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
@@ -3818,161 +3744,73 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 <script>
 
-        // === Simple View toggle (compact, name-only items) ===
+        // === Simple View toggles: sync + body class ===
         (function(){
             function setSimple(on){
                 document.body.classList.toggle('simple-view-on', !!on);
-                var a = document.getElementById('simple-view-toggle');
-                var b = document.getElementById('simple-view-toggle-setlist');
-                if (a) a.checked = !!on;
-                if (b) b.checked = !!on;
+                var a=document.getElementById('simple-view-toggle');
+                var b=document.getElementById('simple-view-toggle-setlist');
+                if(a) a.checked=!!on; if(b) b.checked=!!on;
             }
             function init(){
-                var a = document.getElementById('simple-view-toggle');
-                var b = document.getElementById('simple-view-toggle-setlist');
-                if (a) a.addEventListener('change', function(){ setSimple(a.checked); });
-                if (b) b.addEventListener('change', function(){ setSimple(b.checked); });
+                var a=document.getElementById('simple-view-toggle');
+                var b=document.getElementById('simple-view-toggle-setlist');
+                function onChange(e){ setSimple((e.target||a||b).checked); }
+                if(a) a.addEventListener('change', onChange);
+                if(b) b.addEventListener('change', onChange);
                 setSimple(document.body.classList.contains('simple-view-on'));
             }
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', init);
-            } else {
-                init();
-            }
+            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
         })();
 
-        // === Empty state: ensure All Songs shows only "No songs yet" when empty ===
-        (function(){
-            function enforceSimpleEmpty(){
-                var ul = document.getElementById('master-list');
-                if (!ul) return;
-                // If UL has no <li> or contains a placeholder mentioning "No songs yet", force our single-line placeholder
-                var hasItems = ul.querySelector('li');
-                if (hasItems) return;
-                ul.innerHTML = '<li class="p-4 text-center text-gray-500 dark:text-gray-400">No songs yet</li>';
-            }
-            var obs = new MutationObserver(function(){ enforceSimpleEmpty(); });
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function(){
-                    var ul = document.getElementById('master-list');
-                    if (ul) obs.observe(ul, {childList:true, subtree:false});
-                    enforceSimpleEmpty();
-                });
-            } else {
-                var ul = document.getElementById('master-list');
-                if (ul) obs.observe(ul, {childList:true, subtree:false});
-                enforceSimpleEmpty();
-            }
-        })();
-
-</script>
-<script>
-
-        // === De-duplicate any accidental duplicate Simple view containers ===
-        (function(){
-            function dedupeById(id){
-                var nodes = document.querySelectorAll('#'+id);
-                if (nodes.length > 1){
-                    for (var i=1; i<nodes.length; i++){ nodes[i].parentNode && nodes[i].parentNode.removeChild(nodes[i]); }
-                }
-            }
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', function(){ dedupeById('simple-view-container'); dedupeById('simple-view-container-setlist'); });
-            } else {
-                dedupeById('simple-view-container'); dedupeById('simple-view-container-setlist');
-            }
-        })();
-
-</script>
-<script>
-
-        // === Drag-to-toggle behavior for switches ===
+        // === Drag-to-toggle behavior for Simple + Dark/Light ===
         (function(){
             function makeDraggableToggle(input){
-                if (!input) return;
-                var container = input.parentElement; // the wrapper with track + dot following input
-                var track = input.nextElementSibling;
-                var dot = track ? track.nextElementSibling : null;
-                var dragging = false, startX = 0, startChecked = false;
-
-                function onPointerDown(e){
-                    dragging = true;
-                    startX = (e.touches ? e.touches[0].clientX : e.clientX);
-                    startChecked = input.checked;
-                    document.addEventListener('pointermove', onPointerMove);
-                    document.addEventListener('pointerup', onPointerUp);
-                    document.addEventListener('touchmove', onPointerMove, {passive:false});
-                    document.addEventListener('touchend', onPointerUp);
+                if(!input) return;
+                var track=input.nextElementSibling, dot=track?track.nextElementSibling:null;
+                var dragging=false,startX=0;
+                function down(e){ dragging=true; startX=(e.touches?e.touches[0].clientX:e.clientX);
+                    document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);
+                    document.addEventListener('touchmove',move,{passive:false});document.addEventListener('touchend',up);
                 }
-                function onPointerMove(e){
-                    if (!dragging) return;
-                    var x = (e.touches ? e.touches[0].clientX : e.clientX);
-                    var dx = x - startX;
-                    // threshold ~10px to toggle
-                    if (Math.abs(dx) > 10){
-                        input.checked = dx > 0 ? true : false;
-                        // reflect immediate visual state
-                        input.dispatchEvent(new Event('change', {bubbles:true}));
-                    }
-                    if (e.cancelable) e.preventDefault();
+                function move(e){ if(!dragging) return; var x=(e.touches?e.touches[0].clientX:e.clientX); var dx=x-startX;
+                    if(Math.abs(dx)>10){ input.checked = dx>0; input.dispatchEvent(new Event('change',{bubbles:true})); }
+                    if(e.cancelable) e.preventDefault();
                 }
-                function onPointerUp(e){
-                    dragging = false;
-                    document.removeEventListener('pointermove', onPointerMove);
-                    document.removeEventListener('pointerup', onPointerUp);
-                    document.removeEventListener('touchmove', onPointerMove);
-                    document.removeEventListener('touchend', onPointerUp);
+                function up(){ dragging=false;
+                    document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);
+                    document.removeEventListener('touchmove',move);document.removeEventListener('touchend',up);
                 }
-                // attach to track and dot (bigger targets). Also keep default click behavior.
-                if (track) {
-                    track.style.cursor = 'pointer';
-                    track.addEventListener('pointerdown', onPointerDown);
-                    track.addEventListener('touchstart', onPointerDown, {passive:true});
-                }
-                if (dot) {
-                    dot.style.cursor = 'pointer';
-                    dot.addEventListener('pointerdown', onPointerDown);
-                    dot.addEventListener('touchstart', onPointerDown, {passive:true});
-                }
+                if(track){ track.style.cursor='pointer'; track.addEventListener('pointerdown',down); track.addEventListener('touchstart',down,{passive:true}); }
+                if(dot){ dot.style.cursor='pointer'; dot.addEventListener('pointerdown',down); dot.addEventListener('touchstart',down,{passive:true}); }
             }
             function init(){
-                var simpleA = document.getElementById('simple-view-toggle');
-                var simpleB = document.getElementById('simple-view-toggle-setlist');
-                var dark = document.getElementById('dark-mode-toggle') || (document.querySelector('#dark-mode-container input[type="checkbox"]'));
-                [simpleA, simpleB, dark].forEach(makeDraggableToggle);
+                var a=document.getElementById('simple-view-toggle');
+                var b=document.getElementById('simple-view-toggle-setlist');
+                var d=document.getElementById('dark-mode-toggle') || document.querySelector('#dark-mode-container input[type="checkbox"]');
+                [a,b,d].forEach(makeDraggableToggle);
             }
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', init);
-            } else {
-                init();
-            }
+            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
         })();
 
-</script>
-<script>
-
-        // === Empty state: "No songs yet" plus one instruction line ===
+        // === Enforce exact empty state for All Songs ===
         (function(){
-            var INSTRUCTION = 'Drag & drop PDF files onto this page or use the Add files button';
-            function enforceEmpty(){
-                var ul = document.getElementById('master-list');
-                if (!ul) return;
-                var hasItems = ul.querySelector('li');
-                if (hasItems) return;
-                ul.innerHTML = '<li class="p-4 text-center text-gray-500 dark:text-gray-400">No songs yet</li>'
-                             + '<li class="pb-6 -mt-2 text-center text-sm text-gray-400 dark:text-gray-500">'+INSTRUCTION+'</li>';
+            var LINE1='No songs yet';
+            var LINE2='Drag & drop PDF files onto this page or use the Add files button';
+            function enforce(){
+                var ul=document.getElementById('master-list');
+                if(!ul) return;
+                var hasItems=ul.querySelector('li');
+                if(hasItems) return;
+                ul.innerHTML = '<li class="p-4 text-center text-gray-500 dark:text-gray-400">'+LINE1+'</li>' +
+                               '<li class="pb-6 -mt-2 text-center text-sm text-gray-400 dark:text-gray-500">'+LINE2+'</li>';
             }
-            var obs = new MutationObserver(function(){ enforceEmpty(); });
             function start(){
-                var ul = document.getElementById('master-list');
-                if (ul) obs.observe(ul, {childList:true});
-                enforceEmpty();
+                var ul=document.getElementById('master-list');
+                if(ul){ new MutationObserver(enforce).observe(ul,{childList:true}); }
+                enforce(); setTimeout(enforce,50); setTimeout(enforce,200); setTimeout(enforce,600);
             }
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', start);
-            } else {
-                start();
-            }
+            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',start);}else{start();}
         })();
 
 </script>
