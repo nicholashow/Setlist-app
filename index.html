@@ -1479,94 +1479,7 @@ body.simple-view-on .drag-handle { display:none !important; }
 body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 
-/* === SAFE: Simple View shows 4 emblems (index, star, genre, lightning/energy) === */
-body.simple-view-on .index-number,
-body.simple-view-on .favorite-star-container,
-body.simple-view-on .genre-dot,
-body.simple-view-on .energy-chip,
-body.simple-view-on .bolt,
-body.simple-view-on .lightning { display: inline-flex !important; }
-
-
-/* === PATCH: Genre infusion under Sort By select === */
-#filters-group { position: relative; }
-#sort-genre-holder {
-  display: none;
-  position: relative;
-  margin-top: 0.5rem;
-}
-#sort-genre-holder .infused {
-  border: 1px solid var(--tw-prose-borders, rgba(229,231,235,1));
-  border-radius: 0.5rem;
-  max-height: 11rem;
-  overflow: auto;
-  padding: 0.5rem;
-  background: var(--tw-bg, #fff);
-}
-.dark #sort-genre-holder .infused { background: rgb(31, 41, 55); border-color: rgba(55,65,81,1); }
-#sort-genre-holder .title {
-  font-size: 0.75rem;
-  margin-bottom: 0.25rem;
-  color: rgba(107,114,128,1);
-}
-.dark #sort-genre-holder .title { color: rgba(156,163,175,1); }
-
-
-/* === FIX: Genres live inside Sort By; hide the old right-side container === */
-#filters-group { position: relative; }
-#genre-filter-container { display: none !important; } /* permanently hide external box */
-#sort-genre-holder {
-  display: none;
-  position: relative;
-  margin-top: 0.5rem;
-}
-#sort-genre-holder .infused {
-  border: 1px solid var(--tw-prose-borders, rgba(229,231,235,1));
-  border-radius: 0.5rem;
-  max-height: 11rem;
-  overflow: auto;
-  padding: 0.5rem;
-  background: #fff;
-}
-.dark #sort-genre-holder .infused { background: rgb(31, 41, 55); border-color: rgba(55,65,81,1); }
-#sort-genre-holder .title {
-  font-size: 0.75rem;
-  margin-bottom: 0.25rem;
-  color: rgba(107,114,128,1);
-}
-.dark #sort-genre-holder .title { color: rgba(156,163,175,1); }
-
-
-/* === FIX: Keep setlist Simple View toggle inline to the right of Share Setlist (no wrap) === */
-#setlist-header, #setlist-controls, .setlist-controls { display: flex; flex-wrap: nowrap; align-items: center; gap: 0.5rem; }
-#simple-view-container-setlist { display: inline-flex; flex: 0 0 auto; margin-left: 0.5rem; }
-
-
-/* === FIX: Sidebar (.left-col) clean mask during width animation === */
-.left-col { position: relative; overflow: hidden; will-change: width; }
-.left-col::after {
-  content: ""; position: absolute; inset: 0;
-  background: rgba(17,24,39,1); /* gray-900 */
-  opacity: 0; pointer-events: none;
-  transition: opacity 180ms ease;
-}
-.dark .left-col::after { background: rgba(0,0,0,1); }
-.left-col.is-animating::after { opacity: 1; }
-
-
-/* === PATCH: Sidebar OPEN animation refinement === */
-.left-col { position: relative; overflow: hidden; }
-.left-col.is-opening::after {
-  content: ""; position: absolute; inset: 0;
-  background: rgba(17,24,39,1); /* gray-900 */
-  opacity: 0.6; pointer-events: none;
-}
-.dark .left-col.is-opening::after { background: rgba(0,0,0,1); opacity: 0.65; }
-.left-col.is-opening > * { opacity: 0; }
-.left-col.is-opening.ready > * { opacity: 1; transition: opacity 200ms ease; }
-
-
-/* === PATCH: Simple View 40% smaller height for items (no width change) === */
+/* === PATCH: Simple View compaction (~40% height), keep 4 emblems === */
 body.simple-view-on #master-list > li,
 body.simple-view-on #setlist-list > li,
 body.simple-view-on #favorites-list > li,
@@ -1577,13 +1490,35 @@ body.simple-view-on #plays-list > li {
   margin-top: 0.125rem;
   margin-bottom: 0.125rem;
 }
-/* keep emblem visibility */
 body.simple-view-on .index-number,
 body.simple-view-on .favorite-star-container,
 body.simple-view-on .genre-dot,
 body.simple-view-on .energy-chip,
 body.simple-view-on .bolt,
 body.simple-view-on .lightning { display: inline-flex !important; }
+
+/* === PATCH: Sort genre flyout anchored under the Sort select (no layout shift) === */
+#filters-group { position: relative; }
+#sort-genre-flyout {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  display: none;
+  width: 16rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  background: #ffffff;
+  border: 1px solid rgba(229,231,235,1);
+}
+.dark #sort-genre-flyout { background: rgb(31,41,55); border-color: rgba(55,65,81,1); }
+#sort-genre-flyout .title { font-size: 0.75rem; color: rgba(107,114,128,1); padding: 0.5rem 0.75rem 0 0.75rem; }
+.dark #sort-genre-flyout .title { color: rgba(156,163,175,1); }
+#sort-genre-flyout .slot { max-height: 11rem; overflow: auto; padding: 0.5rem 0.75rem 0.75rem 0.75rem; }
+
+/* === PATCH: Sidebar open (fade in after width expands; no overlays) === */
+.left-col.opening-fade > * { opacity: 0; }
+.left-col.opening-fade.ready > * { opacity: 1; transition: opacity 180ms ease; }
 
 </style>
 </head>
@@ -1684,10 +1619,16 @@ body.simple-view-on .lightning { display: inline-flex !important; }
                     <div id="controls-row">
                         <div id="filters-group">
                             <select id="sort-dropdown" class="p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select">
-                                <option value="name">Sort By</option>
+                                <option value="name">Sort by Name</option>
                                 <option value="artist">Sort by Artist</option>
+                                <option value="lastPlayed">Sort by Last Played</option>
                                 <option value="energy">Sort by Energy</option>
                             </select>
+                        <div id="sort-genre-flyout">
+                            <div class="title">Genres</div>
+                            <div class="slot" id="sort-genre-slot"></div>
+                        </div>
+
                             <div id="genre-filter-container" class="relative">
                                 <button id="genre-filter-button" class="p-2 rounded-lg bg-transparent text-sm text-left dark:bg-transparent dark:text-gray-200">Select Genres</button>
                                 <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
@@ -1771,7 +1712,7 @@ body.simple-view-on .lightning { display: inline-flex !important; }
                             <div class="relative">
                                 <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                                     <option value="custom">Custom Order</option>
-                                    <option value="name">Sort By</option>
+                                    <option value="name">Sort by Name</option>
                                     <option value="artist">Sort by Artist</option>
                                     <option value="genre">Sort by Genre</option>
                                     <option value="energy">Sort by Energy</option>
@@ -1804,8 +1745,9 @@ body.simple-view-on .lightning { display: inline-flex !important; }
                      <h2 class="text-xl font-bold">Favorite Songs</h2>
                     <div class="relative">
                         <select id="favorites-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
-                            <option value="name">Sort By</option>
+                            <option value="name">Sort by Name</option>
                             <option value="artist">Sort by Artist</option>
+                            <option value="lastPlayed">Sort by Last Played</option>
                             <option value="energy">Sort by Energy</option>
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
@@ -1824,8 +1766,9 @@ body.simple-view-on .lightning { display: inline-flex !important; }
                      <h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
                     <div class="relative">
                         <select id="genre-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
-                            <option value="name">Sort By</option>
+                            <option value="name">Sort by Name</option>
                             <option value="artist">Sort by Artist</option>
+                            <option value="lastPlayed">Sort by Last Played</option>
                             <option value="energy">Sort by Energy</option>
                         </select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
@@ -3920,339 +3863,96 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 <script>
 
-        // === SAFE: Sort By + Genre tie-in (no DOM moves) ===
+        // === PATCH: Homepage Sort dropdown & Genre flyout (precise targeting) ===
         (function(){
-            function init(){
-                var sel = document.getElementById('sort-dropdown');
-                var genreBtn = document.getElementById('genre-filter-button');
-                var genreMenu = document.getElementById('genre-filter-dropdown');
-                if (!sel || !genreBtn || !genreMenu) return;
-                function update(){
-                    if (sel.value === 'genre'){
-                        // ensure genre dropdown is visible / opened
-                        genreMenu.classList.remove('hidden');
-                        // If your UI uses a class toggle, simulate a click to open
-                        // but only if dropdown is currently hidden
-                        if (genreMenu.style.display === 'none' || window.getComputedStyle(genreMenu).display === 'none'){
-                            genreBtn.click();
-                        }
-                    } else {
-                        // close if open
-                        if (!genreMenu.classList.contains('hidden')) {
-                            genreBtn.click();
-                        }
-                        genreMenu.classList.add('hidden');
-                    }
-                }
-                sel.addEventListener('change', function(){
-                    // Keep default "name" when none chosen via other means
-                    if (!sel.value) sel.value = 'name';
-                    update();
+            function el(id){ return document.getElementById(id); }
+            function once(fn){ var ran=false; return function(){ if(ran) return; ran=true; fn(); }; }
+            function initSort(){
+                var select = el('sort-dropdown');
+                if (!select) return;
+                // Rename "Sort by Name" -> "Sort By" inside this select only
+                Array.from(select.options).forEach(function(opt){
+                    if ((opt.textContent||'').trim().toLowerCase()==='sort by name'){ opt.textContent='Sort By'; }
                 });
-                // On first load, keep default to "name"
-                if (!sel.value) sel.value = 'name';
-                update();
-            }
-            if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
-        })();
-
-</script>
-<script>
-
-        // === PATCH: Integrate "Select Genres" beneath Sort By select ===
-        (function(){
-            function el(id){ return document.getElementById(id); }
-            function ensureHolder(){
-                var filters = el('filters-group');
-                if (!filters) return null;
-                var holder = el('sort-genre-holder');
-                if (!holder){
-                    holder = document.createElement('div');
-                    holder.id = 'sort-genre-holder';
-                    var inner = document.createElement('div');
-                    inner.className = 'infused';
-                    var title = document.createElement('div');
-                    title.className = 'title';
-                    title.textContent = 'Genres';
-                    inner.appendChild(title);
-                    var slot = document.createElement('div');
-                    slot.id = 'sort-genre-slot';
-                    inner.appendChild(slot);
-                    holder.appendChild(inner);
-                    filters.appendChild(holder);
+                // Remove "Last played" option
+                Array.from(select.options).forEach(function(opt){
+                    var t=(opt.textContent||'').trim().toLowerCase();
+                    if (t==='sort by last played' || opt.value==='lastPlayed'){ opt.remove(); }
+                });
+                // Ensure "Genre" option exists
+                var hasGenre = !!select.querySelector('option[value="genre"]');
+                if (!hasGenre){
+                    var opt = document.createElement('option');
+                    opt.value='genre'; opt.textContent='Genre';
+                    // Insert after Energy if present, else append
+                    var after = select.querySelector('option[value="energy"]');
+                    if (after && after.nextSibling){ select.insertBefore(opt, after.nextSibling); }
+                    else { select.appendChild(opt); }
                 }
-                return holder;
-            }
-            function integrate(){
-                var select = el('sort-dropdown');
-                var holder = ensureHolder();
-                var btn = el('genre-filter-button');
-                var dropdown = el('genre-filter-dropdown');
-                var container = el('genre-filter-container');
-                if (!select || !holder || !btn || !dropdown || !container) return;
-                // rename first option to "Sort By"; remove lastPlayed
-                var optName = select.querySelector('option[value="name"]');
-                if (optName) optName.textContent = 'Sort By';
-                var last = select.querySelector('option[value="lastPlayed"]');
-                if (last) last.parentNode.removeChild(last);
-
-                function showInfused(){
-                    // Move dropdown into holder slot
-                    var slot = el('sort-genre-slot');
-                    if (!slot) return;
-                    if (!slot.contains(dropdown)){
-                        slot.appendChild(dropdown);
-                    }
-                    // Reveal holder
-                    holder.style.display = '';
-                    // Hide the right-side button to prevent layout shift
-                    container.style.display = 'none';
-                    // Ensure dropdown is visible
-                    dropdown.classList.remove('hidden');
-                }
-                function hideInfused(){
-                    // Move back dropdown to original container
-                    if (!container.contains(dropdown)){
-                        container.appendChild(dropdown);
-                    }
-                    // Restore right-side button
-                    container.style.display = '';
-                    // Hide holder
-                    holder.style.display = 'none';
-                }
-                function update(){
-                    if (select.value === 'genre'){ showInfused(); }
-                    else { hideInfused(); }
-                }
-                // Bind
-                select.addEventListener('change', update);
-                // Initial
-                if (!select.value) select.value = 'name';
-                update();
-            }
-            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', integrate); } else { integrate(); }
-        })();
-
-</script>
-<script>
-
-        // === PATCH: Ensure setlist Simple View toggle is right of Share Setlist button ===
-        (function(){
-            function init(){
-                var toggle = document.getElementById('simple-view-container-setlist');
-                var share = document.getElementById('share-setlist-btn');
-                if (!toggle || !share) return;
-                // Move the whole toggle container immediately after the share button
-                if (share.nextSibling !== toggle){
-                    share.parentNode.insertBefore(toggle, share.nextSibling);
-                }
-                // Keep it inline without pushing other controls
-                toggle.style.display = 'inline-flex';
-                toggle.style.marginLeft = '0.5rem';
-                toggle.style.verticalAlign = 'middle';
-            }
-            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
-        })();
-
-</script>
-<script>
-
-        // === FIX: Integrate existing Genres dropdown under Sort By; hide external button ===
-        (function(){
-            function el(id){ return document.getElementById(id); }
-            function ensureHolder(){
-                var filters = el('filters-group');
-                if (!filters) return null;
-                var holder = el('sort-genre-holder');
-                if (!holder){
-                    holder = document.createElement('div');
-                    holder.id = 'sort-genre-holder';
-                    var inner = document.createElement('div');
-                    inner.className = 'infused';
-                    var title = document.createElement('div');
-                    title.className = 'title';
-                    title.textContent = 'Genres';
-                    inner.appendChild(title);
-                    var slot = document.createElement('div');
-                    slot.id = 'sort-genre-slot';
-                    inner.appendChild(slot);
-                    holder.appendChild(inner);
-                    filters.appendChild(holder);
-                }
-                return holder;
-            }
-            function integrate(){
-                var select = el('sort-dropdown');
-                var holder = ensureHolder();
-                var btnContainer = el('genre-filter-container');
-                var dropdown = el('genre-filter-dropdown');
-                if (!select || !holder || !dropdown) return;
-
-                // Rename first option to "Sort By"; remove "Last played"
-                var optName = select.querySelector('option[value="name"]');
-                if (optName) optName.textContent = 'Sort By';
-                var last = select.querySelector('option[value="lastPlayed"]');
-                if (last) last.remove();
-
-                // Permanently hide the external container (CSS also enforces this)
-                if (btnContainer) btnContainer.style.display = 'none';
-
-                // Always keep the dropdown mounted under the holder slot
+                // Prepare flyout
+                var fly = el('sort-genre-flyout');
                 var slot = el('sort-genre-slot');
-                if (slot && !slot.contains(dropdown)) slot.appendChild(dropdown);
-
-                function update(){
-                    if (select.value === 'genre'){
-                        holder.style.display = '';
-                        dropdown.classList.remove('hidden');
-                    } else {
-                        holder.style.display = 'none';
-                        dropdown.classList.add('hidden');
-                    }
-                }
-
-                select.addEventListener('change', update);
-                if (!select.value) select.value = 'name';
-                update();
-            }
-            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', integrate); } else { integrate(); }
-        })();
-
-</script>
-<script>
-
-        // === FIX: Ensure Simple View toggle sits immediately right of Share Setlist and doesn't wrap ===
-        (function(){
-            function init(){
-                var toggle = document.getElementById('simple-view-container-setlist');
-                var share = document.getElementById('share-setlist-btn');
-                if (!toggle || !share) return;
-                if (share.nextSibling !== toggle){
-                    share.parentNode.insertBefore(toggle, share.nextSibling);
-                }
-                var parent = share.parentElement;
-                if (parent){
-                    parent.style.display = 'flex';
-                    parent.style.flexWrap = 'nowrap';
-                    parent.style.alignItems = 'center';
-                    parent.style.gap = '0.5rem';
-                }
-                toggle.style.display = 'inline-flex';
-                toggle.style.flex = '0 0 auto';
-                toggle.style.marginLeft = '0.5rem';
-                toggle.style.verticalAlign = 'middle';
-            }
-            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', init); } else { init(); }
-        })();
-
-</script>
-<script>
-
-        // === FIX: Add/remove .is-animating on .left-col during width changes ===
-        (function(){
-            function arm(){
-                var sb = document.querySelector('.left-col');
-                if (!sb) return;
-                // Add an overlay element is not necessary due to ::after styling
-                var lastWidth = sb.getBoundingClientRect().width;
-                var ro = new ResizeObserver(function(entries){
-                    var w = sb.getBoundingClientRect().width;
-                    if (Math.abs(w - lastWidth) > 1){
-                        sb.classList.add('is-animating');
-                        clearTimeout(sb._animT);
-                        sb._animT = setTimeout(function(){ sb.classList.remove('is-animating'); }, 240);
-                        lastWidth = w;
-                    }
-                });
-                try { ro.observe(sb); } catch(e){}
-                // Also pulse on known toggles
-                ['sidebar-toggle','toggle-sidebar'].forEach(function(id){
-                    var btn = document.getElementById(id);
-                    if (btn) btn.addEventListener('click', function(){
-                        sb.classList.add('is-animating');
-                        clearTimeout(sb._animT);
-                        sb._animT = setTimeout(function(){ sb.classList.remove('is-animating'); }, 240);
-                    });
-                });
-                var dbtn = document.querySelector('[data-action="toggle-sidebar"]');
-                if (dbtn) dbtn.addEventListener('click', function(){
-                    sb.classList.add('is-animating');
-                    clearTimeout(sb._animT);
-                    sb._animT = setTimeout(function(){ sb.classList.remove('is-animating'); }, 240);
-                });
-            }
-            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', arm); } else { arm(); }
-        })();
-
-</script>
-<script>
-
-        // === PATCH: Detect "opening" (width increase) and fade content in after slide ===
-        (function(){
-            function arm(){
-                var sb = document.querySelector('.left-col');
-                if (!sb) return;
-                var lastW = sb.getBoundingClientRect().width;
-                var ro = new ResizeObserver(function(){
-                    var w = sb.getBoundingClientRect().width;
-                    var delta = w - lastW;
-                    if (Math.abs(delta) < 1) return;
-                    if (delta > 0){ // opening
-                        sb.classList.add('is-opening');
-                        sb.classList.remove('ready');
-                        clearTimeout(sb._openT1);
-                        clearTimeout(sb._openT2);
-                        // give width time to expand, then reveal
-                        sb._openT1 = setTimeout(function(){ sb.classList.add('ready'); }, 140);
-                        sb._openT2 = setTimeout(function(){ sb.classList.remove('is-opening'); sb.classList.remove('ready'); }, 400);
-                    }
-                    lastW = w;
-                });
-                try{ ro.observe(sb); }catch(e){}
-            }
-            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', arm); } else { arm(); }
-        })();
-
-</script>
-<script>
-
-        // === PATCH: Show genres under Sort By when selecting Genre (holder already created in prior patch) ===
-        (function(){
-            function el(id){ return document.getElementById(id); }
-            function ensureHolder(){
-                var filters = el('filters-group'); if (!filters) return null;
-                var holder = el('sort-genre-holder');
-                if (!holder){
-                    holder = document.createElement('div');
-                    holder.id = 'sort-genre-holder';
-                    var inner = document.createElement('div');
-                    inner.className = 'infused';
-                    var title = document.createElement('div');
-                    title.className = 'title'; title.textContent = 'Genres';
-                    var slot = document.createElement('div'); slot.id = 'sort-genre-slot';
-                    inner.appendChild(title); inner.appendChild(slot); holder.appendChild(inner);
-                    filters.appendChild(holder);
-                }
-                return holder;
-            }
-            function wire(){
-                var select = el('sort-dropdown');
-                var holder = ensureHolder();
+                var rightContainer = el('genre-list-container') || el('genre-filter-container') || (el('genre-view') && el('genre-view').parentElement);
                 var dropdown = el('genre-filter-dropdown');
-                var external = el('genre-filter-container');
-                if (!select || !holder || !dropdown) return;
-                // Mount dropdown into slot permanently; hide external container if present
-                var slot = el('sort-genre-slot'); if (slot && !slot.contains(dropdown)) slot.appendChild(dropdown);
-                if (external) external.style.display='none';
+                // If there's no standalone dropdown, try the common ID pattern
+                if (!dropdown){ dropdown = el('genre-list') || el('genre-sort-dropdown'); }
+                if (!fly || !slot || !dropdown) return;
+                // Mount dropdown into fly slot (without changing width elsewhere)
+                if (!slot.contains(dropdown)){ slot.appendChild(dropdown); }
+                // Hide the original right-side container *visually* only when genre is chosen
+                function setRightContainerHidden(hide){
+                    if (!rightContainer) return;
+                    if (hide){
+                        rightContainer.style.visibility = 'hidden';
+                        rightContainer.style.pointerEvents = 'none';
+                    } else {
+                        rightContainer.style.visibility = '';
+                        rightContainer.style.pointerEvents = '';
+                    }
+                }
                 function update(){
-                    if (select.value === 'genre'){ holder.style.display=''; dropdown.classList.remove('hidden'); }
-                    else { holder.style.display='none'; dropdown.classList.add('hidden'); }
+                    if (select.value==='genre'){
+                        fly.style.display='block';
+                        dropdown.classList.remove('hidden');
+                        setRightContainerHidden(true);
+                    } else {
+                        fly.style.display='none';
+                        dropdown.classList.add('hidden');
+                        setRightContainerHidden(false);
+                    }
                 }
                 select.addEventListener('change', update);
                 if (!select.value) select.value='name';
                 update();
             }
-            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', wire); } else { wire(); }
+            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', initSort); } else { initSort(); }
+        })();
+
+        // === PATCH: Sidebar open fade-in only (no overlays; no layout changes) ===
+        (function(){
+            function initSidebarFade(){
+                var sb = document.querySelector('.left-col');
+                if (!sb || typeof ResizeObserver==='undefined') return;
+                var lastW = sb.getBoundingClientRect().width;
+                var ro = new ResizeObserver(function(){
+                    var w = sb.getBoundingClientRect().width;
+                    var delta = w - lastW;
+                    if (Math.abs(delta) < 0.5){ lastW = w; return; }
+                    if (delta > 0){ // opening
+                        sb.classList.add('opening-fade');
+                        sb.classList.remove('ready');
+                        // allow layout to settle, then fade in
+                        requestAnimationFrame(function(){ sb.classList.add('ready'); });
+                        setTimeout(function(){
+                            sb.classList.remove('opening-fade');
+                            sb.classList.remove('ready');
+                        }, 260);
+                    }
+                    lastW = w;
+                });
+                try{ ro.observe(sb); }catch(e){}
+            }
+            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', initSidebarFade); } else { initSidebarFade(); }
         })();
 
 </script>
