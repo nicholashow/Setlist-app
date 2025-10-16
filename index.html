@@ -1521,31 +1521,99 @@ body.simple-view-on .lightning { display: inline-flex !important; }
 .left-col.opening-fade.ready > * { opacity: 1; transition: opacity 180ms ease; }
 
 
-.notes-input,
-textarea.notes-input,
-.notes-inline-textarea {
+/* === Setlist toolbar alignment: preserve order/sizes; keep toggle to the right === */
+#simple-view-container-setlist {
+  order: 999;           /* keep at the end, to the right of Share Setlist */
+  margin-left: auto;    /* push it to the far right within the flex row */
+  flex: 0 0 auto;       /* prevent shrinking/wrapping */
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+#record-show, #stop-record, #print-setlist, #share-setlist-btn {
+  flex: 0 0 auto;       /* keep original sizes; don't allow wrap */
+}
+/* If the parent row wraps by default, strongly prefer no-wrap to avoid the toggle dropping below */
+#share-setlist-btn, #print-setlist, #record-show, #stop-record, #simple-view-container-setlist {
+  white-space: nowrap;
+}
+
+
+/* === Inline Notes expander (overlap beneath field, auto-grow downward) === */
+.notes-wrap {
+  position: relative; /* anchor for absolute expander */
+}
+.notes-input, textarea.notes-input {
   white-space: pre-wrap;
   word-break: break-word;
   overflow-wrap: anywhere;
   overflow-x: hidden;
   resize: none;
 }
-#notes-popover, #notes-popover-overlay { display: none !important; } /* ensure legacy popover never shows */
-
-
-/* === Setlist toolbar alignment === */
-#record-show, #stop-record, #print-setlist, #share-setlist-btn, #simple-view-container-setlist {
-  display: inline-flex !important;
-  align-items: center;
-  vertical-align: middle;
-  white-space: nowrap;
+.notes-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 4px;
+  opacity: 0.8;
 }
-#simple-view-container-setlist { margin-left: 0.5rem; flex: none; }
-#share-setlist-btn { margin-left: 0.25rem; }
-@media (max-width: 640px) {
-  /* prevent wrap/jump on small screens */
-  #record-show, #stop-record, #print-setlist, #share-setlist-btn, #simple-view-container-setlist { flex: none; }
+.notes-toggle:hover { opacity: 1; }
+
+.notes-expander {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 4px);  /* overlap content underneath */
+  z-index: 60;
+  width: var(--notes-width, 280px);
+  max-height: 70vh;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 10px 18px rgba(0,0,0,0.12);
+  display: none;
 }
+html.dark .notes-expander {
+  background: #1f2937; color: #e5e7eb; border-color: #374151;
+  box-shadow: 0 10px 18px rgba(0,0,0,0.35);
+}
+.notes-expander.open { display: block; }
+
+.notes-expander-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 6px 8px; font-weight: 600; font-size: 13px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+html.dark .notes-expander-header { border-bottom-color: rgba(255,255,255,0.08); }
+
+.notes-expander-close {
+  appearance:none; border:none; background:transparent;
+  font-size:16px; cursor:pointer; padding:2px 6px; border-radius:6px; color:inherit;
+}
+.notes-expander-close:hover { background: rgba(0,0,0,0.06); }
+html.dark .notes-expander-close:hover { background: rgba(255,255,255,0.08); }
+
+.notes-expander-body { padding: 8px; }
+.notes-expander-text {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 60px;
+  max-height: 60vh;
+  outline: none;
+  border: 1px solid #d1d5db;
+  background: #ffffff; color: #111827;
+  font-size: 14px; line-height: 1.4; font-family: inherit;
+  border-radius: 8px;
+  resize: none;
+  white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; overflow-x: hidden;
+}
+html.dark .notes-expander-text { background: #111827; color: #e5e7eb; border-color: #4b5563; }
 
 </style>
 </head>
@@ -3147,10 +3215,6 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
 /* Make source notes box NOT flash blue when tapped to open */
 .notes-input {
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  resize: none;
   -webkit-tap-highlight-color: transparent;
 }
 </style>
@@ -3245,7 +3309,14 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   }
 
   // Instant open on pointerdown (captures before the source input gets focus)
-  function onPointerDown(ev){ return; }
+  function onPointerDown(ev){
+    var el = ev.target && ev.target.closest && ev.target.closest('.notes-input');
+    if (!el) return;
+    // Determine if content likely overflows the small notes box
+    var overflow = false;
+    try {
+      overflow = el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2 || (el.value||'').length > 40;
+    } catch(e){ overflow = true; }
     if (!overflow) return;
     // Prevent the source from receiving focus/blue flash
     try { ev.preventDefault(); } catch(e){}
@@ -3381,8 +3452,10 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     });
   }
 
-  // notes popover fastHook disabled for inline behavior
-window.__notesActiveSource = el;
+  fastHook('.notes-input', function(ev, el){
+    // Open instantly and suppress the input's own focus/flash
+    ev.preventDefault();
+    window.__notesActiveSource = el;
     openNotesFrom(el);
   });
 })();
@@ -3982,88 +4055,152 @@ window.__notesActiveSource = el;
 </html>
 
 
-/* === Inline Notes: type in-place, fixed width, grow downward === */
+/* === Inline Notes overlay logic with [x] collapse and ▼ reopen === */
 (function(){
-  if (window.__InlineNotes_v1) return;
-  window.__InlineNotes_v1 = true;
+  if (window.__InlineNotesOverlay_v2) return;
+  window.__InlineNotesOverlay_v2 = true;
 
-  function autosizeTextarea(el){
+  function autosize(el){
     if (!el) return;
     el.style.height = 'auto';
     var h = el.scrollHeight;
-    // guard: iOS sometimes returns 0 on first frame; keep min
-    if (!h || h < 20) { h = Math.max(el.clientHeight, 20); }
+    if (!h || h < 20) h = Math.max(el.clientHeight, 20);
     el.style.height = h + 'px';
   }
 
-  function ensureFixedWidth(el){
-    if (!el || el.dataset.lockW) return;
-    var rect = el.getBoundingClientRect(); var w = Math.round(rect.width || el.clientWidth || el.offsetWidth);
-    if (w) {
-      el.style.width = w + 'px';
-      el.style.maxWidth = w + 'px';
-      el.style.minWidth = w + 'px';
-      el.dataset.lockW = String(w);
+  function ensureWrapContainer(input){
+    // Wrap input with .notes-wrap once (to place toggle & expander)
+    var wrap = input.closest('.notes-wrap');
+    if (wrap) return wrap;
+    wrap = document.createElement('div');
+    wrap.className = 'notes-wrap';
+    input.parentNode.insertBefore(wrap, input);
+    wrap.appendChild(input);
+    return wrap;
+  }
+
+  function buildExpander(wrap, input){
+    var existing = wrap.querySelector('.notes-expander');
+    if (existing) return existing;
+
+    // Toggle button (down arrow) next to the input; appears even when collapsed
+    var toggle = wrap.querySelector('.notes-toggle');
+    if (!toggle){
+      toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'notes-toggle';
+      toggle.setAttribute('aria-label', 'Expand notes');
+      toggle.textContent = '▼';
+      wrap.appendChild(toggle);
+      toggle.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        openExpander(wrap, input);
+      });
     }
-    // prevent horizontal growth/jitter
-    el.style.whiteSpace = 'pre-wrap';
-    el.style.wordBreak = 'break-word';
-    el.style.overflowWrap = 'anywhere';
-    el.style.resize = 'none';
+
+    // Expander panel
+    var panel = document.createElement('div');
+    panel.className = 'notes-expander';
+    panel.innerHTML = ''
+      + '<div class="notes-expander-header">'
+      + '  <div>Notes</div>'
+      + '  <button type="button" class="notes-expander-close" aria-label="Close notes">×</button>'
+      + '</div>'
+      + '<div class="notes-expander-body">'
+      + '  <textarea class="notes-expander-text" spellcheck="false"></textarea>'
+      + '</div>';
+    wrap.appendChild(panel);
+
+    // Sync width to input's rendered width
+    var r = input.getBoundingClientRect();
+    var px = Math.max(0, Math.round(r.width || input.clientWidth || input.offsetWidth));
+    panel.style.setProperty('--notes-width', px + 'px');
+
+    // Wire controls
+    var closeBtn = panel.querySelector('.notes-expander-close');
+    var area = panel.querySelector('.notes-expander-text');
+
+    // When opened, mirror value and focus at end
+    function openExpander(wrap, input){
+      var r = input.getBoundingClientRect();
+      var px = Math.max(0, Math.round(r.width || input.clientWidth || input.offsetWidth));
+      panel.style.setProperty('--notes-width', px + 'px');
+
+      area.value = input.value || '';
+      panel.classList.add('open');
+      autosize(area);
+      requestAnimationFrame(function(){
+        area.focus({preventScroll:true});
+        try { area.setSelectionRange(area.value.length, area.value.length); } catch(_){}
+      });
+    }
+
+    // Close: save value back, hide panel; down arrow remains to reopen
+    function closeExpander(save){
+      if (save){
+        input.value = area.value;
+        // trigger change for any bindings
+        try { input.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
+      }
+      panel.classList.remove('open');
+    }
+
+    // Expose open for toggle handler
+    wrap.__openNotesExpander = function(){ openExpander(wrap, input); };
+
+    closeBtn.addEventListener('click', function(e){
+      e.preventDefault();
+      closeExpander(true);
+    });
+
+    // Live sync and auto-grow while typing
+    area.addEventListener('input', function(){
+      autosize(area);
+      input.value = area.value;
+    });
+
+    // If user clicks on input itself, open expander immediately
+    input.addEventListener('focus', function(){
+      openExpander(wrap, input);
+    });
+    input.addEventListener('pointerdown', function(e){
+      // open quickly and prevent other handlers from stealing focus
+      openExpander(wrap, input);
+    }, true);
+
+    // Close on Escape
+    panel.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') { e.preventDefault(); closeExpander(true); }
+    });
+
+    // Store references
+    wrap.__notesPanel = panel;
+    wrap.__notesArea  = area;
+    wrap.__notesClose = closeBtn;
+
+    return panel;
   }
 
-  // Convert an input.notes-input into a textarea inline
-  function upgradeToTextarea(input){
-    if (!input || input.tagName === 'TEXTAREA') return input;
-    var ta = document.createElement('textarea');
-    ta.className = input.className; // keep styling (notes-input etc.)
-    ta.classList.add('notes-inline-textarea');
-    ta.value = input.value || '';
-    ta.placeholder = input.placeholder || 'Notes';
-    // match computed width
-    ta.style.boxSizing = 'border-box';
-    var r = (input.getBoundingClientRect && input.getBoundingClientRect()) || {width: input.clientWidth};
-    var wpx = Math.max(0, Math.round(r.width || input.clientWidth || input.offsetWidth));
-    if (wpx) { ta.style.width = wpx + 'px'; ta.style.maxWidth = wpx + 'px'; ta.style.minWidth = wpx + 'px'; }
-    ta.style.display = 'block';
-    ta.style.minHeight = (input.clientHeight || 28) + 'px';
-    ta.style.maxHeight = '70vh';
-    ta.setAttribute('spellcheck', 'false');
-
-    input.parentNode.replaceChild(ta, input);
-    return ta;
+  function openExpander(wrap, input){
+    if (!wrap.__notesPanel) buildExpander(wrap, input);
+    wrap.__openNotesExpander && wrap.__openNotesExpander();
   }
 
-  // Delegate focus/click to inline textarea
+  // Delegate setup for any notes inputs (existing and future)
   document.addEventListener('pointerdown', function(e){
-    var el = e.target && e.target.closest && e.target.closest('.notes-input');
-    if (!el) return;
-    // Stop other handlers (including old popover) from hijacking
-    try { e.stopImmediatePropagation(); e.preventDefault(); } catch(_){}
-    // Upgrade and focus
-    var ta = upgradeToTextarea(el);
-    ensureFixedWidth(ta);
-    autosizeTextarea(ta);
-    requestAnimationFrame(function(){
-      ta.focus({preventScroll:true});
-      try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch(_){}
-    });
-  }, true); // capture to beat bubbling handlers
+    var input = e.target && e.target.closest && e.target.closest('input.notes-input, textarea.notes-input');
+    if (!input) return;
+    var wrap = ensureWrapContainer(input);
+    buildExpander(wrap, input);
+  }, true);
 
-  // Input handler: auto-grow downward and keep width fixed
-  document.addEventListener('input', function(e){
-    var ta = e.target && e.target.closest && e.target.closest('textarea.notes-input');
-    if (!ta) return;
-    ensureFixedWidth(ta);
-    autosizeTextarea(ta);
-  });
-
-  // Also on load, upgrade any pre-rendered inputs to textareas (keeps positions)
+  // On load, ensure all .notes-input fields are wrapped (non-destructive)
   window.addEventListener('load', function(){
-    document.querySelectorAll('input.notes-input').forEach(function(inp){
-      var ta = upgradeToTextarea(inp);
-      ensureFixedWidth(ta);
-      autosizeTextarea(ta);
+    document.querySelectorAll('input.notes-input, textarea.notes-input').forEach(function(inp){
+      var wrap = ensureWrapContainer(inp);
+      buildExpander(wrap, inp);
     });
   });
+
 })();
+
