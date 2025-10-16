@@ -1520,6 +1520,33 @@ body.simple-view-on .lightning { display: inline-flex !important; }
 .left-col.opening-fade > * { opacity: 0; }
 .left-col.opening-fade.ready > * { opacity: 1; transition: opacity 180ms ease; }
 
+
+.notes-input,
+textarea.notes-input,
+.notes-inline-textarea {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  overflow-x: hidden;
+  resize: none;
+}
+#notes-popover, #notes-popover-overlay { display: none !important; } /* ensure legacy popover never shows */
+
+
+/* === Setlist toolbar alignment === */
+#record-show, #stop-record, #print-setlist, #share-setlist-btn, #simple-view-container-setlist {
+  display: inline-flex !important;
+  align-items: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+#simple-view-container-setlist { margin-left: 0.5rem; flex: none; }
+#share-setlist-btn { margin-left: 0.25rem; }
+@media (max-width: 640px) {
+  /* prevent wrap/jump on small screens */
+  #record-show, #stop-record, #print-setlist, #share-setlist-btn, #simple-view-container-setlist { flex: none; }
+}
+
 </style>
 </head>
 
@@ -3963,14 +3990,19 @@ window.__notesActiveSource = el;
   function autosizeTextarea(el){
     if (!el) return;
     el.style.height = 'auto';
-    el.style.height = el.scrollHeight + 'px';
+    var h = el.scrollHeight;
+    // guard: iOS sometimes returns 0 on first frame; keep min
+    if (!h || h < 20) { h = Math.max(el.clientHeight, 20); }
+    el.style.height = h + 'px';
   }
 
   function ensureFixedWidth(el){
     if (!el || el.dataset.lockW) return;
-    var w = el.clientWidth || el.offsetWidth;
+    var rect = el.getBoundingClientRect(); var w = Math.round(rect.width || el.clientWidth || el.offsetWidth);
     if (w) {
       el.style.width = w + 'px';
+      el.style.maxWidth = w + 'px';
+      el.style.minWidth = w + 'px';
       el.dataset.lockW = String(w);
     }
     // prevent horizontal growth/jitter
@@ -3990,6 +4022,9 @@ window.__notesActiveSource = el;
     ta.placeholder = input.placeholder || 'Notes';
     // match computed width
     ta.style.boxSizing = 'border-box';
+    var r = (input.getBoundingClientRect && input.getBoundingClientRect()) || {width: input.clientWidth};
+    var wpx = Math.max(0, Math.round(r.width || input.clientWidth || input.offsetWidth));
+    if (wpx) { ta.style.width = wpx + 'px'; ta.style.maxWidth = wpx + 'px'; ta.style.minWidth = wpx + 'px'; }
     ta.style.display = 'block';
     ta.style.minHeight = (input.clientHeight || 28) + 'px';
     ta.style.maxHeight = '70vh';
