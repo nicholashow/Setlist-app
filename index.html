@@ -1521,99 +1521,63 @@ body.simple-view-on .lightning { display: inline-flex !important; }
 .left-col.opening-fade.ready > * { opacity: 1; transition: opacity 180ms ease; }
 
 
-/* === Setlist toolbar alignment: preserve order/sizes; keep toggle to the right === */
-#simple-view-container-setlist {
-  order: 999;           /* keep at the end, to the right of Share Setlist */
-  margin-left: auto;    /* push it to the far right within the flex row */
-  flex: 0 0 auto;       /* prevent shrinking/wrapping */
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  vertical-align: middle;
+/* === Inline Notes: fixed width, overlap downward, in-box close, collapsed dropdown === */
+.notes-wrap { position: relative; display: inline-block; }
+.notes-field { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; overflow-x: hidden; resize: none; }
+.notes-dropdown {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  border: none; background: transparent; cursor: pointer; padding: 2px 4px; line-height: 1; opacity: .85;
 }
-#record-show, #stop-record, #print-setlist, #share-setlist-btn {
-  flex: 0 0 auto;       /* keep original sizes; don't allow wrap */
-}
-/* If the parent row wraps by default, strongly prefer no-wrap to avoid the toggle dropping below */
-#share-setlist-btn, #print-setlist, #record-show, #stop-record, #simple-view-container-setlist {
-  white-space: nowrap;
-}
+.notes-dropdown:hover { opacity: 1; }
 
-
-/* === Inline Notes expander (overlap beneath field, auto-grow downward) === */
-.notes-wrap {
-  position: relative; /* anchor for absolute expander */
-}
-.notes-input, textarea.notes-input {
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  overflow-x: hidden;
-  resize: none;
-}
-.notes-toggle {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  cursor: pointer;
-  line-height: 1;
-  padding: 2px 4px;
-  opacity: 0.8;
-}
-.notes-toggle:hover { opacity: 1; }
-
-.notes-expander {
-  position: absolute;
-  left: 0;
-  top: calc(100% + 4px);  /* overlap content underneath */
-  z-index: 60;
+.notes-overlay {
+  position: absolute; left: 0; top: 0; /* cover the original field and expand downward */
   width: var(--notes-width, 280px);
-  max-height: 70vh;
-  border: 1px solid rgba(0,0,0,0.12);
-  border-radius: 10px;
-  background: #ffffff;
-  box-shadow: 0 10px 18px rgba(0,0,0,0.12);
+  z-index: 70;
   display: none;
 }
-html.dark .notes-expander {
-  background: #1f2937; color: #e5e7eb; border-color: #374151;
-  box-shadow: 0 10px 18px rgba(0,0,0,0.35);
-}
-.notes-expander.open { display: block; }
+.notes-overlay.open { display: block; }
 
-.notes-expander-header {
-  display:flex; align-items:center; justify-content:space-between;
-  padding: 6px 8px; font-weight: 600; font-size: 13px;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
+.notes-overlay .notes-box {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d1d5db;
+  background: #ffffff; color: #111827;
+  border-radius: 10px;
+  box-shadow: 0 10px 18px rgba(0,0,0,0.12);
+  padding-top: 28px; /* space for close button */
 }
-html.dark .notes-expander-header { border-bottom-color: rgba(255,255,255,0.08); }
+html.dark .notes-overlay .notes-box { background: #1f2937; color: #e5e7eb; border-color: #374151; box-shadow: 0 10px 18px rgba(0,0,0,0.35); }
 
-.notes-expander-close {
-  appearance:none; border:none; background:transparent;
-  font-size:16px; cursor:pointer; padding:2px 6px; border-radius:6px; color:inherit;
+.notes-close {
+  position: absolute; right: 6px; top: 6px;
+  appearance: none; border: none; background: transparent; color: inherit;
+  font-size: 16px; cursor: pointer; border-radius: 6px; padding: 2px 6px;
 }
-.notes-expander-close:hover { background: rgba(0,0,0,0.06); }
-html.dark .notes-expander-close:hover { background: rgba(255,255,255,0.08); }
+.notes-close:hover { background: rgba(0,0,0,0.06); }
+html.dark .notes-close:hover { background: rgba(255,255,255,0.08); }
 
-.notes-expander-body { padding: 8px; }
-.notes-expander-text {
+.notes-overlay .notes-textarea {
   width: 100%;
   box-sizing: border-box;
   min-height: 60px;
-  max-height: 60vh;
+  max-height: 70vh;
   outline: none;
-  border: 1px solid #d1d5db;
-  background: #ffffff; color: #111827;
+  border: 0;
+  background: transparent; color: inherit;
   font-size: 14px; line-height: 1.4; font-family: inherit;
-  border-radius: 8px;
+  border-radius: 0 0 10px 10px;
   resize: none;
   white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; overflow-x: hidden;
+  padding: 8px 10px 12px 10px;
 }
-html.dark .notes-expander-text { background: #111827; color: #e5e7eb; border-color: #4b5563; }
+
+/* Collapsed height — original single-line feel without changing width */
+.notes-collapsed {
+  height: 36px !important;
+  overflow: hidden !important;
+}
 
 </style>
 </head>
@@ -3323,7 +3287,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     openFrom(el);
   }
 
-  document.addEventListener('pointerdown', onPointerDown, true);
+  // disabled notes popover opener true);
 
   // Keep alignment on resize
   window.addEventListener('resize', function(){ if (activeSource) autoSizeAndPosition(activeSource); });
@@ -3452,10 +3416,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     });
   }
 
-  fastHook('.notes-input', function(ev, el){
-    // Open instantly and suppress the input's own focus/flash
-    ev.preventDefault();
-    window.__notesActiveSource = el;
+  // disabled previous fastHook for notes
+window.__notesActiveSource = el;
     openNotesFrom(el);
   });
 })();
@@ -4055,21 +4017,32 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </html>
 
 
-/* === Inline Notes overlay logic with [x] collapse and ▼ reopen === */
+/* === Inline Notes Overlay (fixed width; type in place; see all text; close to collapse; dropdown to reopen) === */
 (function(){
-  if (window.__InlineNotesOverlay_v2) return;
-  window.__InlineNotesOverlay_v2 = true;
+  if (window.__InlineNotesInBox_v3) return;
+  window.__InlineNotesInBox_v3 = true;
 
-  function autosize(el){
-    if (!el) return;
-    el.style.height = 'auto';
-    var h = el.scrollHeight;
-    if (!h || h < 20) h = Math.max(el.clientHeight, 20);
-    el.style.height = h + 'px';
+  function lockWidthPx(el){
+    var r = el.getBoundingClientRect();
+    var w = Math.max(0, Math.round(r.width || el.clientWidth || el.offsetWidth));
+    if (w) {
+      el.style.width = w + 'px';
+      el.style.maxWidth = w + 'px';
+      el.style.minWidth = w + 'px';
+    }
+    return w;
   }
 
-  function ensureWrapContainer(input){
-    // Wrap input with .notes-wrap once (to place toggle & expander)
+  function autosize(t){
+    if (!t) return;
+    t.style.height = 'auto';
+    var h = t.scrollHeight;
+    if (!h || h < 20) h = Math.max(t.clientHeight, 20);
+    t.style.height = h + 'px';
+  }
+
+  function ensureWrap(input){
+    if (!input) return null;
     var wrap = input.closest('.notes-wrap');
     if (wrap) return wrap;
     wrap = document.createElement('div');
@@ -4079,128 +4052,137 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     return wrap;
   }
 
-  function buildExpander(wrap, input){
-    var existing = wrap.querySelector('.notes-expander');
-    if (existing) return existing;
+  function buildOverlay(wrap, input){
+    if (wrap.__overlay) return wrap.__overlay;
 
-    // Toggle button (down arrow) next to the input; appears even when collapsed
-    var toggle = wrap.querySelector('.notes-toggle');
-    if (!toggle){
-      toggle = document.createElement('button');
-      toggle.type = 'button';
-      toggle.className = 'notes-toggle';
-      toggle.setAttribute('aria-label', 'Expand notes');
-      toggle.textContent = '▼';
-      wrap.appendChild(toggle);
-      toggle.addEventListener('click', function(e){
-        e.preventDefault(); e.stopPropagation();
-        openExpander(wrap, input);
-      });
-    }
+    // Lock field width so overlay matches exactly
+    var wpx = lockWidthPx(input);
+    wrap.style.setProperty('--notes-width', wpx + 'px');
 
-    // Expander panel
-    var panel = document.createElement('div');
-    panel.className = 'notes-expander';
-    panel.innerHTML = ''
-      + '<div class="notes-expander-header">'
-      + '  <div>Notes</div>'
-      + '  <button type="button" class="notes-expander-close" aria-label="Close notes">×</button>'
-      + '</div>'
-      + '<div class="notes-expander-body">'
-      + '  <textarea class="notes-expander-text" spellcheck="false"></textarea>'
+    // Add dropdown button for collapsed state
+    var dd = document.createElement('button');
+    dd.type = 'button';
+    dd.className = 'notes-dropdown';
+    dd.setAttribute('aria-label', 'Show full notes');
+    dd.textContent = '▼';
+    wrap.appendChild(dd);
+
+    // Build overlay container with textarea & close
+    var overlay = document.createElement('div');
+    overlay.className = 'notes-overlay';
+    overlay.innerHTML = '<div class="notes-box">'
+      + '<button type="button" class="notes-close" aria-label="Close notes">×</button>'
+      + '<textarea class="notes-textarea" spellcheck="false"></textarea>'
       + '</div>';
-    wrap.appendChild(panel);
+    wrap.appendChild(overlay);
 
-    // Sync width to input's rendered width
-    var r = input.getBoundingClientRect();
-    var px = Math.max(0, Math.round(r.width || input.clientWidth || input.offsetWidth));
-    panel.style.setProperty('--notes-width', px + 'px');
+    var closeBtn = overlay.querySelector('.notes-close');
+    var area = overlay.querySelector('.notes-textarea');
 
-    // Wire controls
-    var closeBtn = panel.querySelector('.notes-expander-close');
-    var area = panel.querySelector('.notes-expander-text');
+    // State: collapsed by default (single-line field showing); overlay hidden
+    input.classList.add('notes-field','notes-collapsed');
 
-    // When opened, mirror value and focus at end
-    function openExpander(wrap, input){
-      var r = input.getBoundingClientRect();
-      var px = Math.max(0, Math.round(r.width || input.clientWidth || input.offsetWidth));
-      panel.style.setProperty('--notes-width', px + 'px');
+    // Open (expand downward, overlap content; keep width fixed)
+    function openOverlay(){
+      // Sync width every open (in case layout changed)
+      var wpx = lockWidthPx(input);
+      wrap.style.setProperty('--notes-width', wpx + 'px');
 
       area.value = input.value || '';
-      panel.classList.add('open');
+      overlay.classList.add('open');
       autosize(area);
       requestAnimationFrame(function(){
         area.focus({preventScroll:true});
         try { area.setSelectionRange(area.value.length, area.value.length); } catch(_){}
       });
+      dd.style.display = 'none';
     }
 
-    // Close: save value back, hide panel; down arrow remains to reopen
-    function closeExpander(save){
-      if (save){
+    // Close (save text, collapse to single-line, show dropdown)
+    function closeOverlay(save){
+      if (save) {
         input.value = area.value;
-        // trigger change for any bindings
         try { input.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
       }
-      panel.classList.remove('open');
+      overlay.classList.remove('open');
+      input.classList.add('notes-collapsed');
+      dd.style.display = '';
     }
 
-    // Expose open for toggle handler
-    wrap.__openNotesExpander = function(){ openExpander(wrap, input); };
+    // Handlers
+    closeBtn.addEventListener('click', function(e){ e.preventDefault(); closeOverlay(true); });
+    dd.addEventListener('click', function(e){ e.preventDefault(); openOverlay(); });
 
-    closeBtn.addEventListener('click', function(e){
-      e.preventDefault();
-      closeExpander(true);
-    });
-
-    // Live sync and auto-grow while typing
+    // Typing: stay fixed width, grow downward; live-sync input value
     area.addEventListener('input', function(){
       autosize(area);
       input.value = area.value;
     });
 
-    // If user clicks on input itself, open expander immediately
-    input.addEventListener('focus', function(){
-      openExpander(wrap, input);
-    });
-    input.addEventListener('pointerdown', function(e){
-      // open quickly and prevent other handlers from stealing focus
-      openExpander(wrap, input);
-    }, true);
+    // Clicking / focusing the field also opens overlay so user always sees all text while typing
+    input.addEventListener('focus', function(){ openOverlay(); });
+    input.addEventListener('pointerdown', function(){ openOverlay(); }, true);
 
-    // Close on Escape
-    panel.addEventListener('keydown', function(e){
-      if (e.key === 'Escape') { e.preventDefault(); closeExpander(true); }
+    // Escape key to close
+    overlay.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') { e.preventDefault(); closeOverlay(true); }
     });
 
-    // Store references
-    wrap.__notesPanel = panel;
-    wrap.__notesArea  = area;
+    // Store refs
+    wrap.__overlay = overlay;
+    wrap.__notesArea = area;
     wrap.__notesClose = closeBtn;
-
-    return panel;
+    wrap.__notesDropdown = dd;
+    wrap.__openNotes = openOverlay;
+    wrap.__closeNotes = closeOverlay;
+    return overlay;
   }
 
-  function openExpander(wrap, input){
-    if (!wrap.__notesPanel) buildExpander(wrap, input);
-    wrap.__openNotesExpander && wrap.__openNotesExpander();
+  function setupInput(input){
+    // Make sure it wraps and doesn't scroll horizontally
+    input.classList.add('notes-field');
+    input.style.whiteSpace = 'pre-wrap';
+    input.style.wordBreak = 'break-word';
+    input.style.overflowWrap = 'anywhere';
+    input.style.overflowX = 'hidden';
+    input.style.resize = 'none';
+
+    var wrap = ensureWrap(input);
+    buildOverlay(wrap, input);
   }
 
-  // Delegate setup for any notes inputs (existing and future)
-  document.addEventListener('pointerdown', function(e){
-    var input = e.target && e.target.closest && e.target.closest('input.notes-input, textarea.notes-input');
-    if (!input) return;
-    var wrap = ensureWrapContainer(input);
-    buildExpander(wrap, input);
-  }, true);
+  // Initialize existing and future notes inputs
+  function initAll(){
+    document.querySelectorAll('input.notes-input, textarea.notes-input').forEach(setupInput);
+  }
+  initAll();
 
-  // On load, ensure all .notes-input fields are wrapped (non-destructive)
-  window.addEventListener('load', function(){
-    document.querySelectorAll('input.notes-input, textarea.notes-input').forEach(function(inp){
-      var wrap = ensureWrapContainer(inp);
-      buildExpander(wrap, inp);
+  // Observe DOM mutations to handle re-renders
+  var mo = new MutationObserver(function(muts){
+    for (var i=0;i<muts.length;i++){
+      var n = muts[i].addedNodes || [];
+      for (var j=0;j<n.length;j++){
+        var node = n[j];
+        if (node.nodeType !== 1) continue;
+        if (node.matches && (node.matches('input.notes-input') || node.matches('textarea.notes-input'))) {
+          setupInput(node);
+        } else {
+          var list = node.querySelectorAll ? node.querySelectorAll('input.notes-input, textarea.notes-input') : [];
+          list.forEach(setupInput);
+        }
+      }
+    }
+  });
+  try { mo.observe(document.documentElement, { childList:true, subtree:true }); } catch(_){}
+
+  // Re-lock width on resize
+  window.addEventListener('resize', function(){
+    document.querySelectorAll('.notes-wrap').forEach(function(wrap){
+      var input = wrap.querySelector('.notes-field');
+      if (!input) return;
+      var wpx = Math.max(0, Math.round((input.getBoundingClientRect().width || input.clientWidth || input.offsetWidth)));
+      wrap.style.setProperty('--notes-width', wpx + 'px');
     });
   });
 
 })();
-
