@@ -3102,9 +3102,6 @@ html.dark #notes-popover-header { border-bottom-color: rgba(255,255,255,0.08); }
 html.dark #notes-popover-close:hover { background: rgba(255,255,255,0.08); }
 #notes-popover-body { padding: 8px; }
 #notes-popover-text {
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow-wrap: anywhere;
   width: 100%;
   min-width: 160px;
   max-width: 80vw;
@@ -3119,13 +3116,14 @@ html.dark #notes-popover-close:hover { background: rgba(255,255,255,0.08); }
   font-size: 14px; line-height: 1.4; font-family: inherit;
   resize: none; /* auto-size handling */
 }
-html.dark #notes-popover-text {
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow-wrap: anywhere; background: #111827; color: #e5e7eb; border-color: #4b5563; }
+html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-color: #4b5563; }
 
 /* Make source notes box NOT flash blue when tapped to open */
 .notes-input {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  resize: none;
   -webkit-tap-highlight-color: transparent;
 }
 </style>
@@ -3164,30 +3162,24 @@ html.dark #notes-popover-text {
     var rect = src.getBoundingClientRect();
     var caps = viewportCaps();
 
-    // Width: lock to source width on first open; don't grow horizontally while typing
-    var lockW = pop.getAttribute('data-lockW');
-    var width;
-    if (!lockW) {
-      width = Math.max(Math.ceil(rect.width), 220);
-      pop.setAttribute('data-lockW', String(width));
-      // also remember left so pop doesn't jitter horizontally
-      var leftLocked = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
-      pop.setAttribute('data-lockLeft', String(leftLocked));
-    } else {
-      width = parseInt(lockW, 10) || Math.max(Math.ceil(rect.width), 220);
-    }
-    // Apply locked width
-    pop.style.width = width + 'px';
-    // Temporarily set area width so scrollHeight is accurate
+    // Width: at least source width; at most content/viewport cap
+    var contentW = estimateWidthPx(area.value);
+    var width = Math.min(Math.max(Math.ceil(rect.width), Math.min(contentW, caps.maxW)), caps.maxW);
+
+    // Height: fit content
+    area.style.height = 'auto';
+    // Temporarily set width so scrollHeight is accurate
     area.style.width = (width - 20) + 'px';
+    var contentH = area.scrollHeight + 16; // padding
+    var headerH = 34;
+    var height = Math.min(Math.max(contentH, 60), caps.maxH);
+
+    pop.style.width = width + 'px';
     area.style.height = Math.max(40, (height - (headerH + 16))) + 'px';
 
     // Place over the original box (keep within viewport)
     var left = Math.min(rect.left, window.innerWidth - width - 8);
     var top  = Math.min(rect.top,  window.innerHeight - height - 8);
-        var leftLocked = pop.getAttribute('data-lockLeft');
-    var left  = leftLocked ? parseInt(leftLocked,10) : Math.min(rect.left,  window.innerWidth - width - 8);
-    var top   = Math.min(rect.top,   window.innerHeight - height - 8);
     pop.style.left = Math.max(8, left) + 'px';
     pop.style.top  = Math.max(8, top) + 'px';
   }
@@ -3206,20 +3198,6 @@ html.dark #notes-popover-text {
       var len = area.value.length;
       try { area.setSelectionRange(len, len); } catch(e){}
     });
-  // Keep focus in the textarea so the caret never jumps to the title
-  pop.addEventListener('mousedown', function(e){
-    if (e.target !== area && e.target !== close) {
-      e.preventDefault();
-      area.focus({preventScroll:true});
-    }
-  });
-  pop.addEventListener('touchstart', function(e){
-    if (e.target !== area && e.target !== close) {
-      e.preventDefault();
-      area.focus({preventScroll:true});
-    }
-  }, {passive:false});
-  area.setAttribute('autofocus','autofocus');
   }
 
   function closePopover(save){
@@ -3240,14 +3218,7 @@ html.dark #notes-popover-text {
   }
 
   // Instant open on pointerdown (captures before the source input gets focus)
-  function onPointerDown(ev){
-    var el = ev.target && ev.target.closest && ev.target.closest('.notes-input');
-    if (!el) return;
-    // Determine if content likely overflows the small notes box
-    var overflow = false;
-    try {
-      overflow = el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2 || (el.value||'').length > 40;
-    } catch(e){ overflow = true; }
+  function onPointerDown(ev){ return; }
     if (!overflow) return;
     // Prevent the source from receiving focus/blue flash
     try { ev.preventDefault(); } catch(e){}
@@ -3262,12 +3233,6 @@ html.dark #notes-popover-text {
   // Close handlers
   overlay.addEventListener('click', function(){ closePopover(true); });
   close.addEventListener('click', function(){ closePopover(true); });
-    // Auto-grow while typing (downwards only)
-  area.addEventListener('input', function(){
-    area.style.height = 'auto';
-    area.style.height = (area.scrollHeight) + 'px';
-    try{ if (activeSource && 'value' in activeSource) activeSource.value = area.value; }catch(e){}
-  });
   document.addEventListener('keydown', function(e){
     if (pop.style.display === 'block' && e.key === 'Escape') { e.preventDefault(); closePopover(false); }
   });
@@ -3338,18 +3303,15 @@ html.dark #notes-popover-text {
       var width = Math.min(Math.max(Math.ceil(rect.width), Math.min(contentW, caps.maxW)), caps.maxW);
       area.style.height = 'auto';
       area.style.width = (width - 20) + 'px';
-          var contentH = area.scrollHeight + 16; // padding
-    var headerH = 34;
-    var height = Math.min(Math.max(contentH, 60), caps.maxH);
+      var contentH = area.scrollHeight + 16;
+      var headerH = 34;
+      var height = Math.min(Math.max(contentH, 60), caps.maxH);
       pop.style.width = width + 'px';
       area.style.height = Math.max(40, (height - (headerH + 16))) + 'px';
       var left = Math.min(rect.left, window.innerWidth - width - 8);
       var top  = Math.min(rect.top,  window.innerHeight - height - 8);
-          var leftLocked = pop.getAttribute('data-lockLeft');
-    var left  = leftLocked ? parseInt(leftLocked,10) : Math.min(rect.left,  window.innerWidth - width - 8);
-    var top   = Math.min(rect.top,   window.innerHeight - height - 8);
-    pop.style.left = Math.max(8, left) + 'px';
-    pop.style.top  = Math.max(8, top) + 'px';
+      pop.style.left = Math.max(8, left) + 'px';
+      pop.style.top  = Math.max(8, top) + 'px';
     }
     openNotesFrom = function(el){
       area.value = (el.value != null ? el.value : (el.innerText || ''));
@@ -3392,13 +3354,9 @@ html.dark #notes-popover-text {
     });
   }
 
-  fastHook('.notes-input', function(ev, el){
-    // Open instantly and suppress the input's own focus/flash
-    ev.preventDefault();
-    window.__notesActiveSource = el;
+  // notes popover fastHook disabled for inline behavior
+window.__notesActiveSource = el;
     openNotesFrom(el);
-    // Focus after open
-    requestAnimationFrame(function(){ try{ document.getElementById('notes-popover-text').focus({preventScroll:true}); }catch(e){} });
   });
 })();
 
@@ -3995,3 +3953,82 @@ html.dark #notes-popover-text {
 </script>
 </body>
 </html>
+
+
+/* === Inline Notes: type in-place, fixed width, grow downward === */
+(function(){
+  if (window.__InlineNotes_v1) return;
+  window.__InlineNotes_v1 = true;
+
+  function autosizeTextarea(el){
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+  }
+
+  function ensureFixedWidth(el){
+    if (!el || el.dataset.lockW) return;
+    var w = el.clientWidth || el.offsetWidth;
+    if (w) {
+      el.style.width = w + 'px';
+      el.dataset.lockW = String(w);
+    }
+    // prevent horizontal growth/jitter
+    el.style.whiteSpace = 'pre-wrap';
+    el.style.wordBreak = 'break-word';
+    el.style.overflowWrap = 'anywhere';
+    el.style.resize = 'none';
+  }
+
+  // Convert an input.notes-input into a textarea inline
+  function upgradeToTextarea(input){
+    if (!input || input.tagName === 'TEXTAREA') return input;
+    var ta = document.createElement('textarea');
+    ta.className = input.className; // keep styling (notes-input etc.)
+    ta.classList.add('notes-inline-textarea');
+    ta.value = input.value || '';
+    ta.placeholder = input.placeholder || 'Notes';
+    // match computed width
+    ta.style.boxSizing = 'border-box';
+    ta.style.display = 'block';
+    ta.style.minHeight = (input.clientHeight || 28) + 'px';
+    ta.style.maxHeight = '70vh';
+    ta.setAttribute('spellcheck', 'false');
+
+    input.parentNode.replaceChild(ta, input);
+    return ta;
+  }
+
+  // Delegate focus/click to inline textarea
+  document.addEventListener('pointerdown', function(e){
+    var el = e.target && e.target.closest && e.target.closest('.notes-input');
+    if (!el) return;
+    // Stop other handlers (including old popover) from hijacking
+    try { e.stopImmediatePropagation(); e.preventDefault(); } catch(_){}
+    // Upgrade and focus
+    var ta = upgradeToTextarea(el);
+    ensureFixedWidth(ta);
+    autosizeTextarea(ta);
+    requestAnimationFrame(function(){
+      ta.focus({preventScroll:true});
+      try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch(_){}
+    });
+  }, true); // capture to beat bubbling handlers
+
+  // Input handler: auto-grow downward and keep width fixed
+  document.addEventListener('input', function(e){
+    var ta = e.target && e.target.closest && e.target.closest('textarea.notes-input');
+    if (!ta) return;
+    ensureFixedWidth(ta);
+    autosizeTextarea(ta);
+  });
+
+  // Also on load, upgrade any pre-rendered inputs to textareas (keeps positions)
+  window.addEventListener('load', function(){
+    document.querySelectorAll('input.notes-input').forEach(function(inp){
+      var ta = upgradeToTextarea(inp);
+      ensureFixedWidth(ta);
+      autosizeTextarea(ta);
+    });
+  });
+})();
