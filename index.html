@@ -3102,6 +3102,9 @@ html.dark #notes-popover-header { border-bottom-color: rgba(255,255,255,0.08); }
 html.dark #notes-popover-close:hover { background: rgba(255,255,255,0.08); }
 #notes-popover-body { padding: 8px; }
 #notes-popover-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
   width: 100%;
   min-width: 160px;
   max-width: 80vw;
@@ -3116,7 +3119,10 @@ html.dark #notes-popover-close:hover { background: rgba(255,255,255,0.08); }
   font-size: 14px; line-height: 1.4; font-family: inherit;
   resize: none; /* auto-size handling */
 }
-html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-color: #4b5563; }
+html.dark #notes-popover-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere; background: #111827; color: #e5e7eb; border-color: #4b5563; }
 
 /* Make source notes box NOT flash blue when tapped to open */
 .notes-input {
@@ -3158,24 +3164,30 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     var rect = src.getBoundingClientRect();
     var caps = viewportCaps();
 
-    // Width: at least source width; at most content/viewport cap
-    var contentW = estimateWidthPx(area.value);
-    var width = Math.min(Math.max(Math.ceil(rect.width), Math.min(contentW, caps.maxW)), caps.maxW);
-
-    // Height: fit content
-    area.style.height = 'auto';
-    // Temporarily set width so scrollHeight is accurate
-    area.style.width = (width - 20) + 'px';
-    var contentH = area.scrollHeight + 16; // padding
-    var headerH = 34;
-    var height = Math.min(Math.max(contentH, 60), caps.maxH);
-
+    // Width: lock to source width on first open; don't grow horizontally while typing
+    var lockW = pop.getAttribute('data-lockW');
+    var width;
+    if (!lockW) {
+      width = Math.max(Math.ceil(rect.width), 220);
+      pop.setAttribute('data-lockW', String(width));
+      // also remember left so pop doesn't jitter horizontally
+      var leftLocked = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+      pop.setAttribute('data-lockLeft', String(leftLocked));
+    } else {
+      width = parseInt(lockW, 10) || Math.max(Math.ceil(rect.width), 220);
+    }
+    // Apply locked width
     pop.style.width = width + 'px';
+    // Temporarily set area width so scrollHeight is accurate
+    area.style.width = (width - 20) + 'px';
     area.style.height = Math.max(40, (height - (headerH + 16))) + 'px';
 
     // Place over the original box (keep within viewport)
     var left = Math.min(rect.left, window.innerWidth - width - 8);
     var top  = Math.min(rect.top,  window.innerHeight - height - 8);
+        var leftLocked = pop.getAttribute('data-lockLeft');
+    var left  = leftLocked ? parseInt(leftLocked,10) : Math.min(rect.left,  window.innerWidth - width - 8);
+    var top   = Math.min(rect.top,   window.innerHeight - height - 8);
     pop.style.left = Math.max(8, left) + 'px';
     pop.style.top  = Math.max(8, top) + 'px';
   }
@@ -3194,6 +3206,20 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       var len = area.value.length;
       try { area.setSelectionRange(len, len); } catch(e){}
     });
+  // Keep focus in the textarea so the caret never jumps to the title
+  pop.addEventListener('mousedown', function(e){
+    if (e.target !== area && e.target !== close) {
+      e.preventDefault();
+      area.focus({preventScroll:true});
+    }
+  });
+  pop.addEventListener('touchstart', function(e){
+    if (e.target !== area && e.target !== close) {
+      e.preventDefault();
+      area.focus({preventScroll:true});
+    }
+  }, {passive:false});
+  area.setAttribute('autofocus','autofocus');
   }
 
   function closePopover(save){
@@ -3236,6 +3262,12 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   // Close handlers
   overlay.addEventListener('click', function(){ closePopover(true); });
   close.addEventListener('click', function(){ closePopover(true); });
+    // Auto-grow while typing (downwards only)
+  area.addEventListener('input', function(){
+    area.style.height = 'auto';
+    area.style.height = (area.scrollHeight) + 'px';
+    try{ if (activeSource && 'value' in activeSource) activeSource.value = area.value; }catch(e){}
+  });
   document.addEventListener('keydown', function(e){
     if (pop.style.display === 'block' && e.key === 'Escape') { e.preventDefault(); closePopover(false); }
   });
@@ -3306,15 +3338,18 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       var width = Math.min(Math.max(Math.ceil(rect.width), Math.min(contentW, caps.maxW)), caps.maxW);
       area.style.height = 'auto';
       area.style.width = (width - 20) + 'px';
-      var contentH = area.scrollHeight + 16;
-      var headerH = 34;
-      var height = Math.min(Math.max(contentH, 60), caps.maxH);
+          var contentH = area.scrollHeight + 16; // padding
+    var headerH = 34;
+    var height = Math.min(Math.max(contentH, 60), caps.maxH);
       pop.style.width = width + 'px';
       area.style.height = Math.max(40, (height - (headerH + 16))) + 'px';
       var left = Math.min(rect.left, window.innerWidth - width - 8);
       var top  = Math.min(rect.top,  window.innerHeight - height - 8);
-      pop.style.left = Math.max(8, left) + 'px';
-      pop.style.top  = Math.max(8, top) + 'px';
+          var leftLocked = pop.getAttribute('data-lockLeft');
+    var left  = leftLocked ? parseInt(leftLocked,10) : Math.min(rect.left,  window.innerWidth - width - 8);
+    var top   = Math.min(rect.top,   window.innerHeight - height - 8);
+    pop.style.left = Math.max(8, left) + 'px';
+    pop.style.top  = Math.max(8, top) + 'px';
     }
     openNotesFrom = function(el){
       area.value = (el.value != null ? el.value : (el.innerText || ''));
@@ -3362,6 +3397,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     ev.preventDefault();
     window.__notesActiveSource = el;
     openNotesFrom(el);
+    // Focus after open
+    requestAnimationFrame(function(){ try{ document.getElementById('notes-popover-text').focus({preventScroll:true}); }catch(e){} });
   });
 })();
 
