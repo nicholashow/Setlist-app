@@ -4143,91 +4143,148 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
 
 
-/* ===== SAFE COLOR-BY-GENRE FILTER WRAPPER (non-destructive) ===== */
+/* ======= SAFE COLOR PERSIST + COLOR-BASED GENRE VIEW (Non-destructive) ======= */
 (function(){
   try{
-    if (typeof window.__orig_renderGenreView === 'function') {
-      // Already wrapped; avoid double-wrapping
-      return;
-    }
-    if (typeof renderGenreView !== 'function') return;
-
-    window.__orig_renderGenreView = renderGenreView;
-
-    function __songColor(s){
+    // --- Utilities -----------------------------------------------------------
+    function __toHex(c){
+      if (!c) return '';
       try{
-        if (s && s.color) return String(s.color).toLowerCase();
-        if (s && s.genre && typeof getGenreColor === 'function'){
-          var c = getGenreColor(s.genre);
-          if (c) return String(c).toLowerCase();
+        c = String(c).trim();
+        if (!c) return '';
+        // Already hex (#abc or #aabbcc)
+        if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)) return c.toLowerCase();
+        // rgb/rgba -> hex
+        var m = c.match(/rgba?\s*\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
+        if (m){
+          var r = Math.max(0, Math.min(255, parseInt(m[1],10)));
+          var g = Math.max(0, Math.min(255, parseInt(m[2],10)));
+          var b = Math.max(0, Math.min(255, parseInt(m[3],10)));
+          var h = '#' + [r,g,b].map(function(x){ return x.toString(16).padStart(2,'0'); }).join('');
+          return h.toLowerCase();
         }
-      }catch(_){}
-      return '';
+        return c.toLowerCase();
+      }catch(_){ return ''; }
     }
     function __getGenreColorByName(name){
       try{
         if (Array.isArray(window.genres)){
           var g = window.genres.find(function(x){ return x && x.name === name; });
-          if (g && g.color) return String(g.color).toLowerCase();
+          if (g && g.color) return __toHex(g.color);
         }
       }catch(_){}
       return null;
     }
-
-    // New wrapper that preserves all existing side-effects, then refilters by COLOR
-    window.renderGenreView = function(name){
+    function __songColor(s){
       try{
-        // First, do everything the app already does
-        window.__orig_renderGenreView(name);
-      }catch(e){
-        console.error('renderGenreView original threw:', e);
-      }
-
-      try{
-        var targetColor = __getGenreColorByName(name);
-        if (!targetColor) return; // no color resolved -> keep original list
-
-        // Compute the filtered list from masterSongs (fallback: keep original)
-        var list = Array.isArray(window.masterSongs) ? window.masterSongs.filter(function(s){
-          return __songColor(s) === targetColor;
-        }) : null;
-        if (!list || !list.length) {
-          // keep the original empty-state message if present
-          var $ul0 = $('#genre-song-list');
-          if ($ul0.length){
-            $ul0.empty().append('<li class="p-6 text-center text-gray-500 italic">No songs tagged with this color yet.</li>');
-          }
-          return;
+        if (s && s.color) return __toHex(s.color);
+        if (s && s.genre && typeof getGenreColor === 'function'){
+          var c = getGenreColor(s.genre);
+          if (c) return __toHex(c);
         }
+      }catch(_){}
+      return '';
+    }
+    function __persistSongColorById(songId, hex){
+      try{
+        if (!songId || !hex) return;
+        if (!Array.isArray(window.masterSongs)) return;
+        var s = window.masterSongs.find(function(x){ return String(x.id) === String(songId); });
+        if (!s) return;
+        s.color = __toHex(hex);
+        if (typeof save === 'function') save();
+      }catch(_){}
+    }
 
-        // Rebuild the visible list using existing item factory
-        var $ul = $('#genre-song-list');
-        if (!$ul.length || typeof createSongItem !== 'function') return;
-        $ul.empty();
-        list.forEach(function(s,i){
-          $ul.append(createSongItem(s,i,'genre'));
-        });
-
-        // Re-enable dragging like elsewhere (reuse existing options if available)
+    // --- 1) Wrap renderGenreView to filter by COLOR --------------------------
+    if (typeof window.__orig_renderGenreView !== 'function' && typeof window.renderGenreView === 'function'){
+      window.__orig_renderGenreView = window.renderGenreView;
+      window.renderGenreView = function(name){
         try{
-          var draggableOptions = {appendTo:'body',revert:'invalid',cursorAt:{left:10,top:10},helper:'clone',
-            start:function(e,ui){
-              var $i=$(this), count=$i.parent().children('.item-selected').length;
-              var label = count>1?('Dragging '+count+' items'):$i.find('.song-name').text();
-              ui.helper.empty().html(label).css({'background-color':'#3b82f6','color':'white','padding':'0.5rem 1rem',
-                  'height':'auto','width':'auto','white-space':'nowrap','box-shadow':'0 5px 15px rgba(0,0,0,0.3)',
-                  'z-index':9999,'border-radius':'0.5rem','font-weight':'600'});
-            }
-          };
-          $('#genre-song-list .draggable').draggable(draggableOptions);
-        }catch(_){}
-      }catch(e){
-        console.error('renderGenreView(color-filter wrapper) error:', e);
-      }
-    };
+          window.__orig_renderGenreView(name);
+        }catch(e){ console.error('renderGenreView original threw:', e); }
+        try{
+          var target = __getGenreColorByName(name);
+          if (!target) return;
+          var list = Array.isArray(window.masterSongs) ? window.masterSongs.filter(function(s){
+            return __songColor(s) === target;
+          }) : null;
+          var $ul = $('#genre-song-list');
+          if (!$ul.length || !list) return;
+          $ul.empty();
+          if (!list.length){
+            $ul.append('<li class="p-6 text-center text-gray-500 italic">No songs tagged with this color yet.</li>');
+            return;
+          }
+          if (typeof createSongItem !== 'function') return;
+          list.forEach(function(s,i){ $ul.append(createSongItem(s,i,'genre')); });
+          try{
+            var draggableOptions = {appendTo:'body',revert:'invalid',cursorAt:{left:10,top:10},helper:'clone',
+              start:function(e,ui){
+                var $i=$(this), count=$i.parent().children('.item-selected').length;
+                var label = count>1?('Dragging '+count+' items'):$i.find('.song-name').text();
+                ui.helper.empty().html(label).css({'background-color':'#3b82f6','color':'white','padding':'0.5rem 1rem',
+                    'height':'auto','width':'auto','white-space':'nowrap','box-shadow':'0 5px 15px rgba(0,0,0,0.3)',
+                    'z-index':9999,'border-radius':'0.5rem','font-weight':'600'});
+              }
+            };
+            $('#genre-song-list .draggable').draggable(draggableOptions);
+          }catch(_){}
+        }catch(e){
+          console.error('renderGenreView(color-filter wrapper) error:', e);
+        }
+      };
+    }
+
+    // --- 2) Persist color when clicking a song's genre-dot -------------------
+    // This runs *after* your original handler and simply saves the computed color into the song model.
+    $(document).on('click.__persistColor','.genre-dot', function(e){
+      try{
+        var $li = $(this).closest('li');
+        var songId = $li.attr('id') || $li.data('id');
+        if (!songId) return;
+
+        // Try to read the dot's effective color (inline style or computed CSS)
+        var hex = '';
+        var inline = (this.getAttribute('style') || '').match(/background-color\s*:\s*([^;]+)/i);
+        if (inline && inline[1]) hex = __toHex(inline[1]);
+        if (!hex){
+          var css = getComputedStyle(this).backgroundColor;
+          if (css) hex = __toHex(css);
+        }
+        // If still empty, and the song has a genre name, derive via getGenreColor
+        if (!hex){
+          var s = Array.isArray(window.masterSongs) ? window.masterSongs.find(function(x){ return String(x.id)===String(songId); }) : null;
+          if (s && s.genre && typeof getGenreColor === 'function'){
+            hex = __toHex(getGenreColor(s.genre));
+          }
+        }
+        if (hex) __persistSongColorById(songId, hex);
+      }catch(err){ console.warn('persistColor click handler failed', err); }
+    });
+
+    // --- 3) Persist color when dragging a song onto a sidebar genre ----------
+    // We hook the generic drop area: look for elements with data-name (genre) receiving a draggable song.
+    $(document).on('drop.__persistColor', '[data-name]', function(e){
+      try{
+        var genreName = $(this).data('name');
+        if (!genreName) return;
+        // The draggable might not be in event; try to infer from last selected/dragged
+        var $drag = $('.ui-draggable-dragging');
+        var songId = $drag.attr('id') || $drag.data('id');
+        // Fallback: if the UL provides selection state
+        if (!songId){
+          var $sel = $('li.draggable.item-selected').first();
+          songId = $sel.attr('id') || $sel.data('id');
+        }
+        var hex = __getGenreColorByName(genreName);
+        if (songId && hex) __persistSongColorById(songId, hex);
+      }catch(err){ console.warn('persistColor drop handler failed', err); }
+    });
+
   }catch(e){
-    console.error('wrapper init failed:', e);
+    console.error('SAFE COLOR PATCH init error:', e);
   }
 })();
-/* ===== END WRAPPER ===== */
+/* ======= END SAFE PATCH ======= */
 
