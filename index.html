@@ -4006,9 +4006,10 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
 </script>
 
+<!-- MINIMAL_COLOR_GENRE_ONLY -->
 <script>
-/* === Minimal: Sidebar Genre by Color -> Show Files === */
-(function(){ 
+(function(){
+  // Convert "rgb(...)" to lowercase "#rrggbb"
   function rgbToHex(rgb){
     if (!rgb) return null;
     var m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(rgb);
@@ -4017,183 +4018,204 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     return ('#' + h(m[1]) + h(m[2]) + h(m[3])).toLowerCase();
   }
 
-  function readGenreFromNode(node){
-    var name = node.getAttribute('data-genre-name') || node.getAttribute('data-name') || node.getAttribute('data-genre') || '';
-    var color = (node.getAttribute('data-genre-color') || '').toLowerCase();
-    if (!color) { 
-      var dot = node.querySelector('.genre-dot');
-      if (dot) {
-        var cs = getComputedStyle(dot);
-        color = rgbToHex(cs.backgroundColor);
-      }
+  function getHexFromGenreNode(node){
+    // Priority: explicit data-genre-color / data-color / data-tag-color
+    var attrs = ['data-genre-color','data-color','data-tag-color'];
+    for (var i=0;i<attrs.length;i++){
+      var v = (node.getAttribute(attrs[i])||'').trim();
+      if (v) return v.toLowerCase();
     }
-    return { name: (name||'').trim(), color: (color||'').trim() };
+    // Else try a .genre-dot inside the node
+    var dot = node.querySelector('.genre-dot');
+    if (dot){
+      var cs = getComputedStyle(dot);
+      var hex = rgbToHex(cs.backgroundColor);
+      if (hex) return hex;
+    }
+    // Else try the node's own background
+    var cs2 = getComputedStyle(node);
+    var hex2 = rgbToHex(cs2.backgroundColor);
+    return hex2 || null;
   }
 
-  function showGenreView(){
-    if (typeof window.show === 'function') { window.show('genre-view'); return true; }
+  function ensureGenreViewVisible(){
+    if (typeof window.show === 'function'){ window.show('genre-view'); return; }
     try {
-      document.querySelectorAll('section').forEach(function(s){ s.classList.add('hidden'); });
-      var gv = document.getElementById('genre-view');
-      if (gv) gv.classList.remove('hidden');
-      return true;
-    } catch(_){}
-    return false;
+      document.querySelectorAll('section').forEach(function(s){ if (s.id) s.classList.add('hidden'); });
+      var gv = document.getElementById('genre-view'); if (gv) gv.classList.remove('hidden');
+    } catch(e){}
   }
 
-  function renderByColorHex(hex, name){
+  function appendSongLI(ul, content){
+    if (!ul) return;
+    if (typeof content === 'string'){
+      var li = document.createElement('li');
+      li.className = 'p-2 border-b';
+      li.textContent = content;
+      ul.appendChild(li);
+    } else if (content && content.nodeType === 1){
+      ul.appendChild(content);
+    } else if (window.jQuery && content && content.jquery){
+      ul.appendChild(content[0]);
+    }
+  }
+
+  function listByColorHex(hex){
     hex = (hex||'').toLowerCase();
     var ul = document.getElementById('genre-song-list');
     if (!ul) return;
     ul.innerHTML = '';
-    var items = [];
 
-    if (Array.isArray(window.masterSongs)) {
-      items = window.masterSongs.filter(function(s){
+    var any = false;
+    // Preferred: data model route
+    if (Array.isArray(window.masterSongs)){
+      var items = window.masterSongs.filter(function(s){
         var cands = [
           (s.genreColor||''),(s.color||''),(s.tagColor||''),(s.genreHex||'')
-        ].map(function(x){return (x||'').toLowerCase();});
-        return cands.includes(hex);
+        ].map(function(x){ return (x||'').toLowerCase(); });
+        return cands.indexOf(hex) !== -1;
       });
-      if (typeof window.createSongItem === 'function') {
-        items.forEach(function(s, i){ ul.appendChild($(createSongItem(s, i, 'genre'))[0]); });
-      } else {
-        items.forEach(function(s){ 
-          var li = document.createElement('li');
-          li.className = 'p-2 border-b';
-          li.textContent = s.name || s.title || 'Untitled';
-          ul.appendChild(li);
-        });
+      if (items.length){
+        any = true;
+        for (var i=0;i<items.length;i++){
+          var s = items[i];
+          if (typeof window.createSongItem === 'function'){
+            var built = window.createSongItem(s, i, 'genre');
+            // Accept string/DOM/jQuery
+            if (typeof built === 'string'){
+              var holder = document.createElement('div'); holder.innerHTML = built.trim();
+              appendSongLI(ul, holder.firstElementChild || holder);
+            } else {
+              appendSongLI(ul, built);
+            }
+          } else {
+            appendSongLI(ul, s.name || s.title || 'Untitled');
+          }
+        }
       }
-    } else {
-      var selector = [
+    }
+    // Fallback: scan DOM for existing file elements with matching color
+    if (!any){
+      var selectors = [
         '[data-genre-color="'+hex+'"]',
         '[data-color="'+hex+'"]',
         '[data-tag-color="'+hex+'"]'
       ].join(',');
-      var nodes = document.querySelectorAll(selector);
-      nodes.forEach(function(n){
-        var nameNode = n.querySelector('.file-name, .song-title, [data-title]');
-        var txt = (nameNode && (nameNode.textContent || nameNode.getAttribute('data-title'))) || n.getAttribute('data-name') || 'Untitled';
-        var li = document.createElement('li');
-        li.className = 'p-2 border-b';
-        li.textContent = txt;
-        ul.appendChild(li);
-      });
+      var nodes = document.querySelectorAll(selectors);
+      if (nodes.length){
+        any = true;
+        nodes.forEach(function(n){
+          var nameNode = n.querySelector('.file-name, .song-title, [data-title]');
+          var txt = (nameNode && (nameNode.textContent || nameNode.getAttribute('data-title'))) || n.getAttribute('data-name') || 'Untitled';
+          appendSongLI(ul, txt);
+        });
+      }
     }
-
-    var title = document.getElementById('genre-view-title');
-    if (title) title.textContent = name || 'Genre';
-    if (!items.length && !ul.children.length) {
+    if (!any){
       var li = document.createElement('li');
       li.className = 'p-8 text-center text-gray-500 italic';
-      li.textContent = 'No songs in this genre yet.';
+      li.textContent = 'No files with this color yet.';
       ul.appendChild(li);
     }
+    var title = document.getElementById('genre-view-title');
+    if (title) title.textContent = hex.toUpperCase();
   }
 
-  document.addEventListener('click', function(ev){
+  // Delegated: only inside left sidebar; color is the sole key
+  document.addEventListener('click', function(e){
     try {
-      var left = ev.target.closest('.left-col');
-      if (!left) return;
-      var item = ev.target.closest('#genre-list .sidebar-item, [data-genre-color], [data-genre-name]');
+      var left = e.target.closest('.left-col');
+      if (!left) return; // only act in the left sidebar
+      // Accept common genre item shapes
+      var item = e.target.closest('#genre-list .sidebar-item, [data-genre-color], .genre-sidebar-item');
       if (!item) return;
-
-      var info = readGenreFromNode(item);
-      if (!info.color) return;
-
-      showGenreView();
-      renderByColorHex(info.color, info.name);
-      ev.preventDefault();
-      ev.stopPropagation();
-    } catch(e){ console.error('Genre-by-color click failed:', e); }
+      var hex = getHexFromGenreNode(item);
+      if (!hex) return;
+      ensureGenreViewVisible();
+      listByColorHex(hex);
+      e.preventDefault();
+      e.stopPropagation();
+    } catch(err){ console.error('color-genre handler error', err); }
   }, true);
 })();
 </script>
 
 
+<!-- MINIMAL_NOTES_OVERLAY_FULLCARD -->
 <style>
-/* === Minimal: Notes Box Full-Card Expand/Collapse === */
-.notes-expanded-host { position: relative !important; }
-.notes-expanded { 
-  position: absolute !important; 
-  inset: 0 !important; 
-  width: 100% !important; 
-  height: 100% !important; 
-  z-index: 50 !important; 
-  border-radius: 12px !important;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
+.notes-host-active{ position: relative !important; }
+.notes-overlay{
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  z-index: 60; display: flex; flex-direction: column;
+  background: var(--notes-bg, #ffffff);
+  border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,.2);
 }
-.notes-expanded textarea, .notes-expanded .notes-textarea {
-  width: 100% !important; 
-  height: calc(100% - 42px) !important; 
-  resize: none !important; 
-  overflow-y: auto !important; 
-  overflow-x: hidden !important;
-}
-.notes-expanded .notes-bar {
+.dark .notes-overlay{ --notes-bg: #1f2937; }
+.notes-overlay .notes-toolbar{
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,.08);
 }
-.notes-close-btn {
-  cursor: pointer; padding: 4px 10px; border-radius: 8px; border: 1px solid #d1d5db;
+.dark .notes-overlay .notes-toolbar{ border-color: #374151; }
+.notes-overlay .notes-close{
+  padding: 4px 10px; border-radius: 8px; border: 1px solid #d1d5db; cursor: pointer;
 }
-.dark .notes-close-btn { border-color: #374151; }
+.dark .notes-overlay .notes-close{ border-color: #374151; }
+.notes-overlay textarea{
+  width: 100%; height: 100%; flex: 1 1 auto; resize: none;
+  border: none; outline: none; padding: 10px; box-sizing: border-box;
+  background: transparent; color: inherit;
+}
 </style>
 <script>
-/* === Minimal: Notes Box Full-Card Expand/Collapse === */
 (function(){
-  function findHost(el){
-    var host = el.closest('.file-card, .pdf-wrapper, .song-card, .file-item, .song-item, .doc-card');
+  function findFileHost(el){
+    // Choose the nearest card-like container
+    var host = el.closest('.file-card, .song-card, .file-item, .song-item, .doc-card, .pdf-wrapper, .file-box');
     if (!host) host = el.closest('.notes-inline') || el.parentElement;
     return host;
   }
-  function expandNotes(el){
-    var host = findHost(el);
+  function openNotesOverlay(textarea){
+    var host = findFileHost(textarea);
     if (!host) return;
-    host.classList.add('notes-expanded-host');
-    var wrap = el.closest('.notes-inline') || el.parentElement;
-    if (!wrap) wrap = el;
-    wrap.classList.add('notes-expanded');
-
-    if (!wrap.querySelector('.notes-bar')) {
-      var bar = document.createElement('div');
-      bar.className = 'notes-bar bg-white dark:bg-gray-800';
-      var title = document.createElement('div');
-      title.textContent = 'Notes';
-      var close = document.createElement('button');
-      close.type = 'button';
-      close.className = 'notes-close-btn bg-white dark:bg-gray-800';
-      close.textContent = 'Close';
-      close.addEventListener('click', function(){ collapseNotes(el); });
-      bar.appendChild(title); bar.appendChild(close);
-      wrap.insertBefore(bar, wrap.firstChild);
-    }
+    host.classList.add('notes-host-active');
+    // Prevent layout jitter: keep original content but cover it
+    var overlay = document.createElement('div');
+    overlay.className = 'notes-overlay';
+    var bar = document.createElement('div');
+    bar.className = 'notes-toolbar bg-white dark:bg-gray-800';
+    var title = document.createElement('div'); title.textContent = 'Notes';
+    var close = document.createElement('button');
+    close.className = 'notes-close bg-white dark:bg-gray-800'; close.textContent = 'Close';
+    var area = document.createElement('textarea');
+    area.value = textarea.value || '';
+    // Sync back on input
+    area.addEventListener('input', function(){ textarea.value = area.value; if (typeof window.save === 'function') { try { window.save(); } catch(_){} } });
+    close.addEventListener('click', function(){ closeNotesOverlay(overlay, textarea); });
+    bar.appendChild(title); bar.appendChild(close);
+    overlay.appendChild(bar); overlay.appendChild(area);
+    host.appendChild(overlay);
+    area.focus();
   }
-  function collapseNotes(el){
-    var wrap = el.closest('.notes-expanded');
-    if (wrap) wrap.classList.remove('notes-expanded');
-    var host = (wrap && wrap.closest('.notes-expanded-host')) || null;
-    if (host) host.classList.remove('notes-expanded-host');
+  function closeNotesOverlay(overlay, textarea){
+    if (overlay && overlay.parentNode){ overlay.parentNode.removeChild(overlay); }
+    var host = textarea ? findFileHost(textarea) : null;
+    if (host) host.classList.remove('notes-host-active');
   }
-  function bind(){
+  function bindNotes(){
     var sels = ['.notes-textarea','textarea.notes','textarea[data-notes]','textarea[name="notes"]'];
-    var tAreas = [];
-    sels.forEach(function(sel){ document.querySelectorAll(sel).forEach(function(t){ tAreas.push(t); }) });
-    tAreas.forEach(function(t){
-      if (t.__notesFullBound) return;
-      t.__notesFullBound = true;
-      t.addEventListener('focus', function(){ expandNotes(t); }, {passive:true});
-    });
-    document.addEventListener('keydown', function(e){
-      if (e.key === 'Escape') {
-        var open = document.querySelector('.notes-expanded textarea, .notes-expanded .notes-textarea');
-        if (open) collapseNotes(open);
-      }
+    var seen = new WeakSet();
+    sels.forEach(function(sel){
+      document.querySelectorAll(sel).forEach(function(t){
+        if (seen.has(t)) return;
+        seen.add(t);
+        t.addEventListener('focus', function(){ openNotesOverlay(t); }, {passive:true});
+      });
     });
   }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
-  else bind();
+  var mo = new MutationObserver(function(){ bindNotes(); });
+  mo.observe(document.body, {childList:true, subtree:true});
+  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', bindNotes); }
+  else { bindNotes(); }
 })();
 </script>
 
