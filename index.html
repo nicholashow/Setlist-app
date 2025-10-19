@@ -4006,146 +4006,110 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
 </script>
 
-<style>
-/* === In-place Notes: fixed width, vertical auto-grow === */
-.notes-inline { position: relative; display: block; width: 100%; max-width: 100%; }
-.notes-inline .notes-textarea {
-  width: 100%;
-  box-sizing: border-box;
-  min-height: 36px;
-  max-height: 60vh;
-  resize: none;
-  overflow-x: hidden;
-  overflow-y: auto;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  background: #f3f4f6;
-  color: #111827;
-  padding: 8px 10px;
-  line-height: 1.25;
-}
-.dark .notes-inline .notes-textarea {
-  background: #1f2937;
-  color: #e5e7eb;
-  border-color: #374151;
-}
-.notes-inline.collapsed .notes-textarea {
-  min-height: 36px;
-  height: 36px;
-}
-</style>
-
 <script>
-// === In-place Notes auto-grow logic ===
-(function(){
-  function autosize(el){
-    el.style.height = 'auto';
-    var max = parseInt(window.getComputedStyle(el).maxHeight) || 0;
-    var newH = el.scrollHeight + 2;
-    if (max && newH > max) newH = max;
-    el.style.height = newH + 'px';
+// === Minimal Genre Sidebar Click -> Show Matching Files ===
+(function(){ 
+  // Helper: read computed background color and normalize to hex
+  function rgbToHex(rgb){ 
+    if (!rgb) return null;
+    var m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(rgb);
+    if (!m) return null;
+    function toHex(n){ n = parseInt(n,10); return ('0' + n.toString(16)).slice(-2); }
+    return '#' + toHex(m[1]) + toHex(m[2]) + toHex(m[3]);
   }
-
-  function onFocus(e){
-    var wrap = e.target.closest('.notes-inline');
-    if (wrap && wrap.classList.contains('collapsed')) {
-      wrap.classList.remove('collapsed');
+  function getGenreInfo(el){
+    var name = null, color = null;
+    // Name priority: explicit data attribute, then label text
+    var n1 = el.getAttribute('data-genre-name');
+    var n2 = el.getAttribute('data-name');
+    var n3 = el.getAttribute('data-genre');
+    if (n1) name = n1; else if (n2) name = n2; else if (n3) name = n3;
+    if (!name) {
+      var label = el.querySelector('.genre-name');
+      if (label && label.textContent) name = label.textContent.trim();
     }
-    autosize(e.target);
-  }
-
-  function onInput(e){
-    autosize(e.target);
-    if (typeof save === 'function') { try { save(); } catch(_){} }
-  }
-
-  function bindNotes(){
-    document.querySelectorAll('.notes-inline .notes-textarea').forEach(function(ta){
-      if (ta.__notesBound) return;
-      ta.__notesBound = true;
-      ta.addEventListener('focus', onFocus, {passive:true});
-      ta.addEventListener('input', onInput, {passive:true});
-      var wrap = ta.closest('.notes-inline');
-      if (wrap){
-        if (!ta.value || ta.value.trim()==='') {
-          wrap.classList.add('collapsed');
-          ta.style.height = '36px';
-        } else {
-          wrap.classList.remove('collapsed');
-          autosize(ta);
-        }
+    // Color priority: explicit data-color, then .genre-dot style
+    var c1 = el.getAttribute('data-genre-color');
+    if (c1) color = c1;
+    if (!color) { 
+      var dot = el.querySelector('.genre-dot');
+      if (dot) {
+        var cs = window.getComputedStyle(dot);
+        color = rgbToHex(cs.backgroundColor || '');
       }
-    });
+    }
+    return { name: name, color: (color||'').toLowerCase() };
   }
 
-  var mo = new MutationObserver(bindNotes);
-  mo.observe(document.body, {childList:true, subtree:true});
+  // Fallback renderer (non-destructive): only used if the app doesn't define one
+  function fallbackRenderGenreView(genre){ 
+    try {
+      var list = Array.isArray(window.masterSongs) ? window.masterSongs.slice() : [];
+      // Filter by genre NAME or COLOR if we have them
+      list = list.filter(function(s){
+        if (!s) return false;
+        var gName = (s.genre || s.genreName || '').toLowerCase();
+        var gCol  = (s.genreColor || s.color || '').toLowerCase();
+        var inTags = false;
+        if (Array.isArray(s.genres)) inTags = s.genres.map(function(t){return (t||'').toLowerCase();}).includes((genre.name||'').toLowerCase());
+        var matchByName = genre.name && gName === (genre.name||'').toLowerCase();
+        var matchByColor = genre.color && gCol === genre.color;
+        return matchByName || matchByColor || inTags;
+      });
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindNotes);
-  } else {
-    bindNotes();
-  }
-})();
-</script>
+      var $ul = window.jQuery ? window.jQuery('#genre-song-list') : null;
+      if (!$ul || !$ul.length) return;
+      $ul.empty();
 
+      if (!list.length) {
+        $ul.append('<li class="p-8 text-center text-gray-500 italic">No songs in this genre yet.</li>');
+      } else {
+        list.forEach(function(s, i){
+          if (typeof window.createSongItem === 'function') { 
+            $ul.append(window.createSongItem(s, i, 'genre')); 
+          } else {
+            var name = (s.name || s.title || 'Untitled');
+            $ul.append('<li class="p-2 border-b">'+ name +'</li>');
+          }
+        });
+      }
 
-<script>
-// === Genre sidebar click: robust delegation to show associated files ===
-(function(){
-  function getGenreName(el){
-    if (!el) return null;
-    return el.getAttribute('data-genre-name')
-        || (el.dataset ? el.dataset.genre : null)
-        || el.getAttribute('data-name')
-        || (el.textContent || '').trim();
-  }
+      var $title = window.jQuery ? window.jQuery('#genre-view-title') : null;
+      if ($title && $title.length) $title.text(genre.name || 'Genre');
 
-  // Fallback renderer if app didn't define one
-  if (typeof window.renderGenreView !== 'function') {
-    window.renderGenreView = function(genreName){
-      try {
-        var list = (window.masterSongs || []).filter(function(s){ return (s.genre||'') === genreName; });
-        var $ul = $('#genre-song-list');
-        if (!$ul.length) return;
-        $ul.empty();
-        if (!list.length){
-          $ul.append('<li class="p-8 text-center text-gray-500 italic">No songs in this genre yet.</li>');
-        } else {
-          list.forEach(function(s,i){
-            if (typeof createSongItem === 'function') {
-              $ul.append(createSongItem(s, i, 'genre'));
-            } else {
-              $ul.append('<li class="p-2">' + (s.name||'') + '</li>');
-            }
-          });
-        }
-        $('#genre-view-title').text(genreName || 'Genre');
-      } catch(e){ console.error('renderGenreView fallback error', e); }
-    };
+    } catch(e) { console.error('fallbackRenderGenreView error', e); }
   }
 
+  // Delegate clicks from the sidebar to handle any genre item structure without changing your markup
   document.addEventListener('click', function(e){
     try {
-      var leftCol = e.target.closest('.left-col');
-      if (!leftCol) return;
-      // Allow various markup: explicit data attributes or generic id^="genre-"
-      var clickable = e.target.closest('[data-genre-name], [data-name], [data-genre], [id^="genre-"]');
-      if (!clickable) return;
+      // Only react to clicks inside the left sidebar and inside the #genre-list
+      var left = e.target.closest('.left-col');
+      if (!left) return;
+      var node = e.target.closest('#genre-list .sidebar-item');
+      if (!node) return;
 
-      // Ignore known non-nav genre UI pieces
-      var id = clickable.id || '';
-      if (id === 'genre-view' || id === 'genre-song-list' || id === 'genre-view-title' || id === 'genre-color' || id === 'genre-color-display') return;
+      var genre = getGenreInfo(node);
+      if (!genre.name && !genre.color) return; // nothing to do
 
-      var name = getGenreName(clickable);
-      if (!name) return;
+      // Show the Genre view
+      if (typeof window.show === 'function') window.show('genre-view');
+      // Render via app's renderer if provided; otherwise fallback
+      if (typeof window.renderGenreView === 'function') { 
+        window.currentGenre = genre.name || window.currentGenre || '';
+        window.renderGenreView(window.currentGenre); 
+      } else { 
+        fallbackRenderGenreView(genre);
+      }
 
-      window.currentGenre = name;
-      if (typeof show === 'function') { show('genre-view'); }
-      if (typeof renderGenreView === 'function') { renderGenreView(name); }
+      // Mark selection visually (non-destructive to your CSS)
+      var prev = left.querySelectorAll('#genre-list .sidebar-item.selected');
+      prev.forEach(function(el){ el.classList.remove('selected'); });
+      node.classList.add('selected');
+
       e.preventDefault();
       e.stopPropagation();
-    } catch(err){ console.error('Genre click delegate error', err); }
+    } catch(err) { console.error('Genre click handler error', err); }
   }, true);
 })();
 </script>
@@ -4285,48 +4249,3 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   try { mo.observe(document.documentElement, {childList:true, subtree:true}); } catch(_){}
 
 })();
-
-
-<script>
-// === Robust Genre View renderer (idempotent override) ===
-(function(){
-  function ensureGenreRenderer(){
-    window.renderGenreView = function(genreName){
-      try {
-        if (!genreName) { $('#genre-song-list').empty(); $('#genre-view-title').text('Genres'); return; }
-        $('#genre-view-title').text(genreName);
-        var sortVal = $('#genre-sort-dropdown').val() || 'name';
-        var list = (window.masterSongs || []).filter(function(s){ return (s.genre||'') === genreName; });
-        if (sortVal === 'artist') {
-          list.sort(function(a,b){ return (a.artist||'').localeCompare(b.artist||''); });
-        } else if (sortVal === 'energy') {
-          list.sort(function(a,b){ return (b.energy||0) - (a.energy||0); });
-        } else {
-          list.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
-        }
-        window.currentGenreViewSongs = list;
-        var $ul = $('#genre-song-list').empty();
-        if (!list.length){
-          $ul.append('<li class="p-8 text-center text-gray-500 italic">No songs in this genre yet. Drag a song onto this genre from the sidebar.</li>');
-        } else {
-          list.forEach(function(s, i){
-            if (typeof createSongItem === 'function') {
-              $ul.append(createSongItem(s, i, 'genre'));
-            } else {
-              $ul.append('<li class="p-2">' + (s.name||'') + '</li>');
-            }
-          });
-        }
-        $('#genre-song-list .draggable').draggable({appendTo:'body',revert:'invalid',cursorAt:{left:10,top:10},helper:'clone'});
-      } catch(e){
-        console.error('renderGenreView error', e);
-      }
-    };
-  }
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', ensureGenreRenderer);
-  } else {
-    ensureGenreRenderer();
-  }
-})();
-</script>
