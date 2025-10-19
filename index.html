@@ -4006,6 +4006,17 @@ var rect = host.getBoundingClientRect();
         })();
 
 </script>
+
+<script>
+// NOTES_CAPTURE_PREVENT_DEFAULT_v1
+document.addEventListener('mousedown', function(e){
+  var wrap = e.target.closest && e.target.closest('.notes-inline');
+  if (wrap) {
+    e.preventDefault();
+  }
+}, true);
+</script>
+
 </body>
 </html>
 
