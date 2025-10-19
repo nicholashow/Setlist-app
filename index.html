@@ -4143,14 +4143,20 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
 
 
-/* ======= FORCE GENRE CLICK -> COLOR FILTER VIEW (Safe, additive) ======= */
+/* ========================= GENRE BY COLOR — FINAL PATCH =========================
+   Non-destructive, end-of-file add-on. It:
+   1) Normalizes and persists song colors when you tag by dot or drop onto a genre.
+   2) Forces sidebar genre clicks to render by COLOR (not name).
+   3) Overrides renderGenreView with a safe version, keeping a backup.
+================================================================================= */
 (function(){
   try{
-    // Utilities
+    // ---------- Utilities ----------
     function __toHex(c){
       if (!c) return '';
       try{
         c = String(c).trim();
+        if (!c) return '';
         if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)) return c.toLowerCase();
         var m = c.match(/rgba?\s*\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
         if (m){
@@ -4182,9 +4188,66 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       }catch(_){}
       return '';
     }
+    function __findSongById(songId){
+      if (!Array.isArray(window.masterSongs)) return null;
+      return window.masterSongs.find(function(x){ return String(x.id) === String(songId); }) || null;
+    }
+    function __persistSongColorById(songId, hex){
+      try{
+        if (!songId || !hex) return;
+        var s = __findSongById(songId);
+        if (!s) return;
+        s.color = __toHex(hex);
+        if (typeof save === 'function') save();
+      }catch(_){}
+    }
+
+    // ---------- 1) Persist color when tagging by dot ----------
+    $(document).off('click.__persistColor').on('click.__persistColor','.genre-dot', function(e){
+      try{
+        var $li = $(this).closest('li');
+        var songId = $li.attr('id') || $li.data('id');
+        if (!songId) return;
+        var hex = '';
+        var inline = (this.getAttribute('style') || '').match(/background-color\s*:\s*([^;]+)/i);
+        if (inline && inline[1]) hex = __toHex(inline[1]);
+        if (!hex){
+          var css = getComputedStyle(this).backgroundColor;
+          if (css) hex = __toHex(css);
+        }
+        if (!hex){
+          var s = __findSongById(songId);
+          if (s && s.genre && typeof getGenreColor === 'function'){
+            hex = __toHex(getGenreColor(s.genre));
+          }
+        }
+        if (hex) __persistSongColorById(songId, hex);
+      }catch(err){ console.warn('persistColor(dot) failed', err); }
+    });
+
+    // ---------- 2) Persist color on drop onto a sidebar genre ----------
+    $(document).off('drop.__persistColor').on('drop.__persistColor','[data-name]', function(){
+      try{
+        var genreName = $(this).data('name');
+        if (!genreName) return;
+        var hex = __getGenreColorByName(genreName);
+        var $drag = $('.ui-draggable-dragging');
+        var songId = $drag.attr('id') || $drag.data('id');
+        if (!songId){
+          var $sel = $('li.draggable.item-selected').first();
+          songId = $sel.attr('id') || $sel.data('id');
+        }
+        if (hex && songId) __persistSongColorById(songId, hex);
+      }catch(err){ console.warn('persistColor(drop) failed', err); }
+    });
+
+    // ---------- 3) Robust renderer for genre by COLOR ----------
     function __renderGenreColorList(name){
       var $ul = $('#genre-song-list');
-      if (!$ul.length) return;
+      if (!$ul.length){
+        // Fallback: if the app uses a different target, do nothing gracefully.
+        return;
+      }
       var target = __getGenreColorByName(name);
       $ul.empty();
       if (!target || !Array.isArray(window.masterSongs) || !window.masterSongs.length){
@@ -4192,15 +4255,30 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
         return;
       }
       var list = window.masterSongs.filter(function(s){ return __songColor(s) === target; });
+
+      // Optional sorting by existing dropdown (if present)
+      var sortMode = ($('#genre-sort-dropdown').val() || 'name');
+      list.sort(function(a,b){
+        if (sortMode === 'artist') return (a.artist||'').localeCompare(b.artist||'');
+        if (sortMode === 'lastPlayed'){
+          var ta = a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0;
+          var tb = b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0;
+          return tb - ta;
+        }
+        if (sortMode === 'energy') return (b.energy||0) - (a.energy||0);
+        return (a.name||'').localeCompare(b.name||'');
+      });
+
       if (!list.length){
         $ul.append('<li class="p-6 text-center text-gray-500 italic">No songs tagged with this color yet.</li>');
         return;
       }
-      if (typeof createSongItem !== 'function') {
+      if (typeof createSongItem !== 'function'){
         $ul.append('<li class="p-6 text-center text-red-500">createSongItem() missing.</li>');
         return;
       }
       list.forEach(function(s,i){ $ul.append(createSongItem(s,i,'genre')); });
+
       try{
         var draggableOptions = {appendTo:'body',revert:'invalid',cursorAt:{left:10,top:10},helper:'clone',
           start:function(e,ui){
@@ -4215,76 +4293,42 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       }catch(_){}
     }
 
-    // Persist color when dot clicked (as before)
-    $(document).off('click.__persistColor').on('click.__persistColor','.genre-dot', function(e){
+    // ---------- 4) Backup & override renderGenreView ----------
+    if (typeof window.__orig_renderGenreView !== 'function' && typeof window.renderGenreView === 'function'){
+      window.__orig_renderGenreView = window.renderGenreView;
+    }
+    window.renderGenreView = function(name){
+      // Keep your side effects if original exists
+      try{ if (typeof window.__orig_renderGenreView === 'function') window.__orig_renderGenreView(name); }catch(_){}
+      // Then force the color-based list
       try{
-        var $li = $(this).closest('li');
-        var songId = $li.attr('id') || $li.data('id');
-        if (!songId) return;
-        var hex = '';
-        var inline = (this.getAttribute('style') || '').match(/background-color\s*:\s*([^;]+)/i);
-        if (inline && inline[1]) hex = __toHex(inline[1]);
-        if (!hex){
-          var css = getComputedStyle(this).backgroundColor;
-          if (css) hex = __toHex(css);
-        }
-        if (!hex){
-          var s = Array.isArray(window.masterSongs) ? window.masterSongs.find(function(x){ return String(x.id)===String(songId); }) : null;
-          if (s && s.genre && typeof getGenreColor === 'function'){
-            hex = __toHex(getGenreColor(s.genre));
-          }
-        }
-        if (hex){
-          var sng = window.masterSongs && window.masterSongs.find(function(x){ return String(x.id)===String(songId); });
-          if (sng){ sng.color = hex; if (typeof save==='function') save(); }
-        }
-      }catch(err){}
-    });
+        window.currentGenre = name;
+        $('#genre-view-title').text(name);
+        __renderGenreColorList(name);
+      }catch(e){ console.error('renderGenreView override error:', e); }
+    };
 
-    // Persist color when dropping onto a genre (best-effort)
-    $(document).off('drop.__persistColor').on('drop.__persistColor', '[data-name]', function(e){
+    // ---------- 5) Bind sidebar clicks to render & show genre view ----------
+    $(document).off('click.__forceGenre').on('click.__forceGenre','#genre-list .genre-item, .sidebar-item.genre-item', function(e){
       try{
-        var genreName = $(this).data('name');
-        if (!genreName) return;
-        var hex = __getGenreColorByName(genreName);
-        // find dragged song id
-        var $drag = $('.ui-draggable-dragging');
-        var songId = $drag.attr('id') || $drag.data('id');
-        if (!songId){
-          var $sel = $('li.draggable.item-selected').first();
-          songId = $sel.attr('id') || $sel.data('id');
-        }
-        if (hex && songId && Array.isArray(window.masterSongs)){
-          var sng = window.masterSongs.find(function(x){ return String(x.id)===String(songId); });
-          if (sng){ sng.color = hex; if (typeof save==='function') save(); }
-        }
-      }catch(err){}
-    });
-
-    // FORCE sidebar genre clicks to render by color and show the genre view
-    $(document).off('click.__forceGenre').on('click.__forceGenre', '#genre-list .genre-item', function(e){
-      try{
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         var name = $(this).data('name');
         if (name == null) return;
         window.currentGenre = name;
-        // If your app has a view switcher, call it; otherwise, just update title if present
         if (typeof show === 'function') try{ show('genre'); }catch(_){}
         $('#genre-view-title').text(name);
         __renderGenreColorList(name);
-      }catch(err){
-        console.error('genre click handler failed', err);
-      }
+      }catch(err){ console.error('genre click handler failed', err); }
     });
 
-    // Also refresh when the genre view becomes visible (e.g., via other navigation)
+    // ---------- 6) Refresh when the view switches back to genre ----------
     $(document).off('view:genre.__forceGenre').on('view:genre.__forceGenre', function(){
       if (window.currentGenre) __renderGenreColorList(window.currentGenre);
     });
+
   }catch(e){
-    console.error('FORCE GENRE CLICK patch init error:', e);
+    console.error('GENRE COLOR FINAL PATCH init error:', e);
   }
 })();
-/* ======= END FORCE PATCH ======= */
+/* ====================== END GENRE BY COLOR — FINAL PATCH ====================== */
 
