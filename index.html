@@ -4005,6 +4005,90 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
         })();
 
 </script>
+
+<style>
+/* === In-place Notes: fixed width, vertical auto-grow === */
+.notes-inline { position: relative; display: block; width: 100%; max-width: 100%; }
+.notes-inline .notes-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 36px;
+  max-height: 60vh;
+  resize: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #f3f4f6;
+  color: #111827;
+  padding: 8px 10px;
+  line-height: 1.25;
+}
+.dark .notes-inline .notes-textarea {
+  background: #1f2937;
+  color: #e5e7eb;
+  border-color: #374151;
+}
+.notes-inline.collapsed .notes-textarea {
+  min-height: 36px;
+  height: 36px;
+}
+</style>
+
+<script>
+// === In-place Notes auto-grow logic ===
+(function(){
+  function autosize(el){
+    el.style.height = 'auto';
+    var max = parseInt(window.getComputedStyle(el).maxHeight) || 0;
+    var newH = el.scrollHeight + 2;
+    if (max && newH > max) newH = max;
+    el.style.height = newH + 'px';
+  }
+
+  function onFocus(e){
+    var wrap = e.target.closest('.notes-inline');
+    if (wrap && wrap.classList.contains('collapsed')) {
+      wrap.classList.remove('collapsed');
+    }
+    autosize(e.target);
+  }
+
+  function onInput(e){
+    autosize(e.target);
+    if (typeof save === 'function') { try { save(); } catch(_){} }
+  }
+
+  function bindNotes(){
+    document.querySelectorAll('.notes-inline .notes-textarea').forEach(function(ta){
+      if (ta.__notesBound) return;
+      ta.__notesBound = true;
+      ta.addEventListener('focus', onFocus, {passive:true});
+      ta.addEventListener('input', onInput, {passive:true});
+      var wrap = ta.closest('.notes-inline');
+      if (wrap){
+        if (!ta.value || ta.value.trim()==='') {
+          wrap.classList.add('collapsed');
+          ta.style.height = '36px';
+        } else {
+          wrap.classList.remove('collapsed');
+          autosize(ta);
+        }
+      }
+    });
+  }
+
+  var mo = new MutationObserver(bindNotes);
+  mo.observe(document.body, {childList:true, subtree:true});
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindNotes);
+  } else {
+    bindNotes();
+  }
+})();
+</script>
+
 </body>
 </html>
 
@@ -4140,3 +4224,48 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   try { mo.observe(document.documentElement, {childList:true, subtree:true}); } catch(_){}
 
 })();
+
+
+<script>
+// === Robust Genre View renderer (idempotent override) ===
+(function(){
+  function ensureGenreRenderer(){
+    window.renderGenreView = function(genreName){
+      try {
+        if (!genreName) { $('#genre-song-list').empty(); $('#genre-view-title').text('Genres'); return; }
+        $('#genre-view-title').text(genreName);
+        var sortVal = $('#genre-sort-dropdown').val() || 'name';
+        var list = (window.masterSongs || []).filter(function(s){ return (s.genre||'') === genreName; });
+        if (sortVal === 'artist') {
+          list.sort(function(a,b){ return (a.artist||'').localeCompare(b.artist||''); });
+        } else if (sortVal === 'energy') {
+          list.sort(function(a,b){ return (b.energy||0) - (a.energy||0); });
+        } else {
+          list.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+        }
+        window.currentGenreViewSongs = list;
+        var $ul = $('#genre-song-list').empty();
+        if (!list.length){
+          $ul.append('<li class="p-8 text-center text-gray-500 italic">No songs in this genre yet. Drag a song onto this genre from the sidebar.</li>');
+        } else {
+          list.forEach(function(s, i){
+            if (typeof createSongItem === 'function') {
+              $ul.append(createSongItem(s, i, 'genre'));
+            } else {
+              $ul.append('<li class="p-2">' + (s.name||'') + '</li>');
+            }
+          });
+        }
+        $('#genre-song-list .draggable').draggable({appendTo:'body',revert:'invalid',cursorAt:{left:10,top:10},helper:'clone'});
+      } catch(e){
+        console.error('renderGenreView error', e);
+      }
+    };
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', ensureGenreRenderer);
+  } else {
+    ensureGenreRenderer();
+  }
+})();
+</script>
