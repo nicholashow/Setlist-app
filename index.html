@@ -3204,8 +3204,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   }
 
   function autoSizeAndPosition(src){
-    var host = (src.closest && (src.closest('li') || src.closest('.file-row') || src.closest('.list-item'))) || src;
-var rect = host.getBoundingClientRect();
+    var rect = src.getBoundingClientRect();
     var caps = viewportCaps();
 
     // Width: at least source width; at most content/viewport cap
@@ -3220,8 +3219,8 @@ var rect = host.getBoundingClientRect();
     var headerH = 34;
     var height = Math.min(Math.max(contentH, 60), caps.maxH);
 
-    pop.style.width = rect.width + 'px';
-    area.style.height = Math.max(40, (rect.height - (headerH + 16))) + 'px';
+    pop.style.width = width + 'px';
+    area.style.height = Math.max(40, (height - (headerH + 16))) + 'px';
 
     // Place over the original box (keep within viewport)
     var left = Math.min(rect.left, window.innerWidth - width - 8);
@@ -4007,14 +4006,144 @@ var rect = host.getBoundingClientRect();
 
 </script>
 
+<!-- NOTES_FULL_CARD_ENHANCER_v2 -->
 <script>
-// NOTES_CAPTURE_PREVENT_DEFAULT_v1
-document.addEventListener('mousedown', function(e){
-  var wrap = e.target.closest && e.target.closest('.notes-inline');
-  if (wrap) {
-    e.preventDefault();
+(function(){
+  // Track the element that initiated the notes open, so we can size to the correct card
+  var lastNotesClick = null;
+
+  // On any mousedown inside a notes trigger, remember the target and prevent the tiny field focus
+  document.addEventListener('mousedown', function(e){
+    var wrap = e.target.closest && e.target.closest('.notes-inline');
+    if (wrap) {
+      lastNotesClick = e.target;
+      e.preventDefault();
+    }
+  }, true);
+
+  // Also remember on click (fallback if mousedown didn't catch)
+  document.addEventListener('click', function(e){
+    var wrap = e.target.closest && e.target.closest('.notes-inline');
+    if (wrap) {
+      lastNotesClick = e.target;
+    }
+  }, true);
+
+  // Utility: find the file card (dark grey box). Adjust selectors if needed.
+  function findHostFrom(el){
+    if (!el) return null;
+    return el.closest('li, .file-row, .list-item, .song-item, .file-item, .doc-card, .pdf-wrapper, .rounded-xl.bg-gray-800') || el;
   }
-}, true);
+
+  // Utility: compute and apply full-card sizing + focus for the popover
+  function takeoverIfReady(){
+    var pop = document.getElementById('notes-popover');
+    if (!pop || pop.style.display === 'none') return false;
+    var area = pop.querySelector('textarea');
+    if (!area) return false;
+
+    // Find host card for sizing
+    var src = lastNotesClick || pop; // fallback to pop if unknown
+    var host = findHostFrom(src);
+    var rect = host.getBoundingClientRect();
+
+    // Place/size popover to cover entire card
+    pop.style.position = 'fixed';
+    pop.style.left = rect.left + 'px';
+    pop.style.top = rect.top + 'px';
+    pop.style.width = rect.width + 'px';
+    pop.style.height = rect.height + 'px';
+    pop.style.zIndex = 9999;
+    pop.style.borderRadius = '0.75rem';
+
+    // Ensure header & close
+    var header = pop.querySelector('.notes-popover-header');
+    if (!header){
+      header = document.createElement('div');
+      header.className = 'notes-popover-header';
+      header.style.display = 'flex';
+      header.style.alignItems = 'center';
+      header.style.justifyContent = 'space-between';
+      header.style.padding = '8px 10px';
+      header.style.borderBottom = '1px solid rgba(0,0,0,.08)';
+      var title = document.createElement('div'); title.textContent = 'Notes';
+      var close = document.createElement('button');
+      close.textContent = 'Close';
+      close.style.padding = '4px 10px';
+      close.style.borderRadius = '8px';
+      close.style.border = '1px solid #d1d5db';
+      close.style.cursor = 'pointer';
+      close.addEventListener('click', function(){
+        pop.style.display = 'none';
+      });
+      header.appendChild(title);
+      header.appendChild(close);
+      pop.insertBefore(header, pop.firstChild);
+    }
+
+    // Fit textarea inside popover
+    var headerH = header.getBoundingClientRect().height || 40;
+    area.style.position = 'absolute';
+    area.style.left = '0';
+    area.style.top = headerH + 'px';
+    area.style.width = '100%';
+    area.style.height = Math.max(40, rect.height - headerH) + 'px';
+    area.style.resize = 'none';
+    area.style.border = 'none';
+    area.style.outline = 'none';
+    area.style.boxSizing = 'border-box';
+    area.style.background = 'transparent';
+
+    // Force focus into the big textarea (and move cursor to end)
+    try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch(_){}
+    try {
+      area.focus();
+      if (area.setSelectionRange) {
+        var L = (area.value || '').length;
+        area.setSelectionRange(L, L);
+      }
+      setTimeout(function(){
+        try {
+          area.focus();
+          if (area.setSelectionRange) {
+            var L2 = (area.value || '').length;
+            area.setSelectionRange(L2, L2);
+          }
+        } catch(__) {}
+      }, 0);
+    } catch(e){}
+
+    return true;
+  }
+
+  // After any click on a notes trigger, the app shows #notes-popover shortly.
+  // Poll briefly to detect it and then size/focus once.
+  function watchForPopover(){
+    var tries = 0;
+    var iv = setInterval(function(){
+      tries++;
+      if (takeoverIfReady() || tries > 20) clearInterval(iv);
+    }, 25);
+  }
+
+  // Hook common ways your app opens notes (click/focus on notes-inline)
+  document.addEventListener('click', function(e){
+    if (e.target.closest && e.target.closest('.notes-inline')){
+      watchForPopover();
+    }
+  }, true);
+
+  document.addEventListener('focusin', function(e){
+    if (e.target.closest && e.target.closest('.notes-inline')){
+      watchForPopover();
+    }
+  });
+
+  // Also handle resizing when the window changes orientation/size
+  window.addEventListener('resize', function(){
+    takeoverIfReady();
+  });
+})();
 </script>
 
 </body>
