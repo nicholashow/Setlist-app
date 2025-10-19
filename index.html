@@ -4089,6 +4089,67 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 
+
+<script>
+// === Genre sidebar click: robust delegation to show associated files ===
+(function(){
+  function getGenreName(el){
+    if (!el) return null;
+    return el.getAttribute('data-genre-name')
+        || (el.dataset ? el.dataset.genre : null)
+        || el.getAttribute('data-name')
+        || (el.textContent || '').trim();
+  }
+
+  // Fallback renderer if app didn't define one
+  if (typeof window.renderGenreView !== 'function') {
+    window.renderGenreView = function(genreName){
+      try {
+        var list = (window.masterSongs || []).filter(function(s){ return (s.genre||'') === genreName; });
+        var $ul = $('#genre-song-list');
+        if (!$ul.length) return;
+        $ul.empty();
+        if (!list.length){
+          $ul.append('<li class="p-8 text-center text-gray-500 italic">No songs in this genre yet.</li>');
+        } else {
+          list.forEach(function(s,i){
+            if (typeof createSongItem === 'function') {
+              $ul.append(createSongItem(s, i, 'genre'));
+            } else {
+              $ul.append('<li class="p-2">' + (s.name||'') + '</li>');
+            }
+          });
+        }
+        $('#genre-view-title').text(genreName || 'Genre');
+      } catch(e){ console.error('renderGenreView fallback error', e); }
+    };
+  }
+
+  document.addEventListener('click', function(e){
+    try {
+      var leftCol = e.target.closest('.left-col');
+      if (!leftCol) return;
+      // Allow various markup: explicit data attributes or generic id^="genre-"
+      var clickable = e.target.closest('[data-genre-name], [data-name], [data-genre], [id^="genre-"]');
+      if (!clickable) return;
+
+      // Ignore known non-nav genre UI pieces
+      var id = clickable.id || '';
+      if (id === 'genre-view' || id === 'genre-song-list' || id === 'genre-view-title' || id === 'genre-color' || id === 'genre-color-display') return;
+
+      var name = getGenreName(clickable);
+      if (!name) return;
+
+      window.currentGenre = name;
+      if (typeof show === 'function') { show('genre-view'); }
+      if (typeof renderGenreView === 'function') { renderGenreView(name); }
+      e.preventDefault();
+      e.stopPropagation();
+    } catch(err){ console.error('Genre click delegate error', err); }
+  }, true);
+})();
+</script>
+
 </body>
 </html>
 
