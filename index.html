@@ -1991,7 +1991,7 @@ html.dark .notes-inline .notes-textarea {
         function autoCollapseSidebar(){const s=$('.left-col');if(!s.hasClass('collapsed')){s.addClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />')}}
         // ================== Initialization ==================
         $(function(){function ds(){$('#home-btn').removeClass('app-header-selected').addClass('app-header-unselected');$('#nav-favorites, #nav-plays, #nav-recordings, #nav-energy, #setlists-container .setlist-item, #venue-list .venue-item, #genre-list .genre-item').removeClass('selected')}load();ds();$('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');renderLeftSetlists();renderGenres(ds);renderVenues(ds);bindNav(ds);updateTopLeast();show('master');
-        $(document).on('click','.genre-dot',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(!s)return;const g=[''].concat(genres.map(g=>g.name));s.genre=g[(g.indexOf(s.genre||'')+1)%g.length];const n=`<span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span>`;$(`li[id="${s.id}"]`).find('.genre-dot').parent().html(n);if($('#genre-view').is(':visible')){renderGenreView(currentGenre)}save()});
+        $(document).on('click','.genre-dot',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(!s)return;const g=[''].concat(genres.map(g=>g.name));s.genre=g[(g.indexOf(s.genre||'')+1)%g.length];const n=`<span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span>`;$(`li[id="${s.id}"]`).find('.genre-dot').parent().html(n);if($('#genre-view').is(':visible')){if(window.currentGenreColor){renderGenreViewByColor(window.currentGenreColor)}else{renderGenreView(currentGenre)}}save()});
         $(document).on('click','.energy-icon',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(s){s.energy=((s.energy||0)+1)%4;const n=energyIcons[s.energy||0];$(`li[id="${s.id}"]`).find('.energy-icon').html(n);if($('#energy-view').is(':visible')){renderEnergyLevels()}save()}});
         $('#genre-color').on('input',function(){$('#genre-color-display').css({'background-image':'none','background-color':$(this).val()})});
         $('#add-genre').click(function(){const n=$('#genre-name').val().trim(),c=$('#genre-color').val();if(!n)return alert('Enter a genre name');if(genres.some(g=>g.name.toLowerCase()===n.toLowerCase()))return alert('Genre already exists');genres.push({name:n,color:c});$('#genre-name').val('');renderGenres(ds);$('#genre-color-display').css({'background-image':'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)','background-color':''});save()});
@@ -2094,8 +2094,71 @@ const s=$('.left-col');s.toggleClass('collapsed');
         function renderRecordings(){const u=$('#recordings-list').empty();if(recordings.length===0){u.append('<li class="p-8 text-center text-gray-500 italic">No recordings saved.</li>');return}recordings.forEach(r=>{const l=$(`<li class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"><div class="flex-1">${escapeHtml(r.setlist)} - ${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</div><audio controls src="${r.audioData}"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-rec" data-id="${r.id}">Delete</button></li>`);l.find('.delete-rec').click(()=>{recordings=recordings.filter(rec=>rec.id!==r.id);renderRecordings();save()});u.append(l)})}
         function renderFavorites(){let f=masterSongs.filter(s=>s.favorite);const m=$('#favorites-sort-dropdown').val();f.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentFavoritesViewSongs=f;const u=$('#favorites-list').empty();f.forEach((s,i)=>{u.append(createSongItem(s,i,'favorites'))});$('#favorites-list .draggable').draggable(draggableOptions)}
         function renderGenreView(n){currentGenre=n;$('#genre-view-title').text(`Genre: ${n}`);let s=masterSongs.filter(s=>s.genre&&s.genre.toLowerCase()===n.toLowerCase());const m=$('#genre-sort-dropdown').val();s.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentGenreViewSongs=s;const u=$('#genre-song-list').empty();s.forEach((s,i)=>{u.append(createSongItem(s,i,'genre'))});$('#genre-song-list .draggable').draggable(draggableOptions)}
+
+
+// === Color-based Genre View ===
+function normalizeColor(c){
+  if(!c) return '';
+  c = String(c).trim().toLowerCase();
+  if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/.test(c)){
+    if(c.length===4){ return '#' + c.slice(1).split('').map(x=>x+x).join(''); }
+    return c;
+  }
+  var m = c.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*[\d.]+\s*)?\)$/i);
+  if(m){
+    var toHex = v => ('0' + Math.max(0, Math.min(255, Math.round(parseFloat(v)))).toString(16)).slice(-2);
+    return '#' + toHex(m[1]) + toHex(m[2]) + toHex(m[3]);
+  }
+  return c;
+}
+
+function renderGenreViewByColor(colorHex){
+  var target = normalizeColor(colorHex);
+  if(!target) return;
+
+  var list = masterSongs.filter(function(s){
+    var c = normalizeColor(s.color || getGenreColor(s.genre || ''));
+    return c && c === target;
+  });
+
+  var sortMode = $('#genre-sort-dropdown').val();
+  list.sort(function(a,b){
+    if (sortMode==='artist') return (a.artist||'').localeCompare(b.artist||'');
+    if (sortMode==='energy') return (b.energy||0) - (a.energy||0);
+    return (a.name||'').localeCompare(b.name||'');
+  });
+
+  window.currentGenreViewSongs = list;
+
+  $('#genre-title').html(
+    '<span class="inline-block align-middle w-3 h-3 rounded-full mr-2" style="background:'+target+'"></span>' +
+    '<span class="align-middle">Songs with this color</span>'
+  );
+
+  var $ul = $('#genre-song-list').empty();
+  if(!list.length){
+    $ul.append('<li class="p-4 text-center text-gray-500">No songs match this color.</li>');
+  } else {
+    list.forEach(function(s,i){ $ul.append(createSongItem(s,i,'genre')); });
+  }
+
+  $('#genre-song-list .draggable').draggable({
+    appendTo:'body', revert:'invalid', cursorAt:{left:10, top:10},
+    helper:'clone',
+    start:function(e,ui){
+      var $it=$(this);
+      var count=$it.parent().children('.item-selected').length;
+      var label=count>1?('Dragging '+count+' items'):$it.find('.song-name').text();
+      ui.helper.empty().html(label).css({
+        'background-color':'#3b82f6','color':'#fff','padding':'0.5rem 1rem',
+        'height':'auto','width':'auto','white-space':'nowrap','box-shadow':'0 5px 15px rgba(0,0,0,0.3)',
+        'z-index':9999,'border-radius':'0.5rem','font-weight':'600'
+      });
+    }
+  });
+}
         function renderEnergyLevels(){const c=$('#energy-level-container').empty();[1,2,3].forEach(l=>{const s=masterSongs.filter(s=>s.energy===l).sort((a,b)=>a.name.localeCompare(b.name)),e=$(`<div class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg"><div class="flex justify-center mb-2">${energyIcons[l]}</div><ul class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto"></ul></div>`),u=e.find('ul');if(s.length>0)s.forEach(s=>u.append(`<li id="${s.id}" class="p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer draggable">${escapeHtml(s.name)}</li>`));else u.append(`<li class="p-2 text-sm text-gray-500 italic">No songs in this category.</li>`);c.append(e)});$('#energy-level-container .draggable').draggable(draggableOptions)}
-        function renderGenres(ds){$('#genre-list').empty();genres.forEach(g=>{const e=$(`<div class="sidebar-item genre-item" data-name="${escapeHtml(g.name)}"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-genre, .genre-edit-input').length>0)return;ds();$(this).addClass('selected');currentGenre=g.name;show('genre-view')});e.find('.delete-genre').click(ev=>{ev.stopPropagation();if(confirm(`Delete genre "${g.name}"?`)){genres=genres.filter(gn=>gn.name!==g.name);masterSongs.forEach(s=>{if(s.genre===g.name)s.genre=''});renderAll();save()}});e.find('.genre-name').on('dblclick',function(ev){ev.stopPropagation();const o=$(this).text(),i=$('<input class="w-full bg-gray-600 p-1 rounded-md" type="text" value="'+o+'">');$(this).replaceWith(i);i.focus().select().on('blur keypress',function(e){if(e.type==='keypress'&&e.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==o){const gn=genres.find(gn=>gn.name===o);if(gn)gn.name=newName;masterSongs.forEach(s=>{if(s.genre===o)s.genre=newName})}renderAll();save()})});$('#genre-list').append(e)});updateGenreFilters('#genre-filter-dropdown',masterSelectedGenres);$('#genre-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#genre-list .genre-item').each(function(){const n=$(this).data('name'),g=genres.find(g=>g.name===n);if(g)o.push(g)});genres=o;save()}})}
+        function renderGenres(ds){$('#genre-list').empty();genres.forEach(g=>{const e=$(`<div class="sidebar-item genre-item" data-name="${escapeHtml(g.name)}" data-color="${g.color}"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-genre, .genre-edit-input')).length>0)return;ds();$(this).addClass('selected');currentGenre=null;var c=$(this).data('color')||g.color;window.currentGenreColor=normalizeColor(c);show('genre-view');renderGenreViewByColor(window.currentGenreColor)});e.find('.delete-genre').click(ev=>{ev.stopPropagation();if(confirm(`Delete genre "${g.name}"?`)){genres=genres.filter(gn=>gn.name!==g.name);masterSongs.forEach(s=>{if(s.genre===g.name)s.genre=''});renderAll();save()}});e.find('.genre-name').on('dblclick',function(ev){ev.stopPropagation();const o=$(this).text(),i=$('<input class="w-full bg-gray-600 p-1 rounded-md" type="text" value="'+o+'">');$(this).replaceWith(i);i.focus().select().on('blur keypress',function(e){if(e.type==='keypress'&&e.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==o){const gn=genres.find(gn=>gn.name===o);if(gn)gn.name=newName;masterSongs.forEach(s=>{if(s.genre===o)s.genre=newName})}renderAll();save()})});$('#genre-list').append(e)});updateGenreFilters('#genre-filter-dropdown',masterSelectedGenres);$('#genre-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#genre-list .genre-item').each(function(){const n=$(this).data('name'),g=genres.find(g=>g.name===n);if(g)o.push(g)});genres=o;save()}})}
         function renderVenues(ds){$('#venue-list').empty();venues.forEach(v=>{const e=$(`<div class="sidebar-item venue-item" data-name="${escapeHtml(v.name)}"><div class="venue-name text-sm">${escapeHtml(v.name)}</div><span class="delete-venue" title="Delete venue">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-venue').length)return;ds();$(this).addClass('selected');renderVenueSetlists(v.name);show('venue-setlists')});e.find('.delete-venue').click(ev=>{ev.stopPropagation();venues=venues.filter(vn=>vn.name!==v.name);Object.values(setlists).forEach(sl=>{if(sl.venue===v.name)sl.venue=''});recordings.forEach(r=>{if(r.venue===v.name)r.venue=''});renderVenues(ds);if(currentSetlist)renderSetlist();if($('#venue-setlists-view').is(':visible'))$('#home-btn').trigger('click');save()});$('#venue-list').append(e)});$('#venue-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#venue-list .venue-item').each(function(){const n=$(this).data('name'),v=venues.find(v=>v.name===n);if(v)o.push(v)});venues=o;save()}})}
         function renderVenueSetlists(n){$('#venue-setlists-title').html(`Setlists for: <span class="text-blue-600">${escapeHtml(n)}</span>`);const u=$('#venue-setlists-list').empty(),m=Object.entries(setlists).filter(([_,d])=>d.venue===n);if(m.length===0){u.append('<li class="p-4 text-center text-gray-500">No setlists found for this venue.</li>');return}m.forEach(([n,d])=>{u.append(`<li class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" data-setlist-name="${escapeHtml(n)}"><div class="font-medium">${escapeHtml(n)}</div><div class="text-sm text-gray-500">${escapeHtml(d.date)||'No date'}</div></li>`)})}
         function updateGenreFilters(s,l){const d=$(s).empty();if(genres.length===0){d.append('<div class="p-2 text-sm text-gray-500">No genres created.</div>');return}genres.forEach(g=>{d.append(`<label class="flex items-center p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"><input type="checkbox" value="${escapeHtml(g.name)}" class="form-checkbox h-4 w-4 text-blue-600 rounded-md mr-2" ${l.includes(g.name)?'checked':''}>${escapeHtml(g.name)}</label>`)})}
@@ -2869,11 +2932,11 @@ function destroyPdfOverlay() {
             if (!s) return;
             s.genre = genreName;
             var g = (typeof genres!=='undefined') ? genres.find(function(x){ return x.name === genreName; }) : null;
-            if (g && !s.color) { s.color = g.color; } 
+            if (g) { s.color = g.color; } 
             if (typeof save === 'function') save();
             if ($('#master-view').is(':visible') && typeof renderMaster === 'function') renderMaster();
             if ($('#setlist-view').is(':visible') && typeof renderSetlist === 'function') renderSetlist();
-            if ($('#genre-view').is(':visible') && currentGenre === genreName && typeof renderGenreView === 'function') renderGenreView(genreName);
+            if ($('#genre-view').is(':visible') && currentGenre === genreName && typeof renderGenreView === 'function') if(window.currentGenreColor){renderGenreViewByColor(window.currentGenreColor)}else{renderGenreView(genreName)};
           } catch(e){ console.error('Genre drop error:', e); }
         }
       });
@@ -4005,147 +4068,6 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
         })();
 
 </script>
-
-<!-- NOTES_FULL_CARD_ENHANCER_v2 -->
-<script>
-(function(){
-  // Track the element that initiated the notes open, so we can size to the correct card
-  var lastNotesClick = null;
-
-  // On any mousedown inside a notes trigger, remember the target and prevent the tiny field focus
-  document.addEventListener('mousedown', function(e){
-    var wrap = e.target.closest && e.target.closest('.notes-inline');
-    if (wrap) {
-      lastNotesClick = e.target;
-      e.preventDefault();
-    }
-  }, true);
-
-  // Also remember on click (fallback if mousedown didn't catch)
-  document.addEventListener('click', function(e){
-    var wrap = e.target.closest && e.target.closest('.notes-inline');
-    if (wrap) {
-      lastNotesClick = e.target;
-    }
-  }, true);
-
-  // Utility: find the file card (dark grey box). Adjust selectors if needed.
-  function findHostFrom(el){
-    if (!el) return null;
-    return el.closest('li, .file-row, .list-item, .song-item, .file-item, .doc-card, .pdf-wrapper, .rounded-xl.bg-gray-800') || el;
-  }
-
-  // Utility: compute and apply full-card sizing + focus for the popover
-  function takeoverIfReady(){
-    var pop = document.getElementById('notes-popover');
-    if (!pop || pop.style.display === 'none') return false;
-    var area = pop.querySelector('textarea');
-    if (!area) return false;
-
-    // Find host card for sizing
-    var src = lastNotesClick || pop; // fallback to pop if unknown
-    var host = findHostFrom(src);
-    var rect = host.getBoundingClientRect();
-
-    // Place/size popover to cover entire card
-    pop.style.position = 'fixed';
-    pop.style.left = rect.left + 'px';
-    pop.style.top = rect.top + 'px';
-    pop.style.width = rect.width + 'px';
-    pop.style.height = rect.height + 'px';
-    pop.style.zIndex = 9999;
-    pop.style.borderRadius = '0.75rem';
-
-    // Ensure header & close
-    var header = pop.querySelector('.notes-popover-header');
-    if (!header){
-      header = document.createElement('div');
-      header.className = 'notes-popover-header';
-      header.style.display = 'flex';
-      header.style.alignItems = 'center';
-      header.style.justifyContent = 'space-between';
-      header.style.padding = '8px 10px';
-      header.style.borderBottom = '1px solid rgba(0,0,0,.08)';
-      var title = document.createElement('div'); title.textContent = 'Notes';
-      var close = document.createElement('button');
-      close.textContent = 'Close';
-      close.style.padding = '4px 10px';
-      close.style.borderRadius = '8px';
-      close.style.border = '1px solid #d1d5db';
-      close.style.cursor = 'pointer';
-      close.addEventListener('click', function(){
-        pop.style.display = 'none';
-      });
-      header.appendChild(title);
-      header.appendChild(close);
-      pop.insertBefore(header, pop.firstChild);
-    }
-
-    // Fit textarea inside popover
-    var headerH = header.getBoundingClientRect().height || 40;
-    area.style.position = 'absolute';
-    area.style.left = '0';
-    area.style.top = headerH + 'px';
-    area.style.width = '100%';
-    area.style.height = Math.max(40, rect.height - headerH) + 'px';
-    area.style.resize = 'none';
-    area.style.border = 'none';
-    area.style.outline = 'none';
-    area.style.boxSizing = 'border-box';
-    area.style.background = 'transparent';
-
-    // Force focus into the big textarea (and move cursor to end)
-    try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch(_){}
-    try {
-      area.focus();
-      if (area.setSelectionRange) {
-        var L = (area.value || '').length;
-        area.setSelectionRange(L, L);
-      }
-      setTimeout(function(){
-        try {
-          area.focus();
-          if (area.setSelectionRange) {
-            var L2 = (area.value || '').length;
-            area.setSelectionRange(L2, L2);
-          }
-        } catch(__) {}
-      }, 0);
-    } catch(e){}
-
-    return true;
-  }
-
-  // After any click on a notes trigger, the app shows #notes-popover shortly.
-  // Poll briefly to detect it and then size/focus once.
-  function watchForPopover(){
-    var tries = 0;
-    var iv = setInterval(function(){
-      tries++;
-      if (takeoverIfReady() || tries > 20) clearInterval(iv);
-    }, 25);
-  }
-
-  // Hook common ways your app opens notes (click/focus on notes-inline)
-  document.addEventListener('click', function(e){
-    if (e.target.closest && e.target.closest('.notes-inline')){
-      watchForPopover();
-    }
-  }, true);
-
-  document.addEventListener('focusin', function(e){
-    if (e.target.closest && e.target.closest('.notes-inline')){
-      watchForPopover();
-    }
-  });
-
-  // Also handle resizing when the window changes orientation/size
-  window.addEventListener('resize', function(){
-    takeoverIfReady();
-  });
-})();
-</script>
-
 </body>
 </html>
 
