@@ -4007,110 +4007,193 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 
 <script>
-// === Minimal Genre Sidebar Click -> Show Matching Files ===
+/* === Minimal: Sidebar Genre by Color -> Show Files === */
 (function(){ 
-  // Helper: read computed background color and normalize to hex
-  function rgbToHex(rgb){ 
+  function rgbToHex(rgb){
     if (!rgb) return null;
     var m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(rgb);
     if (!m) return null;
-    function toHex(n){ n = parseInt(n,10); return ('0' + n.toString(16)).slice(-2); }
-    return '#' + toHex(m[1]) + toHex(m[2]) + toHex(m[3]);
+    function h(n){ n = parseInt(n,10); return ('0' + n.toString(16)).slice(-2); }
+    return ('#' + h(m[1]) + h(m[2]) + h(m[3])).toLowerCase();
   }
-  function getGenreInfo(el){
-    var name = null, color = null;
-    // Name priority: explicit data attribute, then label text
-    var n1 = el.getAttribute('data-genre-name');
-    var n2 = el.getAttribute('data-name');
-    var n3 = el.getAttribute('data-genre');
-    if (n1) name = n1; else if (n2) name = n2; else if (n3) name = n3;
-    if (!name) {
-      var label = el.querySelector('.genre-name');
-      if (label && label.textContent) name = label.textContent.trim();
-    }
-    // Color priority: explicit data-color, then .genre-dot style
-    var c1 = el.getAttribute('data-genre-color');
-    if (c1) color = c1;
+
+  function readGenreFromNode(node){
+    var name = node.getAttribute('data-genre-name') || node.getAttribute('data-name') || node.getAttribute('data-genre') || '';
+    var color = (node.getAttribute('data-genre-color') || '').toLowerCase();
     if (!color) { 
-      var dot = el.querySelector('.genre-dot');
+      var dot = node.querySelector('.genre-dot');
       if (dot) {
-        var cs = window.getComputedStyle(dot);
-        color = rgbToHex(cs.backgroundColor || '');
+        var cs = getComputedStyle(dot);
+        color = rgbToHex(cs.backgroundColor);
       }
     }
-    return { name: name, color: (color||'').toLowerCase() };
+    return { name: (name||'').trim(), color: (color||'').trim() };
   }
 
-  // Fallback renderer (non-destructive): only used if the app doesn't define one
-  function fallbackRenderGenreView(genre){ 
+  function showGenreView(){
+    if (typeof window.show === 'function') { window.show('genre-view'); return true; }
     try {
-      var list = Array.isArray(window.masterSongs) ? window.masterSongs.slice() : [];
-      // Filter by genre NAME or COLOR if we have them
-      list = list.filter(function(s){
-        if (!s) return false;
-        var gName = (s.genre || s.genreName || '').toLowerCase();
-        var gCol  = (s.genreColor || s.color || '').toLowerCase();
-        var inTags = false;
-        if (Array.isArray(s.genres)) inTags = s.genres.map(function(t){return (t||'').toLowerCase();}).includes((genre.name||'').toLowerCase());
-        var matchByName = genre.name && gName === (genre.name||'').toLowerCase();
-        var matchByColor = genre.color && gCol === genre.color;
-        return matchByName || matchByColor || inTags;
+      document.querySelectorAll('section').forEach(function(s){ s.classList.add('hidden'); });
+      var gv = document.getElementById('genre-view');
+      if (gv) gv.classList.remove('hidden');
+      return true;
+    } catch(_){}
+    return false;
+  }
+
+  function renderByColorHex(hex, name){
+    hex = (hex||'').toLowerCase();
+    var ul = document.getElementById('genre-song-list');
+    if (!ul) return;
+    ul.innerHTML = '';
+    var items = [];
+
+    if (Array.isArray(window.masterSongs)) {
+      items = window.masterSongs.filter(function(s){
+        var cands = [
+          (s.genreColor||''),(s.color||''),(s.tagColor||''),(s.genreHex||'')
+        ].map(function(x){return (x||'').toLowerCase();});
+        return cands.includes(hex);
       });
-
-      var $ul = window.jQuery ? window.jQuery('#genre-song-list') : null;
-      if (!$ul || !$ul.length) return;
-      $ul.empty();
-
-      if (!list.length) {
-        $ul.append('<li class="p-8 text-center text-gray-500 italic">No songs in this genre yet.</li>');
+      if (typeof window.createSongItem === 'function') {
+        items.forEach(function(s, i){ ul.appendChild($(createSongItem(s, i, 'genre'))[0]); });
       } else {
-        list.forEach(function(s, i){
-          if (typeof window.createSongItem === 'function') { 
-            $ul.append(window.createSongItem(s, i, 'genre')); 
-          } else {
-            var name = (s.name || s.title || 'Untitled');
-            $ul.append('<li class="p-2 border-b">'+ name +'</li>');
-          }
+        items.forEach(function(s){ 
+          var li = document.createElement('li');
+          li.className = 'p-2 border-b';
+          li.textContent = s.name || s.title || 'Untitled';
+          ul.appendChild(li);
         });
       }
+    } else {
+      var selector = [
+        '[data-genre-color="'+hex+'"]',
+        '[data-color="'+hex+'"]',
+        '[data-tag-color="'+hex+'"]'
+      ].join(',');
+      var nodes = document.querySelectorAll(selector);
+      nodes.forEach(function(n){
+        var nameNode = n.querySelector('.file-name, .song-title, [data-title]');
+        var txt = (nameNode && (nameNode.textContent || nameNode.getAttribute('data-title'))) || n.getAttribute('data-name') || 'Untitled';
+        var li = document.createElement('li');
+        li.className = 'p-2 border-b';
+        li.textContent = txt;
+        ul.appendChild(li);
+      });
+    }
 
-      var $title = window.jQuery ? window.jQuery('#genre-view-title') : null;
-      if ($title && $title.length) $title.text(genre.name || 'Genre');
-
-    } catch(e) { console.error('fallbackRenderGenreView error', e); }
+    var title = document.getElementById('genre-view-title');
+    if (title) title.textContent = name || 'Genre';
+    if (!items.length && !ul.children.length) {
+      var li = document.createElement('li');
+      li.className = 'p-8 text-center text-gray-500 italic';
+      li.textContent = 'No songs in this genre yet.';
+      ul.appendChild(li);
+    }
   }
 
-  // Delegate clicks from the sidebar to handle any genre item structure without changing your markup
-  document.addEventListener('click', function(e){
+  document.addEventListener('click', function(ev){
     try {
-      // Only react to clicks inside the left sidebar and inside the #genre-list
-      var left = e.target.closest('.left-col');
+      var left = ev.target.closest('.left-col');
       if (!left) return;
-      var node = e.target.closest('#genre-list .sidebar-item');
-      if (!node) return;
+      var item = ev.target.closest('#genre-list .sidebar-item, [data-genre-color], [data-genre-name]');
+      if (!item) return;
 
-      var genre = getGenreInfo(node);
-      if (!genre.name && !genre.color) return; // nothing to do
+      var info = readGenreFromNode(item);
+      if (!info.color) return;
 
-      // Show the Genre view
-      if (typeof window.show === 'function') window.show('genre-view');
-      // Render via app's renderer if provided; otherwise fallback
-      if (typeof window.renderGenreView === 'function') { 
-        window.currentGenre = genre.name || window.currentGenre || '';
-        window.renderGenreView(window.currentGenre); 
-      } else { 
-        fallbackRenderGenreView(genre);
-      }
-
-      // Mark selection visually (non-destructive to your CSS)
-      var prev = left.querySelectorAll('#genre-list .sidebar-item.selected');
-      prev.forEach(function(el){ el.classList.remove('selected'); });
-      node.classList.add('selected');
-
-      e.preventDefault();
-      e.stopPropagation();
-    } catch(err) { console.error('Genre click handler error', err); }
+      showGenreView();
+      renderByColorHex(info.color, info.name);
+      ev.preventDefault();
+      ev.stopPropagation();
+    } catch(e){ console.error('Genre-by-color click failed:', e); }
   }, true);
+})();
+</script>
+
+
+<style>
+/* === Minimal: Notes Box Full-Card Expand/Collapse === */
+.notes-expanded-host { position: relative !important; }
+.notes-expanded { 
+  position: absolute !important; 
+  inset: 0 !important; 
+  width: 100% !important; 
+  height: 100% !important; 
+  z-index: 50 !important; 
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
+}
+.notes-expanded textarea, .notes-expanded .notes-textarea {
+  width: 100% !important; 
+  height: calc(100% - 42px) !important; 
+  resize: none !important; 
+  overflow-y: auto !important; 
+  overflow-x: hidden !important;
+}
+.notes-expanded .notes-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,.08);
+}
+.notes-close-btn {
+  cursor: pointer; padding: 4px 10px; border-radius: 8px; border: 1px solid #d1d5db;
+}
+.dark .notes-close-btn { border-color: #374151; }
+</style>
+<script>
+/* === Minimal: Notes Box Full-Card Expand/Collapse === */
+(function(){
+  function findHost(el){
+    var host = el.closest('.file-card, .pdf-wrapper, .song-card, .file-item, .song-item, .doc-card');
+    if (!host) host = el.closest('.notes-inline') || el.parentElement;
+    return host;
+  }
+  function expandNotes(el){
+    var host = findHost(el);
+    if (!host) return;
+    host.classList.add('notes-expanded-host');
+    var wrap = el.closest('.notes-inline') || el.parentElement;
+    if (!wrap) wrap = el;
+    wrap.classList.add('notes-expanded');
+
+    if (!wrap.querySelector('.notes-bar')) {
+      var bar = document.createElement('div');
+      bar.className = 'notes-bar bg-white dark:bg-gray-800';
+      var title = document.createElement('div');
+      title.textContent = 'Notes';
+      var close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'notes-close-btn bg-white dark:bg-gray-800';
+      close.textContent = 'Close';
+      close.addEventListener('click', function(){ collapseNotes(el); });
+      bar.appendChild(title); bar.appendChild(close);
+      wrap.insertBefore(bar, wrap.firstChild);
+    }
+  }
+  function collapseNotes(el){
+    var wrap = el.closest('.notes-expanded');
+    if (wrap) wrap.classList.remove('notes-expanded');
+    var host = (wrap && wrap.closest('.notes-expanded-host')) || null;
+    if (host) host.classList.remove('notes-expanded-host');
+  }
+  function bind(){
+    var sels = ['.notes-textarea','textarea.notes','textarea[data-notes]','textarea[name="notes"]'];
+    var tAreas = [];
+    sels.forEach(function(sel){ document.querySelectorAll(sel).forEach(function(t){ tAreas.push(t); }) });
+    tAreas.forEach(function(t){
+      if (t.__notesFullBound) return;
+      t.__notesFullBound = true;
+      t.addEventListener('focus', function(){ expandNotes(t); }, {passive:true});
+    });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') {
+        var open = document.querySelector('.notes-expanded textarea, .notes-expanded .notes-textarea');
+        if (open) collapseNotes(open);
+      }
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
 })();
 </script>
 
