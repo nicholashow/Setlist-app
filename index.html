@@ -2093,9 +2093,9 @@ const s=$('.left-col');s.toggleClass('collapsed');
         function renderPlays(){const u=$('#plays-list').empty();if(masterSongs.length===0){u.append('<li class="p-8 text-center text-gray-500 italic">Add songs to start tracking plays.</li>');return}const s=masterSongs.slice().sort((a,b)=>(playCounts[b.id]||0)-(playCounts[a.id]||0));window.currentPlaysViewSongs=s;if(Object.values(playCounts).every(c=>c===0)){u.append('<li class="p-8 text-center text-gray-500 italic">No songs played yet. Click a song to log a play.</li>');return}s.forEach(s=>{const l=$(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable pl-4"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);l.find('button').click(()=>{playCounts[s.id]=0;renderPlays();updateTopLeast();save()});u.append(l)});$('#plays-list .draggable').draggable(draggableOptions)}
         function renderRecordings(){const u=$('#recordings-list').empty();if(recordings.length===0){u.append('<li class="p-8 text-center text-gray-500 italic">No recordings saved.</li>');return}recordings.forEach(r=>{const l=$(`<li class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"><div class="flex-1">${escapeHtml(r.setlist)} - ${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</div><audio controls src="${r.audioData}"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-rec" data-id="${r.id}">Delete</button></li>`);l.find('.delete-rec').click(()=>{recordings=recordings.filter(rec=>rec.id!==r.id);renderRecordings();save()});u.append(l)})}
         function renderFavorites(){let f=masterSongs.filter(s=>s.favorite);const m=$('#favorites-sort-dropdown').val();f.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentFavoritesViewSongs=f;const u=$('#favorites-list').empty();f.forEach((s,i)=>{u.append(createSongItem(s,i,'favorites'))});$('#favorites-list .draggable').draggable(draggableOptions)}
-        function renderGenreView(n){currentGenre=n;$('#genre-view-title').text(`Genre: ${n}`);let s=masterSongs.filter(s=>s.genre&&s.genre.toLowerCase()===n.toLowerCase());const m=$('#genre-sort-dropdown').val();s.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentGenreViewSongs=s;const u=$('#genre-song-list').empty();s.forEach((s,i)=>{u.append(createSongItem(s,i,'genre'))});$('#genre-song-list .draggable').draggable(draggableOptions)}
+        function renderGenreView(n){currentGenre=n;$('#genre-view-title').text(`Genre: ${n}`);let s=masterSongs.filter(s=>{const col=(getGenreColor(n)||'').toLowerCase();const cands=[(s.genreColor||''),(s.color||''),(s.tagColor||''),(s.genreHex||'')].map(x=>(x||'').toLowerCase());return cands.includes(col);});const m=$('#genre-sort-dropdown').val();s.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentGenreViewSongs=s;const u=$('#genre-song-list').empty();s.forEach((s,i)=>{u.append(createSongItem(s,i,'genre'))});$('#genre-song-list .draggable').draggable(draggableOptions)}
         function renderEnergyLevels(){const c=$('#energy-level-container').empty();[1,2,3].forEach(l=>{const s=masterSongs.filter(s=>s.energy===l).sort((a,b)=>a.name.localeCompare(b.name)),e=$(`<div class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg"><div class="flex justify-center mb-2">${energyIcons[l]}</div><ul class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto"></ul></div>`),u=e.find('ul');if(s.length>0)s.forEach(s=>u.append(`<li id="${s.id}" class="p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer draggable">${escapeHtml(s.name)}</li>`));else u.append(`<li class="p-2 text-sm text-gray-500 italic">No songs in this category.</li>`);c.append(e)});$('#energy-level-container .draggable').draggable(draggableOptions)}
-        function renderGenres(ds){$('#genre-list').empty();genres.forEach(g=>{const e=$(`<div class="sidebar-item genre-item" data-name="${escapeHtml(g.name)}"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-genre, .genre-edit-input').length>0)return;ds();$(this).addClass('selected');currentGenre=g.name;show('genre-view')});e.find('.delete-genre').click(ev=>{ev.stopPropagation();if(confirm(`Delete genre "${g.name}"?`)){genres=genres.filter(gn=>gn.name!==g.name);masterSongs.forEach(s=>{if(s.genre===g.name)s.genre=''});renderAll();save()}});e.find('.genre-name').on('dblclick',function(ev){ev.stopPropagation();const o=$(this).text(),i=$('<input class="w-full bg-gray-600 p-1 rounded-md" type="text" value="'+o+'">');$(this).replaceWith(i);i.focus().select().on('blur keypress',function(e){if(e.type==='keypress'&&e.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==o){const gn=genres.find(gn=>gn.name===o);if(gn)gn.name=newName;masterSongs.forEach(s=>{if(s.genre===o)s.genre=newName})}renderAll();save()})});$('#genre-list').append(e)});updateGenreFilters('#genre-filter-dropdown',masterSelectedGenres);$('#genre-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#genre-list .genre-item').each(function(){const n=$(this).data('name'),g=genres.find(g=>g.name===n);if(g)o.push(g)});genres=o;save()}})}
+        function renderGenres(ds){$('#genre-list').empty();genres.forEach(g=>{const e=$(`<div class="sidebar-item genre-item" data-name="${escapeHtml(g.name)}"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-genre, .genre-edit-input').length>0)return;ds();$(this).addClass('selected');currentGenre=g.name;show('genre-view');renderGenreView(g.name)});e.find('.delete-genre').click(ev=>{ev.stopPropagation();if(confirm(`Delete genre "${g.name}"?`)){genres=genres.filter(gn=>gn.name!==g.name);masterSongs.forEach(s=>{if(s.genre===g.name)s.genre=''});renderAll();save()}});e.find('.genre-name').on('dblclick',function(ev){ev.stopPropagation();const o=$(this).text(),i=$('<input class="w-full bg-gray-600 p-1 rounded-md" type="text" value="'+o+'">');$(this).replaceWith(i);i.focus().select().on('blur keypress',function(e){if(e.type==='keypress'&&e.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==o){const gn=genres.find(gn=>gn.name===o);if(gn)gn.name=newName;masterSongs.forEach(s=>{if(s.genre===o)s.genre=newName})}renderAll();save()})});$('#genre-list').append(e)});updateGenreFilters('#genre-filter-dropdown',masterSelectedGenres);$('#genre-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#genre-list .genre-item').each(function(){const n=$(this).data('name'),g=genres.find(g=>g.name===n);if(g)o.push(g)});genres=o;save()}})}
         function renderVenues(ds){$('#venue-list').empty();venues.forEach(v=>{const e=$(`<div class="sidebar-item venue-item" data-name="${escapeHtml(v.name)}"><div class="venue-name text-sm">${escapeHtml(v.name)}</div><span class="delete-venue" title="Delete venue">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-venue').length)return;ds();$(this).addClass('selected');renderVenueSetlists(v.name);show('venue-setlists')});e.find('.delete-venue').click(ev=>{ev.stopPropagation();venues=venues.filter(vn=>vn.name!==v.name);Object.values(setlists).forEach(sl=>{if(sl.venue===v.name)sl.venue=''});recordings.forEach(r=>{if(r.venue===v.name)r.venue=''});renderVenues(ds);if(currentSetlist)renderSetlist();if($('#venue-setlists-view').is(':visible'))$('#home-btn').trigger('click');save()});$('#venue-list').append(e)});$('#venue-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#venue-list .venue-item').each(function(){const n=$(this).data('name'),v=venues.find(v=>v.name===n);if(v)o.push(v)});venues=o;save()}})}
         function renderVenueSetlists(n){$('#venue-setlists-title').html(`Setlists for: <span class="text-blue-600">${escapeHtml(n)}</span>`);const u=$('#venue-setlists-list').empty(),m=Object.entries(setlists).filter(([_,d])=>d.venue===n);if(m.length===0){u.append('<li class="p-4 text-center text-gray-500">No setlists found for this venue.</li>');return}m.forEach(([n,d])=>{u.append(`<li class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" data-setlist-name="${escapeHtml(n)}"><div class="font-medium">${escapeHtml(n)}</div><div class="text-sm text-gray-500">${escapeHtml(d.date)||'No date'}</div></li>`)})}
         function updateGenreFilters(s,l){const d=$(s).empty();if(genres.length===0){d.append('<div class="p-2 text-sm text-gray-500">No genres created.</div>');return}genres.forEach(g=>{d.append(`<label class="flex items-center p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"><input type="checkbox" value="${escapeHtml(g.name)}" class="form-checkbox h-4 w-4 text-blue-600 rounded-md mr-2" ${l.includes(g.name)?'checked':''}>${escapeHtml(g.name)}</label>`)})}
@@ -3204,7 +3204,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   }
 
   function autoSizeAndPosition(src){
-    var rect = src.getBoundingClientRect();
+    var host = (src.closest && (src.closest('li') || src.closest('.list-item') || src.closest('.file-row'))) || src;var rect = host.getBoundingClientRect();
     var caps = viewportCaps();
 
     // Width: at least source width; at most content/viewport cap
@@ -3219,8 +3219,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     var headerH = 34;
     var height = Math.min(Math.max(contentH, 60), caps.maxH);
 
-    pop.style.width = width + 'px';
-    area.style.height = Math.max(40, (height - (headerH + 16))) + 'px';
+    pop.style.width = rect.width + 'px';
+    area.style.height = Math.max(40, (rect.height - (headerH + 16))) + 'px';
 
     // Place over the original box (keep within viewport)
     var left = Math.min(rect.left, window.innerWidth - width - 8);
@@ -4005,249 +4005,6 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
         })();
 
 </script>
-
-<!-- COLOR_ONLY_GENRE_FILTER_v1 -->
-<script>
-(function(){
-  // Utility: convert computed rgb(...) to hex '#rrggbb'
-  function rgbToHex(rgb){
-    if (!rgb) return null;
-    var m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(rgb);
-    if (!m) return null;
-    function h(n){ n = parseInt(n,10); return ('0' + n.toString(16)).slice(-2); }
-    return ('#' + h(m[1]) + h(m[2]) + h(m[3])).toLowerCase();
-  }
-
-  // Find a hex color on a sidebar "genre" node
-  function getSidebarGenreHex(node){
-    if (!node) return null;
-    // 1) Look for explicit attributes first
-    var attrs = ['data-genre-color','data-color','data-tag-color'];
-    for (var i=0;i<attrs.length;i++){
-      var v = node.getAttribute(attrs[i]);
-      if (v && v.trim()) return v.trim().toLowerCase();
-    }
-    // 2) Look for a dot inside (common pattern)
-    var dot = node.querySelector('.genre-dot, .color-dot, .dot');
-    if (dot){
-      var cs = getComputedStyle(dot);
-      var hex = rgbToHex(cs.backgroundColor || '');
-      if (hex) return hex;
-    }
-    // 3) Fall back to the node's own bg color
-    var cs2 = getComputedStyle(node);
-    var hex2 = rgbToHex(cs2.backgroundColor || '');
-    return hex2 || null;
-  }
-
-  // Render function that filters STRICTLY by color
-  function renderGenreByHex(hex){
-    hex = (hex||'').toLowerCase();
-    // Prefer using an existing renderer if present (but pass color)
-    // Otherwise, fill #genre-song-list ourselves.
-    var listEl = document.getElementById('genre-song-list');
-    if (!listEl) return;
-
-    // Clear
-    listEl.innerHTML = '';
-
-    var appended = false;
-
-    // A) Data-model route
-    if (Array.isArray(window.masterSongs)){
-      var items = window.masterSongs.filter(function(s){
-        var cands = [
-          (s.genreColor||''),(s.color||''),(s.tagColor||''),(s.genreHex||'')
-        ].map(function(x){ return (x||'').toLowerCase(); });
-        return cands.indexOf(hex) !== -1;
-      });
-
-      if (items.length){
-        appended = true;
-        if (typeof window.createSongItem === 'function'){
-          for (var i=0;i<items.length;i++){
-            var built = window.createSongItem(items[i], i, 'genre');
-            if (typeof built === 'string'){
-              var tmp = document.createElement('div');
-              tmp.innerHTML = built.trim();
-              var node = tmp.firstElementChild || tmp;
-              listEl.appendChild(node);
-            } else if (built && built.nodeType === 1){
-              listEl.appendChild(built);
-            } else if (window.jQuery && built && built.jquery){
-              listEl.appendChild(built[0]);
-            } else {
-              var li = document.createElement('li');
-              li.className = 'p-2 border-b';
-              li.textContent = items[i].name || items[i].title || 'Untitled';
-              listEl.appendChild(li);
-            }
-          }
-        } else {
-          items.forEach(function(s){
-            var li = document.createElement('li');
-            li.className = 'p-2 border-b';
-            li.textContent = s.name || s.title || 'Untitled';
-            listEl.appendChild(li);
-          });
-        }
-      }
-    }
-
-    // B) DOM route (fallback): scan for existing file cards with matching color
-    if (!appended){
-      var selector = [
-        '[data-genre-color="'+hex+'"]',
-        '[data-color="'+hex+'"]',
-        '[data-tag-color="'+hex+'"]'
-      ].join(',');
-      var nodes = document.querySelectorAll(selector);
-      if (nodes.length){
-        appended = true;
-        nodes.forEach(function(n){
-          // Try to extract a visible title
-          var nameNode = n.querySelector('.file-name, .song-title, [data-title]');
-          var txt = (nameNode && (nameNode.textContent || nameNode.getAttribute('data-title'))) || n.getAttribute('data-name') || 'Untitled';
-          var li = document.createElement('li');
-          li.className = 'p-2 border-b';
-          li.textContent = txt;
-          listEl.appendChild(li);
-        });
-      }
-    }
-
-    if (!appended){
-      var li = document.createElement('li');
-      li.className = 'p-8 text-center text-gray-500 italic';
-      li.textContent = 'No files with this color yet.';
-      listEl.appendChild(li);
-    }
-
-    var title = document.getElementById('genre-view-title');
-    if (title) title.textContent = hex.toUpperCase();
-
-    // Ensure the genre view is visible
-    if (typeof window.show === 'function'){ window.show('genre-view'); }
-    else {
-      try {
-        document.querySelectorAll('section').forEach(function(s){ if (s.id) s.classList.add('hidden'); });
-        var gv = document.getElementById('genre-view'); if (gv) gv.classList.remove('hidden');
-      } catch(e){}
-    }
-  }
-
-  // Delegated click: only listens inside the left sidebar
-  document.addEventListener('click', function(e){
-    try {
-      var sidebar = e.target.closest('.left-col');
-      if (!sidebar) return;
-      // Accept several shapes:
-      //  - explicit data-genre-color on the clicked element or ancestors
-      //  - common class names for sidebar items
-      var item = e.target.closest('[data-genre-color], [data-color], [data-tag-color], .genre-sidebar-item, #genre-list .sidebar-item');
-      if (!item) return;
-      var hex = getSidebarGenreHex(item);
-      if (!hex) return;
-      renderGenreByHex(hex);
-      e.preventDefault();
-      e.stopPropagation();
-    } catch(err){
-      console.error('COLOR_ONLY_GENRE_FILTER error', err);
-    }
-  }, true);
-})();
-</script>
-
-
-<!-- NOTES_FULL_FILE_OVERLAY_v1 -->
-<style>
-.notes-overlay-host { position: relative !important; }
-.notes-overlay {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  z-index: 60; display: flex; flex-direction: column;
-  border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,.18);
-  background: var(--notes-bg, #ffffff);
-}
-.dark .notes-overlay { --notes-bg: #1f2937; }
-.notes-overlay .notes-toolbar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,.08);
-}
-.dark .notes-overlay .notes-toolbar { border-color: #374151; }
-.notes-overlay .notes-close {
-  padding: 4px 10px; border-radius: 8px; border: 1px solid #d1d5db; cursor: pointer;
-  background: #fff;
-}
-.dark .notes-overlay .notes-close { background: #1f2937; border-color: #374151; }
-.notes-overlay textarea {
-  width: 100%; height: 100%; flex: 1 1 auto; resize: none;
-  border: none; outline: none; padding: 10px; box-sizing: border-box;
-  background: transparent; color: inherit;
-}
-</style>
-<script>
-(function(){
-  // Find the correct file card container to overlay (non-destructive)
-  function findFileCard(el){
-    var host = el.closest('[data-file-card], .file-card, .song-card, .file-item, .song-item, .doc-card, .pdf-wrapper, .file-box');
-    if (!host) host = el.closest('.notes-inline') || el.parentElement;
-    return host;
-  }
-  function openOverlayFromTextArea(textarea){
-    var host = findFileCard(textarea);
-    if (!host) return;
-    host.classList.add('notes-overlay-host');
-
-    // Build overlay
-    var overlay = document.createElement('div');
-    overlay.className = 'notes-overlay';
-    var bar = document.createElement('div');
-    bar.className = 'notes-toolbar bg-white dark:bg-gray-800';
-    var title = document.createElement('div');
-    title.textContent = 'Notes';
-    var closeBtn = document.createElement('button');
-    closeBtn.type = 'button';
-    closeBtn.className = 'notes-close';
-    closeBtn.textContent = 'Close';
-
-    var area = document.createElement('textarea');
-    area.value = textarea.value || '';
-    area.addEventListener('input', function(){
-      textarea.value = area.value;
-      if (typeof window.save === 'function'){ try { window.save(); } catch(_){ } }
-    });
-    closeBtn.addEventListener('click', function(){
-      if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
-      host.classList.remove('notes-overlay-host');
-    });
-
-    bar.appendChild(title); bar.appendChild(closeBtn);
-    overlay.appendChild(bar); overlay.appendChild(area);
-    host.appendChild(overlay);
-    area.focus();
-  }
-
-  function bindNotes(){
-    // Bind to common notes selectors without renaming existing classes/ids
-    var selectors = ['.notes-textarea', 'textarea.notes', 'textarea[data-notes]', 'textarea[name="notes"]'];
-    selectors.forEach(function(sel){
-      document.querySelectorAll(sel).forEach(function(t){
-        if (t.__notesOverlayBound) return;
-        t.__notesOverlayBound = true;
-        t.addEventListener('focus', function(){ openOverlayFromTextArea(t); }, {passive:true});
-      });
-    });
-  }
-
-  // Watch for DOM changes to keep bindings fresh
-  var mo = new MutationObserver(function(){ bindNotes(); });
-  mo.observe(document.body, {childList:true, subtree:true});
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindNotes);
-  else bindNotes();
-})();
-</script>
-
 </body>
 </html>
 
