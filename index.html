@@ -4006,10 +4006,10 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
 </script>
 
-<!-- MINIMAL_COLOR_GENRE_ONLY -->
+<!-- COLOR_ONLY_GENRE_FILTER_v1 -->
 <script>
 (function(){
-  // Convert "rgb(...)" to lowercase "#rrggbb"
+  // Utility: convert computed rgb(...) to hex '#rrggbb'
   function rgbToHex(rgb){
     if (!rgb) return null;
     var m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(rgb);
@@ -4018,56 +4018,42 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     return ('#' + h(m[1]) + h(m[2]) + h(m[3])).toLowerCase();
   }
 
-  function getHexFromGenreNode(node){
-    // Priority: explicit data-genre-color / data-color / data-tag-color
+  // Find a hex color on a sidebar "genre" node
+  function getSidebarGenreHex(node){
+    if (!node) return null;
+    // 1) Look for explicit attributes first
     var attrs = ['data-genre-color','data-color','data-tag-color'];
     for (var i=0;i<attrs.length;i++){
-      var v = (node.getAttribute(attrs[i])||'').trim();
-      if (v) return v.toLowerCase();
+      var v = node.getAttribute(attrs[i]);
+      if (v && v.trim()) return v.trim().toLowerCase();
     }
-    // Else try a .genre-dot inside the node
-    var dot = node.querySelector('.genre-dot');
+    // 2) Look for a dot inside (common pattern)
+    var dot = node.querySelector('.genre-dot, .color-dot, .dot');
     if (dot){
       var cs = getComputedStyle(dot);
-      var hex = rgbToHex(cs.backgroundColor);
+      var hex = rgbToHex(cs.backgroundColor || '');
       if (hex) return hex;
     }
-    // Else try the node's own background
+    // 3) Fall back to the node's own bg color
     var cs2 = getComputedStyle(node);
-    var hex2 = rgbToHex(cs2.backgroundColor);
+    var hex2 = rgbToHex(cs2.backgroundColor || '');
     return hex2 || null;
   }
 
-  function ensureGenreViewVisible(){
-    if (typeof window.show === 'function'){ window.show('genre-view'); return; }
-    try {
-      document.querySelectorAll('section').forEach(function(s){ if (s.id) s.classList.add('hidden'); });
-      var gv = document.getElementById('genre-view'); if (gv) gv.classList.remove('hidden');
-    } catch(e){}
-  }
-
-  function appendSongLI(ul, content){
-    if (!ul) return;
-    if (typeof content === 'string'){
-      var li = document.createElement('li');
-      li.className = 'p-2 border-b';
-      li.textContent = content;
-      ul.appendChild(li);
-    } else if (content && content.nodeType === 1){
-      ul.appendChild(content);
-    } else if (window.jQuery && content && content.jquery){
-      ul.appendChild(content[0]);
-    }
-  }
-
-  function listByColorHex(hex){
+  // Render function that filters STRICTLY by color
+  function renderGenreByHex(hex){
     hex = (hex||'').toLowerCase();
-    var ul = document.getElementById('genre-song-list');
-    if (!ul) return;
-    ul.innerHTML = '';
+    // Prefer using an existing renderer if present (but pass color)
+    // Otherwise, fill #genre-song-list ourselves.
+    var listEl = document.getElementById('genre-song-list');
+    if (!listEl) return;
 
-    var any = false;
-    // Preferred: data model route
+    // Clear
+    listEl.innerHTML = '';
+
+    var appended = false;
+
+    // A) Data-model route
     if (Array.isArray(window.masterSongs)){
       var items = window.masterSongs.filter(function(s){
         var cands = [
@@ -4075,92 +4061,125 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
         ].map(function(x){ return (x||'').toLowerCase(); });
         return cands.indexOf(hex) !== -1;
       });
+
       if (items.length){
-        any = true;
-        for (var i=0;i<items.length;i++){
-          var s = items[i];
-          if (typeof window.createSongItem === 'function'){
-            var built = window.createSongItem(s, i, 'genre');
-            // Accept string/DOM/jQuery
+        appended = true;
+        if (typeof window.createSongItem === 'function'){
+          for (var i=0;i<items.length;i++){
+            var built = window.createSongItem(items[i], i, 'genre');
             if (typeof built === 'string'){
-              var holder = document.createElement('div'); holder.innerHTML = built.trim();
-              appendSongLI(ul, holder.firstElementChild || holder);
+              var tmp = document.createElement('div');
+              tmp.innerHTML = built.trim();
+              var node = tmp.firstElementChild || tmp;
+              listEl.appendChild(node);
+            } else if (built && built.nodeType === 1){
+              listEl.appendChild(built);
+            } else if (window.jQuery && built && built.jquery){
+              listEl.appendChild(built[0]);
             } else {
-              appendSongLI(ul, built);
+              var li = document.createElement('li');
+              li.className = 'p-2 border-b';
+              li.textContent = items[i].name || items[i].title || 'Untitled';
+              listEl.appendChild(li);
             }
-          } else {
-            appendSongLI(ul, s.name || s.title || 'Untitled');
           }
+        } else {
+          items.forEach(function(s){
+            var li = document.createElement('li');
+            li.className = 'p-2 border-b';
+            li.textContent = s.name || s.title || 'Untitled';
+            listEl.appendChild(li);
+          });
         }
       }
     }
-    // Fallback: scan DOM for existing file elements with matching color
-    if (!any){
-      var selectors = [
+
+    // B) DOM route (fallback): scan for existing file cards with matching color
+    if (!appended){
+      var selector = [
         '[data-genre-color="'+hex+'"]',
         '[data-color="'+hex+'"]',
         '[data-tag-color="'+hex+'"]'
       ].join(',');
-      var nodes = document.querySelectorAll(selectors);
+      var nodes = document.querySelectorAll(selector);
       if (nodes.length){
-        any = true;
+        appended = true;
         nodes.forEach(function(n){
+          // Try to extract a visible title
           var nameNode = n.querySelector('.file-name, .song-title, [data-title]');
           var txt = (nameNode && (nameNode.textContent || nameNode.getAttribute('data-title'))) || n.getAttribute('data-name') || 'Untitled';
-          appendSongLI(ul, txt);
+          var li = document.createElement('li');
+          li.className = 'p-2 border-b';
+          li.textContent = txt;
+          listEl.appendChild(li);
         });
       }
     }
-    if (!any){
+
+    if (!appended){
       var li = document.createElement('li');
       li.className = 'p-8 text-center text-gray-500 italic';
       li.textContent = 'No files with this color yet.';
-      ul.appendChild(li);
+      listEl.appendChild(li);
     }
+
     var title = document.getElementById('genre-view-title');
     if (title) title.textContent = hex.toUpperCase();
+
+    // Ensure the genre view is visible
+    if (typeof window.show === 'function'){ window.show('genre-view'); }
+    else {
+      try {
+        document.querySelectorAll('section').forEach(function(s){ if (s.id) s.classList.add('hidden'); });
+        var gv = document.getElementById('genre-view'); if (gv) gv.classList.remove('hidden');
+      } catch(e){}
+    }
   }
 
-  // Delegated: only inside left sidebar; color is the sole key
+  // Delegated click: only listens inside the left sidebar
   document.addEventListener('click', function(e){
     try {
-      var left = e.target.closest('.left-col');
-      if (!left) return; // only act in the left sidebar
-      // Accept common genre item shapes
-      var item = e.target.closest('#genre-list .sidebar-item, [data-genre-color], .genre-sidebar-item');
+      var sidebar = e.target.closest('.left-col');
+      if (!sidebar) return;
+      // Accept several shapes:
+      //  - explicit data-genre-color on the clicked element or ancestors
+      //  - common class names for sidebar items
+      var item = e.target.closest('[data-genre-color], [data-color], [data-tag-color], .genre-sidebar-item, #genre-list .sidebar-item');
       if (!item) return;
-      var hex = getHexFromGenreNode(item);
+      var hex = getSidebarGenreHex(item);
       if (!hex) return;
-      ensureGenreViewVisible();
-      listByColorHex(hex);
+      renderGenreByHex(hex);
       e.preventDefault();
       e.stopPropagation();
-    } catch(err){ console.error('color-genre handler error', err); }
+    } catch(err){
+      console.error('COLOR_ONLY_GENRE_FILTER error', err);
+    }
   }, true);
 })();
 </script>
 
 
-<!-- MINIMAL_NOTES_OVERLAY_FULLCARD -->
+<!-- NOTES_FULL_FILE_OVERLAY_v1 -->
 <style>
-.notes-host-active{ position: relative !important; }
-.notes-overlay{
+.notes-overlay-host { position: relative !important; }
+.notes-overlay {
   position: absolute; inset: 0; width: 100%; height: 100%;
   z-index: 60; display: flex; flex-direction: column;
+  border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,.18);
   background: var(--notes-bg, #ffffff);
-  border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,.2);
 }
-.dark .notes-overlay{ --notes-bg: #1f2937; }
-.notes-overlay .notes-toolbar{
+.dark .notes-overlay { --notes-bg: #1f2937; }
+.notes-overlay .notes-toolbar {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 10px; border-bottom: 1px solid rgba(0,0,0,.08);
 }
-.dark .notes-overlay .notes-toolbar{ border-color: #374151; }
-.notes-overlay .notes-close{
+.dark .notes-overlay .notes-toolbar { border-color: #374151; }
+.notes-overlay .notes-close {
   padding: 4px 10px; border-radius: 8px; border: 1px solid #d1d5db; cursor: pointer;
+  background: #fff;
 }
-.dark .notes-overlay .notes-close{ border-color: #374151; }
-.notes-overlay textarea{
+.dark .notes-overlay .notes-close { background: #1f2937; border-color: #374151; }
+.notes-overlay textarea {
   width: 100%; height: 100%; flex: 1 1 auto; resize: none;
   border: none; outline: none; padding: 10px; box-sizing: border-box;
   background: transparent; color: inherit;
@@ -4168,54 +4187,64 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </style>
 <script>
 (function(){
-  function findFileHost(el){
-    // Choose the nearest card-like container
-    var host = el.closest('.file-card, .song-card, .file-item, .song-item, .doc-card, .pdf-wrapper, .file-box');
+  // Find the correct file card container to overlay (non-destructive)
+  function findFileCard(el){
+    var host = el.closest('[data-file-card], .file-card, .song-card, .file-item, .song-item, .doc-card, .pdf-wrapper, .file-box');
     if (!host) host = el.closest('.notes-inline') || el.parentElement;
     return host;
   }
-  function openNotesOverlay(textarea){
-    var host = findFileHost(textarea);
+  function openOverlayFromTextArea(textarea){
+    var host = findFileCard(textarea);
     if (!host) return;
-    host.classList.add('notes-host-active');
-    // Prevent layout jitter: keep original content but cover it
+    host.classList.add('notes-overlay-host');
+
+    // Build overlay
     var overlay = document.createElement('div');
     overlay.className = 'notes-overlay';
     var bar = document.createElement('div');
     bar.className = 'notes-toolbar bg-white dark:bg-gray-800';
-    var title = document.createElement('div'); title.textContent = 'Notes';
-    var close = document.createElement('button');
-    close.className = 'notes-close bg-white dark:bg-gray-800'; close.textContent = 'Close';
+    var title = document.createElement('div');
+    title.textContent = 'Notes';
+    var closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'notes-close';
+    closeBtn.textContent = 'Close';
+
     var area = document.createElement('textarea');
     area.value = textarea.value || '';
-    // Sync back on input
-    area.addEventListener('input', function(){ textarea.value = area.value; if (typeof window.save === 'function') { try { window.save(); } catch(_){} } });
-    close.addEventListener('click', function(){ closeNotesOverlay(overlay, textarea); });
-    bar.appendChild(title); bar.appendChild(close);
+    area.addEventListener('input', function(){
+      textarea.value = area.value;
+      if (typeof window.save === 'function'){ try { window.save(); } catch(_){ } }
+    });
+    closeBtn.addEventListener('click', function(){
+      if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      host.classList.remove('notes-overlay-host');
+    });
+
+    bar.appendChild(title); bar.appendChild(closeBtn);
     overlay.appendChild(bar); overlay.appendChild(area);
     host.appendChild(overlay);
     area.focus();
   }
-  function closeNotesOverlay(overlay, textarea){
-    if (overlay && overlay.parentNode){ overlay.parentNode.removeChild(overlay); }
-    var host = textarea ? findFileHost(textarea) : null;
-    if (host) host.classList.remove('notes-host-active');
-  }
+
   function bindNotes(){
-    var sels = ['.notes-textarea','textarea.notes','textarea[data-notes]','textarea[name="notes"]'];
-    var seen = new WeakSet();
-    sels.forEach(function(sel){
+    // Bind to common notes selectors without renaming existing classes/ids
+    var selectors = ['.notes-textarea', 'textarea.notes', 'textarea[data-notes]', 'textarea[name="notes"]'];
+    selectors.forEach(function(sel){
       document.querySelectorAll(sel).forEach(function(t){
-        if (seen.has(t)) return;
-        seen.add(t);
-        t.addEventListener('focus', function(){ openNotesOverlay(t); }, {passive:true});
+        if (t.__notesOverlayBound) return;
+        t.__notesOverlayBound = true;
+        t.addEventListener('focus', function(){ openOverlayFromTextArea(t); }, {passive:true});
       });
     });
   }
+
+  // Watch for DOM changes to keep bindings fresh
   var mo = new MutationObserver(function(){ bindNotes(); });
   mo.observe(document.body, {childList:true, subtree:true});
-  if (document.readyState === 'loading'){ document.addEventListener('DOMContentLoaded', bindNotes); }
-  else { bindNotes(); }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindNotes);
+  else bindNotes();
 })();
 </script>
 
