@@ -4005,6 +4005,171 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
         })();
 
 </script>
+
+<!-- === DROP‑IN GENRE FILTER PATCH (DOM‑only, safe) === -->
+<script>
+/*
+  Drop‑in Genre Filter Patch (DOM‑only)
+  Purpose: When a sidebar genre is clicked, show a page listing files tagged with the same COLOR.
+  How it works: Pure DOM scan (no reliance on your app's internal JS). Non‑destructive.
+  Scope: Adds a minimal 'genre-view' section if missing. Hides other main views while showing results.
+*/
+(function(){
+  // ---- helpers ----
+  const NAMED_TO_HEX = { black:'#000000', white:'#ffffff', red:'#ff0000', green:'#008000', blue:'#0000ff', yellow:'#ffff00', orange:'#ffa500', purple:'#800080', gray:'#808080', grey:'#808080' };
+  const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+  function toHex(c){
+    if(!c) return '';
+    c = String(c).trim().toLowerCase();
+    if (NAMED_TO_HEX[c]) return NAMED_TO_HEX[c];
+    if (HEX_RE.test(c)) return c.length===4 ? '#' + c.slice(1).split('').map(ch=>ch+ch).join('') : c;
+    const m = c.match(/rgba?\(([^)]+)\)/i);
+    if (m){
+      const parts = m[1].split(',').map(x=>parseFloat(x));
+      if (parts.length>=3){
+        const [r,g,b] = parts.map(n=>Math.max(0,Math.min(255,Math.round(n))));
+        const h = (n)=>n.toString(16).padStart(2,'0');
+        return ('#'+h(r)+h(g)+h(b)).toLowerCase();
+      }
+    }
+    return '';
+  }
+  function uniq(arr){ return Array.from(new Set(arr.filter(Boolean))); }
+
+  // Resolve color(s) from a DOM node representing a file card
+  function colorsFromFileEl(el){
+    const out = [];
+    const candAttrs = ['color','colors','genreColor','genre','tags'];
+    candAttrs.forEach(k=>{
+      const v = el.getAttribute('data-'+k) || (el.dataset && el.dataset[k]);
+      if (!v) return;
+      String(v).split(/[,\\s]+/).forEach(tok=>{ const hex = toHex(tok); if (hex) out.push(hex); });
+    });
+    el.querySelectorAll('.color-chip,.genre-color,.color-dot,[data-color]').forEach(dot=>{
+      const v = dot.getAttribute('data-color') || getComputedStyle(dot).backgroundColor || (dot.style && dot.style.backgroundColor);
+      const hex = toHex(v);
+      if (hex) out.push(hex);
+    });
+    return uniq(out);
+  }
+
+  // Guess file cards in the current page
+  function allFileEls(){
+    const sels = ['.file-card','.song-file','.file','.song','.fileItem','.songItem','[data-file]','[data-type="file"]'];
+    const nodes = new Set();
+    sels.forEach(sel=>document.querySelectorAll(sel).forEach(n=>nodes.add(n)));
+    if (nodes.size===0) document.querySelectorAll('li').forEach(n=>{ if(n.matches('[data-id], [data-file]')) nodes.add(n); });
+    return Array.from(nodes);
+  }
+
+  // Build/ensure the genre results page
+  function ensureGenreView(){
+    let view = document.getElementById('genre-view');
+    if (!view){
+      view = document.createElement('section');
+      view.id = 'genre-view';
+      view.style.padding = '12px';
+      view.style.display = 'none';
+      view.innerHTML = '<h2 id="genre-title" style="margin:0 0 8px 0;">Genre</h2>\\n<ul id="genre-song-list" style="list-style:none;padding:0;margin:0;display:grid;gap:8px;"></ul>';
+      document.body.appendChild(view);
+    } else {
+      if (!view.querySelector('#genre-song-list')){
+        const ul = document.createElement('ul'); ul.id='genre-song-list'; ul.style.listStyle='none'; ul.style.padding='0'; ul.style.margin='0'; ul.style.display='grid'; ul.style.gap='8px';
+        view.appendChild(ul);
+      }
+      if (!view.querySelector('#genre-title')){
+        const h = document.createElement('h2'); h.id='genre-title'; h.textContent='Genre'; view.prepend(h);
+      }
+    }
+    return view;
+  }
+
+  // Hide other primary views (best effort, non‑destructive)
+  function hideOtherViews(showEl){
+    const candidates = document.querySelectorAll('section, main, [data-view], .view');
+    candidates.forEach(el=>{ if (el!==showEl && el.id!=='__genre_shim_keep') el.style.display='none'; });
+  }
+
+  function showGenrePage(){
+    const v = ensureGenreView();
+    hideOtherViews(v);
+    v.style.display = '';
+    return v;
+  }
+
+  // Render matches
+  function renderMatches(hex, label){
+    const view = showGenrePage();
+    const ul = view.querySelector('#genre-song-list');
+    const title = view.querySelector('#genre-title');
+    title.textContent = label + ' (' + hex + ')';
+    ul.innerHTML = '';
+
+    const files = allFileEls();
+    const matched = [];
+    files.forEach(el=>{
+      const cols = colorsFromFileEl(el);
+      if (cols.includes(hex)) matched.push(el);
+    });
+
+    if (matched.length===0){
+      const li = document.createElement('li');
+      li.textContent = 'No files found with color ' + hex + '. (Scanned '+files.length+' items.)';
+      ul.appendChild(li);
+      return;
+    }
+
+    matched.forEach(el=>{
+      const li = document.createElement('li');
+      const clone = el.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.style.opacity=''; clone.style.pointerEvents='auto'; clone.style.transform='';
+      li.appendChild(clone);
+      ul.appendChild(li);
+    });
+  }
+
+  // Resolve color from a sidebar genre item element
+  function colorFromGenreItem(el){
+    let v = el.getAttribute('data-color') || (el.dataset && el.dataset.color);
+    if (!v){
+      const dot = el.querySelector('.color-dot,.genre-color,[data-color]');
+      if (dot) v = dot.getAttribute('data-color') || getComputedStyle(dot).backgroundColor || dot.style.backgroundColor;
+    }
+    if (!v){
+      const m = (el.textContent||'').match(/#([0-9a-f]{3}|[0-9a-f]{6})/i);
+      if (m) v = m[0];
+    }
+    return toHex(v);
+  }
+
+  function labelFromGenreItem(el){
+    return (el.getAttribute('data-name') || (el.dataset && el.dataset.name) || (el.textContent||'').trim() || 'Genre');
+  }
+
+  // Hook up sidebar clicks (broad selectors to be resilient)
+  const sidebar = document.querySelector('.sidebar, #sidebar, [data-role="sidebar"]') || document;
+  sidebar.addEventListener('click', function(e){
+    const item = e.target.closest && e.target.closest('.genre-item, [data-genre], .sidebar-genre, li.genre, .genre');
+    if (!item) return;
+    const hex = colorFromGenreItem(item);
+    const label = labelFromGenreItem(item);
+    if (!hex){
+      const view = showGenrePage();
+      const ul = view.querySelector('#genre-song-list');
+      const title = view.querySelector('#genre-title');
+      title.textContent = label;
+      ul.innerHTML = '<li>Could not detect a color for this genre. Add a <code>data-color</code> attribute or a swatch element with a background color.</li>';
+      return;
+    }
+    renderMatches(hex, label);
+  }, true);
+
+  // Optional programmatic API
+  window.__GenreFilterPatch = { renderByHex: renderMatches };
+})();
+</script>
+<!-- === /DROP‑IN GENRE FILTER PATCH === -->
 </body>
 </html>
 
