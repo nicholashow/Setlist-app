@@ -4402,9 +4402,11 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     $(document).off('click.__genreOpenForce').on('click.__genreOpenForce', '#genre-list .genre-item, .sidebar-item.genre-item', function(e){
       e.preventDefault(); e.stopPropagation();
       var name = $(this).data('name');
+      if (name == null || name === '') { name = $.trim($(this).text()); }
       if (name == null) return;
       window.currentGenre = name;
       if (typeof show === 'function'){ try{ show('genre-view'); }catch(_){} }
+      if (!$('#genre-song-list').length){ var host=$('#genre-view'); if(!host.length) host=$('[data-view="genre-view"]'); if(!host.length) host=$('body'); host.append('<ul id="genre-song-list"></ul>'); }
       renderGenreByColor(name);
     });
 
