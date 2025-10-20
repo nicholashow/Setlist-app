@@ -4448,7 +4448,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       var name = $(this).data('name');
       if (name == null) return;
       window.currentGenre = name;
-      if (typeof show === 'function'){ try{ show('genre'); }catch(_){} }
+      if (typeof show === 'function'){ try{ show('genre-view'); }catch(_){} }
       renderGenreByColor(name);
     });
 
