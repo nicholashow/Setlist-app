@@ -427,7 +427,7 @@
             display: flex;
         }
 
-        .viewer-btn {
+        .viewer-btn, .viewer-btn-close {
             /* Frosted glass effect */
             background-color: rgba(30, 41, 59, 0.75); /* slate-800 with opacity */
             backdrop-filter: blur(10px);
@@ -442,20 +442,15 @@
             box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
         }
 
+        .viewer-btn-close:hover {
+            background-color: rgba(239, 68, 68, 0.8); /* red-500 with opacity */
+            transform: scale(1.1) rotate(90deg);
+        }
+
         .viewer-btn:disabled {
             background-color: rgba(75, 85, 99, 0.5); /* gray-600 with opacity */
             transform: none;
             box-shadow: none;
-        }
-
-        .viewer-btn-close {
-            background-color: rgba(239, 68, 68, 0.75); /* red-500 with opacity */
-        }
-
-        .viewer-btn-close:hover {
-            background-color: rgba(220, 38, 38, 0.8); /* red-600 with opacity */
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
         }
 
         .del-setlist {
@@ -1721,19 +1716,31 @@
          <div id="doc-iframe-wrapper"></div>
     </section>
 
-    <!-- VIEWER CONTROLS -->
-    <div id="viewer-controls" class="fixed top-0 left-0 right-0 h-20 z-[2147483647] p-4 flex justify-center items-center pointer-events-none transition-opacity duration-300 opacity-0">
+    <!-- NEW REDESIGNED VIEWER CONTROLS (now global) -->
+    <div id="viewer-controls" class="fixed top-0 left-0 right-0 h-20 z-[2147483647] p-4 flex justify-between items-center pointer-events-none transition-opacity duration-300 opacity-0">
+        <div class="w-10"></div> <!-- Spacer -->
+        <!-- Centered Navigation -->
         <div class="flex justify-center items-center gap-4">
-            <button id="viewer-prev-btn" class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32">
+             <button id="viewer-prev-btn" class="viewer-btn pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
                 <span>Previous</span>
             </button>
-            <button id="viewer-next-btn" class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32">
+             <button id="viewer-next-btn" class="viewer-btn pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                 <span>Next</span>
-            </button>
-            <button id="viewer-close-btn" class="viewer-btn viewer-btn-close pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 w-32">
-                <span>Close</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
             </button>
         </div>
+        
+        <!-- Close Button on the right -->
+        <button id="viewer-close-btn" class="viewer-btn-close pointer-events-auto flex items-center justify-center h-10 w-10 rounded-full text-white shadow-lg transition-all duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
     </div>
 
     <script>
@@ -1820,7 +1827,6 @@
         let recorder = null;
         let audioChunks = [];
         let cameFromVenue = null;
-        let viewerButtonsClickable = false;
         
         // ================== Persistent Storage ==================
         function save() {
@@ -1867,7 +1873,6 @@ const s=$('.left-col');s.toggleClass('collapsed');
         
         // === NEW Redesigned Viewer Button Handlers ===
         $('#viewer-close-btn').on('click', function(e) {
-            if (!viewerButtonsClickable) return;
             e.stopPropagation();
             $('body').removeClass('doc-viewer-active');
             $('html').removeClass('doc-viewer-active pdf-overlay-active'); // ensure all viewer states are cleared
@@ -1881,14 +1886,12 @@ const s=$('.left-col');s.toggleClass('collapsed');
         });
 
         $('#viewer-next-btn').on('click', function() {
-            if (!viewerButtonsClickable) return;
             if (!$(this).is(':disabled') && currentViewerList && currentViewerIndex < currentViewerList.length - 1) {
                 openSongInContext(currentViewerList[currentViewerIndex + 1].id, currentViewerContext, currentViewerIndex + 1, 'next');
             }
         });
 
         $('#viewer-prev-btn').on('click', function() {
-            if (!viewerButtonsClickable) return;
             if (!$(this).is(':disabled') && currentViewerList && currentViewerIndex > 0) {
                 openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1, 'prev');
             }
@@ -1997,118 +2000,48 @@ const s=$('.left-col');s.toggleClass('collapsed');
                 $('html').addClass('doc-viewer-active');
                 $('#doc-view').addClass('doc-view-fullscreen').show(); 
             }
-            // The new setupScrollHandlers will handle showing the buttons and setting their state.
+            $('#viewer-prev-btn').prop('disabled', currentViewerIndex <= 0);
+            $('#viewer-next-btn').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
             setupScrollHandlers();
+            showNavButtons();
         }
 
         function saveRecording(b){const r=new FileReader();r.readAsDataURL(b);r.onloadend=()=>{const s=setlists[currentSetlist];recordings.push({id:'r_'+Math.random().toString(36).slice(2,9),setlist:currentSetlist,date:s.date,venue:s.venue,audioData:r.result});save();if($('#recordings-view').is(':visible'))renderRecordings();if(currentSetlist)renderSetlist()}}
         
-        // This function shows controls and ensures their state (enabled/disabled) is correct.
-        function showNavButtonsAndCheckState() {
-            const isPrevDisabled = currentViewerIndex <= 0;
-            const isNextDisabled = !currentViewerList || currentViewerIndex >= currentViewerList.length - 1;
-            
-            $('#viewer-prev-btn').prop('disabled', isPrevDisabled);
-            $('#viewer-next-btn').prop('disabled', isNextDisabled);
-            
-            $('#viewer-controls').removeClass('opacity-0');
-            
-            viewerButtonsClickable = false;
-            setTimeout(() => {
-                if (!$('#viewer-controls').hasClass('opacity-0')) {
-                    viewerButtonsClickable = true;
-                }
-            }, 250);
+        function setupScrollHandlers() {
+            resetScrollHandlers();
+            const $viewArea = $('#doc-view, #pdf-overlay-scroll');
 
+            $viewArea.on('mousemove pointerdown touchstart', showNavButtons);
+
+            let touchstartX = 0;
+            $viewArea.on('touchstart', e => { 
+                if (e.originalEvent.touches) touchstartX = e.originalEvent.touches[0].screenX; 
+            });
+            $viewArea.on('touchend', e => {
+                if (e.originalEvent.changedTouches) {
+                    const touchendX = e.originalEvent.changedTouches[0].screenX;
+                    if (touchendX < touchstartX - 50) $('#viewer-next-btn').trigger('click');
+                    if (touchendX > touchstartX + 50) $('#viewer-prev-btn').trigger('click');
+                }
+            });
+            
             startInactivityTimer();
         }
 
-        function hideNavButtons() {
-            $('#viewer-controls').addClass('opacity-0');
-            viewerButtonsClickable = false;
-        }
-        
-        // This timer will hide the controls after a period of inactivity.
-        function startInactivityTimer() {
-            clearTimeout(inactivityTimer);
-            inactivityTimer = setTimeout(hideNavButtons, 3000);
-        }
-
-        // This function sets up all the event listeners for the document viewer.
-        function setupScrollHandlers() {
-            resetScrollHandlers();
-            const $viewArea = $('#pdf-overlay-scroll');
-            if ($viewArea.length === 0) return;
-
-            // 1. Show controls on scroll to top.
-            $viewArea.on('scroll.viewer', function() {
-                if (this.scrollTop < 5) {
-                    if ($('#viewer-controls').hasClass('opacity-0')) {
-                        showNavButtonsAndCheckState();
-                    }
-                } else {
-                    hideNavButtons();
-                }
-            });
-
-            // 2. Show controls on tap at top of viewer, but don't trigger buttons.
-            $viewArea.on('pointerdown.viewer', function(e) {
-                 if ($(e.target).closest('.viewer-btn').length > 0) {
-                    return;
-                }
-                if (e.clientY < 80) {
-                    if ($('#viewer-controls').hasClass('opacity-0')) {
-                         showNavButtonsAndCheckState();
-                    }
-                }
-            });
-
-            // 3. Refined swipe functionality for navigation.
-            let touchstartX = 0;
-            let touchstartY = 0;
-            const swipeThresholdX = 80; 
-            const swipeThresholdY = 40;
-
-            $viewArea.on('touchstart.viewer', e => {
-                if (e.originalEvent.touches) {
-                    touchstartX = e.originalEvent.touches[0].screenX;
-                    touchstartY = e.originalEvent.touches[0].screenY;
-                }
-            });
-            $viewArea.on('touchend.viewer', e => {
-                if (e.originalEvent.changedTouches) {
-                    const touchendX = e.originalEvent.changedTouches[0].screenX;
-                    const touchendY = e.originalEvent.changedTouches[0].screenY;
-                    const deltaX = touchendX - touchstartX;
-                    const deltaY = touchendY - touchstartY;
-
-                    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > swipeThresholdX) {
-                        if (deltaX < 0) { 
-                           if(viewerButtonsClickable) $('#viewer-next-btn').trigger('click');
-                        } else { 
-                           if(viewerButtonsClickable) $('#viewer-prev-btn').trigger('click');
-                        }
-                    }
-                }
-            });
-
-            // Initially check if we should show the buttons.
-            if ($viewArea.length > 0 && $viewArea[0].scrollTop < 5) {
-                showNavButtonsAndCheckState();
-            }
-        }
-
-
-        function resetScrollHandlers() {
-            $('#pdf-overlay-scroll').off('.viewer');
+        function resetScrollHandlers() { 
             $('#doc-view, #pdf-overlay-scroll').off('mousemove pointerdown touchstart touchend'); 
-            clearTimeout(inactivityTimer);
+            clearTimeout(inactivityTimer); 
         }
 
-        function showNavButtons() {
-            showNavButtonsAndCheckState();
+        function showNavButtons() { 
+            $('#viewer-controls').removeClass('opacity-0'); 
+            startInactivityTimer(); 
         }
-
+        function startInactivityTimer() { 
+            clearTimeout(inactivityTimer); 
+            inactivityTimer = setTimeout(() => { $('#viewer-controls').addClass('opacity-0'); }, 3000); 
+        }
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
     </script>
     <!-- Left-edge custom scrollbar (visible only when sidebar is collapsed) -->
@@ -2814,5 +2747,65 @@ function destroyPdfOverlay() {
 })();
 </script>
 
+
+<!-- ADDITIVE PATCH: Center, equal-size controls; red Close button -->
+<style id="controls-equalize-center-additive">
+  /* Center the trio as a group without relying on replacing markup */
+  #viewer-controls { display: flex; align-items: center; justify-content: center; }
+  #viewer-controls > * { pointer-events: auto; }
+  /* Try common button IDs/classes used by this app */
+  #viewer-prev-btn, #viewer-next-btn, #viewer-close-btn,
+  .viewer-btn, .control-btn {
+    min-width: 140px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1.25rem;
+  }
+  /* Make Close button red regardless of prior styles */
+  #viewer-close-btn,
+  .control-btn--close {
+    background-color: #ef4444 !important; /* red-500 */
+    color: #fff !important;
+  }
+  #viewer-close-btn:hover,
+  .control-btn--close:hover {
+    background-color: #dc2626 !important; /* red-600 */
+  }
+</style>
+<script id="controls-label-fix-additive">
+(function(){
+  function ready(f){ if (document.readyState !== 'loading') f(); else document.addEventListener('DOMContentLoaded', f); }
+  ready(function(){
+    // Ensure labels exist and "Close" is spelled as requested
+    var closeBtn = document.getElementById('viewer-close-btn');
+    if (closeBtn){
+      // Replace visible text with "Close" while preserving icons
+      var hasSpan = false;
+      Array.from(closeBtn.childNodes).forEach(function(n){
+        if (n.nodeType === 3) { n.textContent=''; } // remove stray text nodes
+        if (n.nodeType === 1 && n.tagName === 'SPAN') { n.textContent = 'Close'; hasSpan = true; }
+      });
+      if (!hasSpan){
+        var s = document.createElement('span');
+        s.textContent = 'Close';
+        closeBtn.appendChild(s);
+      }
+      closeBtn.classList.add('control-btn--close');
+    }
+    // If buttons are wrapped elsewhere, still try to center group
+    var vc = document.getElementById('viewer-controls');
+    if (vc){
+      vc.style.display = 'flex';
+      vc.style.alignItems = 'center';
+      vc.style.justifyContent = 'center';
+    }
+  });
+})();
+</script>
 </body>
 </html>
