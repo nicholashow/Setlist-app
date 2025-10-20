@@ -1385,1009 +1385,1942 @@
           font-size: 14px;
           font-weight: 600;
           color: #ffffff !important;   /* always white */
-          pointe...(truncated 118937 characters)...el) el.value = val; else el.innerText = val;
-        try { el.dispatchEvent(new Event('input', { bubbles:true })); el.dispatchEvent(new Event('change', { bubbles:true })); } catch(e){}
-      }
-      pop.style.display = 'none';
-      overlay.style.display = 'none';
-      document.documentElement.classList.remove('notes-popover-open');
-      document.body.classList.remove('notes-popover-open');
-      window.__notesActiveSource = null;
-    });
-    close && close.addEventListener('click', function(){
-      // Save on close
-      var val = area.value;
-      if (window.__notesActiveSource) {
-        var el = window.__notesActiveSource;
-        if ('value' in el) el.value = val; else el.innerText = val;
-        try { el.dispatchEvent(new Event('input', { bubbles:true })); el.dispatchEvent(new Event('change', { bubbles:true })); } catch(e){}
-      }
-      pop.style.display = 'none';
-      overlay.style.display = 'none';
-      document.documentElement.classList.remove('notes-popover-open');
-      document.body.classList.remove('notes-popover-open');
-      window.__notesActiveSource = null;
-    });
-  }
-
-  fastHook('.notes-input', function(ev, el){
-    // Open instantly and suppress the input's own focus/flash
-    ev.preventDefault();
-    window.__notesActiveSource = el;
-    openNotesFrom(el);
-  });
-})();
-
-/* --- 2) Setlist dragging: switch to name-only when leaving setlist box; do not reorder outside --- */
-(function(){
-  if (window.__SetlistDragNameOnly_v1) return;
-  window.__SetlistDragNameOnly_v1 = true;
-
-  function getSetlistRect(){
-    var el = document.getElementById('setlist-list');
-    return el ? el.getBoundingClientRect() : null;
-  }
-
-  function isInsideRect(pt, rect){
-    return rect && pt.x >= rect.left && pt.x <= rect.right && pt.y >= rect.top && pt.y <= rect.bottom;
-  }
-
-  // Attach a jQuery UI draggable specifically for setlist items, without touching existing sortables
-  function init(){
-    var $list = window.jQuery && window.jQuery('#setlist-list');
-    if (!$list || !$list.length) return;
-
-    // Delegate to dynamic items
-    $list.on('mousedown touchstart', '.setlist-item', function(){
-      var $item = window.jQuery(this);
-      if ($item.data('hasExportDrag')) return; // only once
-      $item.data('hasExportDrag', true);
-
-      $item.draggable({
-        helper: function(){
-          var name = ($item.find('.song-name-text').text() || $item.text() || '').trim();
-          var $h = window.jQuery('<div class="drag-helper drag-name-only draggable">'+name+'</div>');
-          $h.data('name', name);
-          return $h;
-        },
-        appendTo: 'body',
-        containment: 'document',
-        distance: 4;
-        zIndex: 2147483645,
-        start: function(e, ui){
-          $item.data('exporting', false);
-          $item.addClass('dragging-from-setlist');
-          $list.sortable('enable'); // ensure enabled at start
-          $item.data('setlistRect', getSetlistRect());
-        },
-        drag: function(e, ui){
-          var rect = $item.data('setlistRect') || getSetlistRect();
-          var pt = { x: (e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX) || ui.position.left),
-                     y: (e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY) || ui.position.top) };
-          var inside = isInsideRect(pt, rect);
-          if (!inside && !$item.data('exporting')){
-            // Leaving setlist: switch to name-only visual and DISABLE reordering
-            $item.data('exporting', true);
-            try { $list.sortable('disable'); } catch(err){}
-            ui.helper.addClass('drag-name-only');
-          } else if (inside && $item.data('exporting')){
-            // Back inside: allow reordering again
-            $item.data('exporting', false);
-            try { $list.sortable('enable'); } catch(err){}
-            ui.helper.removeClass('drag-name-only').text(ui.helper.data('name'));
-          }
-        },
-        stop: function(e, ui){
-          // Always re-enable sortable to keep in-list reordering perfect
-          try { $list.sortable('enable'); } catch(err){}
-          $item.removeClass('dragging-from-setlist').data('exporting', false);
+          pointer-events: none;
+          white-space: nowrap;
         }
-      });
+
+        /* Ensure date input content is centered and text is visible */
+        #setlist-date {
+          text-align: center;
+          color: #ffffff;               /* typed date text white */
+        }
+        .dark #setlist-date {
+          color: #ffffff;
+        }
+        .dark #setlist-date::-webkit-calendar-picker-indicator {
+          filter: invert(1);
+        }
+
+        /* Order select: center displayed value text and keep it white */
+        #setlist-sort-filter-dropdown {
+          text-align: center;
+          text-align-last: center;      /* centers selected option in most browsers */
+          color: #ffffff !important;
+        }
+        .dark #setlist-sort-filter-dropdown {
+          color: #ffffff !important;
+        }
+        /* The dropdown arrow container color (so it doesn't clash) */
+        #setlist-details-content .pointer-events-none svg {
+          color: #ffffff;
+          fill: currentColor;
+        }
+
+
+
+        /* === Precise centering updates === */
+        #setlist-details-content input,
+        #setlist-details-content select {
+          height: 36px;                /* uniform control height */
+          line-height: 36px;           /* vertical centering for text & placeholders */
+          font-size: 15px;
+          font-weight: 600;
+          text-align: center;
+        }
+
+        #date-placeholder {
+          position: absolute;
+          z-index: 2;
+          pointer-events: none;
+          font-size: 15px;
+          font-weight: 600;
+          color: #ffffff !important;
+          /* left/top set dynamically to the INPUT center */
+        }
+
+        #-webkit-date-text { color: #ffffff; } /* noop fallback */
+        .dark #setlist-venue::placeholder { color: #ffffff !important; }
+        # setlist-venue::placeholder { color: #ffffff !important; } /* ensure white in light mode too */
+
+        #setlist-sort-filter-dropdown {
+          text-align: center;
+          text-align-last: center;
+          color: #ffffff !important;
+        }
+        
+        #genre-name::placeholder, #venue-name::placeholder { text-align: center; }
+        #genre-name, #venue-name { text-align: center; } /* helps iOS Safari */
+
+
+/* === Toggle switches (green when ON + knob slide) === */
+#simple-view-container input:checked + .toggle-track,
+#simple-view-container-setlist input:checked + .toggle-track,
+#dark-mode-container input:checked + .toggle-track { background-color:#22c55e !important; }
+#simple-view-container input + .toggle-track + .dot,
+#simple-view-container-setlist input + .toggle-track + .dot,
+#dark-mode-container input + .toggle-track + .dot { transition: transform 0.2s ease; }
+#simple-view-container input:checked + .toggle-track + .dot,
+#simple-view-container-setlist input:checked + .toggle-track + .dot,
+#dark-mode-container input:checked + .toggle-track + .dot { transform: translateX(20px); }
+
+
+/* === Simple View (name-only) === */
+body.simple-view-on .song-details-container,
+body.simple-view-on .favorite-star-container,
+body.simple-view-on .genre-dot,
+body.simple-view-on .index-number,
+body.simple-view-on .delete-btn,
+body.simple-view-on .song-meta,
+body.simple-view-on .energy-chip,
+body.simple-view-on .duration-chip,
+body.simple-view-on .artist-name,
+body.simple-view-on .file-actions,
+body.simple-view-on .drag-handle { display:none !important; }
+body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+
+/* === PATCH: Simple View compaction (~40% height), keep 4 emblems === */
+body.simple-view-on #master-list > li,
+body.simple-view-on #setlist-list > li,
+body.simple-view-on #favorites-list > li,
+body.simple-view-on #genre-song-list > li,
+body.simple-view-on #plays-list > li {
+  padding-top: 0.25rem !important;
+  padding-bottom: 0.25rem !important;
+  margin-top: 0.125rem;
+  margin-bottom: 0.125rem;
+}
+body.simple-view-on .index-number,
+body.simple-view-on .favorite-star-container,
+body.simple-view-on .genre-dot,
+body.simple-view-on .energy-chip,
+body.simple-view-on .bolt,
+body.simple-view-on .lightning { display: inline-flex !important; }
+
+/* === PATCH: Sort genre flyout anchored under the Sort select (no layout shift) === */
+#filters-group { position: relative; }
+#sort-genre-flyout {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  display: none;
+  width: 16rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  background: #ffffff;
+  border: 1px solid rgba(229,231,235,1);
+}
+.dark #sort-genre-flyout { background: rgb(31,41,55); border-color: rgba(55,65,81,1); }
+#sort-genre-flyout .title { font-size: 0.75rem; color: rgba(107,114,128,1); padding: 0.5rem 0.75rem 0 0.75rem; }
+.dark #sort-genre-flyout .title { color: rgba(156,163,175,1); }
+#sort-genre-flyout .slot { max-height: 11rem; overflow: auto; padding: 0.5rem 0.75rem 0.75rem 0.75rem; }
+
+/* === PATCH: Sidebar open (fade in after width expands; no overlays) === */
+.left-col.opening-fade > * { opacity: 0; }
+.left-col.opening-fade.ready > * { opacity: 1; transition: opacity 180ms ease; }
+
+
+/* === In-place Notes expanding box (fixed width, vertical auto-grow) === */
+.notes-inline { position: relative; display: inline-block; width: 100%; }
+.notes-inline .notes-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 36px;
+  max-height: 70vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  background: #f3f4f6; /* gray box */
+  color: #111827;
+  font-size: 14px;
+  line-height: 1.4;
+  font-family: inherit;
+  padding: 8px 36px 8px 10px; /* room for buttons on right */
+  resize: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+html.dark .notes-inline .notes-textarea {
+  background: #374151; color: #e5e7eb; border-color: #4b5563;
+}
+.notes-inline .notes-btn {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+  opacity: .85;
+}
+.notes-inline .notes-btn:hover { opacity: 1; }
+.notes-inline .notes-btn.dropdown { display: none; } /* hidden while expanded */
+.notes-inline.collapsed .notes-btn.close { display: none; }
+.notes-inline.collapsed .notes-btn.dropdown { display: inline-block; }
+.notes-inline.collapsed .notes-textarea {
+  height: 36px !important; /* single-line look */
+  overflow: hidden !important;
+}
+
+</style>
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
+    <div id="app">
+        <aside class="left-col w-64 bg-gray-800 text-white flex-shrink-0 dark:bg-black">
+            <div class="left-col-main-content">
+                <div class="app-header app-header-selected" id="home-btn">
+                    <h1 class="text-2xl font-bold mb-2 underline">ALL SONGS</h1>
+                    <p class="text-sm whitespace-nowrap">Organize music performances</p>
+                </div>
+
+                <div class="mb-2 p-2 rounded-lg bg-gray-700" id="nav-setlists">
+                    <div class="flex items-center justify-between">
+                        <span class="font-medium uppercase">Setlists</span>
+                        <button class="text-sm px-2 py-1 rounded-md bg-gray-600" id="toggle-setlists">▾</button>
+                    </div>
+                    <div class="mt-2" id="setlists-container"></div>
+                    <div class="mt-2">
+                        <input class="w-full p-1 text-sm rounded-md bg-gray-700" id="new-setlist-name" placeholder="New setlist name" />
+                        <button class="w-full mt-1 p-1 text-sm rounded-md btn-add" id="add-setlist-btn">Add Setlist</button>
+                    </div>
+                </div>
+                <div class="sidebar-item" id="nav-favorites">Favorites</div>
+                <div class="sidebar-item" id="nav-plays">Plays</div>
+                <div class="sidebar-item" id="nav-recordings">Recordings</div>
+                <div class="sidebar-item" id="nav-energy">Energy Levels</div>
+
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold uppercase">Genres</h3>
+                     <div class="item-creation">
+                        <div class="color-picker-wrapper">
+                            <div id="genre-color-display"></div>
+                            <input type="color" id="genre-color" title="Select color">
+                        </div>
+                        <input class="item-name-input" id="genre-name" placeholder="New genre" />
+                        <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-genre">Add</button>
+                    </div>
+                    <div class="mt-2 space-y-1" id="genre-list"></div>
+                </div>
+
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold uppercase">Venues</h3>
+                    <div class="item-creation">
+                        <input class="item-name-input" id="venue-name" placeholder="New venue" />
+                        <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-venue">Add</button>
+                    </div>
+                    <div class="mt-2 space-y-1" id="venue-list"></div>
+                </div>
+            </div>
+            
+            <div class="stats-container">
+                <h3 class="stats-title">Top Played</h3>
+                <ul class="text-xs mt-1" id="top-played"></ul>
+                <h3 class="stats-title mt-3">Least Played</h3>
+                <ul class="text-xs mt-1" id="least-played"></ul>
+            </div>
+        
+<div id="stats-external-scroll"><div class="track"></div><div id="stats-thumb"></div></div>
+</aside>
+
+        <button id="sidebar-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </button>
+
+        <main class="flex-1 p-4 overflow-auto">
+            <section id="master-view">
+                 <div id="master-view-controls">
+                    <div id="search-container">
+                        <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..." />
+                        <datalist id="search-results"></datalist>
+                        
+                        <div id="simple-view-container" class="absolute right-[120px] top-1/2 -translate-y-1/2">
+                            <label for="simple-view-toggle" class="flex items-center cursor-pointer">
+                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="simple-view-toggle" class="sr-only">
+                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div id="dark-mode-container">
+                             <label for="dark-mode-toggle" class="flex items-center cursor-pointer ml-4">
+                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="dark-mode-toggle" class="dark-mode-toggle sr-only">
+                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="controls-row">
+                        <div id="filters-group">
+                            <select id="sort-dropdown" class="p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select">
+                                <option value="name">Sort by Name</option>
+                                <option value="artist">Sort by Artist</option>
+                                <option value="lastPlayed">Sort by Last Played</option>
+                                <option value="energy">Sort by Energy</option>
+                            </select>
+                        <div id="sort-genre-flyout">
+                            <div class="title">Genres</div>
+                            <div class="slot" id="sort-genre-slot"></div>
+                        </div>
+
+                            <div id="genre-filter-container" class="relative hidden">
+                                <button id="genre-filter-button" class="p-2 rounded-lg bg-transparent text-sm text-left dark:bg-transparent dark:text-gray-200">Select Genres</button>
+                                <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
+                            </div>
+                        </div>
+                        <div id="master-view-buttons" class="flex gap-2">
+                            <input accept=".pdf" class="hidden" id="master-upload" multiple="" type="file" />
+                            <button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow btn-master" id="upload-master-btn">Add files</button>
+                            <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow btn-master" id="delete-all-btn">Delete All</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="master-list"></ul>
+                </div>
+                <div id="master-drop-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-8 pointer-events-none">
+                    <div class="text-center bg-white dark:bg-gray-800 p-12 rounded-2xl border-4 border-dashed border-blue-500">
+                        <h2 class="text-2xl font-bold">Drop Files Here</h2>
+                        <p>Add PDF song sheets to ALL SONGS</p>
+                    </div>
+                </div>
+            </section>
+
+
+            <section class="hidden" id="setlist-view">
+                 <div class="flex items-center gap-2 mb-2">
+                    <button id="back-to-venue-btn" class="hidden p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition dark:bg-gray-700 dark:hover:bg-gray-600">← Back</button>
+                    <h2 class="text-xl font-bold" id="setlist-title">Setlist</h2>
+                    <p id="setlist-total-duration" class="text-sm text-gray-500 dark:text-white ml-2"></p>
+                    <p id="setlist-song-count" class="text-sm text-gray-500 dark:text-white ml-2"></p>
+                </div>
+
+                <div class="flex items-end justify-between flex-wrap gap-4 mb-2">
+                    <div class="flex items-center gap-2 whitespace-nowrap">
+                        <button id="record-show" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Record Show</button>
+                        <button id="stop-record" class="p-2 bg-red-600 text-white rounded-lg hidden shadow">Stop Recording</button>
+                        <button id="print-setlist" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">Print Setlist</button>
+                        <div class="relative inline-flex items-center whitespace-nowrap">
+                            <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Share Setlist</button>
+
+                        <div id="simple-view-container-setlist" class="inline-flex items-center ml-2">
+                            <label for="simple-view-toggle-setlist" class="flex items-center cursor-pointer">
+                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
+                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                            <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
+                                <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
+                                <a href="#" id="share-email" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Email (text only)</a>
+                                <a href="#" id="share-gmail" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Gmail (text only)</a>
+                                <a href="#" id="share-copy" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Copy to Clipboard (text only)</a>
+                            </div>
+                            <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="setlist-details-container" class="mb-2">
+                    <div id="setlist-details-toggle">
+                        <span>Setlist Details</span>
+                        <span class="toggle-arrow">▾</span>
+                    </div>
+                    <div id="setlist-details-content">
+                        <div id="setlist-date-container">
+                            <label for="setlist-date" class="font-medium text-xs">Date</label>
+                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                            <span id="date-placeholder">mm/dd/yyyy</span>
+                        </div>
+                        <div>
+                            <label for="setlist-venue" class="font-medium text-xs">Venue</label>
+                            <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                        </div>
+                        <div>
+                            <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
+                            <div class="relative">
+                                <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                                    <option value="custom">Custom Order</option>
+                                    <option value="name">Sort by Name</option>
+                                    <option value="artist">Sort by Artist</option>
+                                    <option value="genre">Sort by Genre</option>
+                                    <option value="energy">Sort by Energy</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="setlist-recordings" class="mb-2"></div>
+                
+                 <div class="setlist-view-container">
+                    <div class="setlist-panel">
+                        <div class="panel-header">Setlist Songs</div>
+                        <ul id="setlist-list"></ul>
+                    </div>
+                    <div class="setlist-panel">
+                        <div class="panel-header">Add Songs to Setlist</div>
+                        <input id="setlist-search-add" class="w-full p-2 border-b dark:bg-gray-800 dark:border-gray-600 flex-shrink-0" placeholder="Search all songs...">
+                        <ul id="setlist-add-songs-list"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="hidden" id="favorites-view">
+                <div class="flex items-center justify-between mb-2">
+                     <h2 class="text-xl font-bold">Favorite Songs</h2>
+                    <div class="relative">
+                        <select id="favorites-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
+                            <option value="name">Sort by Name</option>
+                            <option value="artist">Sort by Artist</option>
+                            <option value="lastPlayed">Sort by Last Played</option>
+                            <option value="energy">Sort by Energy</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="favorites-list"></ul>
+                </div>
+            </section>
+
+            <section class="hidden" id="genre-view">
+                 <div class="flex items-center justify-between mb-2">
+                     <h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
+                    <div class="relative">
+                        <select id="genre-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 hidden">
+                            <option value="name">Sort by Name</option>
+                            <option value="artist">Sort by Artist</option>
+                            <option value="lastPlayed">Sort by Last Played</option>
+                            <option value="energy">Sort by Energy</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="genre-song-list"></ul>
+                </div>
+            </section>
+
+            <section class="hidden" id="plays-view">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl font-bold">Plays</h2>
+                    <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow" id="reset-plays">Reset All Plays</button>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="plays-list"></ul>
+                </div>
+            </section>
+
+            <section class="hidden" id="recordings-view">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl font-bold">Recordings</h2>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="recordings-list"></ul>
+                </div>
+            </section>
+
+            <section class="hidden" id="energy-view">
+                <h2 class="text-xl font-bold mb-2">Energy Levels</h2>
+                <div id="energy-level-container" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+            </section>
+
+            <section class="hidden" id="venue-setlists-view">
+                <h2 class="text-xl font-bold mb-2" id="venue-setlists-title"></h2>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="venue-setlists-list"></ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <section class="hidden" id="doc-view">
+         <div id="doc-iframe-wrapper"></div>
+    </section>
+
+    <!-- VIEWER CONTROLS -->
+    <div id="viewer-controls" class="fixed top-0 left-0 right-0 h-20 z-[2147483647] p-4 flex justify-center items-center pointer-events-none transition-opacity duration-300 opacity-0">
+        <div class="flex justify-center items-center gap-4">
+            <button id="viewer-prev-btn" class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32">
+                <span>Previous</span>
+            </button>
+            <button id="viewer-next-btn" class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32">
+                <span>Next</span>
+            </button>
+            <button id="viewer-close-btn" class="viewer-btn viewer-btn-close pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 w-32">
+                <span>Close</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ================== Disable Zoom on iPad ==================
+        document.addEventListener('touchstart', (event) => {
+          if (event.touches.length > 1) {
+             event.preventDefault();
+          }
+        }, { passive: false });
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (event) => {
+          const now = (new Date()).getTime();
+          if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+          }
+          lastTouchEnd = now;
+        }, false);
+        // ================== Memory Management ==================
+        let objectURLs = new Set();
+        window.addEventListener('unload', () => {
+            objectURLs.forEach(url => URL.revokeObjectURL(url));
+            objectURLs.clear();
+        });
+        // ================== Data Structures ==================
+        let masterSongs = [];
+        let setlists = {};
+        let currentSetlist = null;
+        let playCounts = {};
+        let genres = [{ name: 'Rock', color: '#ef4444' }, { name: 'Pop', color: '#3b82f6' }, { name: 'Jazz', color: '#10b981' }];
+        const energyIcons = [
+            // Level 0 - outline only
+            `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 1L5 14h6l-2 9 11-13h-7l3-10z" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linejoin="round"/>
+            </svg>`,
+            // Level 1 - lower fill
+            `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
+                <defs>
+                    <linearGradient id="energy-grad-1" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="60%" style="stop-color:transparent" />
+                        <stop offset="60%" style="stop-color:#f59e0b" />
+                    </linearGradient>
+                </defs>
+                <path d="M12 1L5 14h6l-2 9 11-13h-7l3-10z" fill="url(#energy-grad-1)" stroke="#b45309" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>`,
+            // Level 2 - deeper fill
+            `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
+                <defs>
+                    <linearGradient id="energy-grad-2" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="40%" style="stop-color:transparent" />
+                        <stop offset="40%" style="stop-color:#f59e0b" />
+                    </linearGradient>
+                </defs>
+                <path d="M12 1L5 14h6l-2 9 11-13h-7l3-10z" fill="url(#energy-grad-2)" stroke="#b45309" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>`,
+            // Level 3 - full warm fill + twinkle sparks
+            `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="-4 -4 32 32" class="energy-svg-3" aria-hidden="true">
+                <defs>
+                    <radialGradient id="energy-grad-3" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" style="stop-color:#FBBF24;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:1" />
+                    </radialGradient>
+                </defs>
+                <g class="sparks">
+                    <path class="energy-spark" d="M12,0 L12.5,4 L15,4.5 L12.5,5 L12,9 L11.5,5 L9,4.5 L11.5,4 Z" fill="#FCD34D"/>
+                    <path class="energy-spark" d="M21,8 L21.5,12 L24,12.5 L21.5,13 L21,17 L20.5,13 L18,12.5 L20.5,12 Z" fill="#FCD34D"/>
+                    <path class="energy-spark" d="M3,8 L3.5,12 L6,12.5 L3.5,13 L3,17 L2.5,13 L0,12.5 L2.5,12 Z" fill="#FCD34D"/>
+                    <path class="energy-spark" d="M6,17 L6.5,21 L9,21.5 L6.5,22 L6,26 L5.5,22 L3,21.5 L5.5,21 Z" fill="#FCD34D"/>
+                    <path class="energy-spark" d="M18,17 L18.5,21 L21,21.5 L18.5,22 L18,26 L17.5,22 L15,21.5 L17.5,21 Z" fill="#FCD34D"/>
+                </g>
+                <g transform="scale(1.25) translate(-3, -3)">
+                    <path d="M12 1L5 14h6l-2 9 11-13h-7l3-10z" fill="url(#energy-grad-3)" stroke="#b45309" stroke-width="1.8" stroke-linejoin="round"/>
+                </g>
+            </svg>`
+        ];
+        let venues = [];
+        let recordings = [];
+        let masterSelectedGenres = [];
+        let currentGenre = null;
+        let viewedSongsInSetlist = new Set();
+        let currentViewerContext = null;
+        let currentViewerList = [];
+        let currentViewerIndex = -1;
+        let inactivityTimer = null;
+        let recorder = null;
+        let audioChunks = [];
+        let cameFromVenue = null;
+        let viewerButtonsClickable = false;
+        
+        // ================== Persistent Storage ==================
+        function save() {
+            localStorage.setItem('setlistData', JSON.stringify({
+                masterSongs: masterSongs.map(song => ({ ...song, file: undefined, fileInfo: song.fileInfo ? { name: song.fileInfo.name, type: song.fileInfo.type, size: song.fileInfo.size, data: song.fileInfo.data } : undefined })),
+                setlists, playCounts, genres, venues,
+                recordings: recordings.map(rec => ({ ...rec, audioData: rec.audioData }))
+            }));
+            localStorage.setItem('darkMode', $('html').hasClass('dark') ? 'enabled' : 'disabled');
+        }
+
+        function load() {
+            const raw = localStorage.getItem('setlistData'); if(raw){try{const o=JSON.parse(raw);masterSongs=o.masterSongs||[];masterSongs.forEach(s=>{s.lastPlayed=s.lastPlayed||null;s.favorite=s.favorite||!1});setlists=o.setlists||{};Object.keys(setlists).forEach(k=>{if(Array.isArray(setlists[k])){setlists[k]={songs:setlists[k].map(s=>s.id),date:"",venue:""}}});playCounts=o.playCounts||{};genres=o.genres||genres;venues=o.venues||[];recordings=o.recordings||[]}catch(e){console.error("Error parsing localStorage data: ",e);masterSongs=[];setlists={};playCounts={};venues=[];recordings=[]}}
+            const darkModePref = localStorage.getItem('darkMode'); if(darkModePref==='disabled'){$('html').removeClass('dark');$('#dark-mode-toggle').prop('checked',!1)}else{$('html').addClass('dark');$('#dark-mode-toggle').prop('checked',!0)}
+        }
+        // ================== File Handling ==================
+        function storeFile(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res({name:f.name,type:f.type,size:f.size,data:e.target.result});r.onerror=()=>rej(new Error('Failed to read file'));r.readAsDataURL(f)})}
+        function getFileURL(s){if(!s||!s.fileInfo||!s.fileInfo.data){console.error(`Invalid song or fileInfo for song: ${s?.name||'unknown'}`);return null}if(!s.file||!objectURLs.has(s.file)){try{const b=dataURItoBlob(s.fileInfo.data),url=URL.createObjectURL(b);if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}s.file=url;objectURLs.add(url)}catch(e){console.error(`Error creating object URL for ${s.name}:`,e);return null}}return s.file}
+        function dataURItoBlob(d){try{const s=d.split(',');if(s.length<2)throw new Error('Invalid data URI');const b=atob(s[1]),m=s[0].split(':')[1].split(';')[0],a=new ArrayBuffer(b.length),i=new Uint8Array(a);for(let j=0;j<b.length;j++){i[j]=b.charCodeAt(j)}return new Blob([a],{type:m})}catch(e){console.error('Error converting data URI to Blob:',e);throw e}}
+
+        // ================== GENRE FIX: Helper Functions ==================
+        function getGenreColorByName(name) {
+            if (!name) return '';
+            const genre = genres.find(g => g.name === name);
+            // Ensure color is a lowercase hex string for consistent comparison
+            return genre && genre.color ? genre.color.toLowerCase() : '';
+        }
+
+        function getSongColor(song) {
+            // A song's own `color` property takes precedence.
+            if (song.color) {
+                return song.color.toLowerCase();
+            }
+            // Otherwise, fall back to the color of its assigned genre.
+            return getGenreColorByName(song.genre);
+        }
+
+        // ================== UI Helpers ==================
+        function autoCollapseSidebar(){const s=$('.left-col');if(!s.hasClass('collapsed')){s.addClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />')}}
+        // ================== Initialization ==================
+        $(function(){function ds(){$('#home-btn').removeClass('app-header-selected').addClass('app-header-unselected');$('#nav-favorites, #nav-plays, #nav-recordings, #nav-energy, #setlists-container .setlist-item, #venue-list .venue-item, #genre-list .genre-item').removeClass('selected')}load();ds();$('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');renderLeftSetlists();renderGenres(ds);renderVenues(ds);bindNav(ds);updateTopLeast();show('master');
+        
+        // GENRE FIX: Update genre-dot click handler to persist color
+        $(document).on('click','.genre-dot',function(e){
+            e.stopPropagation();
+            const song = masterSongs.find(s => s.id === $(this).closest('li').attr('id'));
+            if(!song) return;
+
+            const genreNames = [''].concat(genres.map(g => g.name)); // Cycle through genres, including "none"
+            const currentIndex = genreNames.indexOf(song.genre || '');
+            const nextIndex = (currentIndex + 1) % genreNames.length;
+            const newGenreName = genreNames[nextIndex];
+            
+            song.genre = newGenreName;
+            
+            // Explicitly set the song's color property based on the new genre
+            if (newGenreName) {
+                const genre = genres.find(g => g.name === newGenreName);
+                song.color = genre ? genre.color : '';
+            } else {
+                song.color = ''; // No genre means no color
+            }
+
+            // Update the dot's appearance using the new color
+            const newDotHtml = `<span class="genre-dot" style="background:${song.color || '#cbd5e1'}" title="${song.genre || 'no genre'}"></span>`;
+            $(`li[id="${song.id}"]`).find('.genre-dot').parent().html(newDotHtml);
+            
+            if ($('#genre-view').is(':visible') && currentGenre) {
+                renderGenreView(currentGenre); // Re-render if the genre view is open
+            }
+            save();
+        });
+
+        $(document).on('click','.energy-icon',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(s){s.energy=((s.energy||0)+1)%4;const n=energyIcons[s.energy||0];$(`li[id="${s.id}"]`).find('.energy-icon').html(n);if($('#energy-view').is(':visible')){renderEnergyLevels()}save()}});
+        $('#genre-color').on('input',function(){$('#genre-color-display').css({'background-image':'none','background-color':$(this).val()})});
+        $('#add-genre').click(function(){const n=$('#genre-name').val().trim(),c=$('#genre-color').val();if(!n)return alert('Enter a genre name');if(genres.some(g=>g.name.toLowerCase()===n.toLowerCase()))return alert('Genre already exists');genres.push({name:n,color:c});$('#genre-name').val('');renderGenres(ds);$('#genre-color-display').css({'background-image':'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)','background-color':''});save()});
+        $('#add-venue').click(function(){const n=$('#venue-name').val().trim();if(!n)return alert('Enter a venue name');if(venues.some(v=>v.name.toLowerCase()===n.toLowerCase()))return alert('Venue already exists');venues.push({name:n});$('#venue-name').val('');renderVenues(ds);save()});
+        $('#sidebar-toggle').click(function(){
+const s=$('.left-col');s.toggleClass('collapsed');
+    if (!s.hasClass('collapsed')) {
+        s.find('.left-col-main-content').scrollTop(0);
+    }$(this).find('svg').html(s.hasClass('collapsed')?'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />':'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')});
+        $('#sidebar-toggle').droppable({accept:'.draggable',tolerance:'pointer',over:function(){const s=$('.left-col');if(s.hasClass('collapsed')){s.removeClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')}}});
+        
+        // --- IPAD INPUT FIX: Manually focus inputs on touchstart and stop the event ---
+        // This intercepts the tap before jQuery UI Touch Punch can hijack it for dragging.
+        $('main').on('touchstart', 'input.artist-input, input.notes-input, input.duration-input', function(e) {
+            this.focus();
+            e.stopPropagation();
+        });
+
+        $('main').on('click','li.draggable',function(e){if($(e.target).closest('input, button, a, .genre-dot, .energy-icon, .favorite-star-container').length>0){return}const s=$(this).attr('id'),c=$('main > section:visible').attr('id').replace('-view','');openSongInContext(s,c)});
+        
+        // === NEW Redesigned Viewer Button Handlers ===
+        $('#viewer-close-btn').on('click', function(e) {
+            if (!viewerButtonsClickable) return;
+            e.stopPropagation();
+            $('body').removeClass('doc-viewer-active');
+            $('html').removeClass('doc-viewer-active pdf-overlay-active'); // ensure all viewer states are cleared
+            $('#doc-view').removeClass('doc-view-fullscreen').hide();
+            resetScrollHandlers();
+            $('#viewer-controls').addClass('opacity-0'); // Hide controls
+            $('#doc-iframe-wrapper').empty();
+            if (typeof destroyPdfOverlay === 'function') {
+                destroyPdfOverlay();
+            }
+        });
+
+        $('#viewer-next-btn').on('click', function() {
+            if (!viewerButtonsClickable) return;
+            if (!$(this).is(':disabled') && currentViewerList && currentViewerIndex < currentViewerList.length - 1) {
+                openSongInContext(currentViewerList[currentViewerIndex + 1].id, currentViewerContext, currentViewerIndex + 1, 'next');
+            }
+        });
+
+        $('#viewer-prev-btn').on('click', function() {
+            if (!viewerButtonsClickable) return;
+            if (!$(this).is(':disabled') && currentViewerList && currentViewerIndex > 0) {
+                openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1, 'prev');
+            }
+        });
     });
+        // ================== Event Handlers ==================
+        function bindNav(ds){
+            $('#home-btn').click(()=>{ds();$('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');show('master');autoCollapseSidebar()});
+            $('#nav-favorites').click(()=>{ds();$('#nav-favorites').addClass('selected');show('favorites')});
+            $('#nav-plays').click(()=>{ds();$('#nav-plays').addClass('selected');show('plays')});
+            $('#nav-recordings').click(()=>{ds();$('#nav-recordings').addClass('selected');show('recordings')});
+            $('#nav-energy').click(()=>{ds();$('#nav-energy').addClass('selected');show('energy')});
+            $('#nav-favorites').droppable({accept:'.draggable',hoverClass:'drag-hover-setlist',drop:function(e,ui){let c=!1;const i=ui.draggable.hasClass('item-selected')?$(`#${ui.draggable.parent().attr('id')} .item-selected`):ui.draggable;i.each(function(){const s=masterSongs.find(s=>s.id===$(this).attr('id'));if(s&&!s.favorite){s.favorite=!0;c=!0;$(`li[id="${s.id}"]`).find('.favorite-star-container').addClass('favorited')}});if(c){save();if($('#favorites-view').is(':visible')){renderFavorites()}}}});
+            $('#setlists-container').on('click','.setlist-item',function(e){if($(e.target).closest('.del-setlist, .edit-input').length)return;const n=$(this).data('name');ds();$(this).addClass('selected');cameFromVenue=null;currentSetlist=n;viewedSongsInSetlist.clear();$('#setlist-title').text(n);show('setlist');autoCollapseSidebar()});
+            $('#venue-setlists-list').on('click','li',function(){const n=$(this).data('setlist-name');if(setlists[n]){cameFromVenue=$('#venue-setlists-title .text-blue-600').text();currentSetlist=n;viewedSongsInSetlist.clear();show('setlist')}});
+            $('#back-to-venue-btn').click(()=>{if(cameFromVenue){renderVenueSetlists(cameFromVenue);show('venue-setlists')}});
+            $('#toggle-setlists').click(()=>$('#setlists-container').slideToggle(150));
+            $(document).on('click','#setlist-details-toggle',function(){$(this).toggleClass('open');$('#setlist-details-content').slideToggle(200,function(){if($(this).is(':visible'))$(this).css('display','flex')})});
+            $('#add-setlist-btn').click(()=>{const n=$('#new-setlist-name').val().trim();if(!n)return alert('Enter a name');if(setlists[n])return alert('Name exists');setlists[n]={songs:[],date:"",venue:""};$('#new-setlist-name').val('');renderLeftSetlists();save()});
+            $('#upload-master-btn').click(()=>$('#master-upload').click());
+            $('#master-upload').on('change',handleMasterUpload);
+            $('#search').on('input',renderMaster);
+            $('#setlist-search-add').on('input',renderAddSongsPanel);
+            $('#sort-dropdown, #favorites-sort-dropdown, #genre-sort-dropdown').on('change',function(){const v=$('main > section:visible').attr('id');if(v==='master-view')renderMaster();else if(v==='favorites-view')renderFavorites();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)});
+            $('#genre-filter-button').on('click',()=>$('#genre-filter-dropdown').toggleClass('hidden'));
+            $(document).on('change','#genre-filter-dropdown input[type="checkbox"]',function(){masterSelectedGenres=$('#genre-filter-dropdown input:checked').map(function(){return $(this).val()}).get();updateGenreFilterButtonText('#genre-filter-button',masterSelectedGenres);renderMaster()});
+            $('#setlist-sort-filter-dropdown').on('change',renderSetlist);
+            $(document).on('click',function(e){if(!$(e.target).closest('#genre-filter-container').length)$('#genre-filter-dropdown').addClass('hidden');if(!$(e.target).closest('.relative').has('#share-setlist-btn').length)$('#share-options').addClass('hidden')});
+            $('#reset-plays').click(()=>{if(confirm('Reset all plays?')){playCounts={};masterSongs.forEach(s=>s.lastPlayed=null);renderPlays();updateTopLeast();save()}});
+            $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
+            $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
+            $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
+            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style></head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
+            $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
+            $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
+            $('#share-email').on('click',e=>{e.preventDefault();shareSetlist('email')});
+            $('#share-gmail').on('click',e=>{e.preventDefault();shareSetlist('gmail')});
+            $('#share-copy').on('click',e=>{e.preventDefault();shareSetlist('copy')});
+            $('#dark-mode-toggle').change(function(){$('html').toggleClass('dark',this.checked);save()});
+            $(document).on('dragenter dragover',function(e){e.preventDefault();e.stopPropagation();if($('#master-view').is(':visible'))$('#master-drop-overlay').removeClass('hidden')}).on('dragleave drop',function(e){e.preventDefault();e.stopPropagation();$('#master-drop-overlay').addClass('hidden');if(e.type==='drop'&&$('#master-view').is(':visible')){const f=e.originalEvent.dataTransfer?.files;if(f?.length>0){handleMasterUpload({target:{files:f}})}}});
+            $(document).on('click','.favorite-star-container',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(s){s.favorite=!s.favorite;save();$(`li[id="${s.id}"]`).find('.favorite-star-container').toggleClass('favorited',s.favorite);if($('#favorites-view').is(':visible'))renderFavorites()}});
+            $('main').on('input','.artist-input, .notes-input, .duration-input',function(e){const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(s){s[$(this).attr('class').match(/(\w+)-input/)[1]]=e.target.value;save()}});
+            $('main').on('click','.delete-btn',function(e){e.stopPropagation();const i=$(this).closest('li').attr('id'),s=masterSongs.find(s=>s.id===i);if(!s)return;const c=$(this).text().toLowerCase();if(c==='delete'){if(confirm(`Permanently delete "${s.name}"?`)){if(s.file)URL.revokeObjectURL(s.file);removeFromAllSetlists([i]);masterSongs=masterSongs.filter(x=>x.id!==i);renderAll()}}else{setlists[currentSetlist].songs=setlists[currentSetlist].songs.filter(id=>id!==i);renderSetlist();save()}});
+            $('#setlist-date').on('input',function(){$('#date-placeholder').toggle(!$(this).val())})}
+        async function shareSetlist(m){if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),t=`${escapeHtml(currentSetlist)} - ${escapeHtml(s.date)} @ ${escapeHtml(s.venue)}\n${o.map((s,i)=>`${i+1}. ${escapeHtml(s.name)}`).join('\n')}`,j=`Setlist: ${currentSetlist}`;if(m==='native'&&navigator.share){const f=[];for(let s of o){if(s.fileInfo?.data){try{const b=dataURItoBlob(s.fileInfo.data);f.push(new File([b],s.name+'.pdf',{type:'application/pdf'}))}catch(e){console.error("Could not process file for sharing:",s.name,e)}}}try{await navigator.share({title:currentSetlist,text:t,files:f})}catch(err){console.error('Share failed:',err)}}else if(m==='email'){window.location.href=`mailto:?subject=${encodeURIComponent(j)}&body=${encodeURIComponent(t)}`}else if(m==='gmail'){window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(j)}&body=${encodeURIComponent(t)}`,'_blank')}else{fallbackCopy(t)}$('#share-options').addClass('hidden')}
+        function fallbackCopy(t){if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>{$('#copy-feedback').css('opacity',1);setTimeout(()=>$('#copy-feedback').css('opacity',0),2000)})}}
+        async function handleMasterUpload(e){const f=e.target.files;for(let file of f){const n=file.name.replace(/\.[^/.]+$/,'');if(masterSongs.some(s=>s.name.toLowerCase()===n.toLowerCase())&&!confirm(`A file named "${n}" already exists. Add anyway?`))continue;const i='s_'+Math.random().toString(36).slice(2,9);try{const fi=await storeFile(file);masterSongs.push({id:i,name:n,artist:'',genre:'',notes:'',duration:'',energy:0,favorite:!1,fileInfo:fi,lastPlayed:null});playCounts[i]=0}catch(err){console.error('Error processing file:',file.name,err);alert(`Failed to process file: ${file.name}`)}}renderAll()}
+        function createSongItem(s,i,c){const f=s.favorite?'favorited':'',t=`<div class="w-8 flex-shrink-0 flex justify-center items-center favorite-star-container ${f}" title="Toggle Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></div>`,d=`<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span></div>`,g=`<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${s.energy||0}">${energyIcons[s.energy||0]}</div>`,b=['master','favorites','genre'].includes(c)?'Delete':'Remove',n=`<div class="song-details-container"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(s.artist||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(s.notes||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(s.duration||'')}"><button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${b}</button></div>`,v=c==='setlist'&&viewedSongsInSetlist.has(s.id)?'viewed-index':'';return $(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable"><div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${v}">${i+1}</span></div>${t}${d}${g}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium" data-song-id="${s.id}"><span class="song-name-text" data-song-id="${s.id}">${escapeHtml(s.name)}</span></div>${n}</li>`)}
+        const draggableOptions={appendTo:'body',revert:'invalid',cursorAt:{left:10,top:10},helper:'clone',start:function(e,ui){const i=$(this),c=i.parent().children('.item-selected').length,h=c>1?`Dragging ${c} items`:i.find('.song-name').text();ui.helper.empty().html(h).css({'background-color':'#3b82f6','color':'white','padding':'0.5rem 1rem','height':'auto','width':'auto','white-space':'nowrap','box-shadow':'0 5px 15px rgba(0,0,0,0.3)','z-index':9999,'border-radius':'0.5rem','font-weight':'600'})}};
+        function renderMaster(){const q=$('#search').val().toLowerCase();let l=masterSongs.filter(s=>(q?(s.name.toLowerCase().includes(q)||(s.artist||'').toLowerCase().includes(q)):!0)&&(masterSelectedGenres.length>0?masterSelectedGenres.includes(s.genre):!0));const m=$('#sort-dropdown').val();l.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentMasterViewSongs=l;const u=$('#master-list').empty();if(l.length===0)u.append(`<li class="p-8 text-center text-gray-500 italic">${(q||masterSelectedGenres.length>0)?'No songs match your current filters.':'No songs yet. <br> Drag & drop PDF files onto the page or use the "Add files" button!'}</li>`);else l.forEach((s,i)=>u.append(createSongItem(s,i,'master')));$('#master-list .draggable').draggable(draggableOptions)}
+        function renderAddSongsPanel(){const q=$('#setlist-search-add').val().toLowerCase();let l=masterSongs.filter(s=>q?s.name.toLowerCase().includes(q):!0);l.sort((a,b)=>a.name.localeCompare(b.name));const u=$('#setlist-add-songs-list').empty(),c=setlists[currentSetlist]?.songs||[];l.forEach(s=>{const i=c.includes(s.id),li=$(`<li class="add-song-item" data-song-id="${s.id}"><label for="add-${s.id}" class="flex items-center w-full cursor-pointer"><input type="checkbox" id="add-${s.id}" class="sr-only custom-checkbox-input" ${i?'checked':''}><div class="custom-checkbox-box"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></div><span class="ml-3 flex-grow">${escapeHtml(s.name)}</span></label></li>`);li.find('input').on('change',function(){const i=$(this).closest('.add-song-item').data('song-id');if(this.checked){if(!setlists[currentSetlist].songs.includes(i))setlists[currentSetlist].songs.push(i)}else{setlists[currentSetlist].songs=setlists[currentSetlist].songs.filter(id=>id!==i)}renderSetlist();save()});u.append(li)})}
+        function removeFromAllSetlists(i){Object.values(setlists).forEach(s=>{s.songs=s.songs.filter(id=>!i.includes(id))})}
+        function renderLeftSetlists(){const c=$('#setlists-container').empty();Object.keys(setlists).forEach(n=>{const e=$(`<div class="p-2 mb-1 rounded-lg cursor-pointer setlist-item bg-gray-700" data-name="${escapeHtml(n)}"><div class="flex items-center"><button class="del-setlist" title="Delete setlist"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg></button><span class="setlist-name">${escapeHtml(n)}</span></div></div>`);e.find('.del-setlist').click(ev=>{ev.stopPropagation();if(confirm('Delete '+n+'?')){delete setlists[n];recordings=recordings.filter(r=>r.setlist!==n);if(currentSetlist===n){currentSetlist=null;$('#home-btn').trigger('click')}renderLeftSetlists();save()}});e.on('dblclick',function(){const i=$('<input class="edit-input w-full bg-gray-600 p-1 rounded-md" value="'+escapeHtml(n)+'">');$(this).find('.setlist-name').replaceWith(i);i.focus().on('blur keypress',function(ev){if(ev.type==='keypress'&&ev.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==n&&!setlists[newName]){setlists[newName]=setlists[n];recordings.forEach(r=>{if(r.setlist===n)r.setlist=newName});delete setlists[n];if(currentSetlist===n){currentSetlist=newName;$('#setlist-title').text(newName)}}renderLeftSetlists();save()})});c.append(e)});$('.setlist-item').droppable({accept:'.draggable',hoverClass:'drag-hover-setlist',drop:function(e,ui){const s=setlists[$(this).data('name')];let a=!1;const i=ui.draggable.hasClass('item-selected')?$(`#${ui.draggable.parent().attr('id')} .item-selected`):ui.draggable;i.each(function(){const d=$(this).attr('id');if(d&&!s.songs.includes(d)){s.songs.push(d);a=!0}});if(a){save();if(currentSetlist===$(this).data('name'))renderSetlist()}}});$('#setlists-container').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=$(this).sortable('toArray',{attribute:'data-name'}),n={};o.forEach(i=>{if(setlists[i])n[i]=setlists[i]});setlists=n;save()}})}
+        function renderSetlist(){if(!currentSetlist){$('#setlist-view').hide();return}$('#setlist-details-toggle').removeClass('open');$('#setlist-details-content').hide();$('#back-to-venue-btn').toggle(!!cameFromVenue);const s=setlists[currentSetlist];$('#setlist-title').text(currentSetlist);$('#setlist-date').val(s.date||'');$('#date-placeholder').toggle(!s.date);$('#setlist-venue').val(s.venue||'');renderAddSongsPanel();$('#setlist-recordings').empty();const r=recordings.filter(r=>r.setlist===currentSetlist);if(r.length>0){const c=$('<div class="p-2 bg-gray-100 rounded-lg dark:bg-gray-700"></div>').append('<h4 class="font-semibold text-sm mb-2">Recordings for this Setlist:</h4>');r.forEach(r=>{c.append($(`<div class="flex items-center justify-between p-2 mb-1 bg-white rounded-lg shadow-sm dark:bg-gray-600"><span>${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</span><audio controls src="${r.audioData}" style="height:30px;"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition" data-id="${r.id}">Delete</button></div>`).on('click','button',function(){if(confirm('Delete this recording?')){recordings=recordings.filter(rec=>rec.id!==$(this).data('id'));save();renderSetlist()}}))});$('#setlist-recordings').append(c)}let o=(s.songs||[]).map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean);const m=$('#setlist-sort-filter-dropdown').val();if(m!=='custom')o.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='name'?a.name.localeCompare(b.name):m==='energy'?(b.energy||0)-(a.energy||0):m==='genre'?(a.genre||'').localeCompare(b.genre||''):0);$('#setlist-total-duration').text(`Runtime: ${o.reduce((a,s)=>a+(parseInt(s.duration,10)||0),0)} min`);$('#setlist-song-count').text(`${o.length} songs`);window.currentSetlistViewSongs=o;const u=$('#setlist-list').empty();o.forEach((s,i)=>{u.append(createSongItem(s,i,'setlist'))});if($('#setlist-list').hasClass('ui-sortable'))$('#setlist-list').sortable('destroy');$('#setlist-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){$('#setlist-sort-filter-dropdown').val('custom');setlists[currentSetlist].songs=$(this).sortable('toArray');$('#setlist-list .index-number').each((i,el)=>$(el).text(i+1));save()}}).disableSelection()}
+        function renderPlays(){const u=$('#plays-list').empty();if(masterSongs.length===0){u.append('<li class="p-8 text-center text-gray-500 italic">Add songs to start tracking plays.</li>');return}const s=masterSongs.slice().sort((a,b)=>(playCounts[b.id]||0)-(playCounts[a.id]||0));window.currentPlaysViewSongs=s;if(Object.values(playCounts).every(c=>c===0)){u.append('<li class="p-8 text-center text-gray-500 italic">No songs played yet. Click a song to log a play.</li>');return}s.forEach(s=>{const l=$(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable pl-4"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);l.find('button').click(()=>{playCounts[s.id]=0;renderPlays();updateTopLeast();save()});u.append(l)});$('#plays-list .draggable').draggable(draggableOptions)}
+        function renderRecordings(){const u=$('#recordings-list').empty();if(recordings.length===0){u.append('<li class="p-8 text-center text-gray-500 italic">No recordings saved.</li>');return}recordings.forEach(r=>{const l=$(`<li class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"><div class="flex-1">${escapeHtml(r.setlist)} - ${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</div><audio controls src="${r.audioData}"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-rec" data-id="${r.id}">Delete</button></li>`);l.find('.delete-rec').click(()=>{recordings=recordings.filter(rec=>rec.id!==r.id);renderRecordings();save()});u.append(l)})}
+        function renderFavorites(){let f=masterSongs.filter(s=>s.favorite);const m=$('#favorites-sort-dropdown').val();f.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentFavoritesViewSongs=f;const u=$('#favorites-list').empty();f.forEach((s,i)=>{u.append(createSongItem(s,i,'favorites'))});$('#favorites-list .draggable').draggable(draggableOptions)}
+        
+        // GENRE FIX: Re-implement renderGenreView to filter by color
+        function renderGenreView(n) {
+            currentGenre = n;
+            $('#genre-view-title').text(`Genre: ${n}`);
+            const targetColor = getGenreColorByName(n);
+            const songList = $('#genre-song-list').empty();
+
+            if (!targetColor) {
+                songList.append('<li class="p-8 text-center text-gray-500 italic">This genre has no color assigned.</li>');
+                return;
+            }
+
+            let songs = masterSongs.filter(song => getSongColor(song) === targetColor);
+
+            const sortMode = $('#genre-sort-dropdown').val();
+            songs.sort((a, b) => {
+                if (sortMode === 'artist') return (a.artist || '').localeCompare(b.artist || '');
+                if (sortMode === 'lastPlayed') return (b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0) - (a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0);
+                if (sortMode === 'energy') return (b.energy || 0) - (a.energy || 0);
+                return a.name.localeCompare(b.name);
+            });
+            
+            window.currentGenreViewSongs = songs;
+
+            if (songs.length === 0) {
+                 songList.append('<li class="p-8 text-center text-gray-500 italic">No songs found with this genre\'s color.</li>');
+            } else {
+                songs.forEach((song, i) => {
+                    songList.append(createSongItem(song, i, 'genre'));
+                });
+            }
+            
+            $('#genre-song-list .draggable').draggable(draggableOptions);
+        }
+
+        function renderEnergyLevels(){const c=$('#energy-level-container').empty();[1,2,3].forEach(l=>{const s=masterSongs.filter(s=>s.energy===l).sort((a,b)=>a.name.localeCompare(b.name)),e=$(`<div class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg"><div class="flex justify-center mb-2">${energyIcons[l]}</div><ul class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto"></ul></div>`),u=e.find('ul');if(s.length>0)s.forEach(s=>u.append(`<li id="${s.id}" class="p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer draggable">${escapeHtml(s.name)}</li>`));else u.append(`<li class="p-2 text-sm text-gray-500 italic">No songs in this category.</li>`);c.append(e)});$('#energy-level-container .draggable').draggable(draggableOptions)}
+        function renderGenres(ds){$('#genre-list').empty();genres.forEach(g=>{const e=$(`<div class="sidebar-item genre-item" data-name="${escapeHtml(g.name)}"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-genre, .genre-edit-input').length>0)return;ds();$(this).addClass('selected');currentGenre=g.name;show('genre-view')});e.find('.delete-genre').click(ev=>{ev.stopPropagation();if(confirm(`Delete genre "${g.name}"?`)){genres=genres.filter(gn=>gn.name!==g.name);masterSongs.forEach(s=>{if(s.genre===g.name)s.genre=''});renderAll();save()}});e.find('.genre-name').on('dblclick',function(ev){ev.stopPropagation();const o=$(this).text(),i=$('<input class="w-full bg-gray-600 p-1 rounded-md" type="text" value="'+o+'">');$(this).replaceWith(i);i.focus().select().on('blur keypress',function(e){if(e.type==='keypress'&&e.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==o){const gn=genres.find(gn=>gn.name===o);if(gn)gn.name=newName;masterSongs.forEach(s=>{if(s.genre===o)s.genre=newName})}renderAll();save()})});$('#genre-list').append(e)});updateGenreFilters('#genre-filter-dropdown',masterSelectedGenres);$('#genre-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#genre-list .genre-item').each(function(){const n=$(this).data('name'),g=genres.find(g=>g.name===n);if(g)o.push(g)});genres=o;save()}})}
+        function renderVenues(ds){$('#venue-list').empty();venues.forEach(v=>{const e=$(`<div class="sidebar-item venue-item" data-name="${escapeHtml(v.name)}"><div class="venue-name text-sm">${escapeHtml(v.name)}</div><span class="delete-venue" title="Delete venue">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-venue').length)return;ds();$(this).addClass('selected');renderVenueSetlists(v.name);show('venue-setlists')});e.find('.delete-venue').click(ev=>{ev.stopPropagation();venues=venues.filter(vn=>vn.name!==v.name);Object.values(setlists).forEach(sl=>{if(sl.venue===v.name)sl.venue=''});recordings.forEach(r=>{if(r.venue===v.name)r.venue=''});renderVenues(ds);if(currentSetlist)renderSetlist();if($('#venue-setlists-view').is(':visible'))$('#home-btn').trigger('click');save()});$('#venue-list').append(e)});$('#venue-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#venue-list .venue-item').each(function(){const n=$(this).data('name'),v=venues.find(v=>v.name===n);if(v)o.push(v)});venues=o;save()}})}
+        function renderVenueSetlists(n){$('#venue-setlists-title').html(`Setlists for: <span class="text-blue-600">${escapeHtml(n)}</span>`);const u=$('#venue-setlists-list').empty(),m=Object.entries(setlists).filter(([_,d])=>d.venue===n);if(m.length===0){u.append('<li class="p-4 text-center text-gray-500">No setlists found for this venue.</li>');return}m.forEach(([n,d])=>{u.append(`<li class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" data-setlist-name="${escapeHtml(n)}"><div class="font-medium">${escapeHtml(n)}</div><div class="text-sm text-gray-500">${escapeHtml(d.date)||'No date'}</div></li>`)})}
+        function updateGenreFilters(s,l){const d=$(s).empty();if(genres.length===0){d.append('<div class="p-2 text-sm text-gray-500">No genres created.</div>');return}genres.forEach(g=>{d.append(`<label class="flex items-center p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"><input type="checkbox" value="${escapeHtml(g.name)}" class="form-checkbox h-4 w-4 text-blue-600 rounded-md mr-2" ${l.includes(g.name)?'checked':''}>${escapeHtml(g.name)}</label>`)})}
+        function updateGenreFilterButtonText(s,l,d='Select Genres'){const b=$(s);if(l.length===0)b.text(d);else if(l.length===1)b.text(escapeHtml(l[0]));else b.text(`${l.length} genres`)}
+        function getGenreColor(n){return genres.find(x=>x.name===n)?.color||'#cbd5e1'}
+        function escapeHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+        function updateTopLeast(){const p=Object.entries(playCounts).filter(([i])=>masterSongs.find(s=>s.id===i)).sort((a,b)=>b[1]-a[1]),v=p.filter(([_,c])=>c>0);if(v.length===0){$('.stats-container').hide();return}$('.stats-container').show();$('#top-played, #least-played').empty();v.slice(0,5).forEach(([i,c])=>{const s=masterSongs.find(x=>x.id===i);if(s)$('#top-played').append(`<li>${escapeHtml(s.name)}: ${c}</li>`)});v.slice(-5).reverse().forEach(([i,c])=>{const s=masterSongs.find(x=>x.id===i);if(s)$('#least-played').append(`<li>${escapeHtml(s.name)}: ${c}</li>`)})}
+        function renderAll(){renderLeftSetlists();renderGenres();renderVenues();renderMaster();if(currentSetlist)renderSetlist();renderPlays();renderRecordings();renderFavorites();renderEnergyLevels();if(currentGenre)renderGenreView(currentGenre);updateTopLeast()}
+        
+        function openSongInContext(songId, context, index = -1, direction = 'none') {
+            const song = masterSongs.find(s => s.id === songId); if (!song) return;
+            if (direction === 'none') { playCounts[song.id] = (playCounts[song.id] || 0) + 1; song.lastPlayed = new Date().toISOString().split('T')[0]; updateTopLeast(); save(); }
+            currentViewerList = (context==='master')?window.currentMasterViewSongs||[]:(context==='setlist')?window.currentSetlistViewSongs||[]:(context==='plays')?window.currentPlaysViewSongs||[]:(context==='favorites')?window.currentFavoritesViewSongs||[]:(context==='genre')?window.currentGenreViewSongs||[]:masterSongs;
+            currentViewerContext = context;
+            currentViewerIndex = (index === -1) ? currentViewerList.findIndex(s => s.id === songId) : index;
+            if (context === 'setlist') { viewedSongsInSetlist.add(songId); $(`#setlist-list li[id="${songId}"] .index-number`).addClass('viewed-index'); }
+            const url = getFileURL(song); if (!url) { alert('File not available for this song.'); return; }
+            
+            (function(){
+                const scroller = showPdfOverlay();
+                (async () => {
+                    try {
+                        await renderPDFInto(scroller, url);
+                    } catch (e) {
+                        console.error('PDF render failed, opening natively', e);
+                        destroyPdfOverlay();
+                        try { window.open(url, '_blank'); } catch(_) {}
+                    }
+                })();
+            })();
+            const $wrapper = $('#doc-iframe-wrapper');
+            const $oldContainer = $wrapper.find('.current');
+            const $newContainer = $(`<div class="doc-iframe-container"><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
+            if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20); } 
+            else if (direction === 'prev') { $newContainer.addClass('prev'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-prev').removeClass('current'); $newContainer.addClass('current incoming-prev').removeClass('prev'); }, 20); } 
+            else { $newContainer.addClass('current'); $wrapper.html($newContainer); }
+            setTimeout(() => $oldContainer.remove(), 800);
+            
+            (function(){
+                const pdfContainer = $newContainer.find('.pdfjs-container')[0];
+                if (pdfContainer) { renderPDFWithPDFJS(url, pdfContainer); }
+            })();
+            
+            if (direction === 'none') { 
+                $('body').addClass('doc-viewer-active');
+                $('html').addClass('doc-viewer-active');
+                $('#doc-view').addClass('doc-view-fullscreen').show(); 
+            }
+            // The new setupScrollHandlers will handle showing the buttons and setting their state.
+            setupScrollHandlers();
+        }
+
+        function saveRecording(b){const r=new FileReader();r.readAsDataURL(b);r.onloadend=()=>{const s=setlists[currentSetlist];recordings.push({id:'r_'+Math.random().toString(36).slice(2,9),setlist:currentSetlist,date:s.date,venue:s.venue,audioData:r.result});save();if($('#recordings-view').is(':visible'))renderRecordings();if(currentSetlist)renderSetlist()}}
+        
+        // This function shows controls and ensures their state (enabled/disabled) is correct.
+        function showNavButtonsAndCheckState() {
+            const isPrevDisabled = currentViewerIndex <= 0;
+            const isNextDisabled = !currentViewerList || currentViewerIndex >= currentViewerList.length - 1;
+            
+            $('#viewer-prev-btn').prop('disabled', isPrevDisabled);
+            $('#viewer-next-btn').prop('disabled', isNextDisabled);
+            
+            $('#viewer-controls').removeClass('opacity-0');
+            
+            viewerButtonsClickable = false;
+            setTimeout(() => {
+                if (!$('#viewer-controls').hasClass('opacity-0')) {
+                    viewerButtonsClickable = true;
+                }
+            }, 250);
+
+            startInactivityTimer();
+        }
+
+        function hideNavButtons() {
+            $('#viewer-controls').addClass('opacity-0');
+            viewerButtonsClickable = false;
+        }
+        
+        // This timer will hide the controls after a period of inactivity.
+        function startInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(hideNavButtons, 3000);
+        }
+
+        // This function sets up all the event listeners for the document viewer.
+        function setupScrollHandlers() {
+            resetScrollHandlers();
+            const $viewArea = $('#pdf-overlay-scroll');
+            if ($viewArea.length === 0) return;
+
+            // 1. Show controls on scroll to top.
+            $viewArea.on('scroll.viewer', function() {
+                if (this.scrollTop < 5) {
+                    if ($('#viewer-controls').hasClass('opacity-0')) {
+                        showNavButtonsAndCheckState();
+                    }
+                } else {
+                    hideNavButtons();
+                }
+            });
+
+            // 2. Show controls on tap at top of viewer, but don't trigger buttons.
+            $viewArea.on('pointerdown.viewer', function(e) {
+                 if ($(e.target).closest('.viewer-btn').length > 0) {
+                    return;
+                }
+                if (e.clientY < 80) {
+                    if ($('#viewer-controls').hasClass('opacity-0')) {
+                         showNavButtonsAndCheckState();
+                    }
+                }
+            });
+
+            // 3. Refined swipe functionality for navigation.
+            let touchstartX = 0;
+            let touchstartY = 0;
+            const swipeThresholdX = 80; 
+            const swipeThresholdY = 40;
+
+            $viewArea.on('touchstart.viewer', e => {
+                if (e.originalEvent.touches) {
+                    touchstartX = e.originalEvent.touches[0].screenX;
+                    touchstartY = e.originalEvent.touches[0].screenY;
+                }
+            });
+            $viewArea.on('touchend.viewer', e => {
+                if (e.originalEvent.changedTouches) {
+                    const touchendX = e.originalEvent.changedTouches[0].screenX;
+                    const touchendY = e.originalEvent.changedTouches[0].screenY;
+                    const deltaX = touchendX - touchstartX;
+                    const deltaY = touchendY - touchstartY;
+
+                    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > swipeThresholdX) {
+                        if (deltaX < 0) { 
+                           if(viewerButtonsClickable) $('#viewer-next-btn').trigger('click');
+                        } else { 
+                           if(viewerButtonsClickable) $('#viewer-prev-btn').trigger('click');
+                        }
+                    }
+                }
+            });
+
+            // Initially check if we should show the buttons.
+            if ($viewArea.length > 0 && $viewArea[0].scrollTop < 5) {
+                showNavButtonsAndCheckState();
+            }
+        }
+
+
+        function resetScrollHandlers() {
+            $('#pdf-overlay-scroll').off('.viewer');
+            $('#doc-view, #pdf-overlay-scroll').off('mousemove pointerdown touchstart touchend'); 
+            clearTimeout(inactivityTimer);
+        }
+
+        function showNavButtons() {
+            showNavButtonsAndCheckState();
+        }
+
+        function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
+    </script>
+    <!-- Left-edge custom scrollbar (visible only when sidebar is collapsed) -->
+    <div id="edge-scrollbar" class="hidden" aria-hidden="true">
+        <div id="edge-thumb"></div>
+    </div>
+
+
+<script>
+(function(){
+  // Find the stats container
+  const stats = document.querySelector('.stats-container');
+  const aside = document.querySelector('aside.left-col');
+  const rail  = document.getElementById('stats-external-scroll');
+  const thumb = document.getElementById('stats-thumb');
+  if (!stats || !aside || !rail || !thumb) return;
+
+  // Show the rail
+  rail.style.display = 'block';
+
+  // Helpers
+  function rect(el){
+    const r = el.getBoundingClientRect();
+    return {top:r.top, left:r.left, width:r.width, height:r.height, bottom:r.bottom};
   }
 
-  // Try now and retry a few times for late DOM
-  init();
-  var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
+  // Position rail to match stats vertical position and height, locked to the far right inside the aside
+  function layout(){
+    const a = rect(aside);
+    const s = rect(stats);
+    // Calculate offset of stats within aside
+    const top = s.top - a.top;
+    const height = s.height;
+    // Place rail
+    rail.style.top = top + 'px';
+    rail.style.height = height + 'px';
+    // Keep at far right
+    rail.style.right = '0px';
+  }
+
+  // Update thumb size & position based on scroll
+  function updateThumb(){
+    const content = stats.scrollHeight;
+    const visible = stats.clientHeight;
+    if (content <= visible + 1) {
+      thumb.style.display = 'none';
+      return;
+    }
+    thumb.style.display = 'block';
+    const railH = rail.clientHeight;
+    const ratio = visible / content;
+    const thumbH = Math.max(24, Math.round(railH * ratio));
+    const maxScroll = content - visible;
+    const scrollTop = stats.scrollTop;
+    const trackSpace = railH - thumbH;
+    const thumbTop = maxScroll > 0 ? Math.round((scrollTop / maxScroll) * trackSpace) : 0;
+    thumb.style.height = thumbH + 'px';
+    thumb.style.top = thumbTop + 'px';
+  }
+
+  // Scroll sync from stats -> thumb
+  stats.addEventListener('scroll', updateThumb, {passive:true});
+
+  // Drag handling for thumb -> stats
+  let dragging = false;
+  let dragStartY = 0;
+  let startTop = 0;
+
+  function onDown(e){
+    dragging = true;
+    dragStartY = (e.touches ? e.touches[0].clientY : e.clientY);
+    startTop = parseInt(window.getComputedStyle(thumb).top, 10) || 0;
+    e.preventDefault();
+  }
+  function onMove(e){
+    if (!dragging) return;
+    const railH = rail.clientHeight;
+    const thumbH = thumb.clientHeight;
+    const maxThumbTop = railH - thumbH;
+    const currentY = (e.touches ? e.touches[0].clientY : e.clientY);
+    let newTop = startTop + (currentY - dragStartY);
+    newTop = Math.max(0, Math.min(maxThumbTop, newTop));
+    thumb.style.top = newTop + 'px';
+    // Map back to scrollTop
+    const content = stats.scrollHeight;
+    const visible = stats.clientHeight;
+    const maxScroll = content - visible;
+    const ratio = newTop / maxThumbTop;
+    stats.scrollTop = Math.round(maxScroll * ratio);
+  }
+  function onUp(){ dragging = false; }
+
+  thumb.addEventListener('mousedown', onDown);
+  thumb.addEventListener('touchstart', onDown, {passive:false});
+  window.addEventListener('mousemove', onMove, {passive:false});
+  window.addEventListener('touchmove', onMove, {passive:false});
+  window.addEventListener('mouseup', onUp);
+  window.addEventListener('touchend', onUp);
+
+  // Re-layout on resize and when fonts/images load
+  const ro = new ResizeObserver(() => { layout(); updateThumb(); });
+  ro.observe(aside);
+  ro.observe(stats);
+  window.addEventListener('resize', () => { layout(); updateThumb(); });
+
+  // Initial layout
+  requestAnimationFrame(() => { layout(); updateThumb(); });
 })();
+
+// === Long-press (2s) to rename song titles across the app (iPad-friendly) ===
+(function(){
+    let holdTimer = null;
+    let startX = 0, startY = 0;
+    const HOLD_MS = 1100;
+    const THRESHOLD = 8;
+
+    function getPoint(e){
+        if (e.touches && e.touches.length) return {x: e.touches[0].clientX, y: e.touches[0].clientY};
+        if (e.changedTouches && e.changedTouches.length) return {x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY};
+        return {x: e.clientX || 0, y: e.clientY || 0};
+    }
+    function cancelTimer(){ if (holdTimer){ clearTimeout(holdTimer); holdTimer = null; } }
+
+    // Start hold on the visible song title content
+    $(document).on('touchstart mousedown', '.song-name[data-song-id]', function(e){
+        const $target = $(this);
+        const p = getPoint(e); startX = p.x; startY = p.y;
+        cancelTimer();
+        holdTimer = setTimeout(()=>{
+            const songId = $target.data('song-id');
+            if (!songId) return;
+            beginInlineRename($target, songId);
+        }, HOLD_MS);
+    });
+
+    // Cancel if the finger/mouse moves significantly (scroll gesture)
+    $(document).on('touchmove mousemove', function(e){
+        if (!holdTimer) return;
+        const p = getPoint(e);
+        if (Math.abs(p.x - startX) > THRESHOLD || Math.abs(p.y - startY) > THRESHOLD){
+            cancelTimer();
+        }
+    });
+    // Cancel on release
+    $(document).on('touchend mouseup touchcancel', function(){ cancelTimer(); });
+
+    function beginInlineRename($textEl, songId){
+        // Avoid duplicate editors
+        if ($textEl.closest('.song-name').find('input.edit-input').length) return;
+
+        const current = $textEl.text();
+        const $input = $('<input type="text" class="edit-input" />').val(current);
+        // Replace only the text span (preserves layout around it)
+        $textEl.replaceWith($input);
+        $input.focus();
+        // Make typing legible in dark mode
+        $input.addClass('bg-white text-black');
+
+        function commit(save){
+            const song = masterSongs.find(s => s.id === songId);
+            if (!song){ renderAll(); return; }
+            if (save){
+                const newName = String($input.val() || '').trim();
+                if (newName && newName !== song.name){
+                    song.name = newName;
+                    save(); // persist
+                }
+            }
+            renderAll(); // re-render everywhere that references this song
+        }
+
+        $input.on('keydown', function(ev){
+            if (ev.key === 'Enter') commit(true);
+            else if (ev.key === 'Escape') commit(false);
+        });
+        $input.on('blur', function(){ commit(true); });
+        // Prevent accidental drags while editing
+        $input.on('touchstart mousedown', function(ev){ ev.stopPropagation(); });
+    }
+})();
+
 </script>
 
 
-<style id="setlist-export-chip-styles">
-/* Blue name-only ghost chip (separate overlay that follows cursor) */
-#setlist-export-ghost{
-  position:fixed; top:0; left:0;
-  transform:translate(-9999px,-9999px);
-  padding:6px 10px; border-radius:8px;
-  background:rgba(59,130,246,.95); color:#fff;
-  font-size:14px; line-height:1.2;
-  box-shadow:0 6px 16px rgba(0,0,0,.25);
-  border:1px solid rgba(59,130,246,1);
-  max-width:50vw; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;
-  pointer-events:none; z-index:2147483646; opacity:0; transition:opacity 50ms linear;
+<script>
+function loadPDFJSLib() {
+  return new Promise((resolve, reject) => {
+    if (window.pdfjsLib) { resolve(window.pdfjsLib); return; }
+    const s = document.createElement('script');
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    s.onload = () => {
+      try {
+        if (window['pdfjsLib']) {
+          window['pdfjsLib'].GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+          resolve(window['pdfjsLib']);
+        } else reject(new Error('pdfjsLib not found'));
+      } catch(e){ reject(e); }
+    };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
 }
-/* Keep placeholder from jumping while exporting */
-.ui-sortable-placeholder.setlist-exporting{
-  visibility:hidden!important; height:0!important; margin:0!important; padding:0!important; border:0!important;
+async function renderPDFWithPDFJS(url, containerEl) {
+  try {
+    // Blob fetch to bypass CORS; fallback to direct URL
+    let dataURL = url, revoke = null;
+    try {
+      const resp = await fetch(url, { credentials: 'include' });
+      if (resp.ok) {
+        const blob = await resp.blob();
+        dataURL = URL.createObjectURL(blob);
+        revoke = dataURL;
+      }
+    } catch(_e){}
+    const pdfjsLib = await loadPDFJSLib();
+    const pdf = await pdfjsLib.getDocument(dataURL).promise;
+    containerEl.innerHTML = '';
+    const dpr = window.devicePixelRatio || 1;
+    for (let p=1; p<=pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const base = page.getViewport({ scale: 1 });
+      const fitWidth = containerEl.clientWidth || base.width;
+      let scale = fitWidth / base.width;
+      scale = Math.max(0.8, Math.min(2.0, scale));
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d', { alpha:false });
+      canvas.width = Math.floor(viewport.width * dpr);
+      canvas.height = Math.floor(viewport.height * dpr);
+      canvas.style.width = viewport.width + 'px';
+      canvas.style.height = viewport.height + 'px';
+      const holder = document.createElement('div');
+      holder.className = 'pdfjs-page';
+      holder.appendChild(canvas);
+      containerEl.appendChild(holder);
+      const renderContext = { canvasContext: ctx, viewport, transform: [dpr,0,0,dpr,0,0] };
+      await page.render(renderContext).promise;
+    }
+    if (revoke) setTimeout(() => URL.revokeObjectURL(revoke), 30000);
+    // Tap/pointerdown should reveal nav buttons
+    const showBar = () => { try { if (window.showNavButtons) window.showNavButtons(); } catch(e){} };
+    containerEl.addEventListener('touchstart', showBar, {passive:true});
+    containerEl.addEventListener('pointerdown', showBar, {passive:true});
+  } catch (err) {
+    console.error('PDF.js render error:', err);
+    try { window.open(url, '_blank'); } catch(e){}
+  }
 }
-/* Freeze the big helper at the edge (don’t let it move outside) */
-.ui-sortable-helper.setlist-helper-frozen{
-  position:fixed !important; pointer-events:none !important; z-index:2147483645 !important;
-}
-</style>
+</script>
 
 <script>
-/* Setlist export behavior (v12 — dual-visual + frozen helper, non-destructive)
-   - Inside setlist: normal reorder + full-size helper (unchanged).
-   - When pointer leaves the setlist box: show BLUE name-only ghost that follows cursor; freeze the big helper at the boundary.
-   - While outside: keep sortable responsive; pin placeholder at the original index so the order doesn’t change.
-   - Re-enter: hide ghost + unfreeze helper.
-   - Stop: cleanup so nothing remains “name-only” or frozen.
-*/
 (function(){
-  if (window.__SetlistExportBehavior_v12) return;
-  window.__SetlistExportBehavior_v12 = true;
-
-  function $jq(){ return window.jQuery || window.$; }
-  var $ = $jq(); if (!$) return;
-
-  // Single reusable ghost
-  var ghost = document.createElement('div');
-  ghost.id = 'setlist-export-ghost';
-  document.body.appendChild(ghost);
-
-  function setGhost(text){ ghost.textContent = text || ''; }
-  function showGhostAt(cx, cy){
-    ghost.style.transform = 'translate(' + (cx + 8) + 'px,' + (cy + 8) + 'px)';
-    if (ghost.style.opacity !== '1') ghost.style.opacity = '1';
-  }
-  function hideGhost(){
-    ghost.style.opacity = '0';
-    ghost.style.transform = 'translate(-9999px,-9999px)';
-  }
-
-  function getItemName($item){
-    var name = '';
+  window.__docTapListenerInstalled = true;
+  function cap(ev){
     try{
-      var $name = $item.find('.song-name, .song-name-text, .file-name, [data-role=\"song-name\"]').first();
-      name = ($name.text()||'').trim(); if (!name) name = ($item.text()||'').trim();
+      var dv = document.getElementById('doc-view');
+      if (!dv || dv.classList.contains('hidden')) return;
+      if (dv.contains(ev.target) && window.showNavButtons) window.showNavButtons();
     }catch(e){}
-    return name || 'Untitled';
   }
-
-  function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
-
-  function attach($list){
-    var inst = $list.data('ui-sortable') || $list.data('sortable');
-    if (!inst) return;
-
-    var exporting = false;
-    var $placeholder = null, $currentItem = null;
-    var startIndex = null;
-    var rect = null;
-    var frozenAt = null; // client coords at boundary
-
-    // Preserve existing callbacks
-    var orig = {
-      start:  $list.sortable('option','start'),
-      sort:   $list.sortable('option','sort'),
-      change: $list.sortable('option','change'),
-      over:   $list.sortable('option','over'),
-      out:    $list.sortable('option','out'),
-      stop:   $list.sortable('option','stop')
-    };
-
-    function updateRect(){
-      var box = $list.get(0).getBoundingClientRect();
-      rect = { left: box.left, top: box.top, right: box.right, bottom: box.bottom };
-    }
-    function inside(cx, cy){ return cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom; }
-
-    function eventClientXY(e){
-      var oe = (e && e.originalEvent) || e;
-      var t = (oe && oe.touches && oe.touches[0]) || (oe && oe.changedTouches && oe.changedTouches[0]);
-      if (t) return { x: t.clientX, y: t.clientY };
-      if (typeof e.clientX === 'number') return { x: e.clientX, y: e.clientY };
-      return { x: rect.left, y: rect.top };
-    }
-
-    function freezeHelperAtEdge(cx, cy){
-      var $helper = $('.ui-sortable-helper');
-      if (!$helper.length) return;
-      // Freeze at nearest edge point
-      var fx = clamp(cx, rect.left, rect.right);
-      var fy = clamp(cy, rect.top, rect.bottom);
-      if (cx < rect.left)  fx = rect.left;
-      if (cx > rect.right) fx = rect.right;
-      if (cy < rect.top)   fy = rect.top;
-      if (cy > rect.bottom)fy = rect.bottom;
-      frozenAt = { x: fx, y: fy };
-      var w = $helper.outerWidth(), h = $helper.outerHeight();
-      $helper.addClass('setlist-helper-frozen')
-             .css({ left: (fx - Math.round(w/2)) + 'px', top: (fy - Math.round(h/2)) + 'px' });
-    }
-
-    function updateFrozenHelper(){
-      if (!frozenAt) return;
-      var $helper = $('.ui-sortable-helper');
-      if ($helper.length && $helper.hasClass('setlist-helper-frozen')){
-        var w = $helper.outerWidth(), h = $helper.outerHeight();
-        $helper.css({ left: (frozenAt.x - Math.round(w/2)) + 'px', top: (frozenAt.y - Math.round(h/2)) + 'px' });
-      }
-    }
-
-    function unfreezeHelper(){
-      var $helper = $('.ui-sortable-helper');
-      if ($helper.length){
-        $helper.removeClass('setlist-helper-frozen').css({ left:'', top:'' });
-      }
-      frozenAt = null;
-    }
-
-    function toExportMode(cx, cy){
-      if (exporting) return;
-      exporting = true;
-      setGhost(getItemName($currentItem)); showGhostAt(cx, cy);
-      if ($placeholder) $placeholder.addClass('setlist-exporting');
-      freezeHelperAtEdge(cx, cy);
-    }
-
-    function toReorderMode(){
-      if (!exporting) return;
-      exporting = false;
-      hideGhost();
-      if ($placeholder) $placeholder.removeClass('setlist-exporting');
-      unfreezeHelper();
-    }
-
-    function hardCleanup(){
-      exporting = false; hideGhost(); unfreezeHelper();
-      if ($placeholder) $placeholder.removeClass('setlist-exporting');
-      $placeholder = null; $currentItem = null; startIndex = null; rect = null; frozenAt = null;
-    }
-
-    function keepPlaceholderPinned(){
-      if (!exporting || !$placeholder || startIndex == null) return;
-      var $children = $list.children(':visible');
-      if (!$children.length) return;
-      var idx = Math.max(0, Math.min(startIndex, $children.length - 1));
-      var $anchor = $children.eq(idx);
-      if ($anchor.length && !$placeholder.is($anchor.next())){ $placeholder.insertAfter($anchor); }
-      $placeholder.addClass('setlist-exporting');
-    }
-
-    $list.sortable('option','start', function(e, ui){
-      exporting = false;
-      $placeholder = ui.placeholder; $currentItem = ui.item; startIndex = ui.item.index();
-      updateRect(); hideGhost(); unfreezeHelper();
-      if (orig.start) orig.start.call(this, e, ui);
-    });
-
-    $list.sortable('option','sort', function(e, ui){
-      if (!rect) updateRect();
-      var p = eventClientXY(e);
-      if (inside(p.x, p.y)){
-        toReorderMode();
-      } else {
-        if (!exporting) toExportMode(p.x, p.y);
-        showGhostAt(p.x, p.y);
-        updateFrozenHelper();
-        keepPlaceholderPinned();
-      }
-      if (orig.sort) orig.sort.call(this, e, ui);
-    });
-
-    $list.sortable('option','over', function(e, ui){
-      toReorderMode();
-      if (orig.over) orig.over.call(this, e, ui);
-    });
-
-    $list.sortable('option','out', function(e, ui){
-      var p = eventClientXY(e);
-      if (!rect) updateRect();
-      toExportMode(p.x, p.y);
-      if (orig.out) orig.out.call(this, e, ui);
-    });
-
-    $list.sortable('option','change', function(e, ui){
-      keepPlaceholderPinned();
-      if (orig.change) orig.change.call(this, e, ui);
-    });
-
-    $list.sortable('option','stop', function(e, ui){
-      hardCleanup();
-      if (orig.stop) orig.stop.call(this, e, ui);
-    });
-
-    window.addEventListener('scroll', function(){ if ($currentItem) updateRect(); }, { passive:true });
-    window.addEventListener('resize', function(){ if ($currentItem) updateRect(); }, { passive:true });
-  }
-
-  function init(){
-    var $list = $('#setlist-list'); // adjust if your setlist uses a different selector
-    if ($list.length){ attach($list); }
-  }
-
-  init();
-  var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
+  window.__docTapCapture = cap;
+  document.addEventListener('touchstart', cap, {passive:true, capture:true});
+  document.addEventListener('pointerdown', cap, {passive:true, capture:true});
 })();
 </script>
 
-
-<style id="setlist-export-chip-styles">
-#setlist-export-ghost{
-  position:fixed; top:0; left:0;
-  transform:translate(-9999px,-9999px);
-  padding:6px 10px; border-radius:8px;
-  background:rgba(59,130,246,.95); color:#fff;
-  font-size:14px; line-height:1.2;
-  box-shadow:0 6px 16px rgba(0,0,0,.25);
-  border:1px solid rgba(59,130,246,1);
-  max-width:50vw; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;
-  pointer-events:none; z-index:2147483646; opacity:0; transition:opacity 50ms linear;
-}
-.ui-sortable-placeholder.setlist-exporting{
-  visibility:hidden!important; height:0!important; margin:0!important; padding:0!important; border:0!important;
-}
-.ui-sortable-helper.setlist-helper-frozen{
-  position:fixed !important; pointer-events:none !important; z-index:2147483645 !important;
-}
-</style>
 <script>
-(function(){
-  if (window.__SetlistExportBehavior_v13) return;
-  window.__SetlistExportBehavior_v13 = true;
-  function $jq(){ return window.jQuery || window.$; }
-  var $ = $jq(); if (!$) return;
-
-  var ghost = document.createElement('div');
-  ghost.id = 'setlist-export-ghost';
-  document.body.appendChild(ghost);
-
-  function setGhost(text){ ghost.textContent = text || ''; }
-  function showGhostAt(cx, cy){ ghost.style.transform = 'translate('+(cx+8)+'px,'+(cy+8)+'px)'; ghost.style.opacity = '1'; }
-  function hideGhost(){ ghost.style.opacity = '0'; ghost.style.transform = 'translate(-9999px,-9999px)'; }
-
-  function getItemName($item){
-    var n=''; try{ var $n=$item.find('.song-name, .song-name-text, .file-name, [data-role="song-name"]').first();
-      n = ($n.text()||'').trim(); if(!n) n=($item.text()||'').trim(); }catch(e){}
-    return n || 'Untitled';
-  }
-  function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
-
-  function attach($list){
-    var inst = $list.data('ui-sortable') || $list.data('sortable'); if(!inst) return;
-    var exporting=false, $ph=null, $item=null, startIndex=null, rect=null, frozenAt=null;
-
-    var orig = {
-      start:$list.sortable('option','start'),
-      sort:$list.sortable('option','sort'),
-      change:$list.sortable('option','change'),
-      over:$list.sortable('option','over'),
-      out:$list.sortable('option','out'),
-      stop:$list.sortable('option','stop'),
-      update:$list.sortable('option','update'),
-      receive:$list.sortable('option','receive')
+function loadPDFJSLib() {
+  return new Promise((resolve, reject) => {
+    if (window.pdfjsLib) return resolve(window.pdfjsLib);
+    const s = document.createElement('script');
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    s.onload = () => {
+      try {
+        if (!window.pdfjsLib) return reject(new Error('pdfjsLib missing'));
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        resolve(window.pdfjsLib);
+      } catch(e){ reject(e); }
     };
-
-    function updateRect(){ var r=$list.get(0).getBoundingClientRect(); rect={left:r.left, top:r.top, right:r.right, bottom:r.bottom}; }
-    function inside(x,y){ return x>=rect.left && x<=rect.right && y>=rect.top && y<=rect.bottom; }
-    function evtXY(e){
-      var oe=(e&&e.originalEvent)||e, t=(oe&&oe.touches&&oe.touches[0])||(oe&&oe.changedTouches&&oe.changedTouches[0]);
-      if(t) return {x:t.clientX,y:t.clientY}; if(typeof e.clientX==='number') return {x:e.clientX,y:e.clientY};
-      return {x:rect.left,y:rect.top};
-    }
-
-    function freezeAtEdge(cx,cy){
-      var $h=$('.ui-sortable-helper'); if(!$h.length) return;
-      var fx=clamp(cx,rect.left,rect.right), fy=clamp(cy,rect.top,rect.bottom);
-      if(cx<rect.left)fx=rect.left; if(cx>rect.right)fx=rect.right; if(cy<rect.top)fy=rect.top; if(cy>rect.bottom)fy=rect.bottom;
-      frozenAt={x:fx,y:fy};
-      var w=$h.outerWidth(), h=$h.outerHeight();
-      $h.addClass('setlist-helper-frozen').css({ left:(fx-Math.round(w/2))+'px', top:(fy-Math.round(h/2))+'px' });
-    }
-    function updateFrozen(){
-      if(!frozenAt) return; var $h=$('.ui-sortable-helper');
-      if($h.length && $h.hasClass('setlist-helper-frozen')){
-        var w=$h.outerWidth(), h=$h.outerHeight();
-        $h.css({ left:(frozenAt.x-Math.round(w/2))+'px', top:(frozenAt.y-Math.round(h/2))+'px' });
-      }
-    }
-    function unfreeze(){ var $h=$('.ui-sortable-helper'); if($h.length){ $h.removeClass('setlist-helper-frozen').css({left:'',top:''}); } frozenAt=null; }
-
-    function toExport(cx,cy){
-      if(exporting) return; exporting=true;
-      setGhost(getItemName($item)); showGhostAt(cx,cy);
-      if($ph) $ph.addClass('setlist-exporting');
-      freezeAtEdge(cx,cy);
-    }
-    function toReorder(){ if(!exporting) return; exporting=false; hideGhost(); if($ph) $ph.removeClass('setlist-exporting'); unfreeze(); }
-    function keepPinned(){
-      if(!exporting||!$ph||startIndex==null) return;
-      var kids=$list.children(':visible'); if(!kids.length) return;
-      var idx=Math.max(0,Math.min(startIndex,kids.length-1)), $a=kids.eq(idx);
-      if($a.length && !$ph.is($a.next())) $ph.insertAfter($a);
-      $ph.addClass('setlist-exporting');
-    }
-    function cleanup(){ exporting=false; hideGhost(); unfreeze(); if($ph) $ph.removeClass('setlist-exporting'); $ph=null; $item=null; startIndex=null; rect=null; frozenAt=null; }
-
-    $list.sortable('option','start', function(e,ui){
-      exporting=false; $ph=ui.placeholder; $item=ui.item; startIndex=ui.item.index(); updateRect(); hideGhost(); unfreeze();
-      if(orig.start) orig.start.call(this,e,ui);
-    });
-    $list.sortable('option','sort', function(e,ui){
-      if(!rect) updateRect(); var p=evtXY(e);
-      if(inside(p.x,p.y)){ toReorder(); }
-      else { if(!exporting) toExport(p.x,p.y); showGhostAt(p.x,p.y); updateFrozen(); keepPinned(); }
-      if(orig.sort) orig.sort.call(this,e,ui);
-    });
-    $list.sortable('option','over', function(e,ui){ toReorder(); if(orig.over) orig.over.call(this,e,ui); });
-    $list.sortable('option','out', function(e,ui){ var p=evtXY(e); if(!rect) updateRect(); toExport(p.x,p.y); if(orig.out) orig.out.call(this,e,ui); });
-    $list.sortable('option','change', function(e,ui){ keepPinned(); if(orig.change) orig.change.call(this,e,ui); });
-
-    // Prevent reorder when outside: cancel on update/receive
-    $list.sortable('option','update', function(e,ui){ if(exporting){ try{$list.sortable('cancel');}catch(_){ } return; } if(orig.update) orig.update.call(this,e,ui); });
-    $list.sortable('option','receive', function(e,ui){ if(exporting){ try{$list.sortable('cancel');}catch(_){ } return; } if(orig.receive) orig.receive.call(this,e,ui); });
-
-    $list.sortable('option','stop', function(e,ui){
-      if(exporting){ try{$list.sortable('cancel');}catch(_){ } }
-      cleanup(); if(orig.stop) orig.stop.call(this,e,ui);
-    });
-
-    window.addEventListener('scroll', function(){ if($item) updateRect(); }, {passive:true});
-    window.addEventListener('resize', function(){ if($item) updateRect(); }, {passive:true});
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+async function renderPDFInto(containerEl, url) {
+  let src = url, revoke = null;
+  try {
+    const r = await fetch(url, { credentials: 'include' });
+    if (r.ok) { const b = await r.blob(); src = URL.createObjectURL(b); revoke = src; }
+  } catch(e) {}
+  const lib = await loadPDFJSLib();
+  const pdf = await lib.getDocument(src).promise;
+  containerEl.innerHTML = '';
+  const dpr = window.devicePixelRatio || 1;
+  for (let i=1; i<=pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const base = page.getViewport({ scale: 1 });
+    const fit = containerEl.clientWidth || base.width;
+    let scale = Math.max(0.8, Math.min(2.0, fit / base.width));
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { alpha:false });
+    canvas.width  = Math.floor(viewport.width  * dpr);
+    canvas.height = Math.floor(viewport.height * dpr);
+    canvas.style.width  = viewport.width  + 'px';
+    canvas.style.height = viewport.height + 'px';
+    const holder = document.createElement('div');
+    holder.className = 'pdfjs-page';
+    holder.appendChild(canvas);
+    containerEl.appendChild(holder);
+    await page.render({ canvasContext: ctx, viewport, transform:[dpr,0,0,dpr,0,0] }).promise;
   }
+  if (revoke) setTimeout(() => URL.revokeObjectURL(revoke), 30000);
+}
+</script>
 
-  function init(){ var $list=$('#setlist-list'); if($list.length) attach($list); }
-  init(); var tries=0, t=setInterval(function(){ tries++; init(); if(tries>20) clearInterval(t); }, 200);
+<script>
+function ensurePdfOverlay() {
+  let ov = document.getElementById('pdf-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'pdf-overlay';
+    ov.innerHTML = '<div id="pdf-overlay-scroll" class="pdfjs-scroll"></div>';
+    document.body.appendChild(ov);
+  }
+  return ov;
+}
+function showPdfOverlay() {
+  document.documentElement.classList.add('pdf-overlay-active');
+  document.body.classList.add('pdf-overlay-active');
+  const ov = ensurePdfOverlay();
+  ov.style.display = 'block';
+  const scroller = document.getElementById('pdf-overlay-scroll');
+  const showBar = () => { try { if (window.showNavButtons) window.showNavButtons(); } catch(e){} };
+  scroller.addEventListener('touchstart', showBar, {passive:true});
+  scroller.addEventListener('pointerdown', showBar, {passive:true});
+  return scroller;
+}
+function destroyPdfOverlay() {
+  document.documentElement.classList.remove('pdf-overlay-active');
+  document.body.classList.remove('pdf-overlay-active');
+  const ov = document.getElementById('pdf-overlay');
+  if (ov) ov.style.display = 'none';
+  const sc = document.getElementById('pdf-overlay-scroll');
+  if (sc) sc.innerHTML = '';
+}
+</script>
+
+<script>
+/* Universal viewer wiring so buttons work on Songs, Setlists, Favorites */
+(function wrapOpenSongInContext(){
+  if (window.__wrapOpenSongInContext_v1) return; window.__wrapOpenSongInContext_v1 = true;
+  function install(){
+    if (!window.openSongInContext || window.openSongInContext.__wrapped) return;
+    var orig = window.openSongInContext;
+    function wrapped(songId, context, index, dir){
+      try {
+        if (typeof context !== 'undefined') window.currentViewerContext = context;
+        if (typeof index   === 'number')     window.currentViewerIndex   = index;
+        if (context && Array.isArray(context.list)) window.currentViewerList = context.list;
+      } catch(e){}
+      return orig.apply(this, arguments);
+    }
+    wrapped.__wrapped = true;
+    window.openSongInContext = wrapped;
+  }
+  install(); document.addEventListener('DOMContentLoaded', install); setTimeout(install, 500); setTimeout(install, 1500);
 })();
-</script>
-<script>
 
-        // === Simple View toggles: sync + body class ===
-        (function(){
-            function setSimple(on){
-                document.body.classList.toggle('simple-view-on', !!on);
-                var a=document.getElementById('simple-view-toggle');
-                var b=document.getElementById('simple-view-toggle-setlist');
-                if(a) a.checked=!!on; if(b) b.checked=!!on;
-            }
-            function init(){
-                var a=document.getElementById('simple-view-toggle');
-                var b=document.getElementById('simple-view-toggle-setlist');
-                function onChange(e){ setSimple((e.target||a||b).checked); }
-                if(a) a.addEventListener('change', onChange);
-                if(b) b.addEventListener('change', onChange);
-                setSimple(document.body.classList.contains('simple-view-on'));
-            }
-            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
-        })();
-
-        // === Drag-to-toggle behavior for Simple + Dark/Light ===
-        (function(){
-            function makeDraggableToggle(input){
-                if(!input) return;
-                var track=input.nextElementSibling, dot=track?track.nextElementSibling:null;
-                var dragging=false,startX=0;
-                function down(e){ dragging=true; startX=(e.touches?e.touches[0].clientX:e.clientX);
-                    document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);
-                    document.addEventListener('touchmove',move,{passive:false});document.addEventListener('touchend',up);
-                }
-                function move(e){ if(!dragging) return; var x=(e.touches?e.touches[0].clientX:e.clientX); var dx=x-startX;
-                    if(Math.abs(dx)>10){ input.checked = dx>0; input.dispatchEvent(new Event('change',{bubbles:true})); }
-                    if(e.cancelable) e.preventDefault();
-                }
-                function up(){ dragging=false;
-                    document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);
-                    document.removeEventListener('touchmove',move);document.removeEventListener('touchend',up);
-                }
-                if(track){ track.style.cursor='pointer'; track.addEventListener('pointerdown',down); track.addEventListener('touchstart',down,{passive:true}); }
-                if(dot){ dot.style.cursor='pointer'; dot.addEventListener('pointerdown',down); dot.addEventListener('touchstart',down,{passive:true}); }
-            }
-            function init(){
-                var a=document.getElementById('simple-view-toggle');
-                var b=document.getElementById('simple-view-toggle-setlist');
-                var d=document.getElementById('dark-mode-toggle') || document.querySelector('#dark-mode-container input[type="checkbox"]');
-                [a,b,d].forEach(makeDraggableToggle);
-            }
-            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
-        })();
-
-        // === Enforce exact empty state for All Songs ===
-        (function(){
-            var LINE1='No songs yet';
-            var LINE2='Drag & drop PDF files onto this page or use the Add files button';
-            function enforce(){
-                var ul=document.getElementById('master-list');
-                if(!ul) return;
-                var hasItems=ul.querySelector('li');
-                if(hasItems) return;
-                ul.innerHTML = '<li class="p-4 text-center text-gray-500 dark:text-gray-400">'+LINE1+'</li>' +
-                               '<li class="pb-6 -mt-2 text-center text-sm text-gray-400 dark:text-gray-500">'+LINE2+'</li>';
-            }
-            function start(){
-                var ul=document.getElementById('master-list');
-                if(ul){ new MutationObserver(enforce).observe(ul,{childList:true}); }
-                enforce(); setTimeout(enforce,50); setTimeout(enforce,200); setTimeout(enforce,600);
-            }
-            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',start);}else{start();}
-        })();
-
-</script>
-<script>
-
-        // === PATCH: Homepage Sort dropdown & Genre flyout (precise targeting) ===
-        (function(){
-            function el(id){ return document.getElementById(id); }
-            function once(fn){ var ran=false; return function(){ if(ran) return; ran=true; fn(); }; }
-            function initSort(){
-                var select = el('sort-dropdown');
-                if (!select) return;
-                // Rename "Sort by Name" -> "Sort By" inside this select only
-                Array.from(select.options).forEach(function(opt){
-                    if ((opt.textContent||'').trim().toLowerCase()==='sort by name'){ opt.textContent='Sort By'; }
-                });
-                // Remove "Last played" option
-                Array.from(select.options).forEach(function(opt){
-                    var t=(opt.textContent||'').trim().toLowerCase();
-                    if (t==='sort by last played' || opt.value==='lastPlayed'){ opt.remove(); }
-                });
-                // Ensure "Genre" option exists
-                var hasGenre = !!select.querySelector('option[value="genre"]');
-                if (!hasGenre){
-                    var opt = document.createElement('option');
-                    opt.value='genre'; opt.textContent='Genre';
-                    // Insert after Energy if present, else append
-                    var after = select.querySelector('option[value="energy"]');
-                    if (after && after.nextSibling){ select.insertBefore(opt, after.nextSibling); }
-                    else { select.appendChild(opt); }
-                }
-                // Prepare flyout
-                var fly = el('sort-genre-flyout');
-                var slot = el('sort-genre-slot');
-                var rightContainer = el('genre-list-container') || el('genre-filter-container') || (el('genre-view') && el('genre-view').parentElement);
-                var dropdown = el('genre-filter-dropdown');
-                // If there's no standalone dropdown, try the common ID pattern
-                if (!dropdown){ dropdown = el('genre-list') || el('genre-sort-dropdown'); }
-                if (!fly || !slot || !dropdown) return;
-                // Mount dropdown into fly slot (without changing width elsewhere)
-                if (!slot.contains(dropdown)){ slot.appendChild(dropdown); }
-                // Hide the original right-side container *visually* only when genre is chosen
-                function setRightContainerHidden(hide){
-                    if (!rightContainer) return;
-                    if (hide){
-                        rightContainer.style.visibility = 'hidden';
-                        rightContainer.style.pointerEvents = 'none';
-                    } else {
-                        rightContainer.style.visibility = '';
-                        rightContainer.style.pointerEvents = '';
-                    }
-                }
-                function update(){
-                    if (select.value==='genre'){
-                        fly.style.display='block';
-                        dropdown.classList.remove('hidden');
-                        setRightContainerHidden(true);
-                    } else {
-                        fly.style.display='none';
-                        dropdown.classList.add('hidden');
-                        setRightContainerHidden(false);
-                    }
-                }
-                select.addEventListener('change', update);
-                if (!select.value) select.value='name';
-                update();
-            }
-            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', initSort); } else { initSort(); }
-        })();
-
-        // === PATCH: Sidebar open fade-in only (no overlays; no layout changes) ===
-        (function(){
-            function initSidebarFade(){
-                var sb = document.querySelector('.left-col');
-                if (!sb || typeof ResizeObserver==='undefined') return;
-                var lastW = sb.getBoundingClientRect().width;
-                var ro = new ResizeObserver(function(){
-                    var w = sb.getBoundingClientRect().width;
-                    var delta = w - lastW;
-                    if (Math.abs(delta) < 0.5){ lastW = w; return; }
-                    if (delta > 0){ // opening
-                        sb.classList.add('opening-fade');
-                        sb.classList.remove('ready');
-                        // allow layout to settle, then fade in
-                        requestAnimationFrame(function(){ sb.classList.add('ready'); });
-                        setTimeout(function(){
-                            sb.classList.remove('opening-fade');
-                            sb.classList.remove('ready');
-                        }, 260);
-                    }
-                    lastW = w;
-                });
-                try{ ro.observe(sb); }catch(e){}
-            }
-            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', initSidebarFade); } else { initSidebarFade(); }
-        })();
-
-</script>
-
-<!-- === DROP‑IN GENRE FILTER PATCH (DOM‑only, safe) === -->
-<script>
-/*
-  Drop‑in Genre Filter Patch (DOM‑only)
-  Purpose: When a sidebar genre is clicked, show a page listing files tagged with the same COLOR.
-  How it works: Pure DOM scan (no reliance on your app's internal JS). Non‑destructive.
-  Scope: Adds a minimal 'genre-view' section if missing. Hides other main views while showing results.
-*/
+/* wrap openDocViewer v1 */
 (function(){
-  // ---- helpers ----
-  const NAMED_TO_HEX = { black:'#000000', white:'#ffffff', red:'#ff0000', green:'#008000', blue:'#0000ff', yellow:'#ffff00', orange:'#ffa500', purple:'#800080', gray:'#808080', grey:'#808080' };
-  const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
-  function toHex(c){
-    if(!c) return '';
-    c = String(c).trim().toLowerCase();
-    if (NAMED_TO_HEX[c]) return NAMED_TO_HEX[c];
-    if (HEX_RE.test(c)) return c.length===4 ? '#' + c.slice(1).split('').map(ch=>ch+ch).join('') : c;
-    const m = c.match(/rgba?\(([^)]+)\)/i);
-    if (m){
-      const parts = m[1].split(',').map(x=>parseFloat(x));
-      if (parts.length>=3){
-        const [r,g,b] = parts.map(n=>Math.max(0,Math.min(255,Math.round(n))));
-        const h = (n)=>n.toString(16).padStart(2,'0');
-        return ('#'+h(r)+h(g)+h(b)).toLowerCase();
+  if (window.__wrapOpenDocViewer_v1) return; window.__wrapOpenDocViewer_v1 = true;
+  function install(){
+    if (!window.openDocViewer || window.openDocViewer.__wrapped) return;
+    var orig = window.openDocViewer;
+    function wrapped(/* songId or docId, maybe context */){
+      try {
+        var args = Array.prototype.slice.call(arguments);
+        var ctx = (args.length > 1 && typeof args[1] === 'object') ? args[1] : (window.currentViewerContext || null);
+        if (ctx) window.currentViewerContext = ctx;
+        try { if (ctx && ctx.list && Array.isArray(ctx.list)) window.currentViewerList = ctx.list; } catch(e){}
+        for (var i=0;i<args.length;i++){ if (typeof args[i] === 'number') { window.currentViewerIndex = args[i]; break; } }
+      } catch(e){}
+      return orig.apply(this, arguments);
+    }
+    wrapped.__wrapped = true;
+    window.openDocViewer = wrapped;
+  }
+  install(); document.addEventListener('DOMContentLoaded', install); setTimeout(install, 500); setTimeout(install, 1500);
+})();
+
+/* Universal CLOSE for the PDF/file viewer — install once */
+(function () {
+  if (window.__UniversalClose_v1) return;
+  window.__UniversalClose_v1 = true;
+
+  function universalCloseViewer() {
+    var closed = false;
+
+    // Use the new single close button's logic
+    try {
+        var newBtn = document.getElementById('viewer-close-btn');
+        if (newBtn && typeof newBtn.click === 'function') {
+            newBtn.click();
+            closed = true;
+        }
+    } catch(_) {}
+    
+    if (closed) return true;
+
+    // Fallback logic just in case
+    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); closed = true; } } catch(_) {}
+    try { document.documentElement.classList.remove('pdf-overlay-active'); closed = true; } catch(_) {}
+    try { document.body.classList.remove('pdf-overlay-active'); closed = true; } catch(_) {}
+
+    return !!closed;
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' || e.keyCode === 27) {
+      if (document.documentElement.classList.contains('pdf-overlay-active') || document.body.classList.contains('doc-viewer-active')) {
+        e.stopPropagation();
+        universalCloseViewer();
       }
     }
-    return '';
-  }
-  function uniq(arr){ return Array.from(new Set(arr.filter(Boolean))); }
-
-  // Resolve color(s) from a DOM node representing a file card
-  function colorsFromFileEl(el){
-    const out = [];
-    const candAttrs = ['color','colors','genreColor','genre','tags'];
-    candAttrs.forEach(k=>{
-      const v = el.getAttribute('data-'+k) || (el.dataset && el.dataset[k]);
-      if (!v) return;
-      String(v).split(/[,\\s]+/).forEach(tok=>{ const hex = toHex(tok); if (hex) out.push(hex); });
-    });
-    el.querySelectorAll('.color-chip,.genre-color,.color-dot,[data-color]').forEach(dot=>{
-      const v = dot.getAttribute('data-color') || getComputedStyle(dot).backgroundColor || (dot.style && dot.style.backgroundColor);
-      const hex = toHex(v);
-      if (hex) out.push(hex);
-    });
-    return uniq(out);
-  }
-
-  // Guess file cards in the current page
-  function allFileEls(){
-    const sels = ['.file-card','.song-file','.file','.song','.fileItem','.songItem','[data-file]','[data-type="file"]'];
-    const nodes = new Set();
-    sels.forEach(sel=>document.querySelectorAll(sel).forEach(n=>nodes.add(n)));
-    if (nodes.size===0) document.querySelectorAll('li').forEach(n=>{ if(n.matches('[data-id], [data-file]')) nodes.add(n); });
-    return Array.from(nodes);
-  }
-
-  // Build/ensure the genre results page
-  function ensureGenreView(){
-    let view = document.getElementById('genre-view');
-    if (!view){
-      view = document.createElement('section');
-      view.id = 'genre-view';
-      view.style.padding = '12px';
-      view.style.display = 'none';
-      view.innerHTML = '<h2 id="genre-title" style="margin:0 0 8px 0;">Genre</h2>\\n<ul id="genre-song-list" style="list-style:none;padding:0;margin:0;display:grid;gap:8px;"></ul>';
-      document.body.appendChild(view);
-    } else {
-      if (!view.querySelector('#genre-song-list')){
-        const ul = document.createElement('ul'); ul.id='genre-song-list'; ul.style.listStyle='none'; ul.style.padding='0'; ul.style.margin='0'; ul.style.display='grid'; ul.style.gap='8px';
-        view.appendChild(ul);
-      }
-      if (!view.querySelector('#genre-title')){
-        const h = document.createElement('h2'); h.id='genre-title'; h.textContent='Genre'; view.prepend(h);
-      }
-    }
-    return view;
-  }
-
-  // Hide other primary views (best effort, non‑destructive)
-  function hideOtherViews(showEl){
-    const candidates = document.querySelectorAll('section, main, [data-view], .view');
-    candidates.forEach(el=>{ if (el!==showEl && el.id!=='__genre_shim_keep') el.style.display='none'; });
-  }
-
-  function showGenrePage(){
-    const v = ensureGenreView();
-    hideOtherViews(v);
-    v.style.display = '';
-    return v;
-  }
-
-  // Render matches
-  function renderMatches(hex, label){
-    const view = showGenrePage();
-    const ul = view.querySelector('#genre-song-list');
-    const title = view.querySelector('#genre-title');
-    title.textContent = label + ' (' + hex + ')';
-    ul.innerHTML = '';
-
-    const files = allFileEls();
-    const matched = [];
-    files.forEach(el=>{
-      const cols = colorsFromFileEl(el);
-      if (cols.includes(hex)) matched.push(el);
-    });
-
-    if (matched.length===0){
-      const li = document.createElement('li');
-      li.textContent = 'No files found with color ' + hex + '. (Scanned '+files.length+' items.)';
-      ul.appendChild(li);
-      return;
-    }
-
-    matched.forEach(el=>{
-      const li = document.createElement('li');
-      const clone = el.cloneNode(true);
-      clone.removeAttribute('id');
-      clone.style.opacity=''; clone.style.pointerEvents='auto'; clone.style.transform='';
-      li.appendChild(clone);
-      ul.appendChild(li);
-    });
-  }
-
-  // Resolve color from a sidebar genre item element
-  function colorFromGenreItem(el){
-    let v = el.getAttribute('data-color') || (el.dataset && el.dataset.color);
-    if (!v){
-      const dot = el.querySelector('.color-dot,.genre-color,[data-color]');
-      if (dot) v = dot.getAttribute('data-color') || getComputedStyle(dot).backgroundColor || dot.style.backgroundColor;
-    }
-    if (!v){
-      const m = (el.textContent||'').match(/#([0-9a-f]{3}|[0-9a-f]{6})/i);
-      if (m) v = m[0];
-    }
-    return toHex(v);
-  }
-
-  function labelFromGenreItem(el){
-    return (el.getAttribute('data-name') || (el.dataset && el.dataset.name) || (el.textContent||'').trim() || 'Genre');
-  }
-
-  // Hook up sidebar clicks (broad selectors to be resilient)
-  const sidebar = document.querySelector('.sidebar, #sidebar, [data-role="sidebar"]') || document;
-  sidebar.addEventListener('click', function(e){
-    const item = e.target.closest && e.target.closest('.genre-item, [data-genre], .sidebar-genre, li.genre, .genre');
-    if (!item) return;
-    const hex = colorFromGenreItem(item);
-    const label = labelFromGenreItem(item);
-    if (!hex){
-      const view = showGenrePage();
-      const ul = view.querySelector('#genre-song-list');
-      const title = view.querySelector('#genre-title');
-      title.textContent = label;
-      ul.innerHTML = '<li>Could not detect a color for this genre. Add a <code>data-color</code> attribute or a swatch element with a background color.</li>';
-      return;
-    }
-    renderMatches(hex, label);
   }, true);
 
-  // Optional programmatic API
-  window.__GenreFilterPatch = { renderByHex: renderMatches };
+  window.universalCloseViewer = universalCloseViewer;
+})();
+
+
+<!-- Genre/Venue exact symmetry + centered placeholders (robust) -->
+<script>
+(function(){
+  if (window.__GenreVenueSync_v2) return; window.__GenreVenueSync_v2 = true;
+
+  function setImportant(el, prop, value){
+    try { el.style.setProperty(prop, value, 'important'); } catch(_){}
+  }
+
+  function syncVenueToGenre(){
+    try {
+      var g = document.getElementById('genre-name');
+      var v = document.getElementById('venue-name');
+      if (!g || !v) return;
+
+      var rect = g.getBoundingClientRect();
+      var gs = getComputedStyle(g);
+
+      // Match box model and typography
+      setImportant(v, 'box-sizing', gs.boxSizing || 'border-box');
+      setImportant(v, 'padding-left', gs.paddingLeft);
+      setImportant(v, 'padding-right', gs.paddingRight);
+      setImportant(v, 'padding-top', gs.paddingTop);
+      setImportant(v, 'padding-bottom', gs.paddingBottom);
+      setImportant(v, 'border-width', gs.borderWidth);
+      setImportant(v, 'border-style', gs.borderStyle);
+      setImportant(v, 'border-color', gs.borderColor);
+      setImportant(v, 'border-radius', gs.borderRadius);
+      setImportant(v, 'font', gs.font);
+
+      // Ensure layout constraints don't override width
+      setImportant(v, 'display', gs.display || 'block');
+      setImportant(v, 'flex', '0 0 auto');
+      setImportant(v, 'max-width', rect.width + 'px');
+      setImportant(v, 'min-width', rect.width + 'px');
+      setImportant(v, 'width', rect.width + 'px');
+      setImportant(v, 'height', rect.height + 'px');
+    } catch(_){}
+  }
+
+  function schedule(){
+    setTimeout(syncVenueToGenre, 0);
+    setTimeout(syncVenueToGenre, 250);
+    setTimeout(syncVenueToGenre, 800);
+    setTimeout(syncVenueToGenre, 1500);
+  }
+
+  window.addEventListener('load', schedule);
+  window.addEventListener('resize', function(){ setTimeout(syncVenueToGenre, 0); });
+
+  // Observe genre size changes (e.g., theme/sidebar width changes)
+  try {
+    var gObsTarget = document.getElementById('genre-name');
+    if (gObsTarget && window.ResizeObserver) {
+      var ro = new ResizeObserver(function(){ syncVenueToGenre(); });
+      ro.observe(gObsTarget);
+    }
+  } catch(_){}
 })();
 </script>
-<!-- === /DROP‑IN GENRE FILTER PATCH === -->
+
+
+<!-- Venue/Genre left-edge alignment + Pull-to-close v4 -->
 <script>
-/* ========================= GENRE BY COLOR — MEGA PATCH =========================
-   This patch guarantees that clicking a sidebar genre shows every file tagged
-   with that genre's COLOR, and that tagging/dragging persists the song color.
-   It is self-contained and robust even if prior bindings are missing.
-================================================================================= */
 (function(){
-  try{
-    // ---------- Canonical color tools ----------
-    function __toHex(c){
-      if (!c) return '';
-      try{
-        c = String(c).trim();
-        if (!c) return '';
-        // "#abc" or "#aabbcc"
-        if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)) {
-          if (c.length === 4) {
-            // expand #abc -> #aabbcc
-            return ("#" + c[1]+c[1] + c[2]+c[2] + c[3]+c[3]).toLowerCase();
+  /* =====  A) Perfect horizontal alignment for Genre/Venue rows  ===== */
+  if (!window.__AlignGenreVenue_v1){
+    window.__AlignGenreVenue_v1 = true;
+
+    function alignVenueRow(){
+      try {
+        var gInput = document.getElementById('genre-name');
+        var vInput = document.getElementById('venue-name');
+        var gAdd   = document.getElementById('add-genre');
+        var vAdd   = document.getElementById('add-venue');
+
+        if (!gInput || !vInput) return;
+
+        var gx = gInput.getBoundingClientRect().left;
+        var vx = vInput.getBoundingClientRect().left;
+
+        var deltaInput = gx - vx;
+        if (Math.abs(deltaInput) > 0.5) {
+          var current = parseFloat(getComputedStyle(vInput).marginLeft) || 0;
+          vInput.style.marginLeft = (current + deltaInput) + "px";
+        }
+
+        if (gAdd && vAdd) {
+          var gxB = gAdd.getBoundingClientRect().left;
+          var vxB = vAdd.getBoundingClientRect().left;
+          var deltaBtn = gxB - vxB;
+          if (Math.abs(deltaBtn) > 0.5) {
+            var currentBtn = parseFloat(getComputedStyle(vAdd).marginLeft) || 0;
+            vAdd.style.marginLeft = (currentBtn + deltaBtn) + "px";
           }
-          return c.toLowerCase();
         }
-        // rgb/rgba -> hex
-        var m = c.match(/rgba?\s*\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/i);
-        if (m){
-          var r = Math.max(0, Math.min(255, parseInt(m[1],10)));
-          var g = Math.max(0, Math.min(255, parseInt(m[2],10)));
-          var b = Math.max(0, Math.min(255, parseInt(m[3],10)));
-          var h = '#' + [r,g,b].map(function(x){ return x.toString(16).padStart(2,'0'); }).join('');
-          return h.toLowerCase();
-        }
-        return c.toLowerCase();
-      }catch(_){ return ''; }
+      } catch(_){}
     }
-    function __buildGenreMaps(){
-      var mapByName = {}, mapByHex = {};
-      var genres = window.genres;
-      if (!Array.isArray(genres) || genres.length === 0) {
-        genres = [];
-        document.querySelectorAll('#genre-list .genre-item, .sidebar-item[data-name]').forEach(function(el){
-          var name = el.dataset.name || (el.querySelector('.genre-name') ? el.querySelector('.genre-name').textContent.trim() : '');
-          var colorEl = el.querySelector('.genre-dot, .color-dot');
-          var color = colorEl ? __toHex(getComputedStyle(colorEl).backgroundColor) : '';
-          if (name && color) {
-            genres.push({name: name, color: color});
+    function schedule(){ setTimeout(alignVenueRow, 200); setTimeout(alignVenueRow, 600); }
+    window.addEventListener('load', schedule);
+    window.addEventListener('resize', function(){ setTimeout(alignVenueRow, 0); });
+  }
+
+  /* =====  B) Pull-to-close v4: downward pull only, stronger threshold, must release  ===== */
+  if (!window.__PullToClose_v4){
+    window.__PullToClose_v4 = true;
+
+    function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
+    var startY = null;
+    var maxPullDown = 0;
+    var active = false;
+    var THRESHOLD_DOWN = 150;
+
+    function onTouchStart(e){
+      var t = e.touches && e.touches[0];
+      var sc = scroller();
+      if (!t || !sc) return;
+      active = (sc.scrollTop <= 2);
+      startY = t.clientY;
+      maxPullDown = 0;
+    }
+    function onTouchMove(e){
+      if (!active) return;
+      var t = e.touches && e.touches[0];
+      var sc = scroller();
+      if (!t || !sc) return;
+      var dy = t.clientY - (startY == null ? t.clientY : startY);
+      if (dy > maxPullDown) maxPullDown = dy;
+    }
+    function onTouchEnd(){
+      try {
+        if (!active) return;
+        var sc = scroller(); if (!sc) return;
+        if (sc.scrollTop <= 2 && maxPullDown > THRESHOLD_DOWN) {
+          if (typeof window.universalCloseViewer === 'function') {
+            window.universalCloseViewer();
           }
-        });
-      }
-      genres.forEach(function(g){
-        if (!g || !g.name) return;
-        var hex = __toHex(g.color || '');
-        if (hex){
-          mapByName[g.name.toLowerCase()] = hex;
-          mapByHex[hex] = g.name;
         }
-      });
-      return { byName: mapByName, byHex: mapByHex };
-    }
-    function __resolveSongColor(song, maps){
-      if (!song) return '';
-      if (song.color) return __toHex(song.color);
-      if (song.genre && maps && maps.byName && maps.byName[song.genre.toLowerCase()]) return maps.byName[song.genre.toLowerCase()];
-      if (typeof getGenreColor === 'function'){
-        try{ return __toHex(getGenreColor(song.genre)); }catch(_){}
+      } finally {
+        active = false; startY = null; maxPullDown = 0;
       }
-      return '';
-    }
-    function __persistSongColor(songId, hex){
-      try{
-        hex = __toHex(hex);
-        if (!hex || !Array.isArray(window.masterSongs)) return;
-        var s = window.masterSongs.find(function(x){ return String(x.id)===String(songId); });
-        if (!s) return;
-        s.color = hex;
-        if (typeof save==='function') save();
-      }catch(_){}
     }
 
-    // ---------- Robust renderer (always color-based) ----------
-    function renderGenreByColor(genreName){
-      var maps = __buildGenreMaps();
-      var target = maps.byName[genreName.toLowerCase()];
-      var $ul = $('#genre-song-list');
-      if ($('#genre-view-title').length) $('#genre-view-title').text(genreName||'Genre');
-      if (!$ul.length){
-        console.warn('renderGenreByColor: #genre-song-list not found');
-        return;
-      }
-      $ul.empty();
-      if (!target || !Array.isArray(window.masterSongs) || !window.masterSongs.length){
-        $ul.append('<li class="p-6 text-center text-gray-500 italic">No songs tagged with this color yet.</li>');
-        return;
-      }
-      var list = window.masterSongs.filter(function(s){
-        return __resolveSongColor(s, maps) === target;
-      });
-
-      // Optional sort support
-      var sortMode = ($('#genre-sort-dropdown').val() || 'name');
-      list.sort(function(a,b){
-        if (sortMode === 'artist') return (a.artist||'').localeCompare(b.artist||'');
-        if (sortMode === 'lastPlayed'){
-          var ta = a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0;
-          var tb = b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0;
-          return tb - ta;
-        }
-        if (sortMode === 'energy') return (b.energy||0) - (a.energy||0);
-        return (a.name||'').localeCompare(b.name||'');
-      });
-
-      if (!list.length){
-        $ul.append('<li class="p-6 text-center text-gray-500 italic">No songs tagged with this color yet.</li>');
-        return;
-      }
-      if (typeof createSongItem !== 'function'){
-        $ul.append('<li class="p-6 text-center text-red-500">createSongItem() missing.</li>');
-        return;
-      }
-      list.forEach(function(s,i){ $ul.append(createSongItem(s,i,'genre')); });
-
-      // Draggable enablement
-      try{
-        var draggableOptions = {appendTo:'body',revert:'invalid',cursorAt:{left:10,top:10},helper:'clone',
-          start:function(e,ui){
-            var $i=$(this), count=$i.parent().children('.item-selected').length;
-            var label = count>1?('Dragging '+count+' items'):$i.find('.song-name').text();
-            ui.helper.empty().html(label).css({'background-color':'#3b82f6','color':'white','padding':'0.5rem 1rem',
-                'height':'auto','width':'auto','white-space':'nowrap','box-shadow':'0 5px 15px rgba(0,0,0,0.3)',
-                'z-index':9999,'border-radius':'0.5rem','font-weight':'600'});
-          }
-        };
-        $('#genre-song-list .draggable').draggable(draggableOptions);
-      }catch(_){}
+    function bind(){
+      var sc = scroller();
+      if (!sc || sc.__pullCloseV4Bound) return;
+      sc.__pullCloseV4Bound = true;
+      sc.addEventListener('touchstart', onTouchStart, {passive:true});
+      sc.addEventListener('touchmove',  onTouchMove,  {passive:true});
+      sc.addEventListener('touchend',   onTouchEnd,   {passive:true});
     }
 
-    // ---------- Override renderGenreView safely ----------
-    if (typeof window.__orig_renderGenreView !== 'function' && typeof window.renderGenreView === 'function'){
-      window.__orig_renderGenreView = window.renderGenreView;
-    }
-    window.renderGenreView = function(name){
-      window.currentGenre = name;
-      renderGenreByColor(name);
-    };
-
-    // ---------- Persist color when tagging by dot ----------
-    $(document).off('click.__persistDotColor').on('click.__persistDotColor', '.genre-dot', function(){
-      try{
-        var $li = $(this).closest('li');
-        var songId = $li.attr('id') || $li.data('id');
-        if (!songId) return;
-        var color = '';
-        var inline = (this.getAttribute('style') || '').match(/background-color\s*:\s*([^;]+)/i);
-        if (inline && inline[1]) color = inline[1];
-        if (!color){
-          var css = getComputedStyle(this).backgroundColor;
-          if (css) color = css;
-        }
-        var hex = __toHex(color);
-        if (!hex){
-          // Fall back to genre -> color if the song already has a genre name
-          var maps = __buildGenreMaps();
-          var s = Array.isArray(window.masterSongs) ? window.masterSongs.find(function(x){ return String(x.id)===String(songId); }) : null;
-          if (s && s.genre) hex = (maps.byName||{})[s.genre.toLowerCase()] || '';
-        }
-        if (hex) __persistSongColor(songId, hex);
-
-        // Live refresh if viewing that genre
-        var maps2 = __buildGenreMaps();
-        var gName = (maps2.byHex||{})[hex];
-        if (gName && gName === window.currentGenre){
-          renderGenreByColor(gName);
-        }
-      }catch(_){}
-    });
-
-    // ---------- Persist color when dropping onto a genre ----------
-    $(document).off('drop.__persistDropColor').on('drop.__persistDropColor','[data-name]', function(){
-      try{
-        var genreName = $(this).data('name');
-        var maps = __buildGenreMaps();
-        var hex = (maps.byName||{})[genreName.toLowerCase()] || '';
-        var $drag = $('.ui-draggable-dragging');
-        var songId = $drag.attr('id') || $drag.data('id');
-        if (!songId){
-          var $sel = $('li.draggable.item-selected').first();
-          songId = $sel.attr('id') || $sel.data('id');
-        }
-        if (hex && songId) __persistSongColor(songId, hex);
-
-        // Always repaint the clicked genre page
-        setTimeout(function(){
-          renderGenreByColor(genreName);
-        }, 0);
-      }catch(_){}
-    });
-
-    // ---------- Re-render on view switch or genre list mutation ----------
-    $(document).off('view:genre.__repaint').on('view:genre.__repaint', function(){
-      if (window.currentGenre) renderGenreByColor(window.currentGenre);
-    });
-    // If the app re-renders the sidebar genres dynamically, repaint the open page
-    var sidebar = document.querySelector('#genre-list');
-    if (sidebar && typeof MutationObserver!=='undefined'){
-      var mo = new MutationObserver(function(){
-        if (window.currentGenre) renderGenreByColor(window.currentGenre);
-      });
-      mo.observe(sidebar, {childList:true, subtree:true});
-    }
-
-  }catch(e){
-    console.error('GENRE BY COLOR — MEGA PATCH init error:', e);
+    bind();
+    new MutationObserver(function(){ bind(); }).observe(document.body, {childList:true, subtree:true});
   }
 })();
-/* ====================== END GENRE BY COLOR — MEGA PATCH ====================== */
 </script>
-</body>
-</html>
+
+
+<script>
+// GENRE FIX: Update drag-and-drop to persist color
+(function(){
+  function attachGenreDroppables(){
+    var $items = $('#genre-list .genre-item');
+    if (!$items.length) return;
+    $items.each(function(){
+      var $el = $(this);
+      if ($el.data('genreDropReady')) return;
+      $el.data('genreDropReady', true);
+      $el.droppable({
+        accept: '.draggable',
+        tolerance: 'pointer',
+        hoverClass: 'drag-hover-setlist',
+        drop: function(event, ui){
+          try {
+            var songId = $(ui.draggable).attr('id');
+            var genreName = $(this).data('name');
+            if (!songId || !genreName) return;
+
+            var song = masterSongs.find(function(x){ return String(x.id) === String(songId); });
+            if (!song) return;
+
+            // Update both the genre name and its color
+            song.genre = genreName;
+            const genreData = genres.find(function(g){ return g.name === genreName; });
+            if (genreData) {
+                song.color = genreData.color; // Always update the song's color
+            }
+            
+            if (typeof save === 'function') save();
+
+            // Re-render views to reflect the change
+            if ($('#master-view').is(':visible')) renderMaster();
+            if ($('#setlist-view').is(':visible')) renderSetlist();
+            if ($('#genre-view').is(':visible') && currentGenre === genreName) renderGenreView(genreName);
+          } catch(e){ console.error('Genre drop error:', e); }
+        }
+      });
+    });
+  }
+
+  $(function(){
+    attachGenreDroppables();
+    var gl = document.getElementById('genre-list');
+    if (gl && window.MutationObserver) {
+      var obs = new MutationObserver(function(){ attachGenreDroppables(); });
+      obs.observe(gl, {childList:true});
+    }
+  });
+})();
+</script>
+
+<script>
+// === Setlist Details: keep the date placeholder span visible only when empty ===
+(function(){
+  function updateDatePlaceholder(){
+    var $date = $('#setlist-date');
+    var $ph = $('#date-placeholder');
+    if ($date.length && $ph.length){
+      if (!$date.val()) { $ph.show(); } else { $ph.hide(); }
+    }
+  }
+  $(document).on('change input', '#setlist-date', updateDatePlaceholder);
+  $(document).on('click', '#setlist-details-toggle', function(){
+    setTimeout(updateDatePlaceholder, 0);
+  });
+  $(function(){ updateDatePlaceholder(); });
+})();
+</script>
+
+
+<script>
+(function(){
+  function positionDatePlaceholder(){
+    var cont = document.getElementById('setlist-date-container');
+    var input = document.getElementById('setlist-date');
+    var ph = document.getElementById('date-placeholder');
+    if (!cont || !input || !ph) return;
+    var r = input.getBoundingClientRect();
+    var c = cont.getBoundingClientRect();
+    var cx = (r.left - c.left) + (r.width / 2);
+    var cy = (r.top - c.top) + (r.height / 2);
+    ph.style.left = cx + 'px';
+    ph.style.top  = cy + 'px';
+    ph.style.transform = 'translate(-50%, -50%)';
+    ph.style.width = r.width + 'px';
+    ph.style.textAlign = 'center';
+  }
+
+  function toggleDatePlaceholder(){
+    var input = document.getElementById('setlist-date');
+    var ph = document.getElementById('date-placeholder');
+    if (!input || !ph) return;
+    ph.style.display = input.value ? 'none' : 'block';
+  }
+
+  function syncAll(){
+    toggleDatePlaceholder();
+    positionDatePlaceholder();
+  }
+
+  window.addEventListener('resize', positionDatePlaceholder);
+  window.addEventListener('orientationchange', positionDatePlaceholder);
+  document.addEventListener('click', function(e){
+    if (e.target && (e.target.id === 'setlist-details-toggle' || e.target.closest && e.target.closest('#setlist-details-toggle'))) {
+      setTimeout(syncAll, 0);
+    }
+  }, true);
+  document.addEventListener('input', function(e){
+    if (e.target && e.target.id === 'setlist-date') toggleDatePlaceholder();
+  });
+  document.addEventListener('change', function(e){
+    if (e.target && e.target.id === 'setlist-date') toggleDatePlaceholder();
+  });
+
+  document.addEventListener('DOMContentLoaded', function(){
+    syncAll();
+    setTimeout(syncAll, 250);
+  });
+})();
+</script>
+
+<style id="viewer-nav-blue-style">
+/* Make prev/next BLUE whenever they are enabled (not :disabled) */
+#viewer-prev-btn:not(:disabled),
+#viewer-next-btn:not(:disabled) {
+  background-color: rgba(59, 130, 246, 0.9) !important; /* blue-500 */
+  color: #ffffff !important;
+  border-color: rgba(59, 130, 246, 0.9) !important;
+}
+</style>
+<script>
+/* Ensure correct disabled state is applied *before* controls appear on first open */
+(function(){
+  if (window.__NavFirstOpenFix_v1) return;
+  window.__NavFirstOpenFix_v1 = true;
+
+  function computeNav(){
+    try {
+      var list = window.currentViewerList;
+      var idx  = window.currentViewerIndex;
+      if (!Array.isArray(list) || typeof idx !== 'number') return null;
+      return { hasPrev: idx > 0, hasNext: idx < (list.length - 1) };
+    } catch(e){ return null; }
+  }
+
+  function setButtonsFromState(){
+    var st = computeNav();
+    var prev = document.getElementById('viewer-prev-btn');
+    var next = document.getElementById('viewer-next-btn');
+    if (!st || !prev || !next) return;
+    prev.disabled = !st.hasPrev;
+    next.disabled = !st.hasNext;
+  }
+
+  // Wrap showPdfOverlay so we correct *right as the overlay is created*
+  (function wrapShow(){
+    var fn = window.showPdfOverlay;
+    if (typeof fn !== 'function' || fn.__navwrap_v1) return;
+    function wrapped(){
+      // At this point, openSongInContext has already set list+index
+      // so we can safely set the correct disabled state BEFORE controls show.
+      // We also queue a couple tiny follow-ups for timing jitter.
+      setButtonsFromState();
+      setTimeout(setButtonsFromState, 0);
+      setTimeout(setButtonsFromState, 100);
+      return fn.apply(this, arguments);
+    }
+    wrapped.__navwrap_v1 = true;
+    window.showPdfOverlay = wrapped;
+  })();
+
+  // As a fallback, if overlay is already active when this loads
+  document.addEventListener('DOMContentLoaded', function(){
+    setButtonsFromState();
+    setTimeout(setButtonsFromState, 50);
+  });
+})();
+</script>
+
+<style id="viewer-nav-behavior-tweaks">
+/* 1) Do NOT move buttons on hover/active */
+#viewer-prev-btn:not(:disabled):hover,
+#viewer-next-btn:not(:disabled):hover,
+#viewer-prev-btn:active,
+#viewer-next-btn:active,
+#viewer-close-btn:not(:disabled):hover,
+#viewer-close-btn:active {
+  transform: none !important;
+  box-shadow: none !important; /* optional: avoid 'lift' illusion */
+}
+
+/* 2) Keep Close button RED on hover/hold; never turn blue */
+#viewer-close-btn,
+#viewer-close-btn:hover,
+#viewer-close-btn:focus,
+#viewer-close-btn:active {
+  background-color: rgba(239, 68, 68, 0.85) !important; /* red-500/600 */
+  color: #ffffff !important;
+  border-color: rgba(239, 68, 68, 0.85) !important;
+}
+</style>
+<script>
+/* 3) Reappearance rule: only when tap near TOP or scroll to TOP */
+(function(){
+  if (window.__ViewerReappearRules_v1) return;
+  window.__ViewerReappearRules_v1 = true;
+
+  var TOP_TAP_PX = 64; // threshold from top edge
+
+  function controlsEl(){ return document.getElementById('viewer-controls'); }
+  function overlayEl(){
+    return document.getElementById('pdf-overlay-scroll') || document.getElementById('doc-view');
+  }
+
+  function showControls(){
+    try {
+      if (typeof window.showNavButtonsAndCheckState === 'function') {
+        window.showNavButtonsAndCheckState();
+      } else {
+        controlsEl() && controlsEl().classList.remove('opacity-0');
+      }
+    } catch(e){}
+  }
+  function hideControls(){
+    try { controlsEl() && controlsEl().classList.add('opacity-0'); } catch(e){}
+  }
+
+  // Only reappear when tapping the top region OR when scrolled to top
+  function shouldShowForEvent(ev){
+    var y = null;
+    if (typeof ev.clientY === 'number') y = ev.clientY;
+    else if (ev.touches && ev.touches[0]) y = ev.touches[0].clientY;
+    else if (ev.changedTouches && ev.changedTouches[0]) y = ev.changedTouches[0].clientY;
+    if (y !== null && y <= TOP_TAP_PX) return true;
+
+    var ov = overlayEl();
+    if (ov && ov.scrollTop <= 5) return true;
+    return false;
+  }
+
+  // Capture pointerdown so we can enforce after app logic runs
+  document.addEventListener('pointerdown', function(ev){
+    var ov = overlayEl();
+    if (!ov) return;
+    if (!ov.contains(ev.target)) return;
+
+    // Let app handlers run; then correct visibility
+    setTimeout(function(){
+      if (shouldShowForEvent(ev)) showControls();
+      else hideControls();
+    }, 0);
+  }, true);
+
+  // When scrolling: show at very top, hide otherwise
+  function onScroll(){
+    var ov = overlayEl();
+    if (!ov) return;
+    if (ov.scrollTop <= 5) showControls();
+    else hideControls();
+  }
+
+  // Attach scroll listeners (including passive touch scrolling)
+  var attachT = setInterval(function(){
+    var ov = overlayEl();
+    if (ov){
+      ov.addEventListener('scroll', onScroll, { passive: true });
+      // Initial state on load
+      onScroll();
+      clearInterval(attachT);
+    }
+  }, 100);
+})();
+</script>
+
+
+<style id="notes-popover-styles">
+/* Anchored Notes popover: expands in place, only as large as needed */
+#notes-popover-overlay {
+  position: fixed; inset: 0;
+  background: transparent; /* no dim; capture outside clicks */
+  display: none;
+  z-index: 2147483646;
+}
+#notes-popover {
+  position: fixed; /* anchored at the source box position */
+  left: 0; top: 0;
+  display: none;
+  z-index: 2147483647;
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+html.dark #notes-popover { background: #1f2937; color: #e5e7eb; border-color: #374151; }
+#notes-popover-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 8px; font-weight: 600; font-size: 13px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+html.dark #notes-popover-header { border-bottom-color: rgba(255,255,255,0.08); }
+#notes-popover-close {
+  appearance: none; border: none; background: transparent;
+  font-size: 18px; line-height: 1; cursor: pointer;
+  padding: 2px 6px; border-radius: 6px; color: inherit;
+}
+#notes-popover-close:hover { background: rgba(0,0,0,0.06); }
+html.dark #notes-popover-close:hover { background: rgba(255,255,255,0.08); }
+#notes-popover-body { padding: 8px; }
+#notes-popover-text {
+  width: 100%;
+  min-width: 160px;
+  max-width: 80vw;
+  min-height: 60px;
+  max-height: 70vh;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border-radius: 8px;
+  outline: none;
+  border: 1px solid #d1d5db;
+  background: #ffffff; color: #111827;
+  font-size: 14px; line-height: 1.4; font-family: inherit;
+  resize: none; /* auto-size handling */
+}
+html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-color: #4b5563; }
+
+/* Make source notes box NOT flash blue when tapped to open */
+.notes-input {
+  -webkit-tap-highlight-color: transparent;
+}
+</style>
+<div id="notes-popover-overlay" aria-hidden="true"></div>
+<div id="notes-popover" role="dialog" aria-modal="true" aria-labelledby="notes-popover-title">
+  <div id="notes-popover-header">
+    <div id="notes-popover-title">Notes</div>
+    <button id="notes-popover-close" aria-label="Close notes">×</button>
+  </div>
+  <div id="notes-popover-body">
+    <textarea id="notes-popover-text" spellcheck="false"></textarea>
+  </div>
+</div>
+<script>
+/* Notes popover (fast): instant open on pointerdown, no blue flash, anchored & autosized */
+(function(){
+  if (window.__NotesPopover_v1) return;
+  window.__NotesPopover_v1 = true;
+
+  var overlay = document.getElementById('notes-popover-overlay');
+  var pop     = document.getElementById('notes-popover');
+  var close   = document.getElementById('notes-popover-close');
+  var area    = document.getElementById('notes-popover-text');
+  var activeSource = null;
+
+  function viewportCaps(){ return { maxW: Math.floor(window.innerWidth * 0.80), maxH: Math.floor(window.innerHeight * 0.70) }; }
+
+  function estimateWidthPx(text){
+    var lines = String(text||'').split('\n');
+    var longest = 0;
+    for (var i=0;i<lines.length;i++){ if (lines[i].length > longest) longest = lines[i].length; }
+    return Math.ceil(longest * 7.2) + 28; // approx char width + paddings
+  }
+
+  function autoSizeAndPosition(src){
+    var rect = src.getBoundingClientRect();
+    var caps = viewportCaps();
+
+    // Width: at least source width; at most content/viewport cap
+    var contentW = estimateWidthPx(area.value);
+    var width = Math.min(Math.max(Math.ceil(rect.width), Math.min(contentW, caps.maxW)), caps.maxW);
+
+    // Height: fit content
+    area.style.height = 'auto';
+    // Temporarily set width so scrollHeight is accurate
+    area.style.width = (width - 20) + 'px';
+    var contentH = area.scrollHeight + 16; // padding
+    var headerH = 34;
+    var height = Math.min(Math.max(contentH, 60), caps.maxH);
+
+    pop.style.width = width + 'px';
+    area.style.height = Math.max(40, (height - (headerH + 16))) + 'px';
+
+    // Place over the original box (keep within viewport)
+    var left = Math.min(rect.left, window.innerWidth - width - 8);
+    var top  = Math.min(rect.top,  window.innerHeight - height - 8);
+    pop.style.left = Math.max(8, left) + 'px';
+    pop.style.top  = Math.max(8, top) + 'px';
+  }
+
+  function openFrom(el){
+    activeSource = el;
+    area.value = (el.value != null ? el
