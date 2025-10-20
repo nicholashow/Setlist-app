@@ -4006,40 +4006,39 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
 </script>
 
-<!-- === MINIMAL GENRE COLOR FIX (safe, contained) === -->
+<!-- === FINAL MINIMAL GENRE BY COLOR FIX (safe) === -->
 <script>
 (function(){
-  // Utilities
   const NAMED = {black:'#000000', white:'#ffffff', red:'#ff0000', green:'#008000', blue:'#0000ff', yellow:'#ffff00', orange:'#ffa500', purple:'#800080', gray:'#808080', grey:'#808080'};
   const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+  function _h2(h){ return ('0'+h.toString(16)).slice(-2); }
   function toHex(c){
     if(!c) return '';
     c = String(c).trim().toLowerCase();
     if (NAMED[c]) return NAMED[c];
-    if (HEX_RE.test(c)) return c.length===4 ? '#' + c.slice(1).split('').map(x=>x+x).join('') : c;
-    const m = c.match(/rgba?\(([^)]+)\)/i);
+    if (HEX_RE.test(c)) return c.length===4 ? '#'+c[1]+c[1]+c[2]+c[2]+c[3]+c[3] : c;
+    let m = c.match(/rgba?\(([^)]+)\)/i);
     if (m){
-      const [r,g,b] = m[1].split(',').map(x=>parseFloat(x));
-      const h = (n)=>Math.max(0,Math.min(255,Math.round(n))).toString(16).padStart(2,'0');
-      return '#'+h(r)+h(g)+h(b);
+      const p = m[1].split(',').map(x=>parseFloat(x));
+      if (p.length>=3){
+        const r = Math.max(0,Math.min(255,Math.round(p[0])));
+        const g = Math.max(0,Math.min(255,Math.round(p[1])));
+        const b = Math.max(0,Math.min(255,Math.round(p[2])));
+        return '#'+_h2(r)+_h2(g)+_h2(b);
+      }
     }
     return '';
   }
-
-  // Ensure the genre view area exists (NON‑destructive; does not hide other views)
-  function ensureGenreArea(){
+  function ensureGenreView(){
     let view = document.getElementById('genre-view');
     if (!view){
       view = document.createElement('section');
       view.id = 'genre-view';
-      view.innerHTML = '<h2 id="genre-title" style="margin:0 0 8px 0;">Genre</h2><ul id="genre-song-list" style="list-style:none;padding:0;margin:0;display:grid;gap:8px;"></ul>';
-      // place near end of body so it doesn't interfere with layout
+      view.innerHTML = '<h2 id="genre-title" class="text-xl font-semibold mb-2">Genre</h2><ul id="genre-song-list" style="list-style:none;padding:0;margin:0;display:grid;gap:8px;"></ul>';
       (document.body || document.documentElement).appendChild(view);
     } else {
       if (!view.querySelector('#genre-song-list')){
-        const ul = document.createElement('ul');
-        ul.id = 'genre-song-list'; ul.style.listStyle='none'; ul.style.padding='0'; ul.style.margin='0'; ul.style.display='grid'; ul.style.gap='8px';
-        view.appendChild(ul);
+        const ul = document.createElement('ul'); ul.id='genre-song-list'; ul.style.listStyle='none'; ul.style.padding='0'; ul.style.margin='0'; ul.style.display='grid'; ul.style.gap='8px'; view.appendChild(ul);
       }
       if (!view.querySelector('#genre-title')){
         const h = document.createElement('h2'); h.id='genre-title'; h.textContent='Genre'; view.prepend(h);
@@ -4047,97 +4046,83 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     }
     return view;
   }
-
-  // Find file cards and detect their colors from common attributes or chips
-  function getFileEls(){
-    const sels = ['.file-card','.song-file','.file','.song','.fileItem','.songItem','[data-file]','[data-type="file"]','li[data-id]'];
-    const out = new Set();
-    sels.forEach(sel => document.querySelectorAll(sel).forEach(n=>out.add(n)));
-    return Array.from(out);
-  }
-  function colorsFromEl(el){
-    const found = new Set();
-    const attrs = ['data-color','data-colors','data-genre-color'];
-    attrs.forEach(k=>{
-      const v = el.getAttribute(k);
-      if (v) String(v).split(/[,\s]+/).forEach(tok=>{ const h = toHex(tok); if (h) found.add(h); });
-    });
-    el.querySelectorAll('.color-chip,.genre-color,.color-dot,[data-color]').forEach(dot=>{
-      const v = dot.getAttribute('data-color') || getComputedStyle(dot).backgroundColor || dot.style.backgroundColor;
-      const h = toHex(v); if (h) found.add(h);
-    });
-    return Array.from(found);
-  }
-
-  // Canonical renderer: called with a *genre name*, resolves its color, then filters by that color
-  function resolveGenreColor(name){
-    // Look for matching sidebar item with data-name or text
-    const items = document.querySelectorAll('.genre-item,[data-genre],.sidebar-genre,li.genre,.genre');
-    for (const it of items){
-      const label = (it.getAttribute('data-name') || (it.dataset && it.dataset.name) || (it.textContent||'').trim() || '').toLowerCase();
-      if (!label) continue;
-      if (label === String(name||'').toLowerCase()){
-        // color via data-color or swatch background
-        const c = it.getAttribute('data-color') || (it.dataset && it.dataset.color) || (function(){
-          const sw = it.querySelector('.color-dot,.genre-color,[data-color]');
-          return sw ? (sw.getAttribute('data-color') || getComputedStyle(sw).backgroundColor || sw.style.backgroundColor) : '';
-        })();
-        return toHex(c);
+  function colorFromGenreItem(item){
+    let v = item.getAttribute('data-color') || (item.dataset && item.dataset.color) || '';
+    if (!v){
+      const sw = item.querySelector('.genre-dot,.color-dot,.genre-color,[data-color]');
+      if (sw){
+        v = sw.getAttribute('data-color') || sw.style.backgroundColor || '';
+        if (!v){ try { v = getComputedStyle(sw).backgroundColor; } catch(_){ } }
       }
     }
-    return ''; // unknown
+    return toHex(v);
   }
-
-  window.renderGenreView = function(name){
-    const view = ensureGenreArea();
-    const hex = resolveGenreColor(name) || toHex(name); // allow passing a hex directly
-    const ul  = view.querySelector('#genre-song-list');
-    const h2  = view.querySelector('#genre-title');
-    h2.textContent = (name || 'Genre') + (hex?(' ('+hex+')') : '');
-    ul.innerHTML = '';
-
-    if (!hex){
-      // Show message instead of going blank
-      const li = document.createElement('li');
-      li.textContent = 'No detectable color for "'+(name||'')+'". Add data-color to the sidebar genre.';
-      ul.appendChild(li);
-      // Still try to make the view visible via existing router if present
-      try { if (typeof show === 'function') show('genre-view'); } catch(_){}
-      return;
+  function labelFromGenreItem(item){
+    return (item.getAttribute('data-name') || (item.dataset && item.dataset.name) || (item.textContent||'').trim() || 'Genre');
+  }
+  function colorFromFileCard(card){
+    const dot = card.querySelector('.genre-dot,.color-dot,.genre-color,[data-color]');
+    let v = '';
+    if (dot){
+      v = dot.getAttribute('data-color') || dot.style.backgroundColor || '';
+      if (!v){ try { v = getComputedStyle(dot).backgroundColor; } catch(_){ } }
     }
-
-    const files = getFileEls();
+    if (!v){
+      v = card.getAttribute('data-color') || card.getAttribute('data-genre-color') || '';
+    }
+    return toHex(v);
+  }
+  function getFileCards(){
+    const sels = ['.song-file','.file-card','.file','.song','.fileItem','.songItem','li[data-id]'];
+    const set = new Set();
+    sels.forEach(sel=>document.querySelectorAll(sel).forEach(n=>set.add(n)));
+    return Array.from(set);
+  }
+  function renderByHex(hex, label){
+    const view = ensureGenreView();
+    const ul = view.querySelector('#genre-song-list');
+    const h2 = view.querySelector('#genre-title');
+    h2.textContent = (label || 'Genre') + (hex?(' ('+hex+')'):''); 
+    ul.innerHTML = '';
+    const cards = getFileCards();
     let matched = 0;
-    files.forEach(el=>{
-      const cols = colorsFromEl(el);
-      if (cols.includes(hex)){
+    cards.forEach(card=>{
+      const c = colorFromFileCard(card);
+      if (c && c === hex){
         matched++;
         const li = document.createElement('li');
-        li.appendChild(el.cloneNode(true));
+        const clone = card.cloneNode(true); clone.removeAttribute('id');
+        li.appendChild(clone);
         ul.appendChild(li);
       }
     });
     if (matched === 0){
       const li = document.createElement('li');
-      li.textContent = 'No files found with color ' + hex + '. (Scanned ' + files.length + ' elements.)';
+      li.textContent = 'No files found with color ' + (hex||'[unknown]') + '. Scanned ' + cards.length + ' items.';
       ul.appendChild(li);
     }
-    // Reveal the genre view using your app's show() if available, but do not hide anything else
     try { if (typeof show === 'function') show('genre-view'); } catch(_){ view.scrollIntoView({behavior:'smooth'}); }
-  };
-
-  // Sidebar click wiring (non‑intrusive; uses delegation)
-  document.addEventListener('click', function(e){
-    const item = e.target.closest && e.target.closest('.genre-item,[data-genre],.sidebar-genre,li.genre,.genre');
-    if (!item) return;
-    const name = item.getAttribute('data-name') || (item.dataset && item.dataset.name) || (item.textContent||'').trim();
-    if (!name) return;
-    window.currentGenre = name;
-    window.renderGenreView(name);
-  }, true);
+  }
+  (function bindSidebar(){
+    const sidebar = document.querySelector('aside, .sidebar, #sidebar, [data-role="sidebar"]') || document;
+    sidebar.addEventListener('click', function(e){
+      const item = e.target.closest && e.target.closest('.genre-item, .sidebar-genre, li.genre, [data-genre], .genre');
+      if (!item) return;
+      const hex = colorFromGenreItem(item);
+      const label = labelFromGenreItem(item);
+      if (!hex){
+        const view = ensureGenreView();
+        view.querySelector('#genre-title').textContent = label;
+        view.querySelector('#genre-song-list').innerHTML = '<li>No color detected on this genre. Add <code>data-color</code> or a color dot.</li>';
+        try { if (typeof show === 'function') show('genre-view'); } catch(_){}
+        return;
+      }
+      renderByHex(hex, label);
+    }, true);
+  })();
 })();
 </script>
-<!-- === /MINIMAL GENRE COLOR FIX === -->
+<!-- === /FINAL MINIMAL GENRE BY COLOR FIX === -->
 </body>
 </html>
 
