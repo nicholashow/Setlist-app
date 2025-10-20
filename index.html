@@ -4170,6 +4170,201 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 <!-- === /DROP‑IN GENRE FILTER PATCH === -->
+
+<!-- === GENRE FILTER ENHANCER + DEBUG PANEL === -->
+<script>
+(function(){
+  // --- color utils ---
+  const NAMED = {black:'#000000',white:'#ffffff',red:'#ff0000',green:'#008000',blue:'#0000ff',yellow:'#ffff00',orange:'#ffa500',purple:'#800080',gray:'#808080',grey:'#808080',pink:'#ffc0cb',brown:'#a52a2a',cyan:'#00ffff',magenta:'#ff00ff'};
+  const HEX_RE = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+  function hexify3to6(h){ return '#'+h.slice(1).split('').map(c=>c+c).join(''); }
+  function clamp255(n){ n = Math.round(+n||0); if(n<0)n=0; if(n>255)n=255; return n; }
+  function toHexColor(input){
+    if(!input) return '';
+    let c = String(input).trim().toLowerCase();
+    if (NAMED[c]) return NAMED[c];
+    if (HEX_RE.test(c)) return c.length===4 ? hexify3to6(c) : c;
+    // rgb/rgba
+    let m = c.match(/rgba?\(([^)]+)\)/i);
+    if (m){
+      const parts = m[1].split(',').map(x=>parseFloat(x));
+      if (parts.length>=3){
+        const [r,g,b] = parts;
+        const h = (x)=>clamp255(x).toString(16).padStart(2,'0');
+        return '#'+h(r)+h(g)+h(b);
+      }
+    }
+    // hsl/hsla
+    m = c.match(/hsla?\(([^)]+)\)/i);
+    if (m){
+      const p = m[1].split(',').map(s=>s.trim());
+      if (p.length>=3){
+        let h = parseFloat(p[0]); let s = parseFloat(p[1]); let l = parseFloat(p[2]);
+        if (p[1].includes('%')) s/=100; if (p[2].includes('%')) l/=100;
+        h = (h%360+360)%360 / 360;
+        const q = l < 0.5 ? l*(1+s) : l + s - l*s;
+        const p2 = 2*l - q;
+        function hue2rgb(p,q,t){ if(t<0)t+=1; if(t>1)t-=1; if(t<1/6)return p+(q-p)*6*t; if(t<1/2)return q; if(t<2/3)return p+(q-p)*(2/3 - t)*6; return p; }
+        const r = clamp255(255*hue2rgb(p2,q,h+1/3));
+        const g = clamp255(255*hue2rgb(p2,q,h));
+        const b = clamp255(255*hue2rgb(p2,q,h-1/3));
+        return '#'+r.toString(16).padStart(2,'0')+g.toString(16).padStart(2,'0')+b.toString(16).padStart(2,'0');
+      }
+    }
+    return '';
+  }
+
+  // --- enhanced detectors ---
+  function readColorFromEl(el){
+    // attributes
+    const attrs = ['data-color','data-colour','data-genre-color','data-hex','data-bg','data-background'];
+    for (const k of attrs){
+      const v = el.getAttribute(k);
+      if (v){ const h = toHexColor(v); if (h) return h; }
+    }
+    // inline styles / computed styles
+    const styles = [
+      el.style && el.style.backgroundColor,
+      el.style && el.style.color,
+      el.style && el.style.borderColor
+    ].filter(Boolean);
+    for (const v of styles){ const h = toHexColor(v); if (h) return h; }
+    const cs = getComputedStyle(el);
+    const cssCand = [cs.backgroundColor, cs.color, cs.borderLeftColor, cs.borderTopColor, cs.borderRightColor, cs.borderBottomColor];
+    for (const v of cssCand){ const h = toHexColor(v); if (h) return h; }
+    // child swatch
+    const sw = el.querySelector('.color-dot,.genre-color,[data-color],[data-hex]');
+    if (sw){ const h = readColorFromEl(sw); if (h) return h; }
+    // text hex
+    const m = (el.textContent||'').match(/#([0-9a-f]{3}|[0-9a-f]{6})/i);
+    if (m) return toHexColor(m[0]);
+    return '';
+  }
+
+  function fileEls(){
+    const sels = ['.file-card','.song-file','.file','.song','.fileItem','.songItem','[data-file]','[data-type="file"]','li[data-id]'];
+    const out = [];
+    sels.forEach(sel=>document.querySelectorAll(sel).forEach(n=>out.push(n)));
+    // de-dup
+    return Array.from(new Set(out));
+  }
+
+  function colorsFromFileEl(el){
+    const found = new Set();
+    // attributes
+    const attrs = ['data-color','data-colors','data-genre-color','data-hex','data-bg','data-background','data-tags'];
+    for (const k of attrs){
+      const v = el.getAttribute(k);
+      if (v){ String(v).split(/[,\s]+/).forEach(tok=>{ const h = toHexColor(tok); if (h) found.add(h); }); }
+    }
+    // chips
+    el.querySelectorAll('.color-chip,.genre-color,.color-dot,[data-color],[data-hex]').forEach(dot=>{
+      const h = readColorFromEl(dot);
+      if (h) found.add(h);
+    });
+    // element self
+    const hSelf = readColorFromEl(el);
+    if (hSelf) found.add(hSelf);
+    return Array.from(found);
+  }
+
+  function ensureGenreUI(){
+    let host = document.getElementById('genre-view');
+    if (!host){
+      host = document.createElement('section');
+      host.id = 'genre-view';
+      host.style.padding = '12px'; host.style.display='none';
+      host.innerHTML = '<h2 id="genre-title">Genre</h2><ul id="genre-song-list" style="list-style:none;padding:0;margin:0;display:grid;gap:8px;"></ul>';
+      document.body.appendChild(host);
+    } else {
+      if (!host.querySelector('#genre-song-list')){
+        const ul = document.createElement('ul'); ul.id='genre-song-list'; ul.style.listStyle='none'; ul.style.padding='0'; ul.style.margin='0'; ul.style.display='grid'; ul.style.gap='8px'; host.appendChild(ul);
+      }
+      if (!host.querySelector('#genre-title')){ const h = document.createElement('h2'); h.id='genre-title'; h.textContent='Genre'; host.prepend(h); }
+    }
+    return host;
+  }
+
+  function showGenre(hex,label){
+    const host = ensureGenreUI();
+    document.querySelectorAll('section, main, [data-view], .view').forEach(el=>{ if(el!==host) el.style.display='none'; });
+    host.style.display='';
+    host.querySelector('#genre-title').textContent = (label||'Genre') + (hex?(' ('+hex+')'):''); 
+    const ul = host.querySelector('#genre-song-list'); ul.innerHTML='';
+    const files = fileEls();
+    let matches = 0;
+    files.forEach(el=>{
+      const cols = colorsFromFileEl(el);
+      if (hex && cols.includes(hex)){
+        matches++;
+        const li = document.createElement('li');
+        const clone = el.cloneNode(true); clone.removeAttribute('id');
+        li.appendChild(clone); ul.appendChild(li);
+      }
+    });
+    if (matches===0){
+      const li = document.createElement('li'); li.textContent = 'No files found with '+(hex||'[no color]')+'. Scanned '+files.length+' elements.'; ul.appendChild(li);
+    }
+  }
+
+  // --- DEBUG PANEL ---
+  (function attachDebug(){
+    const btn = document.createElement('button');
+    btn.textContent = 'Genre Debug';
+    btn.style.position='fixed'; btn.style.bottom='12px'; btn.style.right='12px'; btn.style.zIndex=999999; btn.style.padding='8px 10px'; btn.style.borderRadius='8px';
+    btn.style.border='1px solid #888'; btn.style.background='#fff'; btn.style.cursor='pointer';
+    const panel = document.createElement('div');
+    panel.style.position='fixed'; panel.style.bottom='56px'; panel.style.right='12px'; panel.style.zIndex=999999; panel.style.width='360px'; panel.style.maxHeight='60vh'; panel.style.overflow='auto';
+    panel.style.background='#ffffff'; panel.style.border='1px solid #aaa'; panel.style.borderRadius='10px'; panel.style.boxShadow='0 6px 20px rgba(0,0,0,0.2)'; panel.style.display='none';
+    panel.innerHTML = '<div style="padding:8px 10px; font: 14px/1.3 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial;">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center"><strong>Genre Debug</strong><button id="gd-close" style="border:0;background:#eee;border-radius:6px;padding:4px 8px;cursor:pointer">Close</button></div>'
+      +'<div style="margin-top:8px">'
+      +'<div><em>Sidebar genres (detected color → label):</em><ul id="gd-genres" style="margin:6px 0 10px 16px"></ul></div>'
+      +'<div><em>Files with colors (first 20):</em><ul id="gd-files" style="margin:6px 0 10px 16px"></ul></div>'
+      +'<div style="display:flex;gap:6px;align-items:center;margin-top:8px"><input id="gd-hex" placeholder="#000000" style="flex:1;padding:6px;border:1px solid #ccc;border-radius:6px"/><button id="gd-test" style="padding:6px 10px;border:1px solid #888;border-radius:6px;background:#f6f6f6;cursor:pointer">Test render</button></div>'
+      +'</div></div>';
+    document.body.appendChild(btn); document.body.appendChild(panel);
+    btn.onclick = ()=>{ panel.style.display = (panel.style.display==='none'?'':'none')==='none' ? '' : 'none'; };
+    panel.querySelector('#gd-close').onclick = ()=>{ panel.style.display='none'; };
+    panel.querySelector('#gd-test').onclick = ()=>{ const hx = toHexColor(panel.querySelector('#gd-hex').value); if(hx){ showGenre(hx, 'Manual test'); } };
+    function refresh(){
+      const gl = panel.querySelector('#gd-genres'); gl.innerHTML='';
+      const cand = document.querySelectorAll('.genre-item,[data-genre],.sidebar-genre,li.genre,.genre');
+      cand.forEach(el=>{
+        const hex = readColorFromEl(el);
+        const label = (el.getAttribute('data-name') || (el.dataset && el.dataset.name) || (el.textContent||'').trim()).slice(0,60);
+        const li = document.createElement('li'); li.textContent = (hex||'[no color]') + ' — ' + (label||'[no label]'); gl.appendChild(li);
+      });
+      const fl = panel.querySelector('#gd-files'); fl.innerHTML='';
+      fileEls().slice(0,20).forEach((el,i)=>{
+        const cols = colorsFromFileEl(el);
+        const li = document.createElement('li'); li.textContent = '['+(i+1)+'] '+(cols.join(', ')||'[no colors]'); fl.appendChild(li);
+      });
+    }
+    setTimeout(refresh, 500); setTimeout(refresh, 1500); document.addEventListener('click', ()=>setTimeout(refresh, 50), true);
+  })();
+
+  // --- hook sidebar click (very permissive) ---
+  const sidebar = document.querySelector('.sidebar, #sidebar, [data-role="sidebar"]') || document;
+  sidebar.addEventListener('click', function(e){
+    const item = e.target.closest && e.target.closest('.genre-item, [data-genre], .sidebar-genre, li.genre, .genre');
+    if (!item) return;
+    const hex = readColorFromEl(item);
+    const label = (item.getAttribute('data-name') || (item.dataset && item.dataset.name) || (item.textContent||'').trim() || 'Genre');
+    if (!hex){
+      showGenre('', label);
+      const ul = document.querySelector('#genre-song-list');
+      if (ul) ul.innerHTML = '<li>No color detected on this genre item. Add a data-color attribute or a visible color swatch.</li>';
+      return;
+    }
+    showGenre(hex, label);
+  }, true);
+
+  // expose for console tests
+  window.__GenreEnhDebug = { toHexColor, readColorFromEl, colorsFromFileEl, showGenre };
+})();
+</script>
+<!-- === /GENRE FILTER ENHANCER + DEBUG PANEL === -->
 </body>
 </html>
 
