@@ -4005,6 +4005,127 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
         })();
 
 </script>
+
+<script>
+/* === BEGIN SAFE GENRE VIEW PATCH (do not remove) === */
+(function(){
+  // Normalize view key
+  function normalizeGenreViewKey(v){
+    return (v === 'genre') ? 'genre-view' : v;
+  }
+
+  // Wrap window.show if available to accept both 'genre' and 'genre-view'
+  try {
+    if (typeof window !== 'undefined' && typeof window.show === 'function' && !window.__genreShowWrapped) {
+      const __origShow = window.show;
+      window.show = function(v, ...args){
+        v = normalizeGenreViewKey(v);
+        return __origShow.call(this, v, ...args);
+      };
+      window.__genreShowWrapped = true;
+    }
+  } catch(e){ /* no-op */ }
+
+  // Ensure the container for the genre list exists
+  function ensureGenreListContainer(){
+    var list = document.getElementById('genre-song-list');
+    if (!list) {
+      var host = document.getElementById('genre-view') || document.querySelector('[data-view="genre-view"]') || document.body;
+      if (host) {
+        list = document.createElement('ul');
+        list.id = 'genre-song-list';
+        host.appendChild(list);
+      }
+    }
+    return list;
+  }
+
+  // Unified render function name: renderGenreView(name)
+  // Prefer existing functions where possible.
+  function _callRenderer(name){
+    // Try explicit by-color renderer first
+    if (typeof window.renderGenreByColor === 'function') {
+      return window.renderGenreByColor(name);
+    }
+    // Else try an existing renderGenreView
+    if (typeof window.renderGenreView === 'function' && window.renderGenreView !== _shimRender) {
+      return window.renderGenreView(name);
+    }
+    // Else try a generic render function taking (name)
+    if (typeof window.renderGenre === 'function') {
+      return window.renderGenre(name);
+    }
+    // Nothing to call—best effort no-op
+  }
+
+  function _shimRender(name){
+    ensureGenreListContainer();
+    if (typeof window.show === 'function') {
+      window.show('genre-view');
+    } else {
+      // Fallback: directly unhide #genre-view
+      var gv = document.getElementById('genre-view');
+      if (gv) gv.style.display = '';
+    }
+    window.currentGenre = name || window.currentGenre || '';
+    _callRenderer(window.currentGenre);
+  }
+
+  // If no canonical, define one that uses the shim
+  if (typeof window !== 'undefined') {
+    if (typeof window.renderGenreView !== 'function') {
+      window.renderGenreView = _shimRender;
+    }
+    // Also provide an alias to keep both names available
+    if (typeof window.renderGenreByColor !== 'function' && typeof window.renderGenreView === 'function') {
+      window.renderGenreByColor = window.renderGenreView;
+    }
+  }
+
+  // Robust sidebar click handler (delegated) for items with class .genre-item
+  // Expects each item to have data-name="<Genre Name>" or uses textContent fallback.
+  document.addEventListener('click', function(e){
+    var item = e.target.closest && e.target.closest('.genre-item');
+    if (!item) return;
+
+    var name = item.getAttribute('data-name') || item.dataset && item.dataset.name || (item.textContent || '').trim();
+    if (!name) return;
+
+    // Set current genre, show the page, and render
+    window.currentGenre = name;
+    // Ensure container exists before render
+    ensureGenreListContainer();
+    // Call canonical renderer
+    if (typeof window.renderGenreView === 'function') {
+      window.renderGenreView(name);
+    } else {
+      _shimRender(name);
+    }
+  }, true);
+
+  // If code somewhere calls show('genre-view'), normalize it.
+  // Also auto-render if the app switches to genre-view without a renderer call.
+  // Observe hash/route or mutation to try auto-render.
+  try {
+    var maybeRender = function(){
+      var genreView = document.getElementById('genre-view');
+      if (!genreView) return;
+      var isVisible = !!(genreView.offsetParent || (window.getComputedStyle(genreView).display !== 'none'));
+      if (isVisible) {
+        ensureGenreListContainer();
+        if (window.currentGenre) {
+          _callRenderer(window.currentGenre);
+        }
+      }
+    };
+    document.addEventListener('DOMContentLoaded', maybeRender);
+    window.addEventListener && window.addEventListener('hashchange', maybeRender);
+    var mo = new MutationObserver(function(){ maybeRender(); });
+    mo.observe(document.documentElement, {subtree:true, attributes:true, attributeFilter:['style','class','hidden']});
+  } catch(e){ /* ignore */ }
+})();
+/* === END SAFE GENRE VIEW PATCH === */
+</script>
 </body>
 </html>
 
@@ -4273,7 +4394,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     }
     window.renderGenreView = function(name){
       window.currentGenre = name;
-      if (typeof show === 'function'){ try{ show('genre'); }catch(_){} }
+      if (typeof show === 'function'){ try{ show('genre-view'); }catch(_){} }
       renderGenreByColor(name);
     };
 
@@ -4283,7 +4404,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       var name = $(this).data('name');
       if (name == null) return;
       window.currentGenre = name;
-      if (typeof show === 'function'){ try{ show('genre'); }catch(_){} }
+      if (typeof show === 'function'){ try{ show('genre-view'); }catch(_){} }
       renderGenreByColor(name);
     });
 
