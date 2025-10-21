@@ -1569,6 +1569,17 @@ html.dark .notes-inline .notes-textarea {
   overflow: hidden !important;
 }
 
+
+/* === Genre Detail Page === */
+#genre-page { display:none; }
+#genre-page .colorbar {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
 </style>
 </head>
 
@@ -1637,6 +1648,14 @@ html.dark .notes-inline .notes-textarea {
         </button>
 
         <main class="flex-1 p-4 overflow-auto">
+    <!-- === Genre Detail Page (in main app area) === -->
+    <section id="genre-page" class="p-4 w-full">
+      <div id="genre-colorbar" class="colorbar rounded-xl text-white text-xl"></div>
+      <div class="mt-4">
+        <div id="genre-files" class=""></div>
+      </div>
+    </section>
+
             <section id="master-view">
                  <div id="master-view-controls">
                     <div id="search-container">
@@ -4004,6 +4023,122 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
             if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', initSidebarFade); } else { initSidebarFade(); }
         })();
 
+</script>
+<script>
+
+// === Genre Page Logic ===
+(function(){
+  const $doc = $(document);
+
+  function getBgColor(el){
+    const s = window.getComputedStyle(el);
+    return s.backgroundColor || s.background || "";
+  }
+
+  function rgbToHex(rgb) {
+    try{
+      const m = rgb.match(/\d+/g);
+      if (!m || m.length < 3) return rgb;
+      const r = parseInt(m[0],10), g = parseInt(m[1],10), b = parseInt(m[2],10);
+      const toHex = (n)=> ('0'+n.toString(16)).slice(-2);
+      return '#' + toHex(r) + toHex(g) + toHex(b);
+    }catch(e){ return rgb; }
+  }
+
+  function normalizeColor(c){
+    if (!c) return c;
+    if (c.startsWith('rgb')) return rgbToHex(c);
+    return c.toLowerCase();
+  }
+
+  function ensureGenrePage(){
+    if (!document.querySelector('#genre-page')){
+      const section = document.createElement('section');
+      section.id = 'genre-page';
+      section.className = 'p-4 w-full';
+      section.innerHTML = `
+        <div id="genre-colorbar" class="colorbar rounded-xl text-white text-xl"></div>
+        <div class="mt-4">
+          <div id="genre-files"></div>
+        </div>`;
+      (document.querySelector('main') || document.body).appendChild(section);
+    }
+  }
+
+  function showGenrePage(genreName, color){
+    ensureGenrePage();
+    const $home = $('#master-view, #setlist-view, #favorites-view, #plays-view, #recordings-view, #energy-view');
+    const $page = $('#genre-page');
+    const $colorbar = $('#genre-colorbar');
+    const $files = $('#genre-files');
+
+    // Color bar title (only once in the bar)
+    $colorbar.css('background', color || '#3b82f6');
+    $colorbar.text(genreName || '');
+
+    // Build list by cloning original DOM rows to preserve look/behavior
+    $files.empty();
+
+    const wanted = normalizeColor(color);
+    const $candidates = $('#master-list li, #setlist-list li, #favorites-list li, #genre-song-list li, #plays-list li, .file-row, .song-row');
+
+    const seen = new Set();
+    $candidates.each(function(){
+      const li = this;
+      const id = li.getAttribute('data-id')
+                || li.getAttribute('data-file-id')
+                || (li.querySelector('.song-name')?.textContent?.trim() || li.textContent?.trim() || '').toLowerCase();
+
+      if (!id || seen.has(id)) return;
+
+      let fileColor = li.getAttribute('data-genre-color') || '';
+      if (!fileColor){
+        const dot = li.querySelector('.genre-dot');
+        if (dot) fileColor = getBgColor(dot);
+      }
+      if (!fileColor) return;
+
+      if (normalizeColor(fileColor) === wanted){
+        const clone = li.cloneNode(true);
+        const wrap = document.createElement('div');
+        wrap.className = 'genre-clone-wrap';
+        wrap.appendChild(clone);
+        $files.append(wrap);
+        seen.add(id);
+      }
+    });
+
+    $home.hide();
+    $page.show();
+  }
+
+  function extractGenreInfo(el){
+    const name = el.querySelector('.genre-name')?.textContent?.trim()
+              || el.textContent?.trim() || 'Genre';
+    let color = el.getAttribute('data-color');
+    if (!color){
+      const dot = el.querySelector('.genre-dot');
+      if (dot) color = getComputedStyle(dot).backgroundColor;
+    }
+    if (!color){
+      const s = getComputedStyle(el);
+      if (s?.borderLeftColor && s.borderLeftWidth !== '0px') color = s.borderLeftColor;
+      else color = s.backgroundColor;
+    }
+    return { name, color: normalizeColor(color) };
+  }
+
+  $doc.on('click', '#genre-list > *', function(){
+    const {name, color} = extractGenreInfo(this);
+    showGenrePage(name, color);
+  });
+  $doc.on('click', '.sidebar-item.genre, .genre-row', function(){
+    const {name, color} = extractGenreInfo(this);
+    showGenrePage(name, color);
+  });
+
+  window.showGenrePage = showGenrePage;
+})();
 </script>
 </body>
 </html>
