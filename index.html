@@ -1704,14 +1704,7 @@ html.dark .notes-inline .notes-textarea {
 }
 
 
-/* === Setlist outside-drag behavior (proxy + locked original) === */
-#setlist-list > li.locked-blue {
-  background: #2563eb !important;
-  color: #fff !important;
-}
-#setlist-list > li.locked-blue .song-name-text { color:#fff !important; }
-
-/* Floating proxy that follows the cursor outside the setlist box */
+/* === Outside-drag behavior (pinned clone + name-only proxy) === */
 #drag-proxy-nameonly {
   position: fixed;
   top: 0; left: 0;
@@ -1727,38 +1720,20 @@ html.dark .notes-inline .notes-textarea {
   white-space: nowrap;
   user-select: none;
 }
-
-/* When outside, we hide the jQuery UI helper so only the proxy is visible */
-body.setlist-drag-outside .ui-sortable-helper { opacity: 0 !important; }
-
-
-/* === Keep original item visible & blue while outside === */
-#setlist-list > li.locked-blue {
-  background: #2563eb !important;
-  color: #fff !important;
-}
-#setlist-list > li.locked-blue .song-name-text { color:#fff !important; }
-#setlist-list > li.keep-visible { display: block !important; visibility: visible !important; opacity: 1 !important; }
-
-/* Floating proxy chip */
-#drag-proxy-nameonly {
+#pinned-setlist-clone {
   position: fixed;
-  top: 0; left: 0;
-  transform: translate(-9999px, -9999px);
+  z-index: 9000;
   pointer-events: none;
-  z-index: 10000;
-  background: #2563eb;
+  margin: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,.12);
+  background: #2563eb;  /* blue like active drag */
   color: #fff;
-  border-radius: 9999px;
-  padding: 6px 12px;
-  font-weight: 700;
-  box-shadow: 0 6px 16px rgba(0,0,0,.15);
-  white-space: nowrap;
-  user-select: none;
 }
+#pinned-setlist-clone .song-name-text { color:#fff; }
 
-/* Hide the jQuery helper only when outside so the proxy is all you see */
+/* While outside, hide helper+placeholder so no reflow occurs */
 body.setlist-drag-outside .ui-sortable-helper { opacity: 0 !important; }
+body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none !important; visibility: hidden !important; }
 
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
@@ -4334,156 +4309,84 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   var $panel = $('#setlist-view .setlist-panel');
   if (!$list.length || !$panel.length || !$.fn.sortable) return;
 
-  // Use clone helper so original item can remain visible when we need it
+  // Use clone helper for standard sort
   try { $list.sortable('option', 'helper', 'clone'); }
   catch(e){ try { $list.sortable('destroy'); } catch(_){} $list.sortable({ helper: 'clone' }); }
 
-  // Create a single floating proxy for name-only dragging
+  // Floating elements
   var $proxy = $('#drag-proxy-nameonly');
-  if (!$proxy.length){
-    $proxy = $('<div id="drag-proxy-nameonly" style="display:none;"></div>').appendTo(document.body);
-  }
+  if (!$proxy.length){ $proxy = $('<div id="drag-proxy-nameonly" style="display:none;"></div>').appendTo(document.body); }
+  var $pinned = $('#pinned-setlist-clone');
+  if (!$pinned.length){ $pinned = $('<div id="pinned-setlist-clone" style="display:none;"></div>').appendTo(document.body); }
 
-  $list.off('.proxyOutside');
+  $list.off('.pinnedProxy');
 
   var wasOutside = false;
-  var startIndex = null;
-
-  function setProxyPosition(evt){
-    // Follow the cursor with a small offset
-    var x = evt.clientX + 12;
-    var y = evt.clientY + 12;
-    $proxy.css('transform', 'translate(' + x + 'px,' + y + 'px)');
-  }
-
-  $list.on('sortstart.proxyOutside', function(e, ui){
-    startIndex = ui.item.index();
-    // Build proxy text (file name)
-    var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
-    $proxy.text(name);
-  });
-
-  $list.on('sort.proxyOutside', function(e, ui){
-    var rect = $panel.get(0).getBoundingClientRect();
-    var x = e.clientX, y = e.clientY;
-    var outside = (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom);
-
-    if (outside){
-      if (!wasOutside){
-        document.body.classList.add('setlist-drag-outside');
-        // Keep the REAL item visible and blue in place; hide placeholder to lock its spot
-        ui.item.stop(true,true).css({display:''}).addClass('locked-blue');
-        ui.placeholder.css({ visibility:'hidden', display:'none' });
-        // Hide the jQuery helper; show our proxy instead
-        $proxy.show();
-        wasOutside = true;
-      }
-      setProxyPosition(e);
-    } else {
-      if (wasOutside){
-        document.body.classList.remove('setlist-drag-outside');
-        // Return to normal sorting visuals
-        ui.item.removeClass('locked-blue').hide();       // original hidden during sorting
-        ui.placeholder.css({ visibility:'', display:'' });// placeholder back
-        $proxy.hide().css('transform','translate(-9999px,-9999px)');
-        wasOutside = false;
-      }
-    }
-  });
-
-  $list.on('sortstop.proxyOutside', function(e, ui){
-    // Always hide proxy and clear flags
-    $proxy.hide().css('transform','translate(-9999px,-9999px)');
-    document.body.classList.remove('setlist-drag-outside');
-
-    if (wasOutside){
-      // Cancel reordering to keep numeric position unchanged
-      try { $(this).sortable('cancel'); } catch(_){}
-      // Ensure the real item is visible and blue state cleared after cancel
-      ui.item.removeClass('locked-blue').css({display:''});
-    } else {
-      // Dropped inside normally; ensure original visible
-      ui.item.css({display:''});
-    }
-    wasOutside = false;
-    startIndex = null;
-  });
-
-  // Keep the proxy following even if cursor moves quickly
-  $(document).on('mousemove.proxyOutside', function(e){
-    if (document.body.classList.contains('setlist-drag-outside')){
-      setProxyPosition(e);
-    }
-  });
-})();
-
-</script>
-<script>
-
-(function(){
-  var $ = window.jQuery;
-  var $list = $('#setlist-list');
-  var $panel = $('#setlist-view .setlist-panel');
-  if (!$list.length || !$panel.length || !$.fn.sortable) return;
-
-  // Ensure clone helper so original can remain in place
-  try { $list.sortable('option', 'helper', 'clone'); }
-  catch(e){ try { $list.sortable('destroy'); } catch(_){} $list.sortable({ helper: 'clone' }); }
-
-  // Single proxy chip
-  var $proxy = $('#drag-proxy-nameonly');
-  if (!$proxy.length){
-    $proxy = $('<div id="drag-proxy-nameonly" style="display:none;"></div>').appendTo(document.body);
-  }
-
-  $list.off('.proxyLockedBlue');
-
-  var wasOutside = false;
+  var pinnedRect = null;
 
   function setProxyPosition(evt){
     var x = evt.clientX + 12, y = evt.clientY + 12;
     $proxy.css('transform', 'translate(' + x + 'px,' + y + 'px)');
   }
 
-  $list.on('sortstart.proxyLockedBlue', function(e, ui){
+  function rectOf($el){
+    var r = $el.get(0).getBoundingClientRect();
+    return { left:r.left, top:r.top, width:r.width, height:r.height };
+  }
+
+  $list.on('sortstart.pinnedProxy', function(e, ui){
+    // Build proxy name text
     var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
     $proxy.text(name);
+    // Capture the *on-screen* rect of the original spot (placeholder will replace item)
+    pinnedRect = rectOf(ui.item);
   });
 
-  $list.on('sort.proxyLockedBlue', function(e, ui){
+  $list.on('sort.pinnedProxy', function(e, ui){
     var rect = $panel.get(0).getBoundingClientRect();
     var x = e.clientX, y = e.clientY;
     var outside = (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom);
 
     if (outside){
       if (!wasOutside){
-        document.body.classList.add('setlist-drag-outside');
-        // Keep the REAL item in place, blue, and visible
-        ui.item.addClass('locked-blue keep-visible').css({display:''});
-        // Lock position: hide placeholder so list doesn't reflow
-        ui.placeholder.css({ visibility:'hidden', display:'none' });
-        // Show proxy and hide the drag helper
-        $proxy.show();
         wasOutside = true;
+        document.body.classList.add('setlist-drag-outside');
+        // Pin a visual clone at the original on-screen coordinates
+        var html = ui.item.clone(true, true).prop('outerHTML');
+        $pinned.html(html).css({
+          display:'block',
+          left: pinnedRect.left + 'px',
+          top: pinnedRect.top + 'px',
+          width: pinnedRect.width + 'px',
+          height: pinnedRect.height + 'px'
+        });
+        // Show proxy chip; hide helper (we keep sorting session alive)
+        $proxy.show();
       }
       setProxyPosition(e);
     } else {
       if (wasOutside){
-        document.body.classList.remove('setlist-drag-outside');
-        // Back inside: restore normal sort visuals
-        ui.item.removeClass('keep-visible'); // original hidden again by sortable while dragging
-        ui.placeholder.css({ visibility:'', display:'' });
-        $proxy.hide().css('transform','translate(-9999px,-9999px)');
         wasOutside = false;
+        document.body.classList.remove('setlist-drag-outside');
+        $proxy.hide().css('transform','translate(-9999px,-9999px)');
+        $pinned.hide().empty();
       }
     }
   });
 
-  $list.on('sortstop.proxyLockedBlue', function(e, ui){
-    // Clear flags and visuals
-    document.body.classList.remove('setlist-drag-outside');
+  $list.on('sortstop.pinnedProxy', function(e, ui){
+    // Clean up floats
     $proxy.hide().css('transform','translate(-9999px,-9999px)');
-    ui.item.removeClass('locked-blue keep-visible').css({display:''});
+    $pinned.hide().empty();
+    document.body.classList.remove('setlist-drag-outside');
+    wasOutside = false;
+  });
+
+  // Keep proxy following even on fast moves
+  $(document).on('mousemove.pinnedProxy', function(e){
+    if (document.body.classList.contains('setlist-drag-outside')){
+      setProxyPosition(e);
+    }
   });
 })();
 
