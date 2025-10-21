@@ -4367,7 +4367,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       }
       setProxyPosition(e);
     } else {
-      if (wasOutside){ document.body.classList.remove('setlist-drag-outside'); ui.helper.show(); $proxy.hide().css('transform','translate(-9999px,-9999px)');
+      if (wasOutside){ document.body.classList.remove('setlist-drag-outside'); if (ui.helper){ ui.helper.removeClass('setlist-helper-frozen').css({position:'', left:'', top:'', width:'', height:'', opacity:'', visibility:'', display:''}); }
+ui.helper.show(); $proxy.hide().css('transform','translate(-9999px,-9999px)');
         $pinned.hide().empty();
       }
     }
@@ -4391,23 +4392,19 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 
 </script>
-
 <script>
-// Minimal, defensive fix: prevent duplicate filename "ghost"
+// Minimal proxy dedupe: ensure only one name-only chip exists
 (function(){
-  function dedupeDragProxies(){
-    try {
-      const nodes = Array.from(document.querySelectorAll('#drag-proxy-nameonly'));
-      if (nodes.length > 1) nodes.slice(1).forEach(n => n.remove());
-    } catch(e) {}
-  }
-  dedupeDragProxies();
+  function dedupe(){ try {
+    const nodes = Array.from(document.querySelectorAll('#drag-proxy-nameonly'));
+    if (nodes.length > 1) nodes.slice(1).forEach(n => n.remove());
+  } catch(e){} }
+  dedupe();
   ['pointerdown','touchstart','mousedown'].forEach(ev => {
-    window.addEventListener(ev, dedupeDragProxies, {passive:true});
+    window.addEventListener(ev, dedupe, {passive:true});
   });
 })();
 </script>
-
 </body>
 </html>
 
