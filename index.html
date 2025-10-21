@@ -4570,6 +4570,37 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 
+
+<style>
+  /* Promote the SMALL proxy to the larger style and always use it */
+  #drag-proxy-nameonly {
+    position: absolute !important;
+    left: -9999px;
+    top: -9999px;
+    z-index: 10000 !important;
+    pointer-events: none !important;
+    font-size: 1.1em !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+  }
+  /* Hide any leftover large proxy, just in case */
+  #drag-proxy-nameonly-large { display: none !important; }
+</style>
+<script>
+(function(){
+  // Remove the large proxy element and any handlers that tried to sync it
+  $('#drag-proxy-nameonly-large').remove();
+  $('#setlist-list').off('.largeProxySync');
+  $(document).off('.largeProxySyncDoc');
+
+  // If any earlier scripts try to recreate the large proxy, hide it immediately.
+  new MutationObserver(function(muts){
+    var big = document.getElementById('drag-proxy-nameonly-large');
+    if (big) big.remove();
+  }).observe(document.body, {childList:true, subtree:true});
+})();
+</script>
+
 </body>
 </html>
 
