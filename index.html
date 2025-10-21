@@ -1726,7 +1726,7 @@ html.dark .notes-inline .notes-textarea {
   pointer-events: none;
   margin: 0;
   box-shadow: 0 4px 12px rgba(0,0,0,.12);
-  background: #2563eb;  /* blue like active drag */
+  /* inherit blue/drag styling from the helper we clone */
   color: #fff;
 }
 #pinned-setlist-clone .song-name-text { color:#fff; }
@@ -4352,14 +4352,17 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
         wasOutside = true;
         document.body.classList.add('setlist-drag-outside');
         // Pin a visual clone at the original on-screen coordinates
-        var html = ui.item.clone(true, true).prop('outerHTML');
-        $pinned.html(html).css({
+        // Use the current helper so the look matches the "dragging to reorder" style exactly
+        var helperHtml = ui.helper.prop('outerHTML');
+        $pinned.html(helperHtml).css({
           display:'block',
           left: pinnedRect.left + 'px',
           top: pinnedRect.top + 'px',
           width: pinnedRect.width + 'px',
-          height: pinnedRect.height + 'px'
+          height: ui.helper.outerHeight() + 'px'
         });
+        // Ensure the helper inside the pinned container doesn't try to move
+        $pinned.find('.ui-sortable-helper').css({position:'static', left:'auto', top:'auto', transform:'none'});
         // Show proxy chip; hide helper (we keep sorting session alive)
         $proxy.show();
       }
