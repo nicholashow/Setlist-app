@@ -1732,16 +1732,11 @@ html.dark .notes-inline .notes-textarea {
 #pinned-setlist-clone .song-name-text { color:#fff; }
 
 /* While outside, hide helper+placeholder so no reflow occurs */
-/* removed: keep helper + placeholder visible outside */
+body.setlist-drag-outside .ui-sortable-helper { display: none !important; }
+body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none !important; visibility: hidden !important; }
 
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
-
-<style>
-/* In-list ghost clone that makes the item appear unchanged while dragging outside */
-.setlist-stayput-ghost { pointer-events: none !important; }
-</style>
-
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2245,13 +2240,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
-            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style>
-<style>
-/* In-list ghost clone that makes the item appear unchanged while dragging outside */
-.setlist-stayput-ghost { pointer-events: none !important; }
-</style>
-
-</head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
+            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style></head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
             $('#share-email').on('click',e=>{e.preventDefault();shareSetlist('email')});
@@ -4403,203 +4392,6 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 
 </script>
-<script>
-// === Setlist outside-drag (homepage-like): real tile stays; name-only chip follows finger ===
-(function(){
-  var $list = $('#setlist-list');
-  if (!$list.length) return;
-  var $panel = $list.closest('.setlist-panel');
-  if (!$panel.length) $panel = $list;
-
-  // One name-only proxy (blue chip)
-  var $proxy = $('#drag-proxy-nameonly');
-  if (!$proxy.length){ $proxy = $('<div id="drag-proxy-nameonly" />').appendTo(document.body); }
-  $proxy.css({ position:'fixed', top:0, left:0, transform:'translate(-9999px,-9999px)', 'z-index':10000, 'pointer-events':'none' });
-  // De-dupe proxies
-  (function(){ var nodes = document.querySelectorAll('#drag-proxy-nameonly'); for (var i=1;i<nodes.length;i++) nodes[i].remove(); })();
-
-  // A pixel-perfect overlay twin to keep the visual of the real tile unchanged
-  var $twin = $('#setlist-visual-twin');
-  if (!$twin.length){ $twin = $('<div id="setlist-visual-twin" style="display:none;"></div>').appendTo(document.body); }
-
-  var startRect=null, startIndex=-1, panelRect=null;
-  function rect(el){ return el.getBoundingClientRect(); }
-  function panelBounds(){ var el=$panel.get(0); return rect(el); }
-  function outside(evt){
-    var r = panelRect || (panelRect = panelBounds());
-    var t = evt.touches && evt.touches[0];
-    var cx = t ? t.clientX : evt.clientX;
-    var cy = t ? t.clientY : evt.clientY;
-    return (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom);
-  }
-  function moveProxy(evt, name){
-    if (typeof name === 'string' && $proxy.text() !== name) $proxy.text(name);
-    var t = evt.touches && evt.touches[0];
-    var cx = t ? t.clientX : evt.clientX;
-    var cy = t ? t.clientY : evt.clientY;
-    $proxy.css('transform', 'translate('+(cx+12)+'px,'+(cy+12)+'px)').show();
-  }
-  function hideProxy(){ $proxy.hide().css('transform','translate(-9999px,-9999px)'); }
-
-  function inlineTwinFrom($el){
-    var r = rect($el.get(0));
-    startRect = r;
-    $twin
-      .css({
-        position:'fixed', left:r.left+'px', top:r.top+'px',
-        width:r.width+'px', height:r.height+'px',
-        margin:0, padding:0, 'z-index': 9999, 'pointer-events': 'none', display:'block'
-      })
-      .html('')
-      .append($el.clone(true, true));
-  }
-  function removeTwin(){ $twin.hide().empty(); }
-
-  $list.off('.setlistOutsideTwin');
-  $list.on('sortstart.setlistOutsideTwin', function(e, ui){
-    panelRect=null;
-    startIndex = ui.item.index();
-    removeTwin();
-    hideProxy();
-  });
-  $list.on('sort.setlistOutsideTwin', function(e, ui){
-    if (outside(e)){
-      if ($twin.is(':hidden')) inlineTwinFrom(ui.helper);
-      // Keep placeholder at original index to stop list shift
-      try {
-        var $ph = ui.placeholder;
-        if ($ph && startIndex >= 0){
-          var $kids = $list.children(':not(.ui-sortable-helper)');
-          if (startIndex < $kids.length){ $ph.detach(); $ph.insertBefore($kids.eq(startIndex)); }
-        }
-      } catch(err){}
-      // Make the helper invisible but present so sortable keeps working
-      ui.helper.css({ opacity:0, visibility:'hidden' });
-      // Move the chip
-      var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
-      moveProxy(e, name);
-    } else {
-      removeTwin();
-      ui.helper.css({ opacity:'', visibility:'' });
-      hideProxy();
-    }
-  });
-  $list.on('sortstop.setlistOutsideTwin', function(e, ui){
-    removeTwin();
-    ui.helper.css({ opacity:'', visibility:'' });
-    hideProxy();
-    startRect=null; startIndex=-1; panelRect=null;
-  });
-})();
-</script>
-
-<script>
-// === Setlist outside-drag (homepage parity): keep real look in-list via ghost; drag ONLY name chip outside ===
-(function(){
-  var $list = $('#setlist-list');
-  if (!$list.length) return;
-  var $panel = $list.closest('.setlist-panel');
-  if (!$panel.length) $panel = $list;
-
-  // Single reusable name-only proxy chip
-  var $proxy = $('#drag-proxy-nameonly');
-  if (!$proxy.length){
-    $proxy = $('<div id="drag-proxy-nameonly" />').appendTo(document.body);
-  }
-  $proxy.css({ position:'fixed', top:0, left:0, transform:'translate(-9999px,-9999px)', 'z-index':10000, 'pointer-events':'none' });
-  // Hard de-dupe
-  (function(){ var nodes=document.querySelectorAll('#drag-proxy-nameonly'); for (var i=1;i<nodes.length;i++) nodes[i].remove(); })();
-
-  var startIndex = -1;
-  var $ghost = null;
-  var panelRect = null;
-
-  function getPanelRect(){
-    var el = $panel.get(0);
-    return el.getBoundingClientRect();
-  }
-  function isOutside(evt){
-    var r = panelRect || (panelRect=getPanelRect());
-    var t = (evt.touches && evt.touches[0]) ? evt.touches[0] : null;
-    var cx = t ? t.clientX : evt.clientX;
-    var cy = t ? t.clientY : evt.clientY;
-    return (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom);
-  }
-  function moveProxy(evt, name){
-    if (typeof name === 'string' && $proxy.text() !== name) $proxy.text(name);
-    var t = (evt.touches && evt.touches[0]) ? evt.touches[0] : null;
-    var cx = t ? t.clientX : evt.clientX;
-    var cy = t ? t.clientY : evt.clientY;
-    $proxy.css('transform', 'translate('+(cx+12)+'px,'+(cy+12)+'px)').show();
-  }
-  function hideProxy(){ $proxy.hide().css('transform','translate(-9999px,-9999px)'); }
-
-  function ensureGhost($item){
-    if ($ghost && $ghost.length) return $ghost;
-    // Deep clone to preserve appearance; strip duplicate IDs for safety
-    $ghost = $item.clone(true, true).addClass('setlist-stayput-ghost');
-    $ghost.find('[id]').each(function(){ this.removeAttribute('id'); });
-    return $ghost;
-  }
-  function insertGhostAtIndex(idx){
-    try {
-      var $kids = $list.children(':not(.ui-sortable-helper)');
-      if (idx < 0 || idx > $kids.length) return;
-      // Remove any existing ghost before inserting
-      if ($ghost && $ghost.length) $ghost.detach();
-      if (idx < $kids.length){ $ghost.insertBefore($kids.eq(idx)); }
-      else { $ghost.appendTo($list); }
-    } catch(e){}
-  }
-  function removeGhost(){
-    if ($ghost && $ghost.length){ $ghost.remove(); }
-    $ghost = null;
-  }
-
-  $list.off('.setlistOutsideGhost');
-  $list.on('sortstart.setlistOutsideGhost', function(e, ui){
-    panelRect = null;
-    startIndex = ui.item.index();
-    removeGhost();
-    hideProxy();
-  });
-  $list.on('sort.setlistOutsideGhost', function(e, ui){
-    if (isOutside(e)){
-      // Keep the *look* in the list by inserting a ghost clone at the original index
-      ensureGhost(ui.item);
-      insertGhostAtIndex(startIndex);
-      // Keep placeholder pinned at the same index so list never shifts
-      try {
-        var $ph = ui.placeholder;
-        if ($ph && startIndex >= 0){
-          var $kids = $list.children(':not(.ui-sortable-helper)');
-          if (startIndex < $kids.length){
-            $ph.detach(); $ph.insertBefore($kids.eq(startIndex));
-          }
-        }
-      } catch(err){}
-      // Hide the moving helper (but keep the session alive)
-      ui.helper.css({ visibility:'hidden', opacity:0 });
-      // Show ONE name-only chip following the finger
-      var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
-      moveProxy(e, name);
-    } else {
-      // Back inside: restore normal visuals
-      removeGhost();
-      ui.helper.css({ visibility:'', opacity:'' });
-      hideProxy();
-    }
-  });
-  $list.on('sortstop.setlistOutsideGhost', function(e, ui){
-    // Cleanup
-    removeGhost();
-    ui.helper.css({ visibility:'', opacity:'' });
-    hideProxy();
-    startIndex = -1; panelRect = null;
-  });
-})();
-</script>
-
 </body>
 </html>
 
