@@ -1644,45 +1644,12 @@ html.dark .notes-inline .notes-textarea {
   text-overflow: ellipsis;
   padding-right: 12px; /* small cushion from the emblems/inputs */
 }
-
-
-
-/* Sidebar closed: make filename single-line (keep open state unchanged) */
-.left-col.collapsed ~ main .song-name-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding-right: 12px;
-}
-
-
-/* === All Songs: align toolbar with row columns === */
-/* 1) Make Sort box narrower without moving its LEFT edge */
-#master-view-controls .sort-dropdown,
-#master-view-controls select#sort-dropdown,
-#master-view-controls .sort-select,
-#master-view-controls .sort-container select {
-  width: 180px !important;
-  max-width: 180px !important;
-}
-
-/* 2) Nudge Add files and Delete All left to column-align with row controls */
-#master-view-controls #upload-master-btn,
-#master-view-controls button#upload-master-btn,
-#master-view-controls .btn-master#upload-master-btn {
-  margin-left: -8px !important;   /* align with Artist column */
-}
-#master-view-controls #delete-all-btn,
-#master-view-controls button#delete-all-btn {
-  margin-left: -16px !important;  /* align with per-row Delete button */
-}
-
-/* Keep controls on one line gracefully */
-#master-view-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .5rem;
-  align-items: center;
+.left-col:not(.collapsed) ~ main .song-name-text {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  padding-right: 260px; /* reserve space so wrapping never slides under inputs */
+  line-height: 1.25;
 }
 
 </style>
