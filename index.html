@@ -1752,6 +1752,16 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   }
 </style>
 
+
+<style>
+  /* Larger look applied to whichever proxy survives */
+  .nameonly-large-look {
+    font-size: 1.1em !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+  }
+</style>
+
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2267,6 +2277,16 @@ const s=$('.left-col');s.toggleClass('collapsed');
     font-size: 1.1em;
     font-weight: 600;
     border-radius: 8px;
+  }
+</style>
+
+
+<style>
+  /* Larger look applied to whichever proxy survives */
+  .nameonly-large-look {
+    font-size: 1.1em !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
   }
 </style>
 
@@ -4715,6 +4735,56 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     requestAnimationFrame(rafLoop);
   }
   requestAnimationFrame(rafLoop);
+})();
+</script>
+
+
+<script>
+// === Proxy Arbiter: keep exactly ONE name-only label nearest the finger, with the larger look ===
+(function(){
+  function pageXYFromEvent(evt){
+    var oe = evt && (evt.originalEvent || evt);
+    var t = oe && (oe.touches && oe.touches[0] || oe.changedTouches && oe.changedTouches[0]);
+    var px = t ? t.pageX : (evt && (evt.pageX != null ? evt.pageX : (evt.clientX + window.pageXOffset)));
+    var py = t ? t.pageY : (evt && (evt.pageY != null ? evt.pageY : (evt.clientY + window.pageYOffset)));
+    return {x: px || 0, y: py || 0};
+  }
+  function centerOf(el){
+    var r = el.getBoundingClientRect();
+    return {x: r.left + r.width/2 + window.pageXOffset, y: r.top + r.height/2 + window.pageYOffset};
+  }
+  function dist2(a,b){ var dx=a.x-b.x, dy=a.y-b.y; return dx*dx + dy*dy; }
+  function applyLargeLook(el){
+    el.classList.add('nameonly-large-look');
+    el.style.zIndex = '10000';
+    el.style.pointerEvents = 'none';
+    if (getComputedStyle(el).position === 'static') el.style.position = 'absolute';
+  }
+  function arbiter(evt){
+    var px = pageXYFromEvent(evt);
+    var a = document.getElementById('drag-proxy-nameonly');
+    var b = document.getElementById('drag-proxy-nameonly-large');
+    if (!a && !b) return;
+    if (a && !b){ applyLargeLook(a); return; }
+    if (!a && b){ b.id = 'drag-proxy-nameonly'; applyLargeLook(b); return; }
+    var ca = centerOf(a), cb = centerOf(b);
+    var da = dist2(px, ca), db = dist2(px, cb);
+    var keep = da <= db ? a : b;
+    var toss = da <= db ? b : a;
+    applyLargeLook(keep);
+    if (toss && toss.parentNode) toss.parentNode.removeChild(toss);
+    keep.id = 'drag-proxy-nameonly';
+  }
+
+  var $list = $('#setlist-list');
+  if ($list.length){
+    $list.off('.proxyArbiter');
+    $list.on('sortstart.proxyArbiter', function(e){ arbiter(e); });
+    $list.on('sort.proxyArbiter', function(e){ arbiter(e); });
+    $list.on('sortstop.proxyArbiter', function(e){ arbiter(e); });
+  }
+  $(document).off('.proxyArbiterDoc')
+    .on('mousemove.proxyArbiterDoc touchmove.proxyArbiterDoc', function(e){ arbiter(e); });
 })();
 </script>
 
