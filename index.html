@@ -4516,6 +4516,60 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 
+
+<script>
+// === Overlay: Position the LARGE name-only chip exactly where the original small chip would be ===
+(function(){
+  var $list = $('#setlist-list'); if (!$list.length) return;
+  var $big  = $('#drag-proxy-nameonly-large');
+  if (!$big.length) return;
+
+  function toPageXY(rect){
+    return { left: rect.left + window.pageXOffset, top: rect.top + window.pageYOffset };
+  }
+  function syncToSmall(){
+    var small = document.getElementById('drag-proxy-nameonly');
+    if (!small) return false;
+    var r = small.getBoundingClientRect();
+    if (!(r && isFinite(r.left) && isFinite(r.top))) return false;
+    var p = toPageXY(r);
+    $big.css({ left: p.left + 'px', top: p.top + 'px', display: 'block' });
+    return true;
+  }
+  function hideBig(){ $big.css({ left:'-9999px', top:'-9999px', display:'none' }); }
+
+  // Hook into the existing containment script's lifecycle
+  $list
+    .off('.largeProxySync')
+    .on('sortstart.largeProxySync', function(){
+      hideBig();
+      // don't force-create the small chip; we only sync if it's present
+    })
+    .on('sort.largeProxySync', function(){
+      var small = document.getElementById('drag-proxy-nameonly');
+      if (small){
+        // Make the original small chip invisible so only the big one is seen
+        small.style.opacity = '0';
+        small.style.visibility = 'visible';
+        // Move the big one to the small one's exact position
+        syncToSmall();
+      }
+    })
+    .on('sortstop.largeProxySync', function(){
+      var small = document.getElementById('drag-proxy-nameonly');
+      if (small){ small.style.opacity = ''; small.style.visibility = ''; }
+      hideBig();
+    });
+
+  // Safety: also listen globally in case some drags initialize elsewhere
+  $(document).off('.largeProxySyncDoc')
+    .on('mousemove.largeProxySyncDoc touchmove.largeProxySyncDoc', function(){
+      // If we're mid-drag and the small chip exists, keep syncing
+      syncToSmall();
+    });
+})();
+</script>
+
 </body>
 </html>
 
