@@ -839,7 +839,12 @@
         }
         
         /* === Redesigned Responsive Controls for Master View === */
-        
+        #master-view-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
         #search-container {
             position: relative;
         }
@@ -1633,85 +1638,22 @@ html.dark .notes-inline .notes-textarea {
 
 
 /* === Filename behavior based on sidebar state (ONLY change requested) === */
-
-
-
-
-/* Sidebar closed: make filename single-line (keep open state unchanged) */
-
-
-
-/* === All Songs: align toolbar with row columns === */
-/* 1) Make Sort box narrower without moving its LEFT edge */
-
-
-/* 2) Nudge Add files and Delete All left to column-align with row controls */
-#master-view-controls 
-#master-view-controls 
-
-/* Keep controls on one line gracefully */
-
-
-
-/* === Ensure stacking when sidebar is OPEN; single-line only when CLOSED === */
-
-
-
-/* === All Songs toolbar alignment (anchor Sort left edge) === */
-
-
-/* Shift buttons left without affecting Sort left edge */
-
-
-
-
-/* === Filename behavior (precise) === */
-/* Sidebar CLOSED: one line with ellipsis */
-
-
-/* Sidebar OPEN: stack, but never go under inputs */
-
-
-
-/* === All Songs toolbar alignment === */
-/* Narrow Sort width without moving its left edge */
-
-
-/* Shift buttons left so they align with row columns */
-
-
-
-
-/* === Filename behavior (finalized) === */
-/* Sidebar CLOSED: one line */
 .left-col.collapsed ~ main .song-name-text {
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 12px; /* small cushion from the emblems/inputs */
 }
-
-/* Sidebar OPEN: stack/wrap and NEVER run under inputs */
 .left-col:not(.collapsed) ~ main .song-name-text {
-  white-space: normal !important;
-  overflow: visible !important;
-  text-overflow: clip !important;
-  margin-right: var(--inputs-width) !important; /* reserves space for inputs */
-  padding-right: 8px !important;               /* tiny cushion */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  padding-right: 260px; /* reserve space so wrapping never slides under inputs */
   line-height: 1.25;
 }
 
-
-/* === All Songs toolbar alignment === */
-/* Make Sort narrower while keeping its LEFT edge stationary */
-
-
-/* Shift "Add files" and "Delete All" left to align with row columns */
-#master-view-controls 
-#master-view-controls 
-
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
-<style>:root{ --inputs-width: 300px; }</style>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2200,13 +2142,17 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#toggle-setlists').click(()=>$('#setlists-container').slideToggle(150));
             $(document).on('click','#setlist-details-toggle',function(){$(this).toggleClass('open');$('#setlist-details-content').slideToggle(200,function(){if($(this).is(':visible'))$(this).css('display','flex')})});
             $('#add-setlist-btn').click(()=>{const n=$('#new-setlist-name').val().trim();if(!n)return alert('Enter a name');if(setlists[n])return alert('Name exists');setlists[n]={songs:[],date:"",venue:""};$('#new-setlist-name').val('');renderLeftSetlists();save()});
-            $(');
+            $('#upload-master-btn').click(()=>$('#master-upload').click());
+            $('#master-upload').on('change',handleMasterUpload);
+            $('#search').on('input',renderMaster);
+            $('#setlist-search-add').on('input',renderAddSongsPanel);
+            $('#sort-dropdown, #favorites-sort-dropdown, #genre-sort-dropdown').on('change',function(){const v=$('main > section:visible').attr('id');if(v==='master-view')renderMaster();else if(v==='favorites-view')renderFavorites();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)});
             $('#genre-filter-button').on('click',()=>$('#genre-filter-dropdown').toggleClass('hidden'));
             $(document).on('change','#genre-filter-dropdown input[type="checkbox"]',function(){masterSelectedGenres=$('#genre-filter-dropdown input:checked').map(function(){return $(this).val()}).get();updateGenreFilterButtonText('#genre-filter-button',masterSelectedGenres);renderMaster()});
             $('#setlist-sort-filter-dropdown').on('change',renderSetlist);
             $(document).on('click',function(e){if(!$(e.target).closest('#genre-filter-container').length)$('#genre-filter-dropdown').addClass('hidden');if(!$(e.target).closest('.relative').has('#share-setlist-btn').length)$('#share-options').addClass('hidden')});
             $('#reset-plays').click(()=>{if(confirm('Reset all plays?')){playCounts={};masterSongs.forEach(s=>s.lastPlayed=null);renderPlays();updateTopLeast();save()}});
-            $('});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
+            $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
             $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style></head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
