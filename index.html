@@ -1599,19 +1599,7 @@ html.dark .notes-inline .notes-textarea {
 }
 
 /* Prevent long names from pressing against the 4 inputs */
-#master-list > li .song-name-text,
-#setlist-list > li .song-name-text,
-#favorites-list > li .song-name-text,
-#genre-song-list > li .song-name-text,
-#plays-list > li .song-name-text,
-#genre-page-list > li .song-name-text {
-  display:block;
-  white-space: normal; /* allow wrapping */
-  overflow: visible;
-  text-overflow: clip;
-  padding-right: 260px; /* reserve space so long names don't go under inputs */
-  line-height: 1.25;
-}
+
 
 /* Add a touch of space before the 4-input block */
 #master-list > li .song-details-container,
@@ -1625,19 +1613,7 @@ html.dark .notes-inline .notes-textarea {
 
 
 /* Keep long names on the same row; leave room for the 4-input block */
-#master-list > li .song-name-text,
-#setlist-list > li .song-name-text,
-#favorites-list > li .song-name-text,
-#genre-song-list > li .song-name-text,
-#plays-list > li .song-name-text,
-#genre-page-list > li .song-name-text {
-  display:block;
-  white-space: normal; /* allow wrapping */
-  overflow: visible;
-  text-overflow: clip;
-  padding-right: 260px; /* reserve space so long names don't go under inputs */
-  line-height: 1.25;
-}
+
 
 
 /* === Align the 4 emblems further left across the app ===
@@ -1653,29 +1629,21 @@ html.dark .notes-inline .notes-textarea {
 }
 
 /* Keep long names on one row and away from the inputs edge */
-#master-list > li .song-name-text,
-#setlist-list > li .song-name-text,
-#favorites-list > li .song-name-text,
-#genre-song-list > li .song-name-text,
-#plays-list > li .song-name-text,
-#genre-page-list > li .song-name-text {
-  display:block;
-  white-space: normal; /* allow wrapping */
-  overflow: visible;
-  text-overflow: clip;
-  padding-right: 260px; /* reserve space so long names don't go under inputs */
-  line-height: 1.25;
-}
 
 
-/* === Filename behavior based on sidebar state (no animation changes) === */
+
+
+/* When sidebar is open (default), show full names with wrap and keep off inputs */
+
+
+
+/* === Filename behavior based on sidebar state (ONLY change requested) === */
 .left-col.collapsed ~ main .song-name-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-right: 12px; /* tiny cushion from inputs */
+  padding-right: 12px; /* small cushion from the emblems/inputs */
 }
-/* When sidebar is open (default), show full names with wrap and keep off inputs */
 .left-col:not(.collapsed) ~ main .song-name-text {
   white-space: normal;
   overflow: visible;
