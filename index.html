@@ -1731,6 +1731,35 @@ html.dark .notes-inline .notes-textarea {
 /* When outside, we hide the jQuery UI helper so only the proxy is visible */
 body.setlist-drag-outside .ui-sortable-helper { opacity: 0 !important; }
 
+
+/* === Keep original item visible & blue while outside === */
+#setlist-list > li.locked-blue {
+  background: #2563eb !important;
+  color: #fff !important;
+}
+#setlist-list > li.locked-blue .song-name-text { color:#fff !important; }
+#setlist-list > li.keep-visible { display: block !important; visibility: visible !important; opacity: 1 !important; }
+
+/* Floating proxy chip */
+#drag-proxy-nameonly {
+  position: fixed;
+  top: 0; left: 0;
+  transform: translate(-9999px, -9999px);
+  pointer-events: none;
+  z-index: 10000;
+  background: #2563eb;
+  color: #fff;
+  border-radius: 9999px;
+  padding: 6px 12px;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(0,0,0,.15);
+  white-space: nowrap;
+  user-select: none;
+}
+
+/* Hide the jQuery helper only when outside so the proxy is all you see */
+body.setlist-drag-outside .ui-sortable-helper { opacity: 0 !important; }
+
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
 </head>
@@ -4385,6 +4414,76 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     if (document.body.classList.contains('setlist-drag-outside')){
       setProxyPosition(e);
     }
+  });
+})();
+
+</script>
+<script>
+
+(function(){
+  var $ = window.jQuery;
+  var $list = $('#setlist-list');
+  var $panel = $('#setlist-view .setlist-panel');
+  if (!$list.length || !$panel.length || !$.fn.sortable) return;
+
+  // Ensure clone helper so original can remain in place
+  try { $list.sortable('option', 'helper', 'clone'); }
+  catch(e){ try { $list.sortable('destroy'); } catch(_){} $list.sortable({ helper: 'clone' }); }
+
+  // Single proxy chip
+  var $proxy = $('#drag-proxy-nameonly');
+  if (!$proxy.length){
+    $proxy = $('<div id="drag-proxy-nameonly" style="display:none;"></div>').appendTo(document.body);
+  }
+
+  $list.off('.proxyLockedBlue');
+
+  var wasOutside = false;
+
+  function setProxyPosition(evt){
+    var x = evt.clientX + 12, y = evt.clientY + 12;
+    $proxy.css('transform', 'translate(' + x + 'px,' + y + 'px)');
+  }
+
+  $list.on('sortstart.proxyLockedBlue', function(e, ui){
+    var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
+    $proxy.text(name);
+  });
+
+  $list.on('sort.proxyLockedBlue', function(e, ui){
+    var rect = $panel.get(0).getBoundingClientRect();
+    var x = e.clientX, y = e.clientY;
+    var outside = (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom);
+
+    if (outside){
+      if (!wasOutside){
+        document.body.classList.add('setlist-drag-outside');
+        // Keep the REAL item in place, blue, and visible
+        ui.item.addClass('locked-blue keep-visible').css({display:''});
+        // Lock position: hide placeholder so list doesn't reflow
+        ui.placeholder.css({ visibility:'hidden', display:'none' });
+        // Show proxy and hide the drag helper
+        $proxy.show();
+        wasOutside = true;
+      }
+      setProxyPosition(e);
+    } else {
+      if (wasOutside){
+        document.body.classList.remove('setlist-drag-outside');
+        // Back inside: restore normal sort visuals
+        ui.item.removeClass('keep-visible'); // original hidden again by sortable while dragging
+        ui.placeholder.css({ visibility:'', display:'' });
+        $proxy.hide().css('transform','translate(-9999px,-9999px)');
+        wasOutside = false;
+      }
+    }
+  });
+
+  $list.on('sortstop.proxyLockedBlue', function(e, ui){
+    // Clear flags and visuals
+    document.body.classList.remove('setlist-drag-outside');
+    $proxy.hide().css('transform','translate(-9999px,-9999px)');
+    ui.item.removeClass('locked-blue keep-visible').css({display:''});
   });
 })();
 
