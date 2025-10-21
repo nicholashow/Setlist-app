@@ -1991,7 +1991,7 @@ html.dark .notes-inline .notes-textarea {
         function autoCollapseSidebar(){const s=$('.left-col');if(!s.hasClass('collapsed')){s.addClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />')}}
         // ================== Initialization ==================
         $(function(){function ds(){$('#home-btn').removeClass('app-header-selected').addClass('app-header-unselected');$('#nav-favorites, #nav-plays, #nav-recordings, #nav-energy, #setlists-container .setlist-item, #venue-list .venue-item, #genre-list .genre-item').removeClass('selected')}load();ds();$('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');renderLeftSetlists();renderGenres(ds);renderVenues(ds);bindNav(ds);updateTopLeast();show('master');
-        $(document).on('click','.genre-dot',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(!s)return;const g=[''].concat(genres.map(g=>g.name));s.genre=g[(g.indexOf(s.genre||'')+1)%g.length];const n=`<span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span>`;$(`li[id="${s.id}"]`).find('.genre-dot').parent().html(n);if($('#genre-view').is(':visible')){renderGenreView(currentGenre)}save()});
+        $(document).on('click','.genre-dot',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(!s)return;const g=[''].concat(genres.map(g=>g.name));s.genre=g[(g.indexOf(s.genre||'')+1)%g.length]; s.color=getGenreColor(s.genre);const n=`<span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span>`;$(`li[id="${s.id}"]`).find('.genre-dot').parent().html(n);if($('#genre-view').is(':visible')){renderGenreView(currentGenre)}save()});
         $(document).on('click','.energy-icon',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(s){s.energy=((s.energy||0)+1)%4;const n=energyIcons[s.energy||0];$(`li[id="${s.id}"]`).find('.energy-icon').html(n);if($('#energy-view').is(':visible')){renderEnergyLevels()}save()}});
         $('#genre-color').on('input',function(){$('#genre-color-display').css({'background-image':'none','background-color':$(this).val()})});
         $('#add-genre').click(function(){const n=$('#genre-name').val().trim(),c=$('#genre-color').val();if(!n)return alert('Enter a genre name');if(genres.some(g=>g.name.toLowerCase()===n.toLowerCase()))return alert('Genre already exists');genres.push({name:n,color:c});$('#genre-name').val('');renderGenres(ds);$('#genre-color-display').css({'background-image':'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)','background-color':''});save()});
@@ -2083,22 +2083,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
         async function shareSetlist(m){if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),t=`${escapeHtml(currentSetlist)} - ${escapeHtml(s.date)} @ ${escapeHtml(s.venue)}\n${o.map((s,i)=>`${i+1}. ${escapeHtml(s.name)}`).join('\n')}`,j=`Setlist: ${currentSetlist}`;if(m==='native'&&navigator.share){const f=[];for(let s of o){if(s.fileInfo?.data){try{const b=dataURItoBlob(s.fileInfo.data);f.push(new File([b],s.name+'.pdf',{type:'application/pdf'}))}catch(e){console.error("Could not process file for sharing:",s.name,e)}}}try{await navigator.share({title:currentSetlist,text:t,files:f})}catch(err){console.error('Share failed:',err)}}else if(m==='email'){window.location.href=`mailto:?subject=${encodeURIComponent(j)}&body=${encodeURIComponent(t)}`}else if(m==='gmail'){window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(j)}&body=${encodeURIComponent(t)}`,'_blank')}else{fallbackCopy(t)}$('#share-options').addClass('hidden')}
         function fallbackCopy(t){if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>{$('#copy-feedback').css('opacity',1);setTimeout(()=>$('#copy-feedback').css('opacity',0),2000)})}}
         async function handleMasterUpload(e){const f=e.target.files;for(let file of f){const n=file.name.replace(/\.[^/.]+$/,'');if(masterSongs.some(s=>s.name.toLowerCase()===n.toLowerCase())&&!confirm(`A file named "${n}" already exists. Add anyway?`))continue;const i='s_'+Math.random().toString(36).slice(2,9);try{const fi=await storeFile(file);masterSongs.push({id:i,name:n,artist:'',genre:'',notes:'',duration:'',energy:0,favorite:!1,fileInfo:fi,lastPlayed:null});playCounts[i]=0}catch(err){console.error('Error processing file:',file.name,err);alert(`Failed to process file: ${file.name}`)}}renderAll()}
-        
-        // --- MODIFICATION START ---
-        // Added a colored left border to song items when in the genre view.
-        function createSongItem(s, i, c) {
-            const f = s.favorite ? 'favorited' : '';
-            const t = `<div class="w-8 flex-shrink-0 flex justify-center items-center favorite-star-container ${f}" title="Toggle Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></div>`;
-            const d = `<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${s.genre ? getGenreColor(s.genre) : '#cbd5e1'}" title="${s.genre || 'no genre'}"></span></div>`;
-            const g = `<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${s.energy || 0}">${energyIcons[s.energy || 0]}</div>`;
-            const b = ['master', 'favorites', 'genre'].includes(c) ? 'Delete' : 'Remove';
-            const n = `<div class="song-details-container"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(s.artist || '')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(s.notes || '')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(s.duration || '')}"><button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${b}</button></div>`;
-            const v = c === 'setlist' && viewedSongsInSetlist.has(s.id) ? 'viewed-index' : '';
-            const genreColorStyle = (c === 'genre' && s.genre) ? `border-left: 5px solid ${getGenreColor(s.genre)}; padding-left: calc(0.5rem - 5px);` : '';
-            return $(`<li id="${s.id}" style="${genreColorStyle}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable"><div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${v}">${i + 1}</span></div>${t}${d}${g}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium" data-song-id="${s.id}"><span class="song-name-text" data-song-id="${s.id}">${escapeHtml(s.name)}</span></div>${n}</li>`);
-        }
-        // --- MODIFICATION END ---
-
+        function createSongItem(s,i,c){const f=s.favorite?'favorited':'',t=`<div class="w-8 flex-shrink-0 flex justify-center items-center favorite-star-container ${f}" title="Toggle Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></div>`,d=`<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span></div>`,g=`<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${s.energy||0}">${energyIcons[s.energy||0]}</div>`,b=['master','favorites','genre'].includes(c)?'Delete':'Remove',n=`<div class="song-details-container"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(s.artist||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(s.notes||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(s.duration||'')}"><button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${b}</button></div>`,v=c==='setlist'&&viewedSongsInSetlist.has(s.id)?'viewed-index':'';return $(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable"><div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${v}">${i+1}</span></div>${t}${d}${g}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium" data-song-id="${s.id}"><span class="song-name-text" data-song-id="${s.id}">${escapeHtml(s.name)}</span></div>${n}</li>`)}
         const draggableOptions={appendTo:'body',revert:'invalid',cursorAt:{left:10,top:10},helper:'clone',start:function(e,ui){const i=$(this),c=i.parent().children('.item-selected').length,h=c>1?`Dragging ${c} items`:i.find('.song-name').text();ui.helper.empty().html(h).css({'background-color':'#3b82f6','color':'white','padding':'0.5rem 1rem','height':'auto','width':'auto','white-space':'nowrap','box-shadow':'0 5px 15px rgba(0,0,0,0.3)','z-index':9999,'border-radius':'0.5rem','font-weight':'600'})}};
         function renderMaster(){const q=$('#search').val().toLowerCase();let l=masterSongs.filter(s=>(q?(s.name.toLowerCase().includes(q)||(s.artist||'').toLowerCase().includes(q)):!0)&&(masterSelectedGenres.length>0?masterSelectedGenres.includes(s.genre):!0));const m=$('#sort-dropdown').val();l.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentMasterViewSongs=l;const u=$('#master-list').empty();if(l.length===0)u.append(`<li class="p-8 text-center text-gray-500 italic">${(q||masterSelectedGenres.length>0)?'No songs match your current filters.':'No songs yet. <br> Drag & drop PDF files onto the page or use the "Add files" button!'}</li>`);else l.forEach((s,i)=>u.append(createSongItem(s,i,'master')));$('#master-list .draggable').draggable(draggableOptions)}
         function renderAddSongsPanel(){const q=$('#setlist-search-add').val().toLowerCase();let l=masterSongs.filter(s=>q?s.name.toLowerCase().includes(q):!0);l.sort((a,b)=>a.name.localeCompare(b.name));const u=$('#setlist-add-songs-list').empty(),c=setlists[currentSetlist]?.songs||[];l.forEach(s=>{const i=c.includes(s.id),li=$(`<li class="add-song-item" data-song-id="${s.id}"><label for="add-${s.id}" class="flex items-center w-full cursor-pointer"><input type="checkbox" id="add-${s.id}" class="sr-only custom-checkbox-input" ${i?'checked':''}><div class="custom-checkbox-box"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></div><span class="ml-3 flex-grow">${escapeHtml(s.name)}</span></label></li>`);li.find('input').on('change',function(){const i=$(this).closest('.add-song-item').data('song-id');if(this.checked){if(!setlists[currentSetlist].songs.includes(i))setlists[currentSetlist].songs.push(i)}else{setlists[currentSetlist].songs=setlists[currentSetlist].songs.filter(id=>id!==i)}renderSetlist();save()});u.append(li)})}
@@ -2108,30 +2093,9 @@ const s=$('.left-col');s.toggleClass('collapsed');
         function renderPlays(){const u=$('#plays-list').empty();if(masterSongs.length===0){u.append('<li class="p-8 text-center text-gray-500 italic">Add songs to start tracking plays.</li>');return}const s=masterSongs.slice().sort((a,b)=>(playCounts[b.id]||0)-(playCounts[a.id]||0));window.currentPlaysViewSongs=s;if(Object.values(playCounts).every(c=>c===0)){u.append('<li class="p-8 text-center text-gray-500 italic">No songs played yet. Click a song to log a play.</li>');return}s.forEach(s=>{const l=$(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable pl-4"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);l.find('button').click(()=>{playCounts[s.id]=0;renderPlays();updateTopLeast();save()});u.append(l)});$('#plays-list .draggable').draggable(draggableOptions)}
         function renderRecordings(){const u=$('#recordings-list').empty();if(recordings.length===0){u.append('<li class="p-8 text-center text-gray-500 italic">No recordings saved.</li>');return}recordings.forEach(r=>{const l=$(`<li class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"><div class="flex-1">${escapeHtml(r.setlist)} - ${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</div><audio controls src="${r.audioData}"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-rec" data-id="${r.id}">Delete</button></li>`);l.find('.delete-rec').click(()=>{recordings=recordings.filter(rec=>rec.id!==r.id);renderRecordings();save()});u.append(l)})}
         function renderFavorites(){let f=masterSongs.filter(s=>s.favorite);const m=$('#favorites-sort-dropdown').val();f.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentFavoritesViewSongs=f;const u=$('#favorites-list').empty();f.forEach((s,i)=>{u.append(createSongItem(s,i,'favorites'))});$('#favorites-list .draggable').draggable(draggableOptions)}
-        
-        // --- MODIFICATION START ---
-        // Added a message for when a genre has no songs.
-        function renderGenreView(n) {
-            currentGenre = n;
-            $('#genre-view-title').text(`Genre: ${n}`);
-            let s = masterSongs.filter(s => s.genre && s.genre.toLowerCase() === n.toLowerCase());
-            const m = $('#genre-sort-dropdown').val();
-            s.sort((a, b) => m === 'artist' ? (a.artist || '').localeCompare(b.artist || '') : m === 'lastPlayed' ? (b.lastPlayed ? new Date(b.lastPlayed).getTime() : 0) - (a.lastPlayed ? new Date(a.lastPlayed).getTime() : 0) : m === 'energy' ? (b.energy || 0) - (a.energy || 0) : a.name.localeCompare(b.name));
-            window.currentGenreViewSongs = s;
-            const u = $('#genre-song-list').empty();
-            if (s.length === 0) {
-                u.append('<li class="p-8 text-center text-gray-500 italic">No songs found for this genre.</li>');
-            } else {
-                s.forEach((s, i) => {
-                    u.append(createSongItem(s, i, 'genre'))
-                });
-            }
-            $('#genre-song-list .draggable').draggable(draggableOptions);
-        }
-        // --- MODIFICATION END ---
-
+        function renderGenreView(n){currentGenre=n;$('#genre-view-title').text(`Genre: ${n}`);let s=masterSongs.filter(s=>s.color && s.genre && s.color===getGenreColor(n)); if(!(Array.isArray(s)&&s.length)){ $('#genre-song-list').empty().append('<li class="p-3 text-sm text-gray-500 dark:text-gray-400">No files with this color yet.</li>'); return; }const m=$('#genre-sort-dropdown').val();s.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentGenreViewSongs=s;const u=$('#genre-song-list').empty();s.forEach((s,i)=>{u.append(createSongItem(s,i,'genre'))});$('#genre-song-list .draggable').draggable(draggableOptions)}
         function renderEnergyLevels(){const c=$('#energy-level-container').empty();[1,2,3].forEach(l=>{const s=masterSongs.filter(s=>s.energy===l).sort((a,b)=>a.name.localeCompare(b.name)),e=$(`<div class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg"><div class="flex justify-center mb-2">${energyIcons[l]}</div><ul class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto"></ul></div>`),u=e.find('ul');if(s.length>0)s.forEach(s=>u.append(`<li id="${s.id}" class="p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer draggable">${escapeHtml(s.name)}</li>`));else u.append(`<li class="p-2 text-sm text-gray-500 italic">No songs in this category.</li>`);c.append(e)});$('#energy-level-container .draggable').draggable(draggableOptions)}
-        function renderGenres(ds){$('#genre-list').empty();genres.forEach(g=>{const e=$(`<div class="sidebar-item genre-item" data-name="${escapeHtml(g.name)}"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-genre, .genre-edit-input').length>0)return;ds();$(this).addClass('selected');currentGenre=g.name;show('genre-view')});e.find('.delete-genre').click(ev=>{ev.stopPropagation();if(confirm(`Delete genre "${g.name}"?`)){genres=genres.filter(gn=>gn.name!==g.name);masterSongs.forEach(s=>{if(s.genre===g.name)s.genre=''});renderAll();save()}});e.find('.genre-name').on('dblclick',function(ev){ev.stopPropagation();const o=$(this).text(),i=$('<input class="w-full bg-gray-600 p-1 rounded-md" type="text" value="'+o+'">');$(this).replaceWith(i);i.focus().select().on('blur keypress',function(e){if(e.type==='keypress'&&e.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==o){const gn=genres.find(gn=>gn.name===o);if(gn)gn.name=newName;masterSongs.forEach(s=>{if(s.genre===o)s.genre=newName})}renderAll();save()})});$('#genre-list').append(e)});updateGenreFilters('#genre-filter-dropdown',masterSelectedGenres);$('#genre-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#genre-list .genre-item').each(function(){const n=$(this).data('name'),g=genres.find(g=>g.name===n);if(g)o.push(g)});genres=o;save()}})}
+        function renderGenres(ds){$('#genre-list').empty();genres.forEach(g=>{const e=$(`<div class="sidebar-item genre-item" data-name="${escapeHtml(g.name)}"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-genre, .genre-edit-input').length>0)return;ds();$(this).addClass('selected');currentGenre=g.name;show('genre-view');renderGenreView(g.name)});e.find('.delete-genre').click(ev=>{ev.stopPropagation();if(confirm(`Delete genre "${g.name}"?`)){genres=genres.filter(gn=>gn.name!==g.name);masterSongs.forEach(s=>{if(s.genre===g.name)s.genre=''});renderAll();save()}});e.find('.genre-name').on('dblclick',function(ev){ev.stopPropagation();const o=$(this).text(),i=$('<input class="w-full bg-gray-600 p-1 rounded-md" type="text" value="'+o+'">');$(this).replaceWith(i);i.focus().select().on('blur keypress',function(e){if(e.type==='keypress'&&e.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==o){const gn=genres.find(gn=>gn.name===o);if(gn)gn.name=newName;masterSongs.forEach(s=>{if(s.genre===o)s.genre=newName})}renderAll();save()})});$('#genre-list').append(e)});updateGenreFilters('#genre-filter-dropdown',masterSelectedGenres);$('#genre-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#genre-list .genre-item').each(function(){const n=$(this).data('name'),g=genres.find(g=>g.name===n);if(g)o.push(g)});genres=o;save()}})}
         function renderVenues(ds){$('#venue-list').empty();venues.forEach(v=>{const e=$(`<div class="sidebar-item venue-item" data-name="${escapeHtml(v.name)}"><div class="venue-name text-sm">${escapeHtml(v.name)}</div><span class="delete-venue" title="Delete venue">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-venue').length)return;ds();$(this).addClass('selected');renderVenueSetlists(v.name);show('venue-setlists')});e.find('.delete-venue').click(ev=>{ev.stopPropagation();venues=venues.filter(vn=>vn.name!==v.name);Object.values(setlists).forEach(sl=>{if(sl.venue===v.name)sl.venue=''});recordings.forEach(r=>{if(r.venue===v.name)r.venue=''});renderVenues(ds);if(currentSetlist)renderSetlist();if($('#venue-setlists-view').is(':visible'))$('#home-btn').trigger('click');save()});$('#venue-list').append(e)});$('#venue-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#venue-list .venue-item').each(function(){const n=$(this).data('name'),v=venues.find(v=>v.name===n);if(v)o.push(v)});venues=o;save()}})}
         function renderVenueSetlists(n){$('#venue-setlists-title').html(`Setlists for: <span class="text-blue-600">${escapeHtml(n)}</span>`);const u=$('#venue-setlists-list').empty(),m=Object.entries(setlists).filter(([_,d])=>d.venue===n);if(m.length===0){u.append('<li class="p-4 text-center text-gray-500">No setlists found for this venue.</li>');return}m.forEach(([n,d])=>{u.append(`<li class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" data-setlist-name="${escapeHtml(n)}"><div class="font-medium">${escapeHtml(n)}</div><div class="text-sm text-gray-500">${escapeHtml(d.date)||'No date'}</div></li>`)})}
         function updateGenreFilters(s,l){const d=$(s).empty();if(genres.length===0){d.append('<div class="p-2 text-sm text-gray-500">No genres created.</div>');return}genres.forEach(g=>{d.append(`<label class="flex items-center p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"><input type="checkbox" value="${escapeHtml(g.name)}" class="form-checkbox h-4 w-4 text-blue-600 rounded-md mr-2" ${l.includes(g.name)?'checked':''}>${escapeHtml(g.name)}</label>`)})}
@@ -2905,7 +2869,7 @@ function destroyPdfOverlay() {
             if (!s) return;
             s.genre = genreName;
             var g = (typeof genres!=='undefined') ? genres.find(function(x){ return x.name === genreName; }) : null;
-            if (g && !s.color) { s.color = g.color; } 
+            if (g) { s.color = g.color; } 
             if (typeof save === 'function') save();
             if ($('#master-view').is(':visible') && typeof renderMaster === 'function') renderMaster();
             if ($('#setlist-view').is(':visible') && typeof renderSetlist === 'function') renderSetlist();
@@ -3447,3 +3411,732 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     ev.preventDefault();
     window.__notesActiveSource = el;
     openNotesFrom(el);
+  });
+})();
+
+/* --- 2) Setlist dragging: switch to name-only when leaving setlist box; do not reorder outside --- */
+(function(){
+  if (window.__SetlistDragNameOnly_v1) return;
+  window.__SetlistDragNameOnly_v1 = true;
+
+  function getSetlistRect(){
+    var el = document.getElementById('setlist-list');
+    return el ? el.getBoundingClientRect() : null;
+  }
+
+  function isInsideRect(pt, rect){
+    return rect && pt.x >= rect.left && pt.x <= rect.right && pt.y >= rect.top && pt.y <= rect.bottom;
+  }
+
+  // Attach a jQuery UI draggable specifically for setlist items, without touching existing sortables
+  function init(){
+    var $list = window.jQuery && window.jQuery('#setlist-list');
+    if (!$list || !$list.length) return;
+
+    // Delegate to dynamic items
+    $list.on('mousedown touchstart', '.setlist-item', function(){
+      var $item = window.jQuery(this);
+      if ($item.data('hasExportDrag')) return; // only once
+      $item.data('hasExportDrag', true);
+
+      $item.draggable({
+        helper: function(){
+          var name = ($item.find('.song-name-text').text() || $item.text() || '').trim();
+          var $h = window.jQuery('<div class="drag-helper drag-name-only draggable">'+name+'</div>');
+          $h.data('name', name);
+          return $h;
+        },
+        appendTo: 'body',
+        containment: 'document',
+        distance: 4,
+        zIndex: 2147483645,
+        start: function(e, ui){
+          $item.data('exporting', false);
+          $item.addClass('dragging-from-setlist');
+          $list.sortable('enable'); // ensure enabled at start
+          $item.data('setlistRect', getSetlistRect());
+        },
+        drag: function(e, ui){
+          var rect = $item.data('setlistRect') || getSetlistRect();
+          var pt = { x: (e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX) || ui.position.left),
+                     y: (e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY) || ui.position.top) };
+          var inside = isInsideRect(pt, rect);
+          if (!inside && !$item.data('exporting')){
+            // Leaving setlist: switch to name-only visual and DISABLE reordering
+            $item.data('exporting', true);
+            try { $list.sortable('disable'); } catch(err){}
+            ui.helper.addClass('drag-name-only');
+          } else if (inside && $item.data('exporting')){
+            // Back inside: allow reordering again
+            $item.data('exporting', false);
+            try { $list.sortable('enable'); } catch(err){}
+            ui.helper.removeClass('drag-name-only').text(ui.helper.data('name'));
+          }
+        },
+        stop: function(e, ui){
+          // Always re-enable sortable to keep in-list reordering perfect
+          try { $list.sortable('enable'); } catch(err){}
+          $item.removeClass('dragging-from-setlist').data('exporting', false);
+        }
+      });
+    });
+  }
+
+  // Try now and retry a few times for late DOM
+  init();
+  var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
+})();
+</script>
+
+
+<style id="setlist-export-chip-styles">
+/* Blue name-only ghost chip (separate overlay that follows cursor) */
+#setlist-export-ghost{
+  position:fixed; top:0; left:0;
+  transform:translate(-9999px,-9999px);
+  padding:6px 10px; border-radius:8px;
+  background:rgba(59,130,246,.95); color:#fff;
+  font-size:14px; line-height:1.2;
+  box-shadow:0 6px 16px rgba(0,0,0,.25);
+  border:1px solid rgba(59,130,246,1);
+  max-width:50vw; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;
+  pointer-events:none; z-index:2147483646; opacity:0; transition:opacity 50ms linear;
+}
+/* Keep placeholder from jumping while exporting */
+.ui-sortable-placeholder.setlist-exporting{
+  visibility:hidden!important; height:0!important; margin:0!important; padding:0!important; border:0!important;
+}
+/* Freeze the big helper at the edge (don’t let it move outside) */
+.ui-sortable-helper.setlist-helper-frozen{
+  position:fixed !important; pointer-events:none !important; z-index:2147483645 !important;
+}
+</style>
+
+<script>
+/* Setlist export behavior (v12 — dual-visual + frozen helper, non-destructive)
+   - Inside setlist: normal reorder + full-size helper (unchanged).
+   - When pointer leaves the setlist box: show BLUE name-only ghost that follows cursor; freeze the big helper at the boundary.
+   - While outside: keep sortable responsive; pin placeholder at the original index so the order doesn’t change.
+   - Re-enter: hide ghost + unfreeze helper.
+   - Stop: cleanup so nothing remains “name-only” or frozen.
+*/
+(function(){
+  if (window.__SetlistExportBehavior_v12) return;
+  window.__SetlistExportBehavior_v12 = true;
+
+  function $jq(){ return window.jQuery || window.$; }
+  var $ = $jq(); if (!$) return;
+
+  // Single reusable ghost
+  var ghost = document.createElement('div');
+  ghost.id = 'setlist-export-ghost';
+  document.body.appendChild(ghost);
+
+  function setGhost(text){ ghost.textContent = text || ''; }
+  function showGhostAt(cx, cy){
+    ghost.style.transform = 'translate(' + (cx + 8) + 'px,' + (cy + 8) + 'px)';
+    if (ghost.style.opacity !== '1') ghost.style.opacity = '1';
+  }
+  function hideGhost(){
+    ghost.style.opacity = '0';
+    ghost.style.transform = 'translate(-9999px,-9999px)';
+  }
+
+  function getItemName($item){
+    var name = '';
+    try{
+      var $name = $item.find('.song-name, .song-name-text, .file-name, [data-role=\"song-name\"]').first();
+      name = ($name.text()||'').trim(); if (!name) name = ($item.text()||'').trim();
+    }catch(e){}
+    return name || 'Untitled';
+  }
+
+  function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+  function attach($list){
+    var inst = $list.data('ui-sortable') || $list.data('sortable');
+    if (!inst) return;
+
+    var exporting = false;
+    var $placeholder = null, $currentItem = null;
+    var startIndex = null;
+    var rect = null;
+    var frozenAt = null; // client coords at boundary
+
+    // Preserve existing callbacks
+    var orig = {
+      start:  $list.sortable('option','start'),
+      sort:   $list.sortable('option','sort'),
+      change: $list.sortable('option','change'),
+      over:   $list.sortable('option','over'),
+      out:    $list.sortable('option','out'),
+      stop:   $list.sortable('option','stop')
+    };
+
+    function updateRect(){
+      var box = $list.get(0).getBoundingClientRect();
+      rect = { left: box.left, top: box.top, right: box.right, bottom: box.bottom };
+    }
+    function inside(cx, cy){ return cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom; }
+
+    function eventClientXY(e){
+      var oe = (e && e.originalEvent) || e;
+      var t = (oe && oe.touches && oe.touches[0]) || (oe && oe.changedTouches && oe.changedTouches[0]);
+      if (t) return { x: t.clientX, y: t.clientY };
+      if (typeof e.clientX === 'number') return { x: e.clientX, y: e.clientY };
+      return { x: rect.left, y: rect.top };
+    }
+
+    function freezeHelperAtEdge(cx, cy){
+      var $helper = $('.ui-sortable-helper');
+      if (!$helper.length) return;
+      // Freeze at nearest edge point
+      var fx = clamp(cx, rect.left, rect.right);
+      var fy = clamp(cy, rect.top, rect.bottom);
+      if (cx < rect.left)  fx = rect.left;
+      if (cx > rect.right) fx = rect.right;
+      if (cy < rect.top)   fy = rect.top;
+      if (cy > rect.bottom)fy = rect.bottom;
+      frozenAt = { x: fx, y: fy };
+      var w = $helper.outerWidth(), h = $helper.outerHeight();
+      $helper.addClass('setlist-helper-frozen')
+             .css({ left: (fx - Math.round(w/2)) + 'px', top: (fy - Math.round(h/2)) + 'px' });
+    }
+
+    function updateFrozenHelper(){
+      if (!frozenAt) return;
+      var $helper = $('.ui-sortable-helper');
+      if ($helper.length && $helper.hasClass('setlist-helper-frozen')){
+        var w = $helper.outerWidth(), h = $helper.outerHeight();
+        $helper.css({ left: (frozenAt.x - Math.round(w/2)) + 'px', top: (frozenAt.y - Math.round(h/2)) + 'px' });
+      }
+    }
+
+    function unfreezeHelper(){
+      var $helper = $('.ui-sortable-helper');
+      if ($helper.length){
+        $helper.removeClass('setlist-helper-frozen').css({ left:'', top:'' });
+      }
+      frozenAt = null;
+    }
+
+    function toExportMode(cx, cy){
+      if (exporting) return;
+      exporting = true;
+      setGhost(getItemName($currentItem)); showGhostAt(cx, cy);
+      if ($placeholder) $placeholder.addClass('setlist-exporting');
+      freezeHelperAtEdge(cx, cy);
+    }
+
+    function toReorderMode(){
+      if (!exporting) return;
+      exporting = false;
+      hideGhost();
+      if ($placeholder) $placeholder.removeClass('setlist-exporting');
+      unfreezeHelper();
+    }
+
+    function hardCleanup(){
+      exporting = false; hideGhost(); unfreezeHelper();
+      if ($placeholder) $placeholder.removeClass('setlist-exporting');
+      $placeholder = null; $currentItem = null; startIndex = null; rect = null; frozenAt = null;
+    }
+
+    function keepPlaceholderPinned(){
+      if (!exporting || !$placeholder || startIndex == null) return;
+      var $children = $list.children(':visible');
+      if (!$children.length) return;
+      var idx = Math.max(0, Math.min(startIndex, $children.length - 1));
+      var $anchor = $children.eq(idx);
+      if ($anchor.length && !$placeholder.is($anchor.next())){ $placeholder.insertAfter($anchor); }
+      $placeholder.addClass('setlist-exporting');
+    }
+
+    $list.sortable('option','start', function(e, ui){
+      exporting = false;
+      $placeholder = ui.placeholder; $currentItem = ui.item; startIndex = ui.item.index();
+      updateRect(); hideGhost(); unfreezeHelper();
+      if (orig.start) orig.start.call(this, e, ui);
+    });
+
+    $list.sortable('option','sort', function(e, ui){
+      if (!rect) updateRect();
+      var p = eventClientXY(e);
+      if (inside(p.x, p.y)){
+        toReorderMode();
+      } else {
+        if (!exporting) toExportMode(p.x, p.y);
+        showGhostAt(p.x, p.y);
+        updateFrozenHelper();
+        keepPlaceholderPinned();
+      }
+      if (orig.sort) orig.sort.call(this, e, ui);
+    });
+
+    $list.sortable('option','over', function(e, ui){
+      toReorderMode();
+      if (orig.over) orig.over.call(this, e, ui);
+    });
+
+    $list.sortable('option','out', function(e, ui){
+      var p = eventClientXY(e);
+      if (!rect) updateRect();
+      toExportMode(p.x, p.y);
+      if (orig.out) orig.out.call(this, e, ui);
+    });
+
+    $list.sortable('option','change', function(e, ui){
+      keepPlaceholderPinned();
+      if (orig.change) orig.change.call(this, e, ui);
+    });
+
+    $list.sortable('option','stop', function(e, ui){
+      hardCleanup();
+      if (orig.stop) orig.stop.call(this, e, ui);
+    });
+
+    window.addEventListener('scroll', function(){ if ($currentItem) updateRect(); }, { passive:true });
+    window.addEventListener('resize', function(){ if ($currentItem) updateRect(); }, { passive:true });
+  }
+
+  function init(){
+    var $list = $('#setlist-list'); // adjust if your setlist uses a different selector
+    if ($list.length){ attach($list); }
+  }
+
+  init();
+  var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
+})();
+</script>
+
+
+<style id="setlist-export-chip-styles">
+#setlist-export-ghost{
+  position:fixed; top:0; left:0;
+  transform:translate(-9999px,-9999px);
+  padding:6px 10px; border-radius:8px;
+  background:rgba(59,130,246,.95); color:#fff;
+  font-size:14px; line-height:1.2;
+  box-shadow:0 6px 16px rgba(0,0,0,.25);
+  border:1px solid rgba(59,130,246,1);
+  max-width:50vw; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;
+  pointer-events:none; z-index:2147483646; opacity:0; transition:opacity 50ms linear;
+}
+.ui-sortable-placeholder.setlist-exporting{
+  visibility:hidden!important; height:0!important; margin:0!important; padding:0!important; border:0!important;
+}
+.ui-sortable-helper.setlist-helper-frozen{
+  position:fixed !important; pointer-events:none !important; z-index:2147483645 !important;
+}
+</style>
+<script>
+(function(){
+  if (window.__SetlistExportBehavior_v13) return;
+  window.__SetlistExportBehavior_v13 = true;
+  function $jq(){ return window.jQuery || window.$; }
+  var $ = $jq(); if (!$) return;
+
+  var ghost = document.createElement('div');
+  ghost.id = 'setlist-export-ghost';
+  document.body.appendChild(ghost);
+
+  function setGhost(text){ ghost.textContent = text || ''; }
+  function showGhostAt(cx, cy){ ghost.style.transform = 'translate('+(cx+8)+'px,'+(cy+8)+'px)'; ghost.style.opacity = '1'; }
+  function hideGhost(){ ghost.style.opacity = '0'; ghost.style.transform = 'translate(-9999px,-9999px)'; }
+
+  function getItemName($item){
+    var n=''; try{ var $n=$item.find('.song-name, .song-name-text, .file-name, [data-role="song-name"]').first();
+      n = ($n.text()||'').trim(); if(!n) n=($item.text()||'').trim(); }catch(e){}
+    return n || 'Untitled';
+  }
+  function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+
+  function attach($list){
+    var inst = $list.data('ui-sortable') || $list.data('sortable'); if(!inst) return;
+    var exporting=false, $ph=null, $item=null, startIndex=null, rect=null, frozenAt=null;
+
+    var orig = {
+      start:$list.sortable('option','start'),
+      sort:$list.sortable('option','sort'),
+      change:$list.sortable('option','change'),
+      over:$list.sortable('option','over'),
+      out:$list.sortable('option','out'),
+      stop:$list.sortable('option','stop'),
+      update:$list.sortable('option','update'),
+      receive:$list.sortable('option','receive')
+    };
+
+    function updateRect(){ var r=$list.get(0).getBoundingClientRect(); rect={left:r.left, top:r.top, right:r.right, bottom:r.bottom}; }
+    function inside(x,y){ return x>=rect.left && x<=rect.right && y>=rect.top && y<=rect.bottom; }
+    function evtXY(e){
+      var oe=(e&&e.originalEvent)||e, t=(oe&&oe.touches&&oe.touches[0])||(oe&&oe.changedTouches&&oe.changedTouches[0]);
+      if(t) return {x:t.clientX,y:t.clientY}; if(typeof e.clientX==='number') return {x:e.clientX,y:e.clientY};
+      return {x:rect.left,y:rect.top};
+    }
+
+    function freezeAtEdge(cx,cy){
+      var $h=$('.ui-sortable-helper'); if(!$h.length) return;
+      var fx=clamp(cx,rect.left,rect.right), fy=clamp(cy,rect.top,rect.bottom);
+      if(cx<rect.left)fx=rect.left; if(cx>rect.right)fx=rect.right; if(cy<rect.top)fy=rect.top; if(cy>rect.bottom)fy=rect.bottom;
+      frozenAt={x:fx,y:fy};
+      var w=$h.outerWidth(), h=$h.outerHeight();
+      $h.addClass('setlist-helper-frozen').css({ left:(fx-Math.round(w/2))+'px', top:(fy-Math.round(h/2))+'px' });
+    }
+    function updateFrozen(){
+      if(!frozenAt) return; var $h=$('.ui-sortable-helper');
+      if($h.length && $h.hasClass('setlist-helper-frozen')){
+        var w=$h.outerWidth(), h=$h.outerHeight();
+        $h.css({ left:(frozenAt.x-Math.round(w/2))+'px', top:(frozenAt.y-Math.round(h/2))+'px' });
+      }
+    }
+    function unfreeze(){ var $h=$('.ui-sortable-helper'); if($h.length){ $h.removeClass('setlist-helper-frozen').css({left:'',top:''}); } frozenAt=null; }
+
+    function toExport(cx,cy){
+      if(exporting) return; exporting=true;
+      setGhost(getItemName($item)); showGhostAt(cx,cy);
+      if($ph) $ph.addClass('setlist-exporting');
+      freezeAtEdge(cx,cy);
+    }
+    function toReorder(){ if(!exporting) return; exporting=false; hideGhost(); if($ph) $ph.removeClass('setlist-exporting'); unfreeze(); }
+    function keepPinned(){
+      if(!exporting||!$ph||startIndex==null) return;
+      var kids=$list.children(':visible'); if(!kids.length) return;
+      var idx=Math.max(0,Math.min(startIndex,kids.length-1)), $a=kids.eq(idx);
+      if($a.length && !$ph.is($a.next())) $ph.insertAfter($a);
+      $ph.addClass('setlist-exporting');
+    }
+    function cleanup(){ exporting=false; hideGhost(); unfreeze(); if($ph) $ph.removeClass('setlist-exporting'); $ph=null; $item=null; startIndex=null; rect=null; frozenAt=null; }
+
+    $list.sortable('option','start', function(e,ui){
+      exporting=false; $ph=ui.placeholder; $item=ui.item; startIndex=ui.item.index(); updateRect(); hideGhost(); unfreeze();
+      if(orig.start) orig.start.call(this,e,ui);
+    });
+    $list.sortable('option','sort', function(e,ui){
+      if(!rect) updateRect(); var p=evtXY(e);
+      if(inside(p.x,p.y)){ toReorder(); }
+      else { if(!exporting) toExport(p.x,p.y); showGhostAt(p.x,p.y); updateFrozen(); keepPinned(); }
+      if(orig.sort) orig.sort.call(this,e,ui);
+    });
+    $list.sortable('option','over', function(e,ui){ toReorder(); if(orig.over) orig.over.call(this,e,ui); });
+    $list.sortable('option','out', function(e,ui){ var p=evtXY(e); if(!rect) updateRect(); toExport(p.x,p.y); if(orig.out) orig.out.call(this,e,ui); });
+    $list.sortable('option','change', function(e,ui){ keepPinned(); if(orig.change) orig.change.call(this,e,ui); });
+
+    // Prevent reorder when outside: cancel on update/receive
+    $list.sortable('option','update', function(e,ui){ if(exporting){ try{$list.sortable('cancel');}catch(_){ } return; } if(orig.update) orig.update.call(this,e,ui); });
+    $list.sortable('option','receive', function(e,ui){ if(exporting){ try{$list.sortable('cancel');}catch(_){ } return; } if(orig.receive) orig.receive.call(this,e,ui); });
+
+    $list.sortable('option','stop', function(e,ui){
+      if(exporting){ try{$list.sortable('cancel');}catch(_){ } }
+      cleanup(); if(orig.stop) orig.stop.call(this,e,ui);
+    });
+
+    window.addEventListener('scroll', function(){ if($item) updateRect(); }, {passive:true});
+    window.addEventListener('resize', function(){ if($item) updateRect(); }, {passive:true});
+  }
+
+  function init(){ var $list=$('#setlist-list'); if($list.length) attach($list); }
+  init(); var tries=0, t=setInterval(function(){ tries++; init(); if(tries>20) clearInterval(t); }, 200);
+})();
+</script>
+<script>
+
+        // === Simple View toggles: sync + body class ===
+        (function(){
+            function setSimple(on){
+                document.body.classList.toggle('simple-view-on', !!on);
+                var a=document.getElementById('simple-view-toggle');
+                var b=document.getElementById('simple-view-toggle-setlist');
+                if(a) a.checked=!!on; if(b) b.checked=!!on;
+            }
+            function init(){
+                var a=document.getElementById('simple-view-toggle');
+                var b=document.getElementById('simple-view-toggle-setlist');
+                function onChange(e){ setSimple((e.target||a||b).checked); }
+                if(a) a.addEventListener('change', onChange);
+                if(b) b.addEventListener('change', onChange);
+                setSimple(document.body.classList.contains('simple-view-on'));
+            }
+            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
+        })();
+
+        // === Drag-to-toggle behavior for Simple + Dark/Light ===
+        (function(){
+            function makeDraggableToggle(input){
+                if(!input) return;
+                var track=input.nextElementSibling, dot=track?track.nextElementSibling:null;
+                var dragging=false,startX=0;
+                function down(e){ dragging=true; startX=(e.touches?e.touches[0].clientX:e.clientX);
+                    document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);
+                    document.addEventListener('touchmove',move,{passive:false});document.addEventListener('touchend',up);
+                }
+                function move(e){ if(!dragging) return; var x=(e.touches?e.touches[0].clientX:e.clientX); var dx=x-startX;
+                    if(Math.abs(dx)>10){ input.checked = dx>0; input.dispatchEvent(new Event('change',{bubbles:true})); }
+                    if(e.cancelable) e.preventDefault();
+                }
+                function up(){ dragging=false;
+                    document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);
+                    document.removeEventListener('touchmove',move);document.removeEventListener('touchend',up);
+                }
+                if(track){ track.style.cursor='pointer'; track.addEventListener('pointerdown',down); track.addEventListener('touchstart',down,{passive:true}); }
+                if(dot){ dot.style.cursor='pointer'; dot.addEventListener('pointerdown',down); dot.addEventListener('touchstart',down,{passive:true}); }
+            }
+            function init(){
+                var a=document.getElementById('simple-view-toggle');
+                var b=document.getElementById('simple-view-toggle-setlist');
+                var d=document.getElementById('dark-mode-toggle') || document.querySelector('#dark-mode-container input[type="checkbox"]');
+                [a,b,d].forEach(makeDraggableToggle);
+            }
+            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
+        })();
+
+        // === Enforce exact empty state for All Songs ===
+        (function(){
+            var LINE1='No songs yet';
+            var LINE2='Drag & drop PDF files onto this page or use the Add files button';
+            function enforce(){
+                var ul=document.getElementById('master-list');
+                if(!ul) return;
+                var hasItems=ul.querySelector('li');
+                if(hasItems) return;
+                ul.innerHTML = '<li class="p-4 text-center text-gray-500 dark:text-gray-400">'+LINE1+'</li>' +
+                               '<li class="pb-6 -mt-2 text-center text-sm text-gray-400 dark:text-gray-500">'+LINE2+'</li>';
+            }
+            function start(){
+                var ul=document.getElementById('master-list');
+                if(ul){ new MutationObserver(enforce).observe(ul,{childList:true}); }
+                enforce(); setTimeout(enforce,50); setTimeout(enforce,200); setTimeout(enforce,600);
+            }
+            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',start);}else{start();}
+        })();
+
+</script>
+<script>
+
+        // === PATCH: Homepage Sort dropdown & Genre flyout (precise targeting) ===
+        (function(){
+            function el(id){ return document.getElementById(id); }
+            function once(fn){ var ran=false; return function(){ if(ran) return; ran=true; fn(); }; }
+            function initSort(){
+                var select = el('sort-dropdown');
+                if (!select) return;
+                // Rename "Sort by Name" -> "Sort By" inside this select only
+                Array.from(select.options).forEach(function(opt){
+                    if ((opt.textContent||'').trim().toLowerCase()==='sort by name'){ opt.textContent='Sort By'; }
+                });
+                // Remove "Last played" option
+                Array.from(select.options).forEach(function(opt){
+                    var t=(opt.textContent||'').trim().toLowerCase();
+                    if (t==='sort by last played' || opt.value==='lastPlayed'){ opt.remove(); }
+                });
+                // Ensure "Genre" option exists
+                var hasGenre = !!select.querySelector('option[value="genre"]');
+                if (!hasGenre){
+                    var opt = document.createElement('option');
+                    opt.value='genre'; opt.textContent='Genre';
+                    // Insert after Energy if present, else append
+                    var after = select.querySelector('option[value="energy"]');
+                    if (after && after.nextSibling){ select.insertBefore(opt, after.nextSibling); }
+                    else { select.appendChild(opt); }
+                }
+                // Prepare flyout
+                var fly = el('sort-genre-flyout');
+                var slot = el('sort-genre-slot');
+                var rightContainer = el('genre-list-container') || el('genre-filter-container') || (el('genre-view') && el('genre-view').parentElement);
+                var dropdown = el('genre-filter-dropdown');
+                // If there's no standalone dropdown, try the common ID pattern
+                if (!dropdown){ dropdown = el('genre-list') || el('genre-sort-dropdown'); }
+                if (!fly || !slot || !dropdown) return;
+                // Mount dropdown into fly slot (without changing width elsewhere)
+                if (!slot.contains(dropdown)){ slot.appendChild(dropdown); }
+                // Hide the original right-side container *visually* only when genre is chosen
+                function setRightContainerHidden(hide){
+                    if (!rightContainer) return;
+                    if (hide){
+                        rightContainer.style.visibility = 'hidden';
+                        rightContainer.style.pointerEvents = 'none';
+                    } else {
+                        rightContainer.style.visibility = '';
+                        rightContainer.style.pointerEvents = '';
+                    }
+                }
+                function update(){
+                    if (select.value==='genre'){
+                        fly.style.display='block';
+                        dropdown.classList.remove('hidden');
+                        setRightContainerHidden(true);
+                    } else {
+                        fly.style.display='none';
+                        dropdown.classList.add('hidden');
+                        setRightContainerHidden(false);
+                    }
+                }
+                select.addEventListener('change', update);
+                if (!select.value) select.value='name';
+                update();
+            }
+            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', initSort); } else { initSort(); }
+        })();
+
+        // === PATCH: Sidebar open fade-in only (no overlays; no layout changes) ===
+        (function(){
+            function initSidebarFade(){
+                var sb = document.querySelector('.left-col');
+                if (!sb || typeof ResizeObserver==='undefined') return;
+                var lastW = sb.getBoundingClientRect().width;
+                var ro = new ResizeObserver(function(){
+                    var w = sb.getBoundingClientRect().width;
+                    var delta = w - lastW;
+                    if (Math.abs(delta) < 0.5){ lastW = w; return; }
+                    if (delta > 0){ // opening
+                        sb.classList.add('opening-fade');
+                        sb.classList.remove('ready');
+                        // allow layout to settle, then fade in
+                        requestAnimationFrame(function(){ sb.classList.add('ready'); });
+                        setTimeout(function(){
+                            sb.classList.remove('opening-fade');
+                            sb.classList.remove('ready');
+                        }, 260);
+                    }
+                    lastW = w;
+                });
+                try{ ro.observe(sb); }catch(e){}
+            }
+            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', initSidebarFade); } else { initSidebarFade(); }
+        })();
+
+</script>
+</body>
+</html>
+
+
+/* === In-place Notes behavior (autosize downwards, fixed width, × collapse, ▼ reopen) === */
+(function(){
+  if (window.__NotesInline_v4) return;
+  window.__NotesInline_v4 = true;
+
+  function lockWidth(el){
+    // Lock width to rendered pixel width of the original field to prevent horizontal growth
+    var r = el.getBoundingClientRect();
+    var w = Math.round(r.width || el.clientWidth || el.offsetWidth);
+    if (w && w > 0) {
+      el.style.width = w + 'px';
+      el.style.maxWidth = w + 'px';
+      el.style.minWidth = w + 'px';
+    }
+    return w;
+  }
+
+  function autosize(t){
+    if (!t) return;
+    t.style.height = 'auto';
+    // Use scrollHeight to expand downwards
+    var h = t.scrollHeight;
+    if (!h || h < 36) h = 36;
+    // Cap to max-height via CSS; extra will scroll vertically
+    t.style.height = h + 'px';
+  }
+
+  function makeInlineNotes(input){
+    if (!input || input.__notesInlineBuilt) return;
+    input.__notesInlineBuilt = true;
+
+    // Create wrapper
+    var wrap = document.createElement('div');
+    wrap.className = 'notes-inline';
+    // Clone relevant class styling; we will use a <textarea>
+    var ta = document.createElement('textarea');
+    ta.className = (input.className || '').replace(/\bnotes-input\b/, 'notes-input') + ' notes-textarea';
+    ta.placeholder = input.placeholder || 'Notes';
+    ta.value = input.value || '';
+    ta.setAttribute('spellcheck', 'false');
+
+    // Insert wrapper in place and move input out
+    input.parentNode.insertBefore(wrap, input);
+    input.remove(); // remove the original input element
+    wrap.appendChild(ta);
+
+    // Buttons
+    var btnClose = document.createElement('button');
+    btnClose.type = 'button';
+    btnClose.className = 'notes-btn close';
+    btnClose.setAttribute('aria-label', 'Close notes');
+    btnClose.textContent = '×';
+
+    var btnDrop = document.createElement('button');
+    btnDrop.type = 'button';
+    btnDrop.className = 'notes-btn dropdown';
+    btnDrop.setAttribute('aria-label', 'Expand notes');
+    btnDrop.textContent = '▼';
+
+    wrap.appendChild(btnClose);
+    wrap.appendChild(btnDrop);
+
+    // Lock width to the initial width of the field
+    lockWidth(wrap);
+    // Also ensure the textarea obeys the locked width via wrapper's width
+    ta.style.width = '100%'; // wrapper handles pixel width
+
+    // Start collapsed; show ▼
+    wrap.classList.add('collapsed');
+    autosize(ta);
+
+    // Open: remove collapsed state to allow autosize to show full height
+    function openFull(){
+      wrap.classList.remove('collapsed');
+      autosize(ta);
+      ta.focus({preventScroll:true});
+      try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch(_){}
+    }
+
+    // Close: collapse back to single-line look, keep ▼ to reopen
+    function closeToCollapsed(){
+      // Keep current value, and notify change listeners
+      try { ta.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
+      wrap.classList.add('collapsed');
+      autosize(ta);
+    }
+
+    // Typing: keep width fixed; grow downward
+    ta.addEventListener('input', function(){
+      autosize(ta);
+    });
+
+    // Open on focus/click so user always sees all text while typing
+    ta.addEventListener('focus', openFull);
+    ta.addEventListener('pointerdown', function(){ if (wrap.classList.contains('collapsed')) openFull(); }, true);
+
+    // Close with ×
+    btnClose.addEventListener('click', function(e){ e.preventDefault(); closeToCollapsed(); });
+
+    // Reopen with ▼
+    btnDrop.addEventListener('click', function(e){ e.preventDefault(); openFull(); });
+
+    // Relock width on window resize (in case layout changes)
+    window.addEventListener('resize', function(){
+      lockWidth(wrap);
+    });
+  }
+
+  function initAll(){
+    document.querySelectorAll('input.notes-input, textarea.notes-input').forEach(makeInlineNotes);
+  }
+  initAll();
+
+  // Handle dynamically added notes fields
+  var mo = new MutationObserver(function(muts){
+    for (var i=0;i<muts.length;i++){
+      var n = muts[i].addedNodes || [];
+      for (var j=0;j<n.length;j++){
+        var node = n[j];
+        if (node.nodeType !== 1) continue;
+        if (node.matches && (node.matches('input.notes-input') || node.matches('textarea.notes-input'))) {
+          makeInlineNotes(node);
+        } else if (node.querySelectorAll) {
+          node.querySelectorAll('input.notes-input, textarea.notes-input').forEach(makeInlineNotes);
+        }
+      }
+    }
+  });
+  try { mo.observe(document.documentElement, {childList:true, subtree:true}); } catch(_){}
+
+})();
