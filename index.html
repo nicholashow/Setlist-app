@@ -1753,6 +1753,13 @@ body:not(.setlist-drag-outside) .ui-sortable-helper {
   box-shadow: inherit !important;
 }
 
+
+/* Keep drag helper always visible and above UI */
+body.setlist-drag-outside .ui-sortable-helper {
+  z-index: 9999 !important;
+  opacity: 1 !important;
+}
+
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
 </head>
@@ -4408,6 +4415,53 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   $list.on('sortstop.setlistdrag', function(){
     document.body.classList.remove('setlist-drag-outside');
     originalPrev = null;
+  });
+})();
+
+</script>
+<script>
+
+(function(){
+  const $ = window.jQuery;
+  const $list = $('#setlist-list');
+  const $panel = $('.setlist-view-container .setlist-panel');
+  if (!$list.length || !$panel.length || !$.fn.sortable) return;
+
+  $list.off('sortstart.setlistdrag sort.setlistdrag sortstop.setlistdrag'); // clear our prior handlers
+
+  let originalIndex = null;
+
+  $list.on('sortstart.setlistdrag', function(e, ui){
+    originalIndex = ui.item.index();
+    const name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
+    let chip = ui.helper.find('.drag-name-chip');
+    if (!chip.length){
+      chip = $('<span class="drag-name-chip"></span>');
+      ui.helper.append(chip);
+    }
+    chip.text(name);
+    // Ensure helper is above and visible
+    ui.helper.css({ 'z-index': 9999, 'opacity': 1 });
+  });
+
+  $list.on('sort.setlistdrag', function(e, ui){
+    const rect = $panel[0].getBoundingClientRect();
+    const x = e.clientX, y = e.clientY;
+    const outside = (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom);
+
+    if (outside){
+      document.body.classList.add('setlist-drag-outside');
+      // lock visual position by hiding placeholder (no reorder while outside)
+      ui.placeholder.css({ visibility: 'hidden', display: 'none' });
+    } else {
+      document.body.classList.remove('setlist-drag-outside');
+      ui.placeholder.css({ visibility: '', display: '' });
+    }
+  });
+
+  $list.on('sortstop.setlistdrag', function(){
+    document.body.classList.remove('setlist-drag-outside');
+    originalIndex = null;
   });
 })();
 
