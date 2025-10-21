@@ -4601,6 +4601,95 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 
+
+<script>
+// === Single name-only label deduper ===
+// Guarantees exactly ONE visible name-only chip during outside-drag.
+(function(){
+  function primaryProxy() {
+    // Prefer #drag-proxy-nameonly; if absent, adopt any -large as primary
+    var small = document.getElementById('drag-proxy-nameonly');
+    var large = document.getElementById('drag-proxy-nameonly-large');
+    if (!small && large) {
+      large.id = 'drag-proxy-nameonly';
+      small = large;
+    }
+    if (!small) {
+      // create once if missing
+      small = document.createElement('div');
+      small.id = 'drag-proxy-nameonly';
+      small.style.position = 'absolute';
+      small.style.left = '-9999px';
+      small.style.top = '-9999px';
+      small.style.zIndex = '10000';
+      small.style.pointerEvents = 'none';
+      document.body.appendChild(small);
+    }
+    return small;
+  }
+
+  function purgeExtras() {
+    var primary = primaryProxy();
+    // Remove any duplicate smalls beyond the first
+    var smalls = document.querySelectorAll('#drag-proxy-nameonly');
+    for (var i = 0; i < smalls.length; i++) {
+      if (smalls[i] !== primary) smalls[i].remove();
+    }
+    // Remove ALL 'large' proxies
+    var larges = document.querySelectorAll('#drag-proxy-nameonly-large');
+    for (var j = 0; j < larges.length; j++) larges[j].remove();
+  }
+
+  function hideAllProxies() {
+    var nodes = document.querySelectorAll('#drag-proxy-nameonly, #drag-proxy-nameonly-large');
+    nodes.forEach(function(n){
+      n.style.display = 'none';
+      n.style.left = '-9999px';
+      n.style.top = '-9999px';
+    });
+  }
+
+  // Run once at load
+  purgeExtras(); hideAllProxies();
+
+  // MutationObserver: if any script tries to insert another proxy, remove it
+  var mo = new MutationObserver(function(muts){
+    var changed = false;
+    muts.forEach(function(m){
+      if (m.addedNodes && m.addedNodes.length) changed = true;
+    });
+    if (changed) purgeExtras();
+  });
+  mo.observe(document.body, {childList:true, subtree:true});
+
+  // Hook into setlist drag lifecycle to enforce single proxy
+  var $list = $('#setlist-list');
+  if ($list.length) {
+    $list.off('.oneProxyOnly');
+    $list.on('sortstart.oneProxyOnly', function(){
+      purgeExtras(); hideAllProxies();
+    });
+    $list.on('sort.oneProxyOnly', function(e){
+      // During drag, keep only the primary visible; if others appear, delete them
+      purgeExtras();
+    });
+    $list.on('sortstop.oneProxyOnly', function(){
+      purgeExtras(); hideAllProxies();
+    });
+  }
+
+  // As a last resort, check every animation frame *only while dragging*
+  var dragging = false;
+  document.addEventListener('mousedown', function(){ dragging = true; });
+  document.addEventListener('mouseup',   function(){ dragging = false; });
+  function rafLoop(){
+    if (dragging) { purgeExtras(); }
+    requestAnimationFrame(rafLoop);
+  }
+  requestAnimationFrame(rafLoop);
+})();
+</script>
+
 </body>
 </html>
 
