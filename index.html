@@ -1668,24 +1668,24 @@ html.dark .notes-inline .notes-textarea {
 }
 
 
-/* === All Songs toolbar alignment (minimal + surgical) === */
-/* 1) Narrow Sort by without moving its LEFT edge */
+/* === Minimal toolbar tweak: Sort width + button left offsets (only) === */
+:root {
+  --sort-width: 160px;       /* shrink from right; left edge stays put */
+  --addfiles-left: -16px;    /* tune to align above Artist */
+  --deleteall-left: -48px;   /* tune to align above per-row Delete */
+}
 #controls-row #filters-group #sort-dropdown {
-  width: 150px !important;
-  max-width: 150px !important;
-  flex: 0 0 150px !important;   /* if in a flex container, fixes basis */
-  display: inline-block;
-  vertical-align: middle;
+  flex: 0 0 var(--sort-width) !important;
+  width: var(--sort-width) !important;
+  max-width: var(--sort-width) !important;
 }
-
-/* 2) Shift Add files and Delete All buttons left to align with row columns */
-#master-view-buttons #upload-master-btn {
-  position: relative;
-  left: -14px;   /* align above Artist */
+#controls-row #master-view-buttons #upload-master-btn {
+  position: relative !important;
+  left: var(--addfiles-left) !important;
 }
-#master-view-buttons #delete-all-btn {
-  position: relative;
-  left: -42px;   /* align above per-row Delete */
+#controls-row #master-view-buttons #delete-all-btn {
+  position: relative !important;
+  left: var(--deleteall-left) !important;
 }
 
 </style>
