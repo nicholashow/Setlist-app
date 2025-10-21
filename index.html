@@ -1649,12 +1649,7 @@ html.dark .notes-inline .notes-textarea {
 
         <main class="flex-1 p-4 overflow-auto">
     <!-- === Genre Detail Page (in main app area) === -->
-    <section id="genre-page" class="p-4 w-full">
-      <div id="genre-colorbar" class="colorbar rounded-xl text-white text-xl"></div>
-      <div class="mt-4">
-        <div id="genre-files" class=""></div>
-      </div>
-    </section>
+    <section id="genre-page" class="p-4 w-full"><div id="genre-colorbar" class="colorbar rounded-xl text-white text-xl"></div><div class="mt-4"><div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800"><ul id="genre-page-list"></ul></div></div></section>
 
             <section id="master-view">
                  <div id="master-view-controls">
@@ -4034,7 +4029,6 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     const s = window.getComputedStyle(el);
     return s.backgroundColor || s.background || "";
   }
-
   function rgbToHex(rgb) {
     try{
       const m = rgb.match(/\d+/g);
@@ -4044,7 +4038,6 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       return '#' + toHex(r) + toHex(g) + toHex(b);
     }catch(e){ return rgb; }
   }
-
   function normalizeColor(c){
     if (!c) return c;
     if (c.startsWith('rgb')) return rgbToHex(c);
@@ -4059,7 +4052,9 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       section.innerHTML = `
         <div id="genre-colorbar" class="colorbar rounded-xl text-white text-xl"></div>
         <div class="mt-4">
-          <div id="genre-files"></div>
+          <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+            <ul id="genre-page-list"></ul>
+          </div>
         </div>`;
       (document.querySelector('main') || document.body).appendChild(section);
     }
@@ -4070,25 +4065,26 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     const $home = $('#master-view, #setlist-view, #favorites-view, #plays-view, #recordings-view, #energy-view');
     const $page = $('#genre-page');
     const $colorbar = $('#genre-colorbar');
-    const $files = $('#genre-files');
+    const $list = $('#genre-page-list');
 
-    // Color bar title (only once in the bar)
-    $colorbar.css('background', color || '#3b82f6');
-    $colorbar.text(genreName || '');
+    // Color bar with genre name — only place the name here
+    $colorbar.css('background', color || '#3b82f6').text(genreName || '');
 
-    // Build list by cloning original DOM rows to preserve look/behavior
-    $files.empty();
-
+    // Build: clone real <li> rows so styling/behavior matches everywhere else
+    $list.empty();
     const wanted = normalizeColor(color);
-    const $candidates = $('#master-list li, #setlist-list li, #favorites-list li, #genre-song-list li, #plays-list li, .file-row, .song-row');
+
+    // Pull candidates from all known lists
+    const $sources = $(
+      '#master-list > li, #setlist-list > li, #favorites-list > li, #genre-song-list > li, #plays-list > li'
+    );
 
     const seen = new Set();
-    $candidates.each(function(){
+    $sources.each(function(){
       const li = this;
       const id = li.getAttribute('data-id')
                 || li.getAttribute('data-file-id')
                 || (li.querySelector('.song-name')?.textContent?.trim() || li.textContent?.trim() || '').toLowerCase();
-
       if (!id || seen.has(id)) return;
 
       let fileColor = li.getAttribute('data-genre-color') || '';
@@ -4100,14 +4096,20 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
       if (normalizeColor(fileColor) === wanted){
         const clone = li.cloneNode(true);
-        const wrap = document.createElement('div');
-        wrap.className = 'genre-clone-wrap';
-        wrap.appendChild(clone);
-        $files.append(wrap);
+        // Remove IDs inside the clone to prevent duplicate-id issues
+        clone.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+        // Append directly (items are already <li>), but wrap if not
+        const nodeToAppend = clone.tagName.toLowerCase() === 'li' ? clone : (function(){
+          const liWrapper = document.createElement('li');
+          liWrapper.appendChild(clone);
+          return liWrapper;
+        })();
+        $list.append(nodeToAppend);
         seen.add(id);
       }
     });
 
+    // Hide other views, show this one
     $home.hide();
     $page.show();
   }
@@ -4128,6 +4130,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     return { name, color: normalizeColor(color) };
   }
 
+  // Sidebar → open genre page
   $doc.on('click', '#genre-list > *', function(){
     const {name, color} = extractGenreInfo(this);
     showGenrePage(name, color);
