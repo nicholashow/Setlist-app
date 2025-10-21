@@ -1738,6 +1738,42 @@ body.setlist-drag-outside .ui-sortable-helper.drag-helper .song-name-text {
   color:#fff !important;
 }
 
+
+/* === Locked-in-place original row (when dragging OUTSIDE) === */
+#-setlist-list-override- .locked-blue,
+#setlist-list > li.locked-blue {
+  background: #2563eb !important;
+  color: #fff !important;
+}
+#setlist-list > li.locked-blue .song-name-text { color:#fff !important; }
+
+/* Name-only helper outside the setlist box */
+body.setlist-drag-outside .ui-sortable-helper.drag-helper .song-details-container,
+body.setlist-drag-outside .ui-sortable-helper.drag-helper .favorite-star-container,
+body.setlist-drag-outside .ui-sortable-helper.drag-helper .genre-dot,
+body.setlist-drag-outside .ui-sortable-helper.drag-helper .index-number,
+body.setlist-drag-outside .ui-sortable-helper.drag-helper .energy-chip,
+body.setlist-drag-outside .ui-sortable-helper.drag-helper .duration-chip,
+body.setlist-drag-outside .ui-sortable-helper.drag-helper .delete-btn,
+body.setlist-drag-outside .ui-sortable-helper.drag-helper .file-actions,
+body.setlist-drag-outside .ui-sortable-helper.drag-helper .artist-name { display:none !important; }
+
+body.setlist-drag-outside .ui-sortable-helper.drag-helper .song-name-text {
+  display:inline !important;
+  font-weight:700;
+  color:#fff !important;
+}
+
+/* Keep the helper visible and above everything */
+.ui-sortable-helper.drag-helper { 
+  background:#2563eb !important; 
+  color:#fff !important; 
+  z-index:9999 !important; 
+  opacity:1 !important; 
+  box-shadow:0 6px 16px rgba(0,0,0,.15);
+  outline:none !important;
+}
+
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
 </head>
@@ -4355,6 +4391,68 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     }
     ui.item.removeClass('is-sorting');
     document.body.classList.remove('setlist-drag-outside');
+    wasOutside = false;
+  });
+})();
+
+</script>
+<script>
+
+(function(){
+  var $ = window.jQuery;
+  var $list = $('#setlist-list');
+  var $panel = $('#setlist-view .setlist-panel'); // panel around the UL
+  if (!$list.length || !$panel.length || !$.fn.sortable) return;
+
+  // Ensure we use a clone helper so we can control the original item visibility
+  try { $list.sortable('option', 'helper', helperFn); }
+  catch(e){ try { $list.sortable('destroy'); } catch(_){} $list.sortable({ helper: helperFn }); }
+
+  function helperFn(e, ui){
+    var $h = ui.clone();
+    $h.addClass('drag-helper');
+    return $h;
+  }
+
+  $list.off('.keepOriginalOutside');
+
+  var wasOutside = false;
+
+  $list.on('sortstart.keepOriginalOutside', function(e, ui){
+    // Normal behavior inside box: original is hidden; placeholder shows.
+    // We don't change that here.
+    // Make sure helper sits on top.
+    ui.helper.css({ 'z-index': 9999, 'opacity': 1 });
+  });
+
+  $list.on('sort.keepOriginalOutside', function(e, ui){
+    var rect = $panel.get(0).getBoundingClientRect();
+    var x = e.clientX, y = e.clientY;
+    var outside = (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom);
+
+    if (outside && !wasOutside){
+      // Entered outside: show real item in place and make it blue; hide placeholder so list won't shift.
+      document.body.classList.add('setlist-drag-outside');
+
+      ui.item.stop(true, true).css({display:''}).addClass('locked-blue'); // make original visible + blue
+      ui.placeholder.css({ visibility:'hidden', display:'none' });        // lock position
+
+      wasOutside = true;
+    } else if (!outside && wasOutside){
+      // Returned inside: revert to normal jQuery UI sorting visuals
+      document.body.classList.remove('setlist-drag-outside');
+
+      ui.item.removeClass('locked-blue').hide();                          // original hidden during sort
+      ui.placeholder.css({ visibility:'', display:'' });                  // show placeholder again
+
+      wasOutside = false;
+    }
+  });
+
+  $list.on('sortstop.keepOriginalOutside', function(e, ui){
+    // On drop, clear flags and ensure original is visible again
+    document.body.classList.remove('setlist-drag-outside');
+    ui.item.removeClass('locked-blue').css({display:''});
     wasOutside = false;
   });
 })();
