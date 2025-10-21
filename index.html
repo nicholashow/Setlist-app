@@ -1732,7 +1732,8 @@ html.dark .notes-inline .notes-textarea {
 #pinned-setlist-clone .song-name-text { color:#fff; }
 
 /* While outside, hide helper+placeholder so no reflow occurs */
-/* removed: keep helper + placeholder visible outside */
+body.setlist-drag-outside .ui-sortable-helper { display: none !important; }
+body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none !important; visibility: hidden !important; }
 
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
@@ -4391,96 +4392,101 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 
 </script>
+
+<!-- Drag behavior guard: keep setlist item fixed when cursor leaves the setlist box,
+     and show a name-only blue proxy just like on the All Songs page. Also cancel any
+     reorder if the drag ends while outside the setlist box. -->
 <script>
-// === Minimal outside-drag behavior for setlist: keep real tile unchanged; show one name-only chip ===
 (function(){
+  var $ = window.jQuery;
+  if (!$ || !$.fn.sortable) return;
+
+  // Ensure helper elements exist
+  function ensureHelpers(){
+    if (!document.getElementById('drag-proxy-nameonly')){
+      var chip = document.createElement('div');
+      chip.id = 'drag-proxy-nameonly';
+      chip.style.display = 'none';
+      document.body.appendChild(chip);
+    }
+    if (!document.getElementById('pinned-setlist-clone')){
+      var pin = document.createElement('div');
+      pin.id = 'pinned-setlist-clone';
+      pin.style.display = 'none';
+      document.body.appendChild(pin);
+    }
+  }
+  ensureHelpers();
+
   var $list = $('#setlist-list');
-  if (!$list.length) return;
-  var $panel = $list.closest('.setlist-panel');
-  if (!$panel.length) $panel = $list;
+  var $panel = $('#setlist-view .setlist-panel');
 
-  // Single proxy chip
-  var $proxy = $('#drag-proxy-nameonly');
-  if (!$proxy.length){
-    $proxy = $('<div id="drag-proxy-nameonly" />').appendTo(document.body);
-  }
-  $proxy.css({ position:'fixed', top:0, left:0, transform:'translate(-9999px,-9999px)', 'z-index':10000, 'pointer-events':'none' });
+  if (!$list.length || !$panel.length) return;
 
-  // De-dupe proxies (avoid duplicates)
-  (function(){ var nodes=document.querySelectorAll('#drag-proxy-nameonly'); for (var i=1;i<nodes.length;i++) nodes[i].remove(); })();
+  // Helper setters
+  function showProxy(e){
+    var $proxy = $('#drag-proxy-nameonly');
+    var x = (e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX) || 0) + 12;
+    var y = (e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY) || 0) + 12;
+    $proxy.css('display','block').css('transform','translate('+x+'px,'+y+'px)');
+  }
+  function hideHelpers(){
+    document.body.classList.remove('setlist-drag-outside');
+    $('#pinned-setlist-clone').hide().empty();
+    $('#drag-proxy-nameonly').hide().css('transform','translate(-9999px,-9999px)');
+  }
 
-  var startRect = null;
-  var startIndex = -1;
-  var panelRect = null;
-  function getPanelRect(){
-    var el = $panel.get(0);
-    return el.getBoundingClientRect();
-  }
-  function isOutside(evt){
-    var r = panelRect || (panelRect=getPanelRect());
-    var x = (evt.touches && evt.touches[0] ? evt.touches[0].clientX : evt.clientX);
-    var y = (evt.touches && evt.touches[0] ? evt.touches[0].clientY : evt.clientY);
-    return (x < r.left || x > r.right || y < r.top || y > r.bottom);
-  }
-  function moveProxy(evt, name){
-    if (typeof name === 'string' && $proxy.text() !== name) $proxy.text(name);
-    var x = (evt.touches && evt.touches[0] ? evt.touches[0].clientX : evt.clientX) + 12;
-    var y = (evt.touches && evt.touches[0] ? evt.touches[0].clientY : evt.clientY) + 12;
-    $proxy.css('transform','translate('+x+'px,'+y+'px)').show();
-  }
-  function hideProxy(){ $proxy.hide().css('transform','translate(-9999px,-9999px)'); }
+  // Track outside/inside and cancel reorders if we finish outside
+  var wasOutside = false;
 
-  $list.off('.setlistOutsideMinimal');
-  $list.on('sortstart.setlistOutsideMinimal', function(e, ui){
-    panelRect = null;
-    var r = ui.item.get(0).getBoundingClientRect();
-    startRect = { left:r.left, top:r.top, width:r.width, height:r.height };
-    startIndex = ui.item.index();
-    hideProxy();
+  $list.on('sortstart.dragGuard', function(e, ui){
+    wasOutside = false;
+    // Set the name-only chip text
+    var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
+    $('#drag-proxy-nameonly').text(name);
   });
 
-  $list.on('sort.setlistOutsideMinimal', function(e, ui){
-    if (isOutside(e)){
-      // Freeze helper at its ORIGINAL on-screen rect; do NOT change look or position
-      ui.helper.css({
-        position:'fixed',
-        left: startRect.left + 'px',
-        top:  startRect.top  + 'px',
-        width: startRect.width + 'px',
-        height:startRect.height + 'px',
-        transform: 'none',    // avoid jQuery UI transform shifts
-        opacity: '',          // keep original
-        visibility: 'visible',
-        display: 'block'
-      });
-      // Keep placeholder at original index so the list doesn't shift
-      try {
-        var $ph = ui.placeholder;
-        if ($ph && startIndex >= 0){
-          var $kids = $list.children(':not(.ui-sortable-helper)');
-          if (startIndex < $kids.length){
-            $ph.detach(); $ph.insertBefore($kids.eq(startIndex));
-          }
-        }
-      } catch(err){}
-      // Show single blue name-only chip that follows the finger
-      var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
-      moveProxy(e, name);
-    } else {
-      // Restore helper to normal when back inside
-      ui.helper.css({ position:'', left:'', top:'', width:'', height:'', transform:'', opacity:'', visibility:'', display:'' });
-      hideProxy();
+  $list.on('sort.dragGuard', function(e, ui){
+    var rect = $panel.get(0).getBoundingClientRect();
+    var x = e.clientX, y = e.clientY;
+    // Fallback for touch events
+    if ((x === undefined || y === undefined) && e.originalEvent && e.originalEvent.touches && e.originalEvent.touches.length){
+      x = e.originalEvent.touches[0].clientX;
+      y = e.originalEvent.touches[0].clientY;
+    }
+    var outside = (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom);
+
+    if (outside){
+      if (!wasOutside){
+        wasOutside = true;
+        document.body.classList.add('setlist-drag-outside');
+
+        // Pin a visual clone at the original on-screen coordinates so the item appears not to move
+        var r = ui.item.get(0).getBoundingClientRect();
+        var helperHTML = ui.helper && ui.helper.prop ? ui.helper.prop('outerHTML') : ui.item.prop('outerHTML');
+        $('#pinned-setlist-clone')
+          .html(helperHTML)
+          .css({ display:'block', left: r.left+'px', top: r.top+'px', width: r.width+'px' })
+          .find('.ui-sortable-helper').css({ position:'static', left:'auto', top:'auto', transform:'none' });
+      }
+      showProxy(e);
+    } else if (wasOutside){
+      // We came back inside — restore visuals
+      wasOutside = false;
+      hideHelpers();
     }
   });
 
-  $list.on('sortstop.setlistOutsideMinimal', function(e, ui){
-    // Reset everything
-    ui.helper.css({ position:'', left:'', top:'', width:'', height:'', transform:'', opacity:'', visibility:'', display:'' });
-    hideProxy();
-    startRect = null; startIndex = -1; panelRect = null;
+  $list.on('sortstop.dragGuard', function(e, ui){
+    // If we finished outside, revert any tentative reorder
+    if (wasOutside && $list.sortable){
+      try { $list.sortable('cancel'); } catch(_) {}
+    }
+    hideHelpers();
   });
 })();
 </script>
+
 </body>
 </html>
 
