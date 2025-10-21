@@ -4394,93 +4394,82 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 
 <script>
-// === Setlist outside-drag: keep actual tile unchanged in list; show ONE name-only chip (homepage parity) ===
+// === Minimal fix: contain drag inside #setlist-list + show name-only chip when pointer is outside ===
 (function(){
-  var $list = $('#setlist-list');
-  if (!$list.length) return;
-  var $panel = $list.closest('.setlist-panel'); if (!$panel.length) $panel = $list;
-
-  // Ensure a single proxy chip exists (re-use across drags)
-  var $proxy = $('#drag-proxy-nameonly');
-  if (!$proxy.length){
-    $proxy = $('<div id="drag-proxy-nameonly" />').appendTo(document.body);
+  function ensureProxy(){
+    var $proxy = $('#drag-proxy-nameonly');
+    if (!$proxy.length){
+      $proxy = $('<div id="drag-proxy-nameonly" />').appendTo(document.body);
+    }
+    // iPad-safe absolute positioning (page coords)
+    $proxy.css({ position:'absolute', left:'-9999px', top:'-9999px', zIndex:10000, pointerEvents:'none' });
+    // De-dupe defensive
+    var nodes = document.querySelectorAll('#drag-proxy-nameonly'); 
+    for (var i=1;i<nodes.length;i++) nodes[i].remove();
+    return $proxy;
   }
-  // De-dupe defensive
-  (function(){ var nodes=document.querySelectorAll('#drag-proxy-nameonly'); for (var i=1;i<nodes.length;i++) nodes[i].remove(); })();
-
-  function showProxyAt(e, name){
-    if (name != null && $proxy.text() !== name) $proxy.text(name);
-    // Prefer page coords for iPad stability; fall back to client+scroll
-    var oe = e.originalEvent || e;
+  function bounds($el){
+    var el = $el && $el[0]; if (!el) return {left:0, top:0, right:0, bottom:0};
+    var r = el.getBoundingClientRect();
+    return {left:r.left, top:r.top, right:r.right, bottom:r.bottom};
+  }
+  function isOutside(evt, rect){
+    var oe = evt.originalEvent || evt;
     var t = (oe.touches && oe.touches[0]) || (oe.changedTouches && oe.changedTouches[0]) || null;
-    var px = t ? t.pageX : (e.pageX!=null?e.pageX:(e.clientX + window.pageXOffset));
-    var py = t ? t.pageY : (e.pageY!=null?e.pageY:(e.clientY + window.pageYOffset));
-    $proxy.css({ position:'absolute', left:(px+12)+'px', top:(py+12)+'px', display:'block' });
+    var cx = t ? t.clientX : (evt.clientX!=null?evt.clientX:(evt.pageX - window.pageXOffset));
+    var cy = t ? t.clientY : (evt.clientY!=null?evt.clientY:(evt.pageY - window.pageYOffset));
+    return (cx < rect.left || cx > rect.right || cy < rect.top || cy > rect.bottom);
   }
-  function hideProxy(){ $proxy.css({ display:'none', left:'-9999px', top:'-9999px' }).text(''); }
-
-  var panelRect = null, startIndex = -1, $ghost = null;
-
-  function bounds(){ var el=$panel.get(0); return el.getBoundingClientRect(); }
-  function isOutside(ev){
-    var r = panelRect || (panelRect=bounds());
-    var oe = ev.originalEvent || ev;
+  function moveProxy($proxy, evt, name){
+    if (name!=null && $proxy.text()!==name) $proxy.text(name);
+    var oe = evt.originalEvent || evt;
     var t = (oe.touches && oe.touches[0]) || (oe.changedTouches && oe.changedTouches[0]) || null;
-    var cx = t ? t.clientX : (ev.clientX!=null?ev.clientX:(ev.pageX - window.pageXOffset));
-    var cy = t ? t.clientY : (ev.clientY!=null?ev.clientY:(ev.pageY - window.pageYOffset));
-    return (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom);
+    var px = t ? t.pageX : (evt.pageX!=null?evt.pageX:(evt.clientX+window.pageXOffset));
+    var py = t ? t.pageY : (evt.pageY!=null?evt.pageY:(evt.clientY+window.pageYOffset));
+    $proxy.css({ left:(px+12)+'px', top:(py+12)+'px', display:'block' });
   }
-  function ensureGhost($item){
-    if ($ghost && $ghost.length) return $ghost;
-    $ghost = $item.clone(true, true).addClass('setlist-stayput-ghost');
-    // Strip duplicate ids inside ghost
-    $ghost.find('[id]').each(function(){ this.removeAttribute('id'); });
-    return $ghost;
-  }
-  function placeGhostAt(idx){
+  function hideProxy($proxy){ $proxy.css({ left:'-9999px', top:'-9999px', display:'none' }); }
+
+  function install(){
+    var $list = $('#setlist-list'); if (!$list.length) return false;
     try {
-      var $kids = $list.children(':not(.ui-sortable-helper)');
-      if (idx < 0 || idx > $kids.length) return;
-      if ($ghost && $ghost.length) $ghost.detach();
-      if (idx < $kids.length) $ghost.insertBefore($kids.eq(idx)); else $ghost.appendTo($list);
-    } catch(e){}
-  }
-  function clearGhost(){ if ($ghost){ $ghost.remove(); $ghost=null; } }
-
-  $list.off('.setlistOutsideChip')
-    .on('sortstart.setlistOutsideChip', function(e, ui){
-      panelRect = null;
-      startIndex = ui.item.index();
-      clearGhost(); hideProxy();
-    })
-    .on('sort.setlistOutsideChip', function(e, ui){
-      if (isOutside(e)){
-        // Keep the visible list unchanged: insert a ghost where the item started.
-        ensureGhost(ui.item); placeGhostAt(startIndex);
-        // Pin the placeholder at the same index so no reflow occurs.
-        try{
-          var $ph = ui.placeholder;
-          if ($ph && startIndex >= 0){
-            var $kids = $list.children(':not(.ui-sortable-helper)');
-            if (startIndex < $kids.length){ $ph.detach(); $ph.insertBefore($kids.eq(startIndex)); }
-          }
-        }catch(err){}
-        // Signal "outside" so existing CSS hides helper/placeholder; the ghost keeps the look.
-        document.body.classList.add('setlist-drag-outside');
-        // Show exactly ONE name-only chip following the finger
-        var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
-        showProxyAt(e, name);
-      } else {
-        // Back inside: restore visuals
-        document.body.classList.remove('setlist-drag-outside');
-        clearGhost(); hideProxy();
+      // Contain helper strictly inside list so the visible tile never leaves the box
+      if ($list.sortable('instance')){
+        $list.sortable('option','containment', '#setlist-list');
       }
-    })
-    .on('sortstop.setlistOutsideChip', function(e, ui){
-      document.body.classList.remove('setlist-drag-outside');
-      clearGhost(); hideProxy();
-      startIndex = -1; panelRect = null;
-    });
+    } catch(e){ /* sortable not ready yet */ }
+
+    var $panel = $list.closest('.setlist-panel'); if (!$panel.length) $panel = $list;
+    var rect = null, $proxy = ensureProxy();
+
+    $list.off('.containNameOnly')
+      .on('sortstart.containNameOnly', function(e, ui){
+        rect = bounds($panel);
+        hideProxy($proxy);
+      })
+      .on('sort.containNameOnly', function(e, ui){
+        // When pointer crosses outside, only show the chip; helper is already contained inside
+        if (!rect) rect = bounds($panel);
+        if (isOutside(e, rect)){
+          var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
+          moveProxy($proxy, e, name);
+        } else {
+          hideProxy($proxy);
+        }
+      })
+      .on('sortstop.containNameOnly', function(e, ui){
+        hideProxy($proxy);
+        rect = null;
+      });
+    return true;
+  }
+
+  // Install now and also after window load (in case sortable initializes late)
+  if (!install()){
+    window.addEventListener('load', install, {once:true});
+    setTimeout(install, 500);
+    setTimeout(install, 1500);
+  }
 })();
 </script>
 
