@@ -1703,6 +1703,24 @@ html.dark .notes-inline .notes-textarea {
   line-height: 1.25;
 }
 
+
+/* === Setlist drag: name-only when outside box, keep position locked === */
+body.setlist-drag-outside .ui-sortable-helper {
+  width: auto !important;
+  min-width: 0 !important;
+  padding: 2px 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 1px dashed #2563eb !important;
+  border-radius: 8px;
+}
+body.setlist-drag-outside .ui-sortable-helper * { display: none !important; }
+body.setlist-drag-outside .ui-sortable-helper .song-name-text {
+  display: block !important;
+  color: #2563eb !important;
+  font-weight: 700 !important;
+}
+
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
 </head>
@@ -4268,6 +4286,47 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
   window.showGenrePage = showGenrePage;
 })();
+</script>
+<script>
+
+// === Setlist drag behavior: switch to name-only when outside the setlist panel and lock position ===
+(function(){
+  const $ = window.jQuery;
+  const $list = $('#setlist-list');
+  const $panel = $('.setlist-view-container .setlist-panel');
+  if (!$list.length || !$panel.length || !$.fn.sortable) return;
+
+  let originalPrev = null;
+
+  $list.on('sortstart', function(e, ui){
+    originalPrev = ui.item.prev()[0] || null;
+  });
+
+  $list.on('sort', function(e, ui){
+    const rect = $panel[0].getBoundingClientRect();
+    const x = e.pageX - window.scrollX;
+    const y = e.pageY - window.scrollY;
+    const outside = (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom);
+
+    if (outside){
+      document.body.classList.add('setlist-drag-outside');
+      // Keep placeholder at original position so the item doesn't reflow
+      if (originalPrev){
+        $(ui.placeholder).insertAfter(originalPrev);
+      } else {
+        $(ui.placeholder).prependTo($list);
+      }
+    } else {
+      document.body.classList.remove('setlist-drag-outside');
+    }
+  });
+
+  $list.on('sortstop', function(){
+    document.body.classList.remove('setlist-drag-outside');
+    originalPrev = null;
+  });
+})();
+
 </script>
 </body>
 </html>
