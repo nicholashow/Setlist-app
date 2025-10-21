@@ -1638,22 +1638,12 @@ html.dark .notes-inline .notes-textarea {
 
 
 /* === Filename behavior based on sidebar state (ONLY change requested) === */
-.left-col.collapsed ~ main .song-name-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding-right: 12px; /* small cushion from the emblems/inputs */
-}
+
 
 
 
 /* Sidebar closed: make filename single-line (keep open state unchanged) */
-.left-col.collapsed ~ main .song-name-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding-right: 12px;
-}
+
 
 
 /* === All Songs: align toolbar with row columns === */
@@ -1708,22 +1698,10 @@ html.dark .notes-inline .notes-textarea {
 
 /* === Filename behavior (precise) === */
 /* Sidebar CLOSED: one line with ellipsis */
-.left-col.collapsed ~ main .song-name-text {
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  max-width: 100% !important;
-}
+
 
 /* Sidebar OPEN: stack, but never go under inputs */
-.left-col:not(.collapsed) ~ main .song-name-text {
-  display: block !important;
-  white-space: normal !important;
-  overflow: visible !important;
-  text-overflow: clip !important;
-  max-width: calc(100% - var(--inputs-width)) !important; /* reserve space for inputs/emblems */
-  line-height: 1.25;
-}
+
 
 
 /* === All Songs toolbar alignment === */
@@ -1750,9 +1728,45 @@ html.dark .notes-inline .notes-textarea {
   display: inline-block !important;
 }
 
+
+/* === Filename behavior (finalized) === */
+/* Sidebar CLOSED: one line */
+.left-col.collapsed ~ main .song-name-text {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Sidebar OPEN: stack/wrap and NEVER run under inputs */
+.left-col:not(.collapsed) ~ main .song-name-text {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  margin-right: var(--inputs-width) !important; /* reserves space for inputs */
+  padding-right: 8px !important;               /* tiny cushion */
+  line-height: 1.25;
+}
+
+
+/* === All Songs toolbar alignment === */
+/* Make Sort narrower while keeping its LEFT edge stationary */
+#master-view-controls select#sort-dropdown,
+#master-view-controls .sort-dropdown,
+#master-view-controls .sort-select,
+#master-view-controls .sort-container select {
+  width: 150px !important;
+  max-width: 150px !important;
+  flex: 0 0 150px !important;
+  display: inline-block !important;
+}
+
+/* Shift "Add files" and "Delete All" left to align with row columns */
+#master-view-controls #upload-master-btn { margin-left: -24px !important; }
+#master-view-controls #delete-all-btn   { margin-left: -42px !important; }
+
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
-<style>:root{ --inputs-width: 260px; }</style>
+<style>:root{ --inputs-width: 300px; }</style>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
