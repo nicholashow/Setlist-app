@@ -4392,96 +4392,91 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
 </script>
 <script>
-// === Setlist: keep real tile visible & stationary inside; show ONE name-only chip outside ===
+// === Setlist outside-drag (homepage-like): real tile stays; name-only chip follows finger ===
 (function(){
   var $list = $('#setlist-list');
   if (!$list.length) return;
   var $panel = $list.closest('.setlist-panel');
   if (!$panel.length) $panel = $list;
 
-  // Ensure a single proxy chip exists
+  // One name-only proxy (blue chip)
   var $proxy = $('#drag-proxy-nameonly');
-  if (!$proxy.length){
-    $proxy = $('<div id="drag-proxy-nameonly" />').appendTo(document.body);
-  }
+  if (!$proxy.length){ $proxy = $('<div id="drag-proxy-nameonly" />').appendTo(document.body); }
   $proxy.css({ position:'fixed', top:0, left:0, transform:'translate(-9999px,-9999px)', 'z-index':10000, 'pointer-events':'none' });
-
-  // De-dupe any extra proxies
+  // De-dupe proxies
   (function(){ var nodes = document.querySelectorAll('#drag-proxy-nameonly'); for (var i=1;i<nodes.length;i++) nodes[i].remove(); })();
 
-  var startRect = null;   // on-screen rect of the item at drag start
-  var startIndex = -1;    // original index to pin placeholder
-  var panelRect = null;   // panel bounds cache
+  // A pixel-perfect overlay twin to keep the visual of the real tile unchanged
+  var $twin = $('#setlist-visual-twin');
+  if (!$twin.length){ $twin = $('<div id="setlist-visual-twin" style="display:none;"></div>').appendTo(document.body); }
 
-  function getPanelRect(){
-    var el = $panel.get(0);
-    return el.getBoundingClientRect();
-  }
-  function isOutside(evt){
-    var r = panelRect || (panelRect = getPanelRect());
-    var x = (evt.touches && evt.touches[0] ? evt.touches[0].clientX : evt.clientX);
-    var y = (evt.touches && evt.touches[0] ? evt.touches[0].clientY : evt.clientY);
-    return (x < r.left || x > r.right || y < r.top || y > r.bottom);
+  var startRect=null, startIndex=-1, panelRect=null;
+  function rect(el){ return el.getBoundingClientRect(); }
+  function panelBounds(){ var el=$panel.get(0); return rect(el); }
+  function outside(evt){
+    var r = panelRect || (panelRect = panelBounds());
+    var t = evt.touches && evt.touches[0];
+    var cx = t ? t.clientX : evt.clientX;
+    var cy = t ? t.clientY : evt.clientY;
+    return (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom);
   }
   function moveProxy(evt, name){
     if (typeof name === 'string' && $proxy.text() !== name) $proxy.text(name);
-    var x = (evt.touches && evt.touches[0] ? evt.touches[0].clientX : evt.clientX) + 12;
-    var y = (evt.touches && evt.touches[0] ? evt.touches[0].clientY : evt.clientY) + 12;
-    $proxy.css('transform', 'translate(' + x + 'px,' + y + 'px)').show();
+    var t = evt.touches && evt.touches[0];
+    var cx = t ? t.clientX : evt.clientX;
+    var cy = t ? t.clientY : evt.clientY;
+    $proxy.css('transform', 'translate('+(cx+12)+'px,'+(cy+12)+'px)').show();
   }
   function hideProxy(){ $proxy.hide().css('transform','translate(-9999px,-9999px)'); }
 
-  $list.off('.setlistOutsideFinal');
-  $list.on('sortstart.setlistOutsideFinal', function(e, ui){
-    panelRect = null;
-    var r = ui.item.get(0).getBoundingClientRect();
-    startRect = { left:r.left, top:r.top, width:r.width, height:r.height };
+  function inlineTwinFrom($el){
+    var r = rect($el.get(0));
+    startRect = r;
+    $twin
+      .css({
+        position:'fixed', left:r.left+'px', top:r.top+'px',
+        width:r.width+'px', height:r.height+'px',
+        margin:0, padding:0, 'z-index': 9999, 'pointer-events': 'none', display:'block'
+      })
+      .html('')
+      .append($el.clone(true, true));
+  }
+  function removeTwin(){ $twin.hide().empty(); }
+
+  $list.off('.setlistOutsideTwin');
+  $list.on('sortstart.setlistOutsideTwin', function(e, ui){
+    panelRect=null;
     startIndex = ui.item.index();
+    removeTwin();
     hideProxy();
   });
-
-  $list.on('sort.setlistOutsideFinal', function(e, ui){
-    if (isOutside(e)){
-      // Keep the actual tile *visible* and *fixed* at its start rect INSIDE the setlist box
-      // Do NOT hide it, do NOT change its style beyond pinning to its start rect.
-      ui.helper.css({
-        position:'fixed',
-        left: startRect.left + 'px',
-        top:  startRect.top  + 'px',
-        width: startRect.width + 'px',
-        height:startRect.height + 'px',
-        transform: 'none',     // neutralize jQuery UI transform so it doesn't drift
-        opacity: '',           // keep original look
-        visibility: 'visible', // do not disappear
-        display: 'block'       // ensure it stays visible
-      });
-
-      // Keep the placeholder at the original index so the list doesn't reflow or slide
+  $list.on('sort.setlistOutsideTwin', function(e, ui){
+    if (outside(e)){
+      if ($twin.is(':hidden')) inlineTwinFrom(ui.helper);
+      // Keep placeholder at original index to stop list shift
       try {
         var $ph = ui.placeholder;
         if ($ph && startIndex >= 0){
           var $kids = $list.children(':not(.ui-sortable-helper)');
-          if (startIndex < $kids.length){
-            $ph.detach(); $ph.insertBefore($kids.eq(startIndex));
-          }
+          if (startIndex < $kids.length){ $ph.detach(); $ph.insertBefore($kids.eq(startIndex)); }
         }
       } catch(err){}
-
-      // Show a SINGLE blue name-only chip that follows the finger for sidebar drops
+      // Make the helper invisible but present so sortable keeps working
+      ui.helper.css({ opacity:0, visibility:'hidden' });
+      // Move the chip
       var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
       moveProxy(e, name);
     } else {
-      // Back inside: release helper back to sortable's control and hide proxy
-      ui.helper.css({ position:'', left:'', top:'', width:'', height:'', transform:'', opacity:'', visibility:'', display:'' });
+      removeTwin();
+      ui.helper.css({ opacity:'', visibility:'' });
       hideProxy();
     }
   });
-
-  $list.on('sortstop.setlistOutsideFinal', function(e, ui){
-    // Clean up
-    ui.helper.css({ position:'', left:'', top:'', width:'', height:'', transform:'', opacity:'', visibility:'', display:'' });
+  $list.on('sortstop.setlistOutsideTwin', function(e, ui){
+    removeTwin();
+    ui.helper.css({ opacity:'', visibility:'' });
     hideProxy();
-    startRect = null; startIndex = -1; panelRect = null;
+    startRect=null; startIndex=-1; panelRect=null;
   });
 })();
 </script>
