@@ -1732,8 +1732,7 @@ html.dark .notes-inline .notes-textarea {
 #pinned-setlist-clone .song-name-text { color:#fff; }
 
 /* While outside, hide helper+placeholder so no reflow occurs */
-body.setlist-drag-outside .ui-sortable-helper { display: none !important; }
-body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none !important; visibility: hidden !important; }
+/* removed: keep helper + placeholder visible outside */
 
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
@@ -4391,6 +4390,115 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   });
 })();
 
+</script>
+<script>
+// === Setlist outside-drag: keep real tile unchanged in-place; show ONE name-only chip outside ===
+(function(){
+  var $list = $('#setlist-list');
+  if (!$list.length) return;
+  var $panel = $list.closest('.setlist-panel'); if (!$panel.length) $panel = $list;
+
+  // Single reusable name-only proxy chip (blue pill)
+  var $proxy = $('#drag-proxy-nameonly');
+  if (!$proxy.length){
+    $proxy = $('<div id="drag-proxy-nameonly" />').appendTo(document.body);
+  }
+  $proxy.css({
+    position:'fixed', top:0, left:0,
+    transform:'translate(-9999px,-9999px)',
+    'z-index':10000, 'pointer-events':'none'
+  });
+  // Hard de-dupe in case older code created extras
+  (function(){ var nodes = document.querySelectorAll('#drag-proxy-nameonly'); for (var i=1;i<nodes.length;i++) nodes[i].remove(); })();
+
+  var startRect = null;     // visual rect at drag start
+  var startIndex = -1;      // original list index
+  var startClass = '';      // exact class list at start (to restore look)
+  var panelRect = null;
+
+  function panelBounds(){
+    var el = $panel.get(0);
+    return el.getBoundingClientRect();
+  }
+  function isOutside(evt){
+    var r = panelRect || (panelRect = panelBounds());
+    var t = (evt.touches && evt.touches[0]) ? evt.touches[0] : null;
+    var cx = t ? t.clientX : evt.clientX;
+    var cy = t ? t.clientY : evt.clientY;
+    return (cx < r.left || cx > r.right || cy < r.top || cy > r.bottom);
+  }
+  function moveProxy(evt, name){
+    if (typeof name === 'string' && $proxy.text() !== name) $proxy.text(name);
+    var t = (evt.touches && evt.touches[0]) ? evt.touches[0] : null;
+    var cx = t ? t.clientX : evt.clientX;
+    var cy = t ? t.clientY : evt.clientY;
+    $proxy.css('transform','translate('+(cx+12)+'px,'+(cy+12)+'px)').show();
+  }
+  function hideProxy(){
+    $proxy.hide().css('transform','translate(-9999px,-9999px)');
+  }
+
+  $list.off('.setlistOutsideNameOnly');
+  $list.on('sortstart.setlistOutsideNameOnly', function(e, ui){
+    panelRect = null;
+    var r = ui.item.get(0).getBoundingClientRect();
+    startRect  = { left:r.left, top:r.top, width:r.width, height:r.height };
+    startIndex = ui.item.index();
+    startClass = ui.helper.attr('class') || '';
+    hideProxy();
+  });
+
+  $list.on('sort.setlistOutsideNameOnly', function(e, ui){
+    if (isOutside(e)){
+      // Keep the actual visible tile exactly as it was:
+      //  - Pin helper visually to its start rect with no transform
+      //  - Restore original classes so its look doesn't change
+      ui.helper
+        .attr('class', startClass)
+        .css({
+          position:'fixed',
+          left:  startRect.left + 'px',
+          top:   startRect.top  + 'px',
+          width: startRect.width + 'px',
+          height:startRect.height + 'px',
+          transform:'none',
+          opacity:'',
+          visibility:'visible',
+          display:'block'
+        });
+
+      // Keep placeholder at the original index so the list never shifts
+      try {
+        var $ph = ui.placeholder;
+        if ($ph && startIndex >= 0){
+          var $kids = $list.children(':not(.ui-sortable-helper)');
+          if (startIndex < $kids.length){
+            $ph.detach(); $ph.insertBefore($kids.eq(startIndex));
+          }
+        }
+      } catch(err){}
+
+      // Show ONE name-only chip following the finger for sidebar drop targets
+      var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
+      moveProxy(e, name);
+    } else {
+      // Back inside the box: hand control back to sortable visuals and hide chip
+      ui.helper
+        .attr('class', startClass)
+        .css({ position:'', left:'', top:'', width:'', height:'', transform:'', opacity:'', visibility:'', display:'' });
+      hideProxy();
+    }
+  });
+
+  $list.on('sortstop.setlistOutsideNameOnly', function(e, ui){
+    // Cleanup
+    ui.helper
+      .attr('class', startClass)
+      .css({ position:'', left:'', top:'', width:'', height:'', transform:'', opacity:'', visibility:'', display:'' });
+    hideProxy();
+    startRect = null; startIndex = -1; startClass = ''; panelRect = null;
+  });
+})();
 </script>
 </body>
 </html>
