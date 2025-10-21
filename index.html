@@ -1736,6 +1736,12 @@ html.dark .notes-inline .notes-textarea {
 
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
+
+<style>
+/* In-list ghost clone that makes the item appear unchanged while dragging outside */
+.setlist-stayput-ghost { pointer-events: none !important; }
+</style>
+
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2239,7 +2245,13 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
-            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style></head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
+            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style>
+<style>
+/* In-list ghost clone that makes the item appear unchanged while dragging outside */
+.setlist-stayput-ghost { pointer-events: none !important; }
+</style>
+
+</head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
             $('#share-email').on('click',e=>{e.preventDefault();shareSetlist('email')});
@@ -4482,28 +4494,24 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 
 <script>
-// === Setlist outside-drag: keep actual tile unchanged & stationary; show ONE name-only chip (homepage parity) ===
+// === Setlist outside-drag (homepage parity): keep real look in-list via ghost; drag ONLY name chip outside ===
 (function(){
   var $list = $('#setlist-list');
   if (!$list.length) return;
   var $panel = $list.closest('.setlist-panel');
   if (!$panel.length) $panel = $list;
 
-  // Ensure a single name-only proxy exists and is reused
+  // Single reusable name-only proxy chip
   var $proxy = $('#drag-proxy-nameonly');
   if (!$proxy.length){
     $proxy = $('<div id="drag-proxy-nameonly" />').appendTo(document.body);
   }
   $proxy.css({ position:'fixed', top:0, left:0, transform:'translate(-9999px,-9999px)', 'z-index':10000, 'pointer-events':'none' });
-  // Hard de-dupe (in case older code injected others)
-  (function(){
-    var nodes = document.querySelectorAll('#drag-proxy-nameonly');
-    for (var i=1;i<nodes.length;i++) nodes[i].remove();
-  })();
+  // Hard de-dupe
+  (function(){ var nodes=document.querySelectorAll('#drag-proxy-nameonly'); for (var i=1;i<nodes.length;i++) nodes[i].remove(); })();
 
-  var startRect = null;
   var startIndex = -1;
-  var startClass = '';
+  var $ghost = null;
   var panelRect = null;
 
   function getPanelRect(){
@@ -4511,7 +4519,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     return el.getBoundingClientRect();
   }
   function isOutside(evt){
-    var r = panelRect || (panelRect = getPanelRect());
+    var r = panelRect || (panelRect=getPanelRect());
     var t = (evt.touches && evt.touches[0]) ? evt.touches[0] : null;
     var cx = t ? t.clientX : evt.clientX;
     var cy = t ? t.clientY : evt.clientY;
@@ -4526,36 +4534,41 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   }
   function hideProxy(){ $proxy.hide().css('transform','translate(-9999px,-9999px)'); }
 
-  $list.off('.setlistOutsideExact');
+  function ensureGhost($item){
+    if ($ghost && $ghost.length) return $ghost;
+    // Deep clone to preserve appearance; strip duplicate IDs for safety
+    $ghost = $item.clone(true, true).addClass('setlist-stayput-ghost');
+    $ghost.find('[id]').each(function(){ this.removeAttribute('id'); });
+    return $ghost;
+  }
+  function insertGhostAtIndex(idx){
+    try {
+      var $kids = $list.children(':not(.ui-sortable-helper)');
+      if (idx < 0 || idx > $kids.length) return;
+      // Remove any existing ghost before inserting
+      if ($ghost && $ghost.length) $ghost.detach();
+      if (idx < $kids.length){ $ghost.insertBefore($kids.eq(idx)); }
+      else { $ghost.appendTo($list); }
+    } catch(e){}
+  }
+  function removeGhost(){
+    if ($ghost && $ghost.length){ $ghost.remove(); }
+    $ghost = null;
+  }
 
-  $list.on('sortstart.setlistOutsideExact', function(e, ui){
+  $list.off('.setlistOutsideGhost');
+  $list.on('sortstart.setlistOutsideGhost', function(e, ui){
     panelRect = null;
-    var rect = ui.item.get(0).getBoundingClientRect();
-    startRect  = { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
     startIndex = ui.item.index();
-    startClass = ui.helper.attr('class') || '';
+    removeGhost();
     hideProxy();
   });
-
-  $list.on('sort.setlistOutsideExact', function(e, ui){
+  $list.on('sort.setlistOutsideGhost', function(e, ui){
     if (isOutside(e)){
-      // Keep the actual visible tile EXACTLY where it was:
-      // Lock the helper to its start rect, cancel any transform so there is zero drift.
-      ui.helper.css({
-        position: 'fixed',
-        left:  startRect.left + 'px',
-        top:   startRect.top  + 'px',
-        width: startRect.width + 'px',
-        height:startRect.height + 'px',
-        transform: 'none',
-        opacity: '',
-        visibility: 'visible',
-        display: 'block'
-      });
-      // Remove the blue drag style if your code uses it (avoid look change when outside)
-      ui.helper.removeClass('is-sorting');
-
-      // Keep the placeholder at the original index, so the list never shifts
+      // Keep the *look* in the list by inserting a ghost clone at the original index
+      ensureGhost(ui.item);
+      insertGhostAtIndex(startIndex);
+      // Keep placeholder pinned at the same index so list never shifts
       try {
         var $ph = ui.placeholder;
         if ($ph && startIndex >= 0){
@@ -4565,26 +4578,24 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
           }
         }
       } catch(err){}
-
-      // Show ONE name-only chip that follows the finger
+      // Hide the moving helper (but keep the session alive)
+      ui.helper.css({ visibility:'hidden', opacity:0 });
+      // Show ONE name-only chip following the finger
       var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
       moveProxy(e, name);
     } else {
-      // Back inside: restore helper to sortable control + original classes; hide chip
-      ui.helper
-        .attr('class', startClass) // exact class restoration avoids any look drift
-        .css({ position:'', left:'', top:'', width:'', height:'', transform:'', opacity:'', visibility:'', display:'' });
+      // Back inside: restore normal visuals
+      removeGhost();
+      ui.helper.css({ visibility:'', opacity:'' });
       hideProxy();
     }
   });
-
-  $list.on('sortstop.setlistOutsideExact', function(e, ui){
-    // Full reset
-    ui.helper
-      .attr('class', startClass)
-      .css({ position:'', left:'', top:'', width:'', height:'', transform:'', opacity:'', visibility:'', display:'' });
+  $list.on('sortstop.setlistOutsideGhost', function(e, ui){
+    // Cleanup
+    removeGhost();
+    ui.helper.css({ visibility:'', opacity:'' });
     hideProxy();
-    startRect = null; startIndex = -1; startClass = ''; panelRect = null;
+    startIndex = -1; panelRect = null;
   });
 })();
 </script>
