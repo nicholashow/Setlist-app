@@ -1667,27 +1667,6 @@ html.dark .notes-inline .notes-textarea {
   line-height: 1.28;
 }
 
-
-/* === Minimal toolbar tweak: Sort width + button left offsets (only) === */
-:root {
-  --sort-width: 160px;       /* shrink from right; left edge stays put */
-  --addfiles-left: -16px;    /* tune to align above Artist */
-  --deleteall-left: -48px;   /* tune to align above per-row Delete */
-}
-#controls-row #filters-group #sort-dropdown {
-  flex: 0 0 var(--sort-width) !important;
-  width: var(--sort-width) !important;
-  max-width: var(--sort-width) !important;
-}
-#controls-row #master-view-buttons #upload-master-btn {
-  position: relative !important;
-  left: var(--addfiles-left) !important;
-}
-#controls-row #master-view-buttons #delete-all-btn {
-  position: relative !important;
-  left: var(--deleteall-left) !important;
-}
-
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
 </head>
