@@ -1703,6 +1703,35 @@ html.dark .notes-inline .notes-textarea {
   line-height: 1.25;
 }
 
+
+/* === Setlist drag outside behavior (blue helper + name-only, position locked) === */
+body.setlist-drag-outside .ui-sortable-helper {
+  background: #2563eb !important; /* keep blue as if rearranging */
+  color: #fff !important;
+  z-index: 9999 !important;
+  opacity: 1 !important;
+}
+/* Hide non-name parts when outside; keep only the file name visible */
+body.setlist-drag-outside .ui-sortable-helper .song-details-container,
+body.setlist-drag-outside .ui-sortable-helper .favorite-star-container,
+body.setlist-drag-outside .ui-sortable-helper .genre-dot,
+body.setlist-drag-outside .ui-sortable-helper .index-number,
+body.setlist-drag-outside .ui-sortable-helper .energy-chip,
+body.setlist-drag-outside .ui-sortable-helper .duration-chip,
+body.setlist-drag-outside .ui-sortable-helper .delete-btn,
+body.setlist-drag-outside .ui-sortable-helper .file-actions,
+body.setlist-drag-outside .ui-sortable-helper .artist-name { display:none !important; }
+
+/* Make sure the name is visible and readable on blue */
+body.setlist-drag-outside .ui-sortable-helper .song-name-text {
+  display:inline !important;
+  color:#fff !important;
+  font-weight:700 !important;
+}
+
+/* Keep default in-box sort visuals otherwise */
+.ui-sortable-helper.is-sorting { background:#2563eb !important; color:#fff !important; }
+
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
 </head>
@@ -4268,6 +4297,74 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
   window.showGenrePage = showGenrePage;
 })();
+</script>
+<script>
+
+(function(){
+  var $ = window.jQuery;
+  var $list = $('#setlist-list');
+  // Identify the dark grey box showing all files in the setlist:
+  // It's the UL inside a .setlist-panel in #setlist-view
+  var $panel = $('#setlist-view .setlist-panel > ul#setlist-list');
+  if (!$list.length || !$panel.length || !$.fn.sortable) return;
+
+  // Clear our previous handlers if any
+  $list.off('.outsideLock');
+
+  var lastOutside = false;
+  var originalIndex = null;
+
+  $list.on('sortstart.outsideLock', function(e, ui){
+    originalIndex = ui.item.index();
+    // Ensure helper uses the same blue style as in normal rearrange
+    ui.helper.addClass('is-sorting')
+             .css({ 'z-index': 9999, 'opacity': 1 });
+  });
+
+  $list.on('sort.outsideLock', function(e, ui){
+    var rect = $panel.get(0).getBoundingClientRect();
+    var x = e.clientX, y = e.clientY;
+    var outside = (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom);
+
+    if (outside){
+      if (!lastOutside){
+        document.body.classList.add('setlist-drag-outside');
+        // Hide placeholder so the list doesn't reflow = lock visual position
+        ui.placeholder.css({ visibility: 'hidden', display: 'none' });
+        lastOutside = true;
+      }
+    } else {
+      if (lastOutside){
+        document.body.classList.remove('setlist-drag-outside');
+        ui.placeholder.css({ visibility: '', display: '' });
+        lastOutside = false;
+      }
+    }
+  });
+
+  $list.on('sortstop.outsideLock', function(e, ui){
+    // If stopped while outside, revert to original index so order doesn't change
+    if (lastOutside && originalIndex != null){
+      var $items = $list.children('li');
+      if (originalIndex < 0) originalIndex = 0;
+      if (originalIndex >= $items.length) originalIndex = $items.length - 1;
+      var $target = $items.eq(originalIndex);
+      if ($target.length){
+        if (ui.item.index() < originalIndex){
+          // If item ended up before, insert after target
+          $target.after(ui.item);
+        } else if (ui.item.index() > originalIndex){
+          // If item after, insert before target.next() (ensures original spot)
+          $target.before(ui.item);
+        }
+      }
+    }
+    document.body.classList.remove('setlist-drag-outside');
+    lastOutside = false;
+    originalIndex = null;
+  });
+})();
+
 </script>
 </body>
 </html>
