@@ -1605,10 +1605,12 @@ html.dark .notes-inline .notes-textarea {
 #genre-song-list > li .song-name-text,
 #plays-list > li .song-name-text,
 #genre-page-list > li .song-name-text {
-  padding-right: 0.5rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display:block;
+  white-space: normal; /* allow wrapping */
+  overflow: visible;
+  text-overflow: clip;
+  padding-right: 260px; /* reserve space so long names don't go under inputs */
+  line-height: 1.25;
 }
 
 /* Add a touch of space before the 4-input block */
@@ -1618,8 +1620,7 @@ html.dark .notes-inline .notes-textarea {
 #genre-song-list > li .song-details-container,
 #plays-list > li .song-details-container,
 #genre-page-list > li .song-details-container {
-  margin-left: 0.5rem;
-  margin-left: 0 !important;
+  margin-left: var(--emblems-left) !important;
 }
 
 
@@ -1630,12 +1631,12 @@ html.dark .notes-inline .notes-textarea {
 #genre-song-list > li .song-name-text,
 #plays-list > li .song-name-text,
 #genre-page-list > li .song-name-text {
-  display: block;
-  max-width: calc(100% - 240px);  /* reserve space for inputs (~220px + buffer) */
-  padding-right: 8px;             /* small cushion before inputs */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display:block;
+  white-space: normal; /* allow wrapping */
+  overflow: visible;
+  text-overflow: clip;
+  padding-right: 260px; /* reserve space so long names don't go under inputs */
+  line-height: 1.25;
 }
 
 
@@ -1648,7 +1649,7 @@ html.dark .notes-inline .notes-textarea {
 #genre-song-list > li .song-details-container,
 #plays-list > li .song-details-container,
 #genre-page-list > li .song-details-container {
-  margin-left: -1rem;             /* stronger left shift */
+  margin-left: var(--emblems-left) !important;
 }
 
 /* Keep long names on one row and away from the inputs edge */
@@ -1658,15 +1659,16 @@ html.dark .notes-inline .notes-textarea {
 #genre-song-list > li .song-name-text,
 #plays-list > li .song-name-text,
 #genre-page-list > li .song-name-text {
-  display: block;
-  max-width: calc(100% - 250px);  /* reserve space for inputs (~230px + buffer) */
-  padding-right: 12px;            /* small cushion so stacked text doesn't kiss the inputs */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display:block;
+  white-space: normal; /* allow wrapping */
+  overflow: visible;
+  text-overflow: clip;
+  padding-right: 260px; /* reserve space so long names don't go under inputs */
+  line-height: 1.25;
 }
 
 </style>
+<style>:root{ --emblems-left: -1.15rem; }</style>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
