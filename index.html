@@ -4334,6 +4334,11 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   }
 
   $list.on('sortstart.pinnedProxy', function(e, ui){
+    // capture original state
+    var origIndexPinnedProxy = ui.item.index();
+    var origPosPinnedProxy = {left: ui.position.left, top: ui.position.top};
+    var origOffPinnedProxy = {left: ui.offset.left, top: ui.offset.top};
+
     // Build proxy name text
     var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
     $proxy.text(name);
@@ -4367,7 +4372,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       }
       setProxyPosition(e);
     } else {
-      if (wasOutside){ document.body.classList.remove('setlist-drag-outside'); if (ui.helper){ ui.helper.removeClass('setlist-helper-frozen').css({position:'', left:'', top:'', width:'', height:'', opacity:'', visibility:'', display:''}); }
+      if (wasOutside){ document.body.classList.remove('setlist-drag-outside'); if (ui.helper){ ui.helper.removeClass('setlist-helper-frozen').css({position:'', left:'', top:'', opacity:'', display:''}); }
 ui.helper.show(); $proxy.hide().css('transform','translate(-9999px,-9999px)');
         $pinned.hide().empty();
       }
@@ -4393,15 +4398,17 @@ ui.helper.show(); $proxy.hide().css('transform','translate(-9999px,-9999px)');
 
 </script>
 <script>
-// Minimal proxy dedupe: ensure only one name-only chip exists
+// Strict proxy de-dupe (no duplicate name-only chips)
 (function(){
-  function dedupe(){ try {
-    const nodes = Array.from(document.querySelectorAll('#drag-proxy-nameonly'));
-    if (nodes.length > 1) nodes.slice(1).forEach(n => n.remove());
-  } catch(e){} }
-  dedupe();
-  ['pointerdown','touchstart','mousedown'].forEach(ev => {
-    window.addEventListener(ev, dedupe, {passive:true});
+  function dd(){
+    try {
+      const nodes = Array.from(document.querySelectorAll('#drag-proxy-nameonly'));
+      if (nodes.length > 1) nodes.slice(1).forEach(n => n.remove());
+    } catch(e){}
+  }
+  dd();
+  ['pointerdown','touchstart','mousedown','dragstart'].forEach(ev => {
+    window.addEventListener(ev, dd, {passive:true});
   });
 })();
 </script>
