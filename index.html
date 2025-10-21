@@ -1587,6 +1587,40 @@ html.dark .notes-inline .notes-textarea {
   padding: 0.9rem 1rem;   /* just a touch more breathing room inside the grey box */
 }
 
+
+/* === App-wide: slightly tighter grey boxes === */
+#master-list > li,
+#setlist-list > li,
+#favorites-list > li,
+#genre-song-list > li,
+#plays-list > li,
+#genre-page-list > li {
+  padding: 0.65rem 0.75rem; /* less grey, shifts left icons a bit left */
+}
+
+/* Prevent long names from pressing against the 4 inputs */
+#master-list > li .song-name-text,
+#setlist-list > li .song-name-text,
+#favorites-list > li .song-name-text,
+#genre-song-list > li .song-name-text,
+#plays-list > li .song-name-text,
+#genre-page-list > li .song-name-text {
+  padding-right: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Add a touch of space before the 4-input block */
+#master-list > li .song-details-container,
+#setlist-list > li .song-details-container,
+#favorites-list > li .song-details-container,
+#genre-song-list > li .song-details-container,
+#plays-list > li .song-details-container,
+#genre-page-list > li .song-details-container {
+  margin-left: 0.5rem;
+}
+
 </style>
 </head>
 
