@@ -1687,13 +1687,7 @@ html.dark .notes-inline .notes-textarea {
 
 
 /* === Ensure stacking when sidebar is OPEN; single-line only when CLOSED === */
-.left-col:not(.collapsed) ~ main .song-name-text {
-  white-space: normal !important;
-  overflow: visible !important;
-  text-overflow: clip !important;
-  padding-right: 260px; /* keeps wrap from sliding under emblems */
-  line-height: 1.25;
-}
+
 
 
 /* === All Songs toolbar alignment (anchor Sort left edge) === */
@@ -1711,8 +1705,54 @@ html.dark .notes-inline .notes-textarea {
 #upload-master-btn { position: relative; left: -10px; }
 #delete-all-btn   { position: relative; left: -18px; }
 
+
+/* === Filename behavior (precise) === */
+/* Sidebar CLOSED: one line with ellipsis */
+.left-col.collapsed ~ main .song-name-text {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+}
+
+/* Sidebar OPEN: stack, but never go under inputs */
+.left-col:not(.collapsed) ~ main .song-name-text {
+  display: block !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: calc(100% - var(--inputs-width)) !important; /* reserve space for inputs/emblems */
+  line-height: 1.25;
+}
+
+
+/* === All Songs toolbar alignment === */
+/* Narrow Sort width without moving its left edge */
+#master-view-controls .sort-dropdown,
+#master-view-controls select#sort-dropdown,
+#master-view-controls .sort-select,
+#master-view-controls .sort-container select {
+  width: 160px !important;
+  max-width: 160px !important;
+  display: inline-block !important;
+  vertical-align: middle;
+}
+
+/* Shift buttons left so they align with row columns */
+#upload-master-btn {
+  position: relative !important;
+  left: -14px !important; /* align with Artist column */
+  display: inline-block !important;
+}
+#delete-all-btn {
+  position: relative !important;
+  left: -28px !important; /* align with per-row Delete button */
+  display: inline-block !important;
+}
+
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
+<style>:root{ --inputs-width: 260px; }</style>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
