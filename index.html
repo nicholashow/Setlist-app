@@ -4334,11 +4334,6 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   }
 
   $list.on('sortstart.pinnedProxy', function(e, ui){
-    // capture original state
-    var origIndexPinnedProxy = ui.item.index();
-    var origPosPinnedProxy = {left: ui.position.left, top: ui.position.top};
-    var origOffPinnedProxy = {left: ui.offset.left, top: ui.offset.top};
-
     // Build proxy name text
     var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
     $proxy.text(name);
@@ -4372,8 +4367,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       }
       setProxyPosition(e);
     } else {
-      if (wasOutside){ document.body.classList.remove('setlist-drag-outside'); if (ui.helper){ ui.helper.removeClass('setlist-helper-frozen').css({position:'', left:'', top:'', opacity:'', display:''}); }
-ui.helper.show(); $proxy.hide().css('transform','translate(-9999px,-9999px)');
+      if (wasOutside){ document.body.classList.remove('setlist-drag-outside'); ui.helper.show(); $proxy.hide().css('transform','translate(-9999px,-9999px)');
         $pinned.hide().empty();
       }
     }
@@ -4398,18 +4392,97 @@ ui.helper.show(); $proxy.hide().css('transform','translate(-9999px,-9999px)');
 
 </script>
 <script>
-// Strict proxy de-dupe (no duplicate name-only chips)
+// === Hold-inside + name-only-outside behavior (additive, isolated) ===
+// Keeps the real tile fixed inside #setlist-list while showing a single name-only chip outside.
 (function(){
-  function dd(){
-    try {
-      const nodes = Array.from(document.querySelectorAll('#drag-proxy-nameonly'));
-      if (nodes.length > 1) nodes.slice(1).forEach(n => n.remove());
-    } catch(e){}
+  var $list = $('#setlist-list');
+  if (!$list.length) return;
+
+  // Ensure a single proxy node exists
+  var $proxy = $('#drag-proxy-nameonly');
+  if (!$proxy.length){
+    $proxy = $('<div id="drag-proxy-nameonly" />').appendTo(document.body);
+    // minimal base style in case CSS block isn't present
+    $proxy.css({
+      position:'fixed', top:0, left:0,
+      transform:'translate(-9999px,-9999px)',
+      'z-index': 10000, 'pointer-events':'none'
+    });
   }
-  dd();
-  ['pointerdown','touchstart','mousedown','dragstart'].forEach(ev => {
-    window.addEventListener(ev, dd, {passive:true});
-  });
+
+  // De-dupe stray proxies defensively
+  (function dedupe(){
+    try {
+      var nodes = document.querySelectorAll('#drag-proxy-nameonly');
+      if (nodes.length > 1){ for (var i=1;i<nodes.length;i++) nodes[i].remove(); }
+    } catch(e){}
+  })();
+
+  var origPos = null, origOff = null, origIndex = -1, panelRect = null;
+
+  function panelBounds(){
+    if (panelRect) return panelRect;
+    var $panel = $list.closest('.setlist-panel');
+    var el = ($panel.length ? $panel : $list).get(0);
+    panelRect = el.getBoundingClientRect();
+    return panelRect;
+  }
+  function isOutside(evt){
+    var r = panelBounds();
+    var x = (evt.touches && evt.touches[0] ? evt.touches[0].clientX : evt.clientX);
+    var y = (evt.touches && evt.touches[0] ? evt.touches[0].clientY : evt.clientY);
+    return (x < r.left || x > r.right || y < r.top || y > r.bottom);
+  }
+  function moveProxy(evt, name){
+    if (typeof name === 'string'){
+      // assign text only when different to avoid "duplication" effects
+      if ($proxy.text() !== name) $proxy.text(name);
+    }
+    var x = (evt.touches && evt.touches[0] ? evt.touches[0].clientX : evt.clientX) + 12;
+    var y = (evt.touches && evt.touches[0] ? evt.touches[0].clientY : evt.clientY) + 12;
+    $proxy.css('transform', 'translate(' + x + 'px,' + y + 'px)').show();
+  }
+  function hideProxy(){
+    $proxy.hide().css('transform','translate(-9999px,-9999px)');
+  }
+
+  // Hook into sortable lifecycle (without altering original init)
+  $list
+    .off('.holdOutsideProxy')
+    .on('sortstart.holdOutsideProxy', function(e, ui){
+      panelRect = null; // recalc each drag
+      origPos = { left: ui.position.left, top: ui.position.top };
+      origOff = { left: ui.offset.left,  top: ui.offset.top  };
+      origIndex = ui.item.index();
+      hideProxy();
+    })
+    .on('sort.holdOutsideProxy', function(e, ui){
+      if (isOutside(e)){
+        // 1) Lock the real item INSIDE: force sortable to keep original coords
+        ui.position.left = origPos.left; ui.position.top = origPos.top;
+        ui.offset.left = origOff.left;   ui.offset.top = origOff.top;
+        // 2) Keep the placeholder at original index so no reflow/slide
+        try {
+          var $ph = ui.placeholder;
+          if ($ph && origIndex >= 0){
+            var $kids = $list.children(':not(.ui-sortable-helper)');
+            if (origIndex < $kids.length){
+              $ph.detach(); $ph.insertBefore($kids.eq(origIndex));
+            }
+          }
+        } catch(err){}
+        // 3) Show single name-only label following the finger
+        var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
+        moveProxy(e, name);
+      } else {
+        hideProxy();
+      }
+    })
+    .on('sortstop.holdOutsideProxy', function(e, ui){
+      hideProxy();
+      panelRect = null;
+      origPos = origOff = null; origIndex = -1;
+    });
 })();
 </script>
 </body>
