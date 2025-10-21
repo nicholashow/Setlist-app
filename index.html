@@ -1732,7 +1732,7 @@ html.dark .notes-inline .notes-textarea {
 #pinned-setlist-clone .song-name-text { color:#fff; }
 
 /* While outside, hide helper+placeholder so no reflow occurs */
-body.setlist-drag-outside .ui-sortable-helper { opacity: 0 !important; }
+body.setlist-drag-outside .ui-sortable-helper { display: none !important; }
 body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none !important; visibility: hidden !important; }
 
 </style>
@@ -4368,10 +4368,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       }
       setProxyPosition(e);
     } else {
-      if (wasOutside){
-        wasOutside = false;
-        document.body.classList.remove('setlist-drag-outside');
-        $proxy.hide().css('transform','translate(-9999px,-9999px)');
+      if (wasOutside){ document.body.classList.remove('setlist-drag-outside'); ui.helper.show(); $proxy.hide().css('transform','translate(-9999px,-9999px)');
         $pinned.hide().empty();
       }
     }
@@ -4382,6 +4379,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     $proxy.hide().css('transform','translate(-9999px,-9999px)');
     $pinned.hide().empty();
     document.body.classList.remove('setlist-drag-outside');
+    try{ ui.helper.show(); }catch(_){}
     wasOutside = false;
   });
 
