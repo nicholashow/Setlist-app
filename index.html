@@ -1667,13 +1667,55 @@ html.dark .notes-inline .notes-textarea {
   line-height: 1.25;
 }
 
+
+/* === Smooth Sidebar Animation + Name Behavior === */
+html, body { height: 100%; }
+.app-root { display: flex; height: 100%; overflow: hidden; }
+
+.left-col {
+  will-change: transform, opacity;
+  transform: translateX(0);
+  transition: transform 180ms cubic-bezier(.2,.8,.2,1), opacity 120ms linear;
+  contain: paint;
+}
+body.sidebar-closed .left-col {
+  transform: translateX(-100%);
+  opacity: 0.001; /* avoids black flash while moving out */
+  pointer-events: none;
+}
+
+main {
+  transition: padding-left 180ms cubic-bezier(.2,.8,.2,1);
+}
+
+/* File name behavior by sidebar state */
+body.sidebar-open  .song-name-text {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  padding-right: 260px; /* keep from sliding under inputs when open */
+  line-height: 1.25;
+}
+body.sidebar-closed .song-name-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 12px;
+}
+
+/* Prevent sidebar content from reflowing during animation */
+.left-col .left-col-main-content { 
+  overflow: hidden; 
+}
+
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
     <div id="app">
-        <aside class="left-col w-64 bg-gray-800 text-white flex-shrink-0 dark:bg-black">
+        <div class="app-root">
+<aside class="left-col w-64 bg-gray-800 text-white flex-shrink-0 dark:bg-black">
             <div class="left-col-main-content">
                 <div class="app-header app-header-selected" id="home-btn">
                     <h1 class="text-2xl font-bold mb-2 underline">ALL SONGS</h1>
@@ -1964,6 +2006,7 @@ html.dark .notes-inline .notes-textarea {
                 </div>
             </section>
         </main>
+</div>
     </div>
 
     <section class="hidden" id="doc-view">
@@ -4230,6 +4273,51 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 
   window.showGenrePage = showGenrePage;
 })();
+</script>
+<script>
+
+// === Sidebar Open/Close (fast, smooth, no flicker) ===
+(function(){
+  const body = document.body;
+  const sidebar = document.querySelector('.left-col');
+  const toggle = document.querySelector('#sidebar-toggle');
+
+  // Initial state: assume open if visible in layout
+  if (!body.classList.contains('sidebar-open') && !body.classList.contains('sidebar-closed')) {
+    body.classList.add('sidebar-open');
+  }
+
+  function openSidebar(){
+    body.classList.add('sidebar-open');
+    body.classList.remove('sidebar-closed');
+  }
+  function closeSidebar(){
+    body.classList.add('sidebar-closed');
+    body.classList.remove('sidebar-open');
+  }
+  function toggleSidebar(){
+    // Avoid layout thrash: do reads first
+    const isClosed = body.classList.contains('sidebar-closed');
+    // Use rAF to ensure class change hits next frame for smoother transition
+    requestAnimationFrame(()=> (isClosed ? openSidebar() : closeSidebar()));
+  }
+
+  if (toggle) toggle.addEventListener('click', toggleSidebar);
+
+  // Optional: swipe from left edge on touch devices to open quickly
+  let touchStartX = null;
+  window.addEventListener('touchstart', (e)=>{
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+  }, {passive:true});
+  window.addEventListener('touchend', (e)=>{
+    if (touchStartX !== null && touchStartX < 24) {
+      openSidebar();
+    }
+    touchStartX = null;
+  }, {passive:true});
+})();
+
 </script>
 </body>
 </html>
