@@ -414,50 +414,61 @@
             display: block; /* Fix potential extra space */
         }
         
-        /* === NEW Redesigned Viewer Controls === */
-        #viewer-controls {
-            /* Gradient background for better text visibility over content */
-            background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
-            /* Don't show by default */
-            display: none;
-        }
-        /* Show controls only when a viewer is active */
-        body.doc-viewer-active #viewer-controls,
-        html.pdf-overlay-active #viewer-controls {
+        .doc-nav-buttons {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
             display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            z-index: 103;
+            opacity: 1;
+            transition: opacity 0.3s;
+            background: rgba(30,30,30, 0.8);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
-        .viewer-btn {
-            /* Frosted glass effect */
-            background-color: rgba(30, 41, 59, 0.75); /* slate-800 with opacity */
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            will-change: transform, background-color; /* Perf hint */
+        .doc-nav-buttons.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
 
-        .viewer-btn:not(:disabled):hover {
-            background-color: rgba(59, 130, 246, 0.8); /* blue-500 with opacity */
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+        .doc-nav-button {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            border: none;
+            transition: background-color 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            user-select: none;
         }
 
-        .viewer-btn:disabled {
-            background-color: rgba(75, 85, 99, 0.5); /* gray-600 with opacity */
-            transform: none;
-            box-shadow: none;
+        .doc-nav-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
         }
 
-        .viewer-btn-close {
-            background-color: rgba(239, 68, 68, 0.75); /* red-500 with opacity */
+        .doc-nav-close {
+            background: #ef4444;
         }
 
-        .viewer-btn-close:hover {
-            background-color: rgba(220, 38, 38, 0.8); /* red-600 with opacity */
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+        .doc-nav-button:not(:disabled):hover {
+            background-color: #2563eb;
         }
 
+        .doc-nav-close:hover {
+            background-color: #dc2626;
+        }
+        
         .del-setlist {
             background: #ef4444;
             border-radius: 4px;
@@ -1357,217 +1368,30 @@
           background: #fff; border-radius: 6px;
         }
 
-        /* === Setlist Details: unified centered placeholders (Date, Venue, Order) === */
-        #setlist-details-content input,
-        #setlist-details-content select {
-          height: 34px;
-          font-size: 14px;
-          font-weight: 600;
-          text-align: center;          /* center typed text */
-        }
 
-        /* Centered white placeholder for Venue */
-        #setlist-venue::placeholder {
-          color: #ffffff !important;
-          opacity: 1;
-          text-align: center;
-        }
-
-        /* Date "placeholder" is a sibling span because date inputs don't support ::placeholder reliably */
-        #setlist-date-container {
-          position: relative;
-        }
-        #date-placeholder {
-          position: absolute;
-          left: 50%;
-          top: 50%;
-          transform: translate(-50%, -50%);
-          font-size: 14px;
-          font-weight: 600;
-          color: #ffffff !important;   /* always white */
-          pointer-events: none;
-          white-space: nowrap;
-        }
-
-        /* Ensure date input content is centered and text is visible */
-        #setlist-date {
-          text-align: center;
-          color: #ffffff;               /* typed date text white */
-        }
-        .dark #setlist-date {
-          color: #ffffff;
-        }
-        .dark #setlist-date::-webkit-calendar-picker-indicator {
-          filter: invert(1);
-        }
-
-        /* Order select: center displayed value text and keep it white */
-        #setlist-sort-filter-dropdown {
-          text-align: center;
-          text-align-last: center;      /* centers selected option in most browsers */
-          color: #ffffff !important;
-        }
-        .dark #setlist-sort-filter-dropdown {
-          color: #ffffff !important;
-        }
-        /* The dropdown arrow container color (so it doesn't clash) */
-        #setlist-details-content .pointer-events-none svg {
-          color: #ffffff;
-          fill: currentColor;
-        }
-
-
-
-        /* === Precise centering updates === */
-        #setlist-details-content input,
-        #setlist-details-content select {
-          height: 36px;                /* uniform control height */
-          line-height: 36px;           /* vertical centering for text & placeholders */
-          font-size: 15px;
-          font-weight: 600;
-          text-align: center;
-        }
-
-        #date-placeholder {
-          position: absolute;
-          z-index: 2;
-          pointer-events: none;
-          font-size: 15px;
-          font-weight: 600;
-          color: #ffffff !important;
-          /* left/top set dynamically to the INPUT center */
-        }
-
-        #-webkit-date-text { color: #ffffff; } /* noop fallback */
-        .dark #setlist-venue::placeholder { color: #ffffff !important; }
-        # setlist-venue::placeholder { color: #ffffff !important; } /* ensure white in light mode too */
-
-        #setlist-sort-filter-dropdown {
-          text-align: center;
-          text-align-last: center;
-          color: #ffffff !important;
-        }
-        
-        #genre-name::placeholder, #venue-name::placeholder { text-align: center; }
-        #genre-name, #venue-name { text-align: center; } /* helps iOS Safari */
-
-
-/* === Toggle switches (green when ON + knob slide) === */
-#simple-view-container input:checked + .toggle-track,
-#simple-view-container-setlist input:checked + .toggle-track,
-#dark-mode-container input:checked + .toggle-track { background-color:#22c55e !important; }
-#simple-view-container input + .toggle-track + .dot,
-#simple-view-container-setlist input + .toggle-track + .dot,
-#dark-mode-container input + .toggle-track + .dot { transition: transform 0.2s ease; }
-#simple-view-container input:checked + .toggle-track + .dot,
-#simple-view-container-setlist input:checked + .toggle-track + .dot,
-#dark-mode-container input:checked + .toggle-track + .dot { transform: translateX(20px); }
-
-
-/* === Simple View (name-only) === */
-body.simple-view-on .song-details-container,
-body.simple-view-on .favorite-star-container,
-body.simple-view-on .genre-dot,
-body.simple-view-on .index-number,
-body.simple-view-on .delete-btn,
-body.simple-view-on .song-meta,
-body.simple-view-on .energy-chip,
-body.simple-view-on .duration-chip,
-body.simple-view-on .artist-name,
-body.simple-view-on .file-actions,
-body.simple-view-on .drag-handle { display:none !important; }
-body.simple-view-on .song-name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-
-
-/* === PATCH: Simple View compaction (~40% height), keep 4 emblems === */
-body.simple-view-on #master-list > li,
-body.simple-view-on #setlist-list > li,
-body.simple-view-on #favorites-list > li,
-body.simple-view-on #genre-song-list > li,
-body.simple-view-on #plays-list > li {
-  padding-top: 0.25rem !important;
-  padding-bottom: 0.25rem !important;
-  margin-top: 0.125rem;
-  margin-bottom: 0.125rem;
+/* === Overlay-integrated original nav (non-intrusive) === */
+html.pdf-overlay-active #doc-view { display: block !important; } /* unhide the section so nav exists */
+html.pdf-overlay-active #doc-iframe-wrapper { display: none !important; } /* keep old wrapper hidden to avoid any layout/scroll changes */
+html.pdf-overlay-active #doc-nav-buttons {
+  position: fixed !important;
+  top: 0; left: 0; right: 0;
+  z-index: 1000001 !important; /* above #pdf-overlay (999999) */
+  pointer-events: auto;
 }
-body.simple-view-on .index-number,
-body.simple-view-on .favorite-star-container,
-body.simple-view-on .genre-dot,
-body.simple-view-on .energy-chip,
-body.simple-view-on .bolt,
-body.simple-view-on .lightning { display: inline-flex !important; }
-
-/* === PATCH: Sort genre flyout anchored under the Sort select (no layout shift) === */
-#filters-group { position: relative; }
-#sort-genre-flyout {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  z-index: 50;
-  display: none;
-  width: 16rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-  background: #ffffff;
-  border: 1px solid rgba(229,231,235,1);
-}
-.dark #sort-genre-flyout { background: rgb(31,41,55); border-color: rgba(55,65,81,1); }
-#sort-genre-flyout .title { font-size: 0.75rem; color: rgba(107,114,128,1); padding: 0.5rem 0.75rem 0 0.75rem; }
-.dark #sort-genre-flyout .title { color: rgba(156,163,175,1); }
-#sort-genre-flyout .slot { max-height: 11rem; overflow: auto; padding: 0.5rem 0.75rem 0.75rem 0.75rem; }
-
-/* === PATCH: Sidebar open (fade in after width expands; no overlays) === */
-.left-col.opening-fade > * { opacity: 0; }
-.left-col.opening-fade.ready > * { opacity: 1; transition: opacity 180ms ease; }
+/* Do not modify overlay scroll area at all */
 
 
-/* === In-place Notes expanding box (fixed width, vertical auto-grow) === */
-.notes-inline { position: relative; display: inline-block; width: 100%; }
-.notes-inline .notes-textarea {
-  width: 100%;
-  box-sizing: border-box;
-  min-height: 36px;
-  max-height: 70vh;
-  overflow-x: hidden;
-  overflow-y: auto;
-  border-radius: 10px;
-  border: 1px solid #d1d5db;
-  background: #f3f4f6; /* gray box */
-  color: #111827;
-  font-size: 14px;
-  line-height: 1.4;
-  font-family: inherit;
-  padding: 8px 36px 8px 10px; /* room for buttons on right */
-  resize: none;
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow-wrap: anywhere;
+/* === Ensure original nav is above overlay and not trapped in a transform context === */
+html.pdf-overlay-active #doc-view { display: block !important; transform: none !important; }
+html.pdf-overlay-active #doc-view * { transform: none !important; }
+html.pdf-overlay-active #doc-nav-buttons {
+  position: fixed !important;
+  top: 0; left: 0; right: 0;
+  z-index: 2147483000 !important; /* way above any overlay */
+  pointer-events: auto !important;
 }
-html.dark .notes-inline .notes-textarea {
-  background: #374151; color: #e5e7eb; border-color: #4b5563;
-}
-.notes-inline .notes-btn {
-  position: absolute;
-  top: 6px;
-  right: 8px;
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-size: 14px;
-  line-height: 1;
-  padding: 2px 4px;
-  cursor: pointer;
-  opacity: .85;
-}
-.notes-inline .notes-btn:hover { opacity: 1; }
-.notes-inline .notes-btn.dropdown { display: none; } /* hidden while expanded */
-.notes-inline.collapsed .notes-btn.close { display: none; }
-.notes-inline.collapsed .notes-btn.dropdown { display: inline-block; }
-.notes-inline.collapsed .notes-textarea {
-  height: 36px !important; /* single-line look */
-  overflow: hidden !important;
-}
+/* Make sure overlay stays below */
+#pdf-overlay { z-index: 2147482000 !important; }
 
 </style>
 </head>
@@ -1642,24 +1466,12 @@ html.dark .notes-inline .notes-textarea {
                     <div id="search-container">
                         <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..." />
                         <datalist id="search-results"></datalist>
-                        
-                        <div id="simple-view-container" class="absolute right-[120px] top-1/2 -translate-y-1/2">
-                            <label for="simple-view-toggle" class="flex items-center cursor-pointer">
-                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
-                                <div class="relative">
-                                    <input type="checkbox" id="simple-view-toggle" class="sr-only">
-                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
-                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
-                                </div>
-                            </label>
-                        </div>
-
                         <div id="dark-mode-container">
                              <label for="dark-mode-toggle" class="flex items-center cursor-pointer ml-4">
                                 <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark</span>
                                 <div class="relative">
                                     <input type="checkbox" id="dark-mode-toggle" class="dark-mode-toggle sr-only">
-                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="block bg-gray-600 w-12 h-7 rounded-full"></div>
                                     <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
                                 </div>
                             </label>
@@ -1673,12 +1485,7 @@ html.dark .notes-inline .notes-textarea {
                                 <option value="lastPlayed">Sort by Last Played</option>
                                 <option value="energy">Sort by Energy</option>
                             </select>
-                        <div id="sort-genre-flyout">
-                            <div class="title">Genres</div>
-                            <div class="slot" id="sort-genre-slot"></div>
-                        </div>
-
-                            <div id="genre-filter-container" class="relative hidden">
+                            <div id="genre-filter-container" class="relative">
                                 <button id="genre-filter-button" class="p-2 rounded-lg bg-transparent text-sm text-left dark:bg-transparent dark:text-gray-200">Select Genres</button>
                                 <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
                             </div>
@@ -1712,24 +1519,12 @@ html.dark .notes-inline .notes-textarea {
                 </div>
 
                 <div class="flex items-end justify-between flex-wrap gap-4 mb-2">
-                    <div class="flex items-center gap-2 whitespace-nowrap">
+                    <div class="flex items-center gap-2">
                         <button id="record-show" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Record Show</button>
                         <button id="stop-record" class="p-2 bg-red-600 text-white rounded-lg hidden shadow">Stop Recording</button>
                         <button id="print-setlist" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">Print Setlist</button>
-                        <div class="relative inline-flex items-center whitespace-nowrap">
+                        <div class="relative inline-block">
                             <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Share Setlist</button>
-
-                        <div id="simple-view-container-setlist" class="inline-flex items-center ml-2">
-                            <label for="simple-view-toggle-setlist" class="flex items-center cursor-pointer">
-                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
-                                <div class="relative">
-                                    <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
-                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
-                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
-                                </div>
-                            </label>
-                        </div>
-
                             <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
                                 <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
                                 <a href="#" id="share-email" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Email (text only)</a>
@@ -1814,7 +1609,7 @@ html.dark .notes-inline .notes-textarea {
                  <div class="flex items-center justify-between mb-2">
                      <h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
                     <div class="relative">
-                        <select id="genre-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 hidden">
+                        <select id="genre-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
                             <option value="name">Sort by Name</option>
                             <option value="artist">Sort by Artist</option>
                             <option value="lastPlayed">Sort by Last Played</option>
@@ -1866,22 +1661,21 @@ html.dark .notes-inline .notes-textarea {
 
     <section class="hidden" id="doc-view">
          <div id="doc-iframe-wrapper"></div>
-    </section>
-
-    <!-- VIEWER CONTROLS -->
-    <div id="viewer-controls" class="fixed top-0 left-0 right-0 h-20 z-[2147483647] p-4 flex justify-center items-center pointer-events-none transition-opacity duration-300 opacity-0">
-        <div class="flex justify-center items-center gap-4">
-            <button id="viewer-prev-btn" class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32">
-                <span>Previous</span>
+        <div class="doc-nav-buttons" id="doc-nav-buttons">
+            <button class="doc-nav-button no-select" id="prev-doc">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                Previous
             </button>
-            <button id="viewer-next-btn" class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32">
-                <span>Next</span>
+            <button class="doc-nav-button no-select" id="next-doc">
+                Next
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
             </button>
-            <button id="viewer-close-btn" class="viewer-btn viewer-btn-close pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 w-32">
-                <span>Close</span>
+            <button class="doc-nav-button doc-nav-close no-select" id="close-doc">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                Close
             </button>
         </div>
-    </div>
+    </section>
 
     <script>
         // ================== Disable Zoom on iPad ==================
@@ -1967,7 +1761,6 @@ html.dark .notes-inline .notes-textarea {
         let recorder = null;
         let audioChunks = [];
         let cameFromVenue = null;
-        let viewerButtonsClickable = false;
         
         // ================== Persistent Storage ==================
         function save() {
@@ -2011,36 +1804,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
         });
 
         $('main').on('click','li.draggable',function(e){if($(e.target).closest('input, button, a, .genre-dot, .energy-icon, .favorite-star-container').length>0){return}const s=$(this).attr('id'),c=$('main > section:visible').attr('id').replace('-view','');openSongInContext(s,c)});
-        
-        // === NEW Redesigned Viewer Button Handlers ===
-        $('#viewer-close-btn').on('click', function(e) {
-            if (!viewerButtonsClickable) return;
-            e.stopPropagation();
-            $('body').removeClass('doc-viewer-active');
-            $('html').removeClass('doc-viewer-active pdf-overlay-active'); // ensure all viewer states are cleared
-            $('#doc-view').removeClass('doc-view-fullscreen').hide();
-            resetScrollHandlers();
-            $('#viewer-controls').addClass('opacity-0'); // Hide controls
-            $('#doc-iframe-wrapper').empty();
-            if (typeof destroyPdfOverlay === 'function') {
-                destroyPdfOverlay();
-            }
         });
-
-        $('#viewer-next-btn').on('click', function() {
-            if (!viewerButtonsClickable) return;
-            if (!$(this).is(':disabled') && currentViewerList && currentViewerIndex < currentViewerList.length - 1) {
-                openSongInContext(currentViewerList[currentViewerIndex + 1].id, currentViewerContext, currentViewerIndex + 1, 'next');
-            }
-        });
-
-        $('#viewer-prev-btn').on('click', function() {
-            if (!viewerButtonsClickable) return;
-            if (!$(this).is(':disabled') && currentViewerList && currentViewerIndex > 0) {
-                openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1, 'prev');
-            }
-        });
-    });
         // ================== Event Handlers ==================
         function bindNav(ds){
             $('#home-btn').click(()=>{ds();$('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');show('master');autoCollapseSidebar()});
@@ -2065,6 +1829,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#setlist-sort-filter-dropdown').on('change',renderSetlist);
             $(document).on('click',function(e){if(!$(e.target).closest('#genre-filter-container').length)$('#genre-filter-dropdown').addClass('hidden');if(!$(e.target).closest('.relative').has('#share-setlist-btn').length)$('#share-options').addClass('hidden')});
             $('#reset-plays').click(()=>{if(confirm('Reset all plays?')){playCounts={};masterSongs.forEach(s=>s.lastPlayed=null);renderPlays();updateTopLeast();save()}});
+            $('#close-doc').on('click',function(e){e.stopPropagation();$('body').removeClass('doc-viewer-active'); $('html').removeClass('doc-viewer-active');$('#doc-view').removeClass('doc-view-fullscreen').hide();resetScrollHandlers();$('#doc-iframe-wrapper').empty()});
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
@@ -2093,68 +1858,40 @@ const s=$('.left-col');s.toggleClass('collapsed');
         function renderPlays(){const u=$('#plays-list').empty();if(masterSongs.length===0){u.append('<li class="p-8 text-center text-gray-500 italic">Add songs to start tracking plays.</li>');return}const s=masterSongs.slice().sort((a,b)=>(playCounts[b.id]||0)-(playCounts[a.id]||0));window.currentPlaysViewSongs=s;if(Object.values(playCounts).every(c=>c===0)){u.append('<li class="p-8 text-center text-gray-500 italic">No songs played yet. Click a song to log a play.</li>');return}s.forEach(s=>{const l=$(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable pl-4"><div class="flex-1 cursor-pointer font-medium">${escapeHtml(s.name)}</div><div class="w-24 text-right font-medium">${playCounts[s.id]||0}</div><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition">Reset</button></li>`);l.find('button').click(()=>{playCounts[s.id]=0;renderPlays();updateTopLeast();save()});u.append(l)});$('#plays-list .draggable').draggable(draggableOptions)}
         function renderRecordings(){const u=$('#recordings-list').empty();if(recordings.length===0){u.append('<li class="p-8 text-center text-gray-500 italic">No recordings saved.</li>');return}recordings.forEach(r=>{const l=$(`<li class="flex items-center p-3 hover:bg-gray-50 dark:hover:bg-gray-700"><div class="flex-1">${escapeHtml(r.setlist)} - ${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</div><audio controls src="${r.audioData}"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-rec" data-id="${r.id}">Delete</button></li>`);l.find('.delete-rec').click(()=>{recordings=recordings.filter(rec=>rec.id!==r.id);renderRecordings();save()});u.append(l)})}
         function renderFavorites(){let f=masterSongs.filter(s=>s.favorite);const m=$('#favorites-sort-dropdown').val();f.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentFavoritesViewSongs=f;const u=$('#favorites-list').empty();f.forEach((s,i)=>{u.append(createSongItem(s,i,'favorites'))});$('#favorites-list .draggable').draggable(draggableOptions)}
-        function renderGenreView(n){
-currentGenre = n;
-$('#genre-view-title').text(`Genre: ${n}`);
-
-// Normalize to 6-digit hex (uppercase) for reliable equality
-function __hex(v){
-    if(!v) return '';
-    // Handle rgb()/rgba()
-    const rgb = String(v).trim();
-    const rgbMatch = rgb.match(/^rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\)$/i);
-    if (rgbMatch){
-        const r = Math.max(0, Math.min(255, parseInt(rgbMatch[1],10)));
-        const g = Math.max(0, Math.min(255, parseInt(rgbMatch[2],10)));
-        const b = Math.max(0, Math.min(255, parseInt(rgbMatch[3],10)));
-        return '#' + [r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();
-    }
-    // Handle #RGB or #RRGGBB
-    let s = String(v).trim();
-    if (s[0] !== '#') return '';
-    s = s.toUpperCase();
-    if (s.length === 4){ // #RGB -> #RRGGBB
-        s = '#' + s[1]*2 + s[2]*2 + s[3]*2;
-    }
-    if (s.length === 7) return s;
-    return '';
-}
-
-// Target color is the color configured on the sidebar genre
-const targetHex = __hex(getGenreColor(n));
-
-// Build the list: a song is "in the genre" if its effective color equals targetHex.
-// Effective color = (explicit song.color) OR (color of song.genre, if any)
-let s = masterSongs.filter(song => {
-    const songHex = __hex(song.color || (song.genre ? getGenreColor(song.genre) : ''));
-    return songHex && songHex === targetHex;
-});
-
-const m = $('#genre-sort-dropdown').val();
-s.sort((a,b)=>
-    m==='artist'?(a.artist||'').localeCompare(b.artist||''):
-    m==='lastPlayed'?((b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0)):
-    m==='energy'?((b.energy||0)-(a.energy||0)):
-    a.name.localeCompare(b.name)
-);
-
-window.currentGenreViewSongs = s;
-const u = $('#genre-song-list').empty();
-if (s.length===0){
-    u.append('<li class="p-4 text-center text-gray-500">No files match this genre color.</li>');
-} else {
-    s.forEach((song,i)=>{ u.append(createSongItem(song,i,'genre')); });
-    $('#genre-song-list .draggable').draggable(draggableOptions);
-}
-
-                    } catch (e) {
-                        console.error('PDF render failed, opening natively', e);
-                        destroyPdfOverlay();
-                        try { window.open(url, '_blank'); } catch(_) {}
-                    }
-                })();
+        function renderGenreView(n){currentGenre=n;$('#genre-view-title').text(`Genre: ${n}`);let s=masterSongs.filter(s=>s.genre&&s.genre.toLowerCase()===n.toLowerCase());const m=$('#genre-sort-dropdown').val();s.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentGenreViewSongs=s;const u=$('#genre-song-list').empty();s.forEach((s,i)=>{u.append(createSongItem(s,i,'genre'))});$('#genre-song-list .draggable').draggable(draggableOptions)}
+        function renderEnergyLevels(){const c=$('#energy-level-container').empty();[1,2,3].forEach(l=>{const s=masterSongs.filter(s=>s.energy===l).sort((a,b)=>a.name.localeCompare(b.name)),e=$(`<div class="p-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg"><div class="flex justify-center mb-2">${energyIcons[l]}</div><ul class="divide-y divide-gray-200 dark:divide-gray-700 max-h-96 overflow-y-auto"></ul></div>`),u=e.find('ul');if(s.length>0)s.forEach(s=>u.append(`<li id="${s.id}" class="p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer draggable">${escapeHtml(s.name)}</li>`));else u.append(`<li class="p-2 text-sm text-gray-500 italic">No songs in this category.</li>`);c.append(e)});$('#energy-level-container .draggable').draggable(draggableOptions)}
+        function renderGenres(ds){$('#genre-list').empty();genres.forEach(g=>{const e=$(`<div class="sidebar-item genre-item" data-name="${escapeHtml(g.name)}"><div class="genre-content"><div class="genre-dot" style="background:${g.color}"></div><div class="genre-name text-sm">${escapeHtml(g.name)}</div></div><span class="delete-genre" title="Delete genre">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-genre, .genre-edit-input').length>0)return;ds();$(this).addClass('selected');currentGenre=g.name;show('genre-view')});e.find('.delete-genre').click(ev=>{ev.stopPropagation();if(confirm(`Delete genre "${g.name}"?`)){genres=genres.filter(gn=>gn.name!==g.name);masterSongs.forEach(s=>{if(s.genre===g.name)s.genre=''});renderAll();save()}});e.find('.genre-name').on('dblclick',function(ev){ev.stopPropagation();const o=$(this).text(),i=$('<input class="w-full bg-gray-600 p-1 rounded-md" type="text" value="'+o+'">');$(this).replaceWith(i);i.focus().select().on('blur keypress',function(e){if(e.type==='keypress'&&e.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==o){const gn=genres.find(gn=>gn.name===o);if(gn)gn.name=newName;masterSongs.forEach(s=>{if(s.genre===o)s.genre=newName})}renderAll();save()})});$('#genre-list').append(e)});updateGenreFilters('#genre-filter-dropdown',masterSelectedGenres);$('#genre-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#genre-list .genre-item').each(function(){const n=$(this).data('name'),g=genres.find(g=>g.name===n);if(g)o.push(g)});genres=o;save()}})}
+        function renderVenues(ds){$('#venue-list').empty();venues.forEach(v=>{const e=$(`<div class="sidebar-item venue-item" data-name="${escapeHtml(v.name)}"><div class="venue-name text-sm">${escapeHtml(v.name)}</div><span class="delete-venue" title="Delete venue">✕</span></div>`);e.on('click',function(ev){if($(ev.target).closest('.delete-venue').length)return;ds();$(this).addClass('selected');renderVenueSetlists(v.name);show('venue-setlists')});e.find('.delete-venue').click(ev=>{ev.stopPropagation();venues=venues.filter(vn=>vn.name!==v.name);Object.values(setlists).forEach(sl=>{if(sl.venue===v.name)sl.venue=''});recordings.forEach(r=>{if(r.venue===v.name)r.venue=''});renderVenues(ds);if(currentSetlist)renderSetlist();if($('#venue-setlists-view').is(':visible'))$('#home-btn').trigger('click');save()});$('#venue-list').append(e)});$('#venue-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=[];$('#venue-list .venue-item').each(function(){const n=$(this).data('name'),v=venues.find(v=>v.name===n);if(v)o.push(v)});venues=o;save()}})}
+        function renderVenueSetlists(n){$('#venue-setlists-title').html(`Setlists for: <span class="text-blue-600">${escapeHtml(n)}</span>`);const u=$('#venue-setlists-list').empty(),m=Object.entries(setlists).filter(([_,d])=>d.venue===n);if(m.length===0){u.append('<li class="p-4 text-center text-gray-500">No setlists found for this venue.</li>');return}m.forEach(([n,d])=>{u.append(`<li class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer" data-setlist-name="${escapeHtml(n)}"><div class="font-medium">${escapeHtml(n)}</div><div class="text-sm text-gray-500">${escapeHtml(d.date)||'No date'}</div></li>`)})}
+        function updateGenreFilters(s,l){const d=$(s).empty();if(genres.length===0){d.append('<div class="p-2 text-sm text-gray-500">No genres created.</div>');return}genres.forEach(g=>{d.append(`<label class="flex items-center p-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"><input type="checkbox" value="${escapeHtml(g.name)}" class="form-checkbox h-4 w-4 text-blue-600 rounded-md mr-2" ${l.includes(g.name)?'checked':''}>${escapeHtml(g.name)}</label>`)})}
+        function updateGenreFilterButtonText(s,l,d='Select Genres'){const b=$(s);if(l.length===0)b.text(d);else if(l.length===1)b.text(escapeHtml(l[0]));else b.text(`${l.length} genres`)}
+        function getGenreColor(n){return genres.find(x=>x.name===n)?.color||'#cbd5e1'}
+        function escapeHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+        function updateTopLeast(){const p=Object.entries(playCounts).filter(([i])=>masterSongs.find(s=>s.id===i)).sort((a,b)=>b[1]-a[1]),v=p.filter(([_,c])=>c>0);if(v.length===0){$('.stats-container').hide();return}$('.stats-container').show();$('#top-played, #least-played').empty();v.slice(0,5).forEach(([i,c])=>{const s=masterSongs.find(x=>x.id===i);if(s)$('#top-played').append(`<li>${escapeHtml(s.name)}: ${c}</li>`)});v.slice(-5).reverse().forEach(([i,c])=>{const s=masterSongs.find(x=>x.id===i);if(s)$('#least-played').append(`<li>${escapeHtml(s.name)}: ${c}</li>`)})}
+        function renderAll(){renderLeftSetlists();renderGenres();renderVenues();renderMaster();if(currentSetlist)renderSetlist();renderPlays();renderRecordings();renderFavorites();renderEnergyLevels();if(currentGenre)renderGenreView(currentGenre);updateTopLeast()}
+        function openSongInContext(songId, context, index = -1, direction = 'none') {
+            const song = masterSongs.find(s => s.id === songId); if (!song) return;
+            if (direction === 'none') { playCounts[song.id] = (playCounts[song.id] || 0) + 1; song.lastPlayed = new Date().toISOString().split('T')[0]; updateTopLeast(); save(); }
+            currentViewerList = (context==='master')?window.currentMasterViewSongs||[]:(context==='setlist')?window.currentSetlistViewSongs||[]:(context==='plays')?window.currentPlaysViewSongs||[]:(context==='favorites')?window.currentFavoritesViewSongs||[]:(context==='genre')?window.currentGenreViewSongs||[]:masterSongs;
+            currentViewerContext = context;
+            currentViewerIndex = (index === -1) ? currentViewerList.findIndex(s => s.id === songId) : index;
+            if (context === 'setlist') { viewedSongsInSetlist.add(songId); $(`#setlist-list li[id="${songId}"] .index-number`).addClass('viewed-index'); }
+            const url = getFileURL(song); if (!url) { alert('File not available for this song.'); return; }
+            
+        (function(){
+            const scroller = showPdfOverlay();
+            (async () => {
+                try {
+                    await renderPDFInto(scroller, url);
+                    if (window.showNavButtons) window.showNavButtons();
+                } catch (e) {
+                    console.error('PDF render failed, opening natively', e);
+                    destroyPdfOverlay();
+                    try { window.open(url, '_blank'); } catch(_) {}
+                }
             })();
-            const $wrapper = $('#doc-iframe-wrapper');
+        })();
+        const $wrapper = $('#doc-iframe-wrapper');
             const $oldContainer = $wrapper.find('.current');
             const $newContainer = $(`<div class="doc-iframe-container"><object id="doc-object" data="${url}" type="application/pdf"></object></div>`);
             if (direction === 'next') { $newContainer.addClass('next'); $wrapper.append($newContainer); setTimeout(() => { $oldContainer.addClass('turning-next').removeClass('current'); $newContainer.addClass('current incoming-next').removeClass('next'); }, 20); } 
@@ -2162,128 +1899,40 @@ if (s.length===0){
             else { $newContainer.addClass('current'); $wrapper.html($newContainer); }
             setTimeout(() => $oldContainer.remove(), 800);
             
+            // Start PDF.js rendering (all platforms)
             (function(){
                 const pdfContainer = $newContainer.find('.pdfjs-container')[0];
                 if (pdfContainer) { renderPDFWithPDFJS(url, pdfContainer); }
             })();
-            
-            if (direction === 'none') { 
-                $('body').addClass('doc-viewer-active');
-                $('html').addClass('doc-viewer-active');
-                $('#doc-view').addClass('doc-view-fullscreen').show(); 
-            }
-            // The new setupScrollHandlers will handle showing the buttons and setting their state.
-            setupScrollHandlers();
+if (direction === 'none') { $('body').addClass('doc-viewer-active'); $('html').addClass('doc-viewer-active'); $('#doc-view').addClass('doc-view-fullscreen').show(); setupScrollHandlers(); }
+            $('#prev-doc').prop('disabled', currentViewerIndex <= 0);
+            $('#next-doc').prop('disabled', currentViewerIndex >= currentViewerList.length - 1);
         }
-
         function saveRecording(b){const r=new FileReader();r.readAsDataURL(b);r.onloadend=()=>{const s=setlists[currentSetlist];recordings.push({id:'r_'+Math.random().toString(36).slice(2,9),setlist:currentSetlist,date:s.date,venue:s.venue,audioData:r.result});save();if($('#recordings-view').is(':visible'))renderRecordings();if(currentSetlist)renderSetlist()}}
-        
-        // This function shows controls and ensures their state (enabled/disabled) is correct.
-        function showNavButtonsAndCheckState() {
-            const isPrevDisabled = currentViewerIndex <= 0;
-            const isNextDisabled = !currentViewerList || currentViewerIndex >= currentViewerList.length - 1;
-            
-            $('#viewer-prev-btn').prop('disabled', isPrevDisabled);
-            $('#viewer-next-btn').prop('disabled', isNextDisabled);
-            
-            $('#viewer-controls').removeClass('opacity-0');
-            
-            viewerButtonsClickable = false;
-            setTimeout(() => {
-                if (!$('#viewer-controls').hasClass('opacity-0')) {
-                    viewerButtonsClickable = true;
-                }
-            }, 250);
-
-            startInactivityTimer();
-        }
-
-        function hideNavButtons() {
-            $('#viewer-controls').addClass('opacity-0');
-            viewerButtonsClickable = false;
-        }
-        
-        // This timer will hide the controls after a period of inactivity.
-        function startInactivityTimer() {
-            clearTimeout(inactivityTimer);
-            inactivityTimer = setTimeout(hideNavButtons, 3000);
-        }
-
-        // This function sets up all the event listeners for the document viewer.
         function setupScrollHandlers() {
             resetScrollHandlers();
-            const $viewArea = $('#pdf-overlay-scroll');
-            if ($viewArea.length === 0) return;
-
-            // 1. Show controls on scroll to top.
-            $viewArea.on('scroll.viewer', function() {
-                if (this.scrollTop < 5) {
-                    if ($('#viewer-controls').hasClass('opacity-0')) {
-                        showNavButtonsAndCheckState();
-                    }
-                } else {
-                    hideNavButtons();
-                }
-            });
-
-            // 2. Show controls on tap at top of viewer, but don't trigger buttons.
-            $viewArea.on('pointerdown.viewer', function(e) {
-                 if ($(e.target).closest('.viewer-btn').length > 0) {
-                    return;
-                }
-                if (e.clientY < 80) {
-                    if ($('#viewer-controls').hasClass('opacity-0')) {
-                         showNavButtonsAndCheckState();
-                    }
-                }
-            });
-
-            // 3. Refined swipe functionality for navigation.
+            $('#doc-view').on('mousemove', showNavButtons);
             let touchstartX = 0;
-            let touchstartY = 0;
-            const swipeThresholdX = 80; 
-            const swipeThresholdY = 40;
-
-            $viewArea.on('touchstart.viewer', e => {
-                if (e.originalEvent.touches) {
-                    touchstartX = e.originalEvent.touches[0].screenX;
-                    touchstartY = e.originalEvent.touches[0].screenY;
-                }
+            $('#doc-view').on('touchstart', e => { touchstartX = e.originalEvent.touches[0].screenX; });
+            $('#doc-view').on('touchend', e => {
+                const touchendX = e.originalEvent.changedTouches[0].screenX;
+                if (touchendX < touchstartX - 50) $('#next-doc').trigger('click'); // Swipe left
+                if (touchendX > touchstartX + 50) $('#prev-doc').trigger('click'); // Swipe right
             });
-            $viewArea.on('touchend.viewer', e => {
-                if (e.originalEvent.changedTouches) {
-                    const touchendX = e.originalEvent.changedTouches[0].screenX;
-                    const touchendY = e.originalEvent.changedTouches[0].screenY;
-                    const deltaX = touchendX - touchstartX;
-                    const deltaY = touchendY - touchstartY;
-
-                    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > swipeThresholdX) {
-                        if (deltaX < 0) { 
-                           if(viewerButtonsClickable) $('#viewer-next-btn').trigger('click');
-                        } else { 
-                           if(viewerButtonsClickable) $('#viewer-prev-btn').trigger('click');
-                        }
-                    }
-                }
-            });
-
-            // Initially check if we should show the buttons.
-            if ($viewArea.length > 0 && $viewArea[0].scrollTop < 5) {
-                showNavButtonsAndCheckState();
-            }
+            $('#next-doc').on('click', function() { if (!$(this).is(':disabled') && currentViewerIndex < currentViewerList.length - 1) { openSongInContext(currentViewerList[currentViewerIndex + 1].id, currentViewerContext, currentViewerIndex + 1, 'next'); }});
+            $('#prev-doc').on('click', function() { if (!$(this).is(':disabled') && currentViewerIndex > 0) { openSongInContext(currentViewerList[currentViewerIndex - 1].id, currentViewerContext, currentViewerIndex - 1, 'prev'); }});
+            startInactivityTimer();
         }
-
-
-        function resetScrollHandlers() {
-            $('#pdf-overlay-scroll').off('.viewer');
-            $('#doc-view, #pdf-overlay-scroll').off('mousemove pointerdown touchstart touchend'); 
-            clearTimeout(inactivityTimer);
-        }
-
-        function showNavButtons() {
-            showNavButtonsAndCheckState();
-        }
-
+        function resetScrollHandlers() { $('#doc-view, #next-doc, #prev-doc').off('mousemove touchstart touchend click'); clearTimeout(inactivityTimer); 
+    try{
+      if (window.__docTapCapture) {
+        document.removeEventListener('touchstart', window.__docTapCapture, {capture:true});
+        document.removeEventListener('pointerdown', window.__docTapCapture, {capture:true});
+      }
+    }catch(e){}
+}
+        function showNavButtons() { $('#doc-nav-buttons').removeClass('hidden'); startInactivityTimer(); }
+        function startInactivityTimer() { clearTimeout(inactivityTimer); inactivityTimer = setTimeout(() => { $('#doc-nav-buttons').addClass('hidden'); }, 3000); }
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
     </script>
     <!-- Left-edge custom scrollbar (visible only when sidebar is collapsed) -->
@@ -2631,1540 +2280,6 @@ function destroyPdfOverlay() {
   if (sc) sc.innerHTML = '';
 }
 </script>
-
-<script>
-/* Universal viewer wiring so buttons work on Songs, Setlists, Favorites */
-(function wrapOpenSongInContext(){
-  if (window.__wrapOpenSongInContext_v1) return; window.__wrapOpenSongInContext_v1 = true;
-  function install(){
-    if (!window.openSongInContext || window.openSongInContext.__wrapped) return;
-    var orig = window.openSongInContext;
-    function wrapped(songId, context, index, dir){
-      try {
-        if (typeof context !== 'undefined') window.currentViewerContext = context;
-        if (typeof index   === 'number')     window.currentViewerIndex   = index;
-        if (context && Array.isArray(context.list)) window.currentViewerList = context.list;
-      } catch(e){}
-      return orig.apply(this, arguments);
-    }
-    wrapped.__wrapped = true;
-    window.openSongInContext = wrapped;
-  }
-  install(); document.addEventListener('DOMContentLoaded', install); setTimeout(install, 500); setTimeout(install, 1500);
-})();
-
-/* wrap openDocViewer v1 */
-(function(){
-  if (window.__wrapOpenDocViewer_v1) return; window.__wrapOpenDocViewer_v1 = true;
-  function install(){
-    if (!window.openDocViewer || window.openDocViewer.__wrapped) return;
-    var orig = window.openDocViewer;
-    function wrapped(/* songId or docId, maybe context */){
-      try {
-        var args = Array.prototype.slice.call(arguments);
-        var ctx = (args.length > 1 && typeof args[1] === 'object') ? args[1] : (window.currentViewerContext || null);
-        if (ctx) window.currentViewerContext = ctx;
-        try { if (ctx && ctx.list && Array.isArray(ctx.list)) window.currentViewerList = ctx.list; } catch(e){}
-        for (var i=0;i<args.length;i++){ if (typeof args[i] === 'number') { window.currentViewerIndex = args[i]; break; } }
-      } catch(e){}
-      return orig.apply(this, arguments);
-    }
-    wrapped.__wrapped = true;
-    window.openDocViewer = wrapped;
-  }
-  install(); document.addEventListener('DOMContentLoaded', install); setTimeout(install, 500); setTimeout(install, 1500);
-})();
-
-/* Universal CLOSE for the PDF/file viewer — install once */
-(function () {
-  if (window.__UniversalClose_v1) return;
-  window.__UniversalClose_v1 = true;
-
-  function universalCloseViewer() {
-    var closed = false;
-
-    // Use the new single close button's logic
-    try {
-        var newBtn = document.getElementById('viewer-close-btn');
-        if (newBtn && typeof newBtn.click === 'function') {
-            newBtn.click();
-            closed = true;
-        }
-    } catch(_) {}
-    
-    if (closed) return true;
-
-    // Fallback logic just in case
-    try { if (typeof window.destroyPdfOverlay === 'function') { window.destroyPdfOverlay(); closed = true; } } catch(_) {}
-    try { document.documentElement.classList.remove('pdf-overlay-active'); closed = true; } catch(_) {}
-    try { document.body.classList.remove('pdf-overlay-active'); closed = true; } catch(_) {}
-
-    return !!closed;
-  }
-
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' || e.keyCode === 27) {
-      if (document.documentElement.classList.contains('pdf-overlay-active') || document.body.classList.contains('doc-viewer-active')) {
-        e.stopPropagation();
-        universalCloseViewer();
-      }
-    }
-  }, true);
-
-  window.universalCloseViewer = universalCloseViewer;
-})();
-
-
-<!-- Genre/Venue exact symmetry + centered placeholders (robust) -->
-<script>
-(function(){
-  if (window.__GenreVenueSync_v2) return; window.__GenreVenueSync_v2 = true;
-
-  function setImportant(el, prop, value){
-    try { el.style.setProperty(prop, value, 'important'); } catch(_){}
-  }
-
-  function syncVenueToGenre(){
-    try {
-      var g = document.getElementById('genre-name');
-      var v = document.getElementById('venue-name');
-      if (!g || !v) return;
-
-      var rect = g.getBoundingClientRect();
-      var gs = getComputedStyle(g);
-
-      // Match box model and typography
-      setImportant(v, 'box-sizing', gs.boxSizing || 'border-box');
-      setImportant(v, 'padding-left', gs.paddingLeft);
-      setImportant(v, 'padding-right', gs.paddingRight);
-      setImportant(v, 'padding-top', gs.paddingTop);
-      setImportant(v, 'padding-bottom', gs.paddingBottom);
-      setImportant(v, 'border-width', gs.borderWidth);
-      setImportant(v, 'border-style', gs.borderStyle);
-      setImportant(v, 'border-color', gs.borderColor);
-      setImportant(v, 'border-radius', gs.borderRadius);
-      setImportant(v, 'font', gs.font);
-
-      // Ensure layout constraints don't override width
-      setImportant(v, 'display', gs.display || 'block');
-      setImportant(v, 'flex', '0 0 auto');
-      setImportant(v, 'max-width', rect.width + 'px');
-      setImportant(v, 'min-width', rect.width + 'px');
-      setImportant(v, 'width', rect.width + 'px');
-      setImportant(v, 'height', rect.height + 'px');
-    } catch(_){}
-  }
-
-  function schedule(){
-    setTimeout(syncVenueToGenre, 0);
-    setTimeout(syncVenueToGenre, 250);
-    setTimeout(syncVenueToGenre, 800);
-    setTimeout(syncVenueToGenre, 1500);
-  }
-
-  window.addEventListener('load', schedule);
-  window.addEventListener('resize', function(){ setTimeout(syncVenueToGenre, 0); });
-
-  // Observe genre size changes (e.g., theme/sidebar width changes)
-  try {
-    var gObsTarget = document.getElementById('genre-name');
-    if (gObsTarget && window.ResizeObserver) {
-      var ro = new ResizeObserver(function(){ syncVenueToGenre(); });
-      ro.observe(gObsTarget);
-    }
-  } catch(_){}
-})();
-</script>
-
-
-<!-- Venue/Genre left-edge alignment + Pull-to-close v4 -->
-<script>
-(function(){
-  /* =====  A) Perfect horizontal alignment for Genre/Venue rows  ===== */
-  if (!window.__AlignGenreVenue_v1){
-    window.__AlignGenreVenue_v1 = true;
-
-    function alignVenueRow(){
-      try {
-        var gInput = document.getElementById('genre-name');
-        var vInput = document.getElementById('venue-name');
-        var gAdd   = document.getElementById('add-genre');
-        var vAdd   = document.getElementById('add-venue');
-
-        if (!gInput || !vInput) return;
-
-        var gx = gInput.getBoundingClientRect().left;
-        var vx = vInput.getBoundingClientRect().left;
-
-        var deltaInput = gx - vx;
-        if (Math.abs(deltaInput) > 0.5) {
-          var current = parseFloat(getComputedStyle(vInput).marginLeft) || 0;
-          vInput.style.marginLeft = (current + deltaInput) + "px";
-        }
-
-        if (gAdd && vAdd) {
-          var gxB = gAdd.getBoundingClientRect().left;
-          var vxB = vAdd.getBoundingClientRect().left;
-          var deltaBtn = gxB - vxB;
-          if (Math.abs(deltaBtn) > 0.5) {
-            var currentBtn = parseFloat(getComputedStyle(vAdd).marginLeft) || 0;
-            vAdd.style.marginLeft = (currentBtn + deltaBtn) + "px";
-          }
-        }
-      } catch(_){}
-    }
-    function schedule(){ setTimeout(alignVenueRow, 200); setTimeout(alignVenueRow, 600); }
-    window.addEventListener('load', schedule);
-    window.addEventListener('resize', function(){ setTimeout(alignVenueRow, 0); });
-  }
-
-  /* =====  B) Pull-to-close v4: downward pull only, stronger threshold, must release  ===== */
-  if (!window.__PullToClose_v4){
-    window.__PullToClose_v4 = true;
-
-    function scroller(){ return document.getElementById('pdf-overlay-scroll'); }
-    var startY = null;
-    var maxPullDown = 0;
-    var active = false;
-    var THRESHOLD_DOWN = 150;
-
-    function onTouchStart(e){
-      var t = e.touches && e.touches[0];
-      var sc = scroller();
-      if (!t || !sc) return;
-      active = (sc.scrollTop <= 2);
-      startY = t.clientY;
-      maxPullDown = 0;
-    }
-    function onTouchMove(e){
-      if (!active) return;
-      var t = e.touches && e.touches[0];
-      var sc = scroller();
-      if (!t || !sc) return;
-      var dy = t.clientY - (startY == null ? t.clientY : startY);
-      if (dy > maxPullDown) maxPullDown = dy;
-    }
-    function onTouchEnd(){
-      try {
-        if (!active) return;
-        var sc = scroller(); if (!sc) return;
-        if (sc.scrollTop <= 2 && maxPullDown > THRESHOLD_DOWN) {
-          if (typeof window.universalCloseViewer === 'function') {
-            window.universalCloseViewer();
-          }
-        }
-      } finally {
-        active = false; startY = null; maxPullDown = 0;
-      }
-    }
-
-    function bind(){
-      var sc = scroller();
-      if (!sc || sc.__pullCloseV4Bound) return;
-      sc.__pullCloseV4Bound = true;
-      sc.addEventListener('touchstart', onTouchStart, {passive:true});
-      sc.addEventListener('touchmove',  onTouchMove,  {passive:true});
-      sc.addEventListener('touchend',   onTouchEnd,   {passive:true});
-    }
-
-    bind();
-    new MutationObserver(function(){ bind(); }).observe(document.body, {childList:true, subtree:true});
-  }
-})();
-</script>
-
-
-<script>
-// === Drag into Genres: blue hover + assign song to genre ===
-(function(){
-  function attachGenreDroppables(){
-    var $items = $('#genre-list .genre-item');
-    if (!$items.length) return;
-    $items.each(function(){
-      var $el = $(this);
-      if ($el.data('genreDropReady')) return;
-      $el.data('genreDropReady', true);
-      $el.droppable({
-        accept: '.draggable',
-        tolerance: 'pointer',
-        hoverClass: 'drag-hover-setlist', // blue highlight to match favorites/setlists
-        drop: function(event, ui){
-          try {
-            var songId = $(ui.draggable).attr('id');
-            var genreName = $(this).data('name');
-            if (!songId || !genreName) return;
-            var s = masterSongs.find(function(x){ return String(x.id) === String(songId); });
-            if (!s) return;
-            s.genre = genreName;
-            var g = (typeof genres!=='undefined') ? genres.find(function(x){ return x.name === genreName; }) : null;
-            if (g && !s.color) { s.color = g.color; } 
-            if (typeof save === 'function') save();
-            if ($('#master-view').is(':visible') && typeof renderMaster === 'function') renderMaster();
-            if ($('#setlist-view').is(':visible') && typeof renderSetlist === 'function') renderSetlist();
-            if ($('#genre-view').is(':visible') && currentGenre === genreName && typeof renderGenreView === 'function') renderGenreView(genreName);
-          } catch(e){ console.error('Genre drop error:', e); }
-        }
-      });
-    });
-  }
-
-  $(function(){
-    attachGenreDroppables();
-    var gl = document.getElementById('genre-list');
-    if (gl && window.MutationObserver) {
-      var obs = new MutationObserver(function(){ attachGenreDroppables(); });
-      obs.observe(gl, {childList:true});
-    }
-  });
-})();
-</script>
-
-<script>
-// === Setlist Details: keep the date placeholder span visible only when empty ===
-(function(){
-  function updateDatePlaceholder(){
-    var $date = $('#setlist-date');
-    var $ph = $('#date-placeholder');
-    if ($date.length && $ph.length){
-      if (!$date.val()) { $ph.show(); } else { $ph.hide(); }
-    }
-  }
-  $(document).on('change input', '#setlist-date', updateDatePlaceholder);
-  $(document).on('click', '#setlist-details-toggle', function(){
-    setTimeout(updateDatePlaceholder, 0);
-  });
-  $(function(){ updateDatePlaceholder(); });
-})();
-</script>
-
-
-<script>
-(function(){
-  function positionDatePlaceholder(){
-    var cont = document.getElementById('setlist-date-container');
-    var input = document.getElementById('setlist-date');
-    var ph = document.getElementById('date-placeholder');
-    if (!cont || !input || !ph) return;
-    var r = input.getBoundingClientRect();
-    var c = cont.getBoundingClientRect();
-    var cx = (r.left - c.left) + (r.width / 2);
-    var cy = (r.top - c.top) + (r.height / 2);
-    ph.style.left = cx + 'px';
-    ph.style.top  = cy + 'px';
-    ph.style.transform = 'translate(-50%, -50%)';
-    ph.style.width = r.width + 'px';
-    ph.style.textAlign = 'center';
-  }
-
-  function toggleDatePlaceholder(){
-    var input = document.getElementById('setlist-date');
-    var ph = document.getElementById('date-placeholder');
-    if (!input || !ph) return;
-    ph.style.display = input.value ? 'none' : 'block';
-  }
-
-  function syncAll(){
-    toggleDatePlaceholder();
-    positionDatePlaceholder();
-  }
-
-  window.addEventListener('resize', positionDatePlaceholder);
-  window.addEventListener('orientationchange', positionDatePlaceholder);
-  document.addEventListener('click', function(e){
-    if (e.target && (e.target.id === 'setlist-details-toggle' || e.target.closest && e.target.closest('#setlist-details-toggle'))) {
-      setTimeout(syncAll, 0);
-    }
-  }, true);
-  document.addEventListener('input', function(e){
-    if (e.target && e.target.id === 'setlist-date') toggleDatePlaceholder();
-  });
-  document.addEventListener('change', function(e){
-    if (e.target && e.target.id === 'setlist-date') toggleDatePlaceholder();
-  });
-
-  document.addEventListener('DOMContentLoaded', function(){
-    syncAll();
-    setTimeout(syncAll, 250);
-  });
-})();
-</script>
-
-<style id="viewer-nav-blue-style">
-/* Make prev/next BLUE whenever they are enabled (not :disabled) */
-#viewer-prev-btn:not(:disabled),
-#viewer-next-btn:not(:disabled) {
-  background-color: rgba(59, 130, 246, 0.9) !important; /* blue-500 */
-  color: #ffffff !important;
-  border-color: rgba(59, 130, 246, 0.9) !important;
-}
-</style>
-<script>
-/* Ensure correct disabled state is applied *before* controls appear on first open */
-(function(){
-  if (window.__NavFirstOpenFix_v1) return;
-  window.__NavFirstOpenFix_v1 = true;
-
-  function computeNav(){
-    try {
-      var list = window.currentViewerList;
-      var idx  = window.currentViewerIndex;
-      if (!Array.isArray(list) || typeof idx !== 'number') return null;
-      return { hasPrev: idx > 0, hasNext: idx < (list.length - 1) };
-    } catch(e){ return null; }
-  }
-
-  function setButtonsFromState(){
-    var st = computeNav();
-    var prev = document.getElementById('viewer-prev-btn');
-    var next = document.getElementById('viewer-next-btn');
-    if (!st || !prev || !next) return;
-    prev.disabled = !st.hasPrev;
-    next.disabled = !st.hasNext;
-  }
-
-  // Wrap showPdfOverlay so we correct *right as the overlay is created*
-  (function wrapShow(){
-    var fn = window.showPdfOverlay;
-    if (typeof fn !== 'function' || fn.__navwrap_v1) return;
-    function wrapped(){
-      // At this point, openSongInContext has already set list+index
-      // so we can safely set the correct disabled state BEFORE controls show.
-      // We also queue a couple tiny follow-ups for timing jitter.
-      setButtonsFromState();
-      setTimeout(setButtonsFromState, 0);
-      setTimeout(setButtonsFromState, 100);
-      return fn.apply(this, arguments);
-    }
-    wrapped.__navwrap_v1 = true;
-    window.showPdfOverlay = wrapped;
-  })();
-
-  // As a fallback, if overlay is already active when this loads
-  document.addEventListener('DOMContentLoaded', function(){
-    setButtonsFromState();
-    setTimeout(setButtonsFromState, 50);
-  });
-})();
-</script>
-
-<style id="viewer-nav-behavior-tweaks">
-/* 1) Do NOT move buttons on hover/active */
-#viewer-prev-btn:not(:disabled):hover,
-#viewer-next-btn:not(:disabled):hover,
-#viewer-prev-btn:active,
-#viewer-next-btn:active,
-#viewer-close-btn:not(:disabled):hover,
-#viewer-close-btn:active {
-  transform: none !important;
-  box-shadow: none !important; /* optional: avoid 'lift' illusion */
-}
-
-/* 2) Keep Close button RED on hover/hold; never turn blue */
-#viewer-close-btn,
-#viewer-close-btn:hover,
-#viewer-close-btn:focus,
-#viewer-close-btn:active {
-  background-color: rgba(239, 68, 68, 0.85) !important; /* red-500/600 */
-  color: #ffffff !important;
-  border-color: rgba(239, 68, 68, 0.85) !important;
-}
-</style>
-<script>
-/* 3) Reappearance rule: only when tap near TOP or scroll to TOP */
-(function(){
-  if (window.__ViewerReappearRules_v1) return;
-  window.__ViewerReappearRules_v1 = true;
-
-  var TOP_TAP_PX = 64; // threshold from top edge
-
-  function controlsEl(){ return document.getElementById('viewer-controls'); }
-  function overlayEl(){
-    return document.getElementById('pdf-overlay-scroll') || document.getElementById('doc-view');
-  }
-
-  function showControls(){
-    try {
-      if (typeof window.showNavButtonsAndCheckState === 'function') {
-        window.showNavButtonsAndCheckState();
-      } else {
-        controlsEl() && controlsEl().classList.remove('opacity-0');
-      }
-    } catch(e){}
-  }
-  function hideControls(){
-    try { controlsEl() && controlsEl().classList.add('opacity-0'); } catch(e){}
-  }
-
-  // Only reappear when tapping the top region OR when scrolled to top
-  function shouldShowForEvent(ev){
-    var y = null;
-    if (typeof ev.clientY === 'number') y = ev.clientY;
-    else if (ev.touches && ev.touches[0]) y = ev.touches[0].clientY;
-    else if (ev.changedTouches && ev.changedTouches[0]) y = ev.changedTouches[0].clientY;
-    if (y !== null && y <= TOP_TAP_PX) return true;
-
-    var ov = overlayEl();
-    if (ov && ov.scrollTop <= 5) return true;
-    return false;
-  }
-
-  // Capture pointerdown so we can enforce after app logic runs
-  document.addEventListener('pointerdown', function(ev){
-    var ov = overlayEl();
-    if (!ov) return;
-    if (!ov.contains(ev.target)) return;
-
-    // Let app handlers run; then correct visibility
-    setTimeout(function(){
-      if (shouldShowForEvent(ev)) showControls();
-      else hideControls();
-    }, 0);
-  }, true);
-
-  // When scrolling: show at very top, hide otherwise
-  function onScroll(){
-    var ov = overlayEl();
-    if (!ov) return;
-    if (ov.scrollTop <= 5) showControls();
-    else hideControls();
-  }
-
-  // Attach scroll listeners (including passive touch scrolling)
-  var attachT = setInterval(function(){
-    var ov = overlayEl();
-    if (ov){
-      ov.addEventListener('scroll', onScroll, { passive: true });
-      // Initial state on load
-      onScroll();
-      clearInterval(attachT);
-    }
-  }, 100);
-})();
-</script>
-
-
-<style id="notes-popover-styles">
-/* Anchored Notes popover: expands in place, only as large as needed */
-#notes-popover-overlay {
-  position: fixed; inset: 0;
-  background: transparent; /* no dim; capture outside clicks */
-  display: none;
-  z-index: 2147483646;
-}
-#notes-popover {
-  position: fixed; /* anchored at the source box position */
-  left: 0; top: 0;
-  display: none;
-  z-index: 2147483647;
-  background: #ffffff;
-  color: #111827;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
-  overflow: hidden;
-}
-html.dark #notes-popover { background: #1f2937; color: #e5e7eb; border-color: #374151; }
-#notes-popover-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 6px 8px; font-weight: 600; font-size: 13px;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
-}
-html.dark #notes-popover-header { border-bottom-color: rgba(255,255,255,0.08); }
-#notes-popover-close {
-  appearance: none; border: none; background: transparent;
-  font-size: 18px; line-height: 1; cursor: pointer;
-  padding: 2px 6px; border-radius: 6px; color: inherit;
-}
-#notes-popover-close:hover { background: rgba(0,0,0,0.06); }
-html.dark #notes-popover-close:hover { background: rgba(255,255,255,0.08); }
-#notes-popover-body { padding: 8px; }
-#notes-popover-text {
-  width: 100%;
-  min-width: 160px;
-  max-width: 80vw;
-  min-height: 60px;
-  max-height: 70vh;
-  box-sizing: border-box;
-  padding: 8px 10px;
-  border-radius: 8px;
-  outline: none;
-  border: 1px solid #d1d5db;
-  background: #ffffff; color: #111827;
-  font-size: 14px; line-height: 1.4; font-family: inherit;
-  resize: none; /* auto-size handling */
-}
-html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-color: #4b5563; }
-
-/* Make source notes box NOT flash blue when tapped to open */
-.notes-input {
-  -webkit-tap-highlight-color: transparent;
-}
-</style>
-<div id="notes-popover-overlay" aria-hidden="true"></div>
-<div id="notes-popover" role="dialog" aria-modal="true" aria-labelledby="notes-popover-title">
-  <div id="notes-popover-header">
-    <div id="notes-popover-title">Notes</div>
-    <button id="notes-popover-close" aria-label="Close notes">×</button>
-  </div>
-  <div id="notes-popover-body">
-    <textarea id="notes-popover-text" spellcheck="false"></textarea>
-  </div>
-</div>
-<script>
-/* Notes popover (fast): instant open on pointerdown, no blue flash, anchored & autosized */
-(function(){
-  if (window.__NotesPopover_v1) return;
-  window.__NotesPopover_v1 = true;
-
-  var overlay = document.getElementById('notes-popover-overlay');
-  var pop     = document.getElementById('notes-popover');
-  var close   = document.getElementById('notes-popover-close');
-  var area    = document.getElementById('notes-popover-text');
-  var activeSource = null;
-
-  function viewportCaps(){ return { maxW: Math.floor(window.innerWidth * 0.80), maxH: Math.floor(window.innerHeight * 0.70) }; }
-
-  function estimateWidthPx(text){
-    var lines = String(text||'').split('\n');
-    var longest = 0;
-    for (var i=0;i<lines.length;i++){ if (lines[i].length > longest) longest = lines[i].length; }
-    return Math.ceil(longest * 7.2) + 28; // approx char width + paddings
-  }
-
-  function autoSizeAndPosition(src){
-    var rect = src.getBoundingClientRect();
-    var caps = viewportCaps();
-
-    // Width: at least source width; at most content/viewport cap
-    var contentW = estimateWidthPx(area.value);
-    var width = Math.min(Math.max(Math.ceil(rect.width), Math.min(contentW, caps.maxW)), caps.maxW);
-
-    // Height: fit content
-    area.style.height = 'auto';
-    // Temporarily set width so scrollHeight is accurate
-    area.style.width = (width - 20) + 'px';
-    var contentH = area.scrollHeight + 16; // padding
-    var headerH = 34;
-    var height = Math.min(Math.max(contentH, 60), caps.maxH);
-
-    pop.style.width = width + 'px';
-    area.style.height = Math.max(40, (height - (headerH + 16))) + 'px';
-
-    // Place over the original box (keep within viewport)
-    var left = Math.min(rect.left, window.innerWidth - width - 8);
-    var top  = Math.min(rect.top,  window.innerHeight - height - 8);
-    pop.style.left = Math.max(8, left) + 'px';
-    pop.style.top  = Math.max(8, top) + 'px';
-  }
-
-  function openFrom(el){
-    activeSource = el;
-    area.value = (el.value != null ? el.value : (el.innerText || ''));
-    document.documentElement.classList.add('notes-popover-open');
-    document.body.classList.add('notes-popover-open');
-    overlay.style.display = 'block';
-    pop.style.display = 'block';
-    autoSizeAndPosition(el);
-    // Focus ASAP without setTimeout lag; use rAF to ensure DOM is painted
-    requestAnimationFrame(function(){
-      area.focus();
-      var len = area.value.length;
-      try { area.setSelectionRange(len, len); } catch(e){}
-    });
-  }
-
-  function closePopover(save){
-    if (save && activeSource){
-      var val = area.value;
-      if ('value' in activeSource) activeSource.value = val;
-      else activeSource.innerText = val;
-      try {
-        activeSource.dispatchEvent(new Event('input', { bubbles: true }));
-        activeSource.dispatchEvent(new Event('change', { bubbles: true }));
-      } catch(e){}
-    }
-    overlay.style.display = 'none';
-    pop.style.display = 'none';
-    document.documentElement.classList.remove('notes-popover-open');
-    document.body.classList.remove('notes-popover-open');
-    activeSource = null;
-  }
-
-  // Instant open on pointerdown (captures before the source input gets focus)
-  function onPointerDown(ev){
-    var el = ev.target && ev.target.closest && ev.target.closest('.notes-input');
-    if (!el) return;
-    // Determine if content likely overflows the small notes box
-    var overflow = false;
-    try {
-      overflow = el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2 || (el.value||'').length > 40;
-    } catch(e){ overflow = true; }
-    if (!overflow) return;
-    // Prevent the source from receiving focus/blue flash
-    try { ev.preventDefault(); } catch(e){}
-    openFrom(el);
-  }
-
-  document.addEventListener('pointerdown', onPointerDown, true);
-
-  // Keep alignment on resize
-  window.addEventListener('resize', function(){ if (activeSource) autoSizeAndPosition(activeSource); });
-
-  // Close handlers
-  overlay.addEventListener('click', function(){ closePopover(true); });
-  close.addEventListener('click', function(){ closePopover(true); });
-  document.addEventListener('keydown', function(e){
-    if (pop.style.display === 'block' && e.key === 'Escape') { e.preventDefault(); closePopover(false); }
-  });
-})();
-</script>
-
-
-<style id="notes-fast-and-setlist-drag">
-/* Faster feel: nothing visual here; JS handles instant open */
-/* Name-only helper when dragging outside of setlist list */
-.drag-name-only {
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: rgba(31, 41, 55, 0.95); /* gray-800 */
-  color: #e5e7eb;
-  font-size: 14px;
-  line-height: 1.2;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-  pointer-events: none;
-  max-width: 60vw;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.08);
-}
-</style>
-<script>
-/* --- 1) Notes popover: make it *even faster* and avoid any focus flash --- */
-(function(){
-  if (window.__NotesPopoverSpeed_v2) return;
-  window.__NotesPopoverSpeed_v2 = true;
-
-  function fastHook(selector, handler){
-    // Prioritize touchstart/mousedown before click
-    document.addEventListener('touchstart', function(ev){
-      var el = ev.target.closest && ev.target.closest(selector);
-      if (!el) return;
-      handler(ev, el);
-    }, { capture: true, passive: false });
-    document.addEventListener('mousedown', function(ev){
-      var el = ev.target.closest && ev.target.closest(selector);
-      if (!el) return;
-      handler(ev, el);
-    }, true);
-  }
-
-  // Reuse existing open function if present from previous patch
-  var openNotesFrom = window.__openNotesPopoverFrom;
-  if (!openNotesFrom) {
-    // fallback: hook into the same notes popover elements we injected
-    var pop     = document.getElementById('notes-popover');
-    var overlay = document.getElementById('notes-popover-overlay');
-    var close   = document.getElementById('notes-popover-close');
-    var area    = document.getElementById('notes-popover-text');
-    var activeSource = null;
-
-    function viewportCaps(){ return { maxW: Math.floor(window.innerWidth * 0.80), maxH: Math.floor(window.innerHeight * 0.70) }; }
-    function estimateWidthPx(text){
-      var lines = String(text||'').split('\n');
-      var longest = 0;
-      for (var i=0;i<lines.length;i++){ if (lines[i].length > longest) longest = lines[i].length; }
-      return Math.ceil(longest * 7.2) + 28;
-    }
-    function autoSizeAndPosition(src){
-      var rect = src.getBoundingClientRect();
-      var caps = viewportCaps();
-      var contentW = estimateWidthPx(area.value);
-      var width = Math.min(Math.max(Math.ceil(rect.width), Math.min(contentW, caps.maxW)), caps.maxW);
-      area.style.height = 'auto';
-      area.style.width = (width - 20) + 'px';
-      var contentH = area.scrollHeight + 16;
-      var headerH = 34;
-      var height = Math.min(Math.max(contentH, 60), caps.maxH);
-      pop.style.width = width + 'px';
-      area.style.height = Math.max(40, (height - (headerH + 16))) + 'px';
-      var left = Math.min(rect.left, window.innerWidth - width - 8);
-      var top  = Math.min(rect.top,  window.innerHeight - height - 8);
-      pop.style.left = Math.max(8, left) + 'px';
-      pop.style.top  = Math.max(8, top) + 'px';
-    }
-    openNotesFrom = function(el){
-      area.value = (el.value != null ? el.value : (el.innerText || ''));
-      document.documentElement.classList.add('notes-popover-open');
-      document.body.classList.add('notes-popover-open');
-      overlay.style.display = 'block';
-      pop.style.display = 'block';
-      autoSizeAndPosition(el);
-      area.focus({ preventScroll: true });
-      try { var len = area.value.length; area.setSelectionRange(len, len); } catch(e){}
-    };
-    window.__openNotesPopoverFrom = openNotesFrom;
-    overlay && overlay.addEventListener('click', function(){
-      // Save on outside click
-      var val = area.value;
-      if (window.__notesActiveSource) {
-        var el = window.__notesActiveSource;
-        if ('value' in el) el.value = val; else el.innerText = val;
-        try { el.dispatchEvent(new Event('input', { bubbles:true })); el.dispatchEvent(new Event('change', { bubbles:true })); } catch(e){}
-      }
-      pop.style.display = 'none';
-      overlay.style.display = 'none';
-      document.documentElement.classList.remove('notes-popover-open');
-      document.body.classList.remove('notes-popover-open');
-      window.__notesActiveSource = null;
-    });
-    close && close.addEventListener('click', function(){
-      // Save on close
-      var val = area.value;
-      if (window.__notesActiveSource) {
-        var el = window.__notesActiveSource;
-        if ('value' in el) el.value = val; else el.innerText = val;
-        try { el.dispatchEvent(new Event('input', { bubbles:true })); el.dispatchEvent(new Event('change', { bubbles:true })); } catch(e){}
-      }
-      pop.style.display = 'none';
-      overlay.style.display = 'none';
-      document.documentElement.classList.remove('notes-popover-open');
-      document.body.classList.remove('notes-popover-open');
-      window.__notesActiveSource = null;
-    });
-  }
-
-  fastHook('.notes-input', function(ev, el){
-    // Open instantly and suppress the input's own focus/flash
-    ev.preventDefault();
-    window.__notesActiveSource = el;
-    openNotesFrom(el);
-  });
-})();
-
-/* --- 2) Setlist dragging: switch to name-only when leaving setlist box; do not reorder outside --- */
-(function(){
-  if (window.__SetlistDragNameOnly_v1) return;
-  window.__SetlistDragNameOnly_v1 = true;
-
-  function getSetlistRect(){
-    var el = document.getElementById('setlist-list');
-    return el ? el.getBoundingClientRect() : null;
-  }
-
-  function isInsideRect(pt, rect){
-    return rect && pt.x >= rect.left && pt.x <= rect.right && pt.y >= rect.top && pt.y <= rect.bottom;
-  }
-
-  // Attach a jQuery UI draggable specifically for setlist items, without touching existing sortables
-  function init(){
-    var $list = window.jQuery && window.jQuery('#setlist-list');
-    if (!$list || !$list.length) return;
-
-    // Delegate to dynamic items
-    $list.on('mousedown touchstart', '.setlist-item', function(){
-      var $item = window.jQuery(this);
-      if ($item.data('hasExportDrag')) return; // only once
-      $item.data('hasExportDrag', true);
-
-      $item.draggable({
-        helper: function(){
-          var name = ($item.find('.song-name-text').text() || $item.text() || '').trim();
-          var $h = window.jQuery('<div class="drag-helper drag-name-only draggable">'+name+'</div>');
-          $h.data('name', name);
-          return $h;
-        },
-        appendTo: 'body',
-        containment: 'document',
-        distance: 4,
-        zIndex: 2147483645,
-        start: function(e, ui){
-          $item.data('exporting', false);
-          $item.addClass('dragging-from-setlist');
-          $list.sortable('enable'); // ensure enabled at start
-          $item.data('setlistRect', getSetlistRect());
-        },
-        drag: function(e, ui){
-          var rect = $item.data('setlistRect') || getSetlistRect();
-          var pt = { x: (e.clientX || (e.touches && e.touches[0] && e.touches[0].clientX) || ui.position.left),
-                     y: (e.clientY || (e.touches && e.touches[0] && e.touches[0].clientY) || ui.position.top) };
-          var inside = isInsideRect(pt, rect);
-          if (!inside && !$item.data('exporting')){
-            // Leaving setlist: switch to name-only visual and DISABLE reordering
-            $item.data('exporting', true);
-            try { $list.sortable('disable'); } catch(err){}
-            ui.helper.addClass('drag-name-only');
-          } else if (inside && $item.data('exporting')){
-            // Back inside: allow reordering again
-            $item.data('exporting', false);
-            try { $list.sortable('enable'); } catch(err){}
-            ui.helper.removeClass('drag-name-only').text(ui.helper.data('name'));
-          }
-        },
-        stop: function(e, ui){
-          // Always re-enable sortable to keep in-list reordering perfect
-          try { $list.sortable('enable'); } catch(err){}
-          $item.removeClass('dragging-from-setlist').data('exporting', false);
-        }
-      });
-    });
-  }
-
-  // Try now and retry a few times for late DOM
-  init();
-  var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
-})();
-</script>
-
-
-<style id="setlist-export-chip-styles">
-/* Blue name-only ghost chip (separate overlay that follows cursor) */
-#setlist-export-ghost{
-  position:fixed; top:0; left:0;
-  transform:translate(-9999px,-9999px);
-  padding:6px 10px; border-radius:8px;
-  background:rgba(59,130,246,.95); color:#fff;
-  font-size:14px; line-height:1.2;
-  box-shadow:0 6px 16px rgba(0,0,0,.25);
-  border:1px solid rgba(59,130,246,1);
-  max-width:50vw; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;
-  pointer-events:none; z-index:2147483646; opacity:0; transition:opacity 50ms linear;
-}
-/* Keep placeholder from jumping while exporting */
-.ui-sortable-placeholder.setlist-exporting{
-  visibility:hidden!important; height:0!important; margin:0!important; padding:0!important; border:0!important;
-}
-/* Freeze the big helper at the edge (don’t let it move outside) */
-.ui-sortable-helper.setlist-helper-frozen{
-  position:fixed !important; pointer-events:none !important; z-index:2147483645 !important;
-}
-</style>
-
-<script>
-/* Setlist export behavior (v12 — dual-visual + frozen helper, non-destructive)
-   - Inside setlist: normal reorder + full-size helper (unchanged).
-   - When pointer leaves the setlist box: show BLUE name-only ghost that follows cursor; freeze the big helper at the boundary.
-   - While outside: keep sortable responsive; pin placeholder at the original index so the order doesn’t change.
-   - Re-enter: hide ghost + unfreeze helper.
-   - Stop: cleanup so nothing remains “name-only” or frozen.
-*/
-(function(){
-  if (window.__SetlistExportBehavior_v12) return;
-  window.__SetlistExportBehavior_v12 = true;
-
-  function $jq(){ return window.jQuery || window.$; }
-  var $ = $jq(); if (!$) return;
-
-  // Single reusable ghost
-  var ghost = document.createElement('div');
-  ghost.id = 'setlist-export-ghost';
-  document.body.appendChild(ghost);
-
-  function setGhost(text){ ghost.textContent = text || ''; }
-  function showGhostAt(cx, cy){
-    ghost.style.transform = 'translate(' + (cx + 8) + 'px,' + (cy + 8) + 'px)';
-    if (ghost.style.opacity !== '1') ghost.style.opacity = '1';
-  }
-  function hideGhost(){
-    ghost.style.opacity = '0';
-    ghost.style.transform = 'translate(-9999px,-9999px)';
-  }
-
-  function getItemName($item){
-    var name = '';
-    try{
-      var $name = $item.find('.song-name, .song-name-text, .file-name, [data-role=\"song-name\"]').first();
-      name = ($name.text()||'').trim(); if (!name) name = ($item.text()||'').trim();
-    }catch(e){}
-    return name || 'Untitled';
-  }
-
-  function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
-
-  function attach($list){
-    var inst = $list.data('ui-sortable') || $list.data('sortable');
-    if (!inst) return;
-
-    var exporting = false;
-    var $placeholder = null, $currentItem = null;
-    var startIndex = null;
-    var rect = null;
-    var frozenAt = null; // client coords at boundary
-
-    // Preserve existing callbacks
-    var orig = {
-      start:  $list.sortable('option','start'),
-      sort:   $list.sortable('option','sort'),
-      change: $list.sortable('option','change'),
-      over:   $list.sortable('option','over'),
-      out:    $list.sortable('option','out'),
-      stop:   $list.sortable('option','stop')
-    };
-
-    function updateRect(){
-      var box = $list.get(0).getBoundingClientRect();
-      rect = { left: box.left, top: box.top, right: box.right, bottom: box.bottom };
-    }
-    function inside(cx, cy){ return cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom; }
-
-    function eventClientXY(e){
-      var oe = (e && e.originalEvent) || e;
-      var t = (oe && oe.touches && oe.touches[0]) || (oe && oe.changedTouches && oe.changedTouches[0]);
-      if (t) return { x: t.clientX, y: t.clientY };
-      if (typeof e.clientX === 'number') return { x: e.clientX, y: e.clientY };
-      return { x: rect.left, y: rect.top };
-    }
-
-    function freezeHelperAtEdge(cx, cy){
-      var $helper = $('.ui-sortable-helper');
-      if (!$helper.length) return;
-      // Freeze at nearest edge point
-      var fx = clamp(cx, rect.left, rect.right);
-      var fy = clamp(cy, rect.top, rect.bottom);
-      if (cx < rect.left)  fx = rect.left;
-      if (cx > rect.right) fx = rect.right;
-      if (cy < rect.top)   fy = rect.top;
-      if (cy > rect.bottom)fy = rect.bottom;
-      frozenAt = { x: fx, y: fy };
-      var w = $helper.outerWidth(), h = $helper.outerHeight();
-      $helper.addClass('setlist-helper-frozen')
-             .css({ left: (fx - Math.round(w/2)) + 'px', top: (fy - Math.round(h/2)) + 'px' });
-    }
-
-    function updateFrozenHelper(){
-      if (!frozenAt) return;
-      var $helper = $('.ui-sortable-helper');
-      if ($helper.length && $helper.hasClass('setlist-helper-frozen')){
-        var w = $helper.outerWidth(), h = $helper.outerHeight();
-        $helper.css({ left: (frozenAt.x - Math.round(w/2)) + 'px', top: (frozenAt.y - Math.round(h/2)) + 'px' });
-      }
-    }
-
-    function unfreezeHelper(){
-      var $helper = $('.ui-sortable-helper');
-      if ($helper.length){
-        $helper.removeClass('setlist-helper-frozen').css({ left:'', top:'' });
-      }
-      frozenAt = null;
-    }
-
-    function toExportMode(cx, cy){
-      if (exporting) return;
-      exporting = true;
-      setGhost(getItemName($currentItem)); showGhostAt(cx, cy);
-      if ($placeholder) $placeholder.addClass('setlist-exporting');
-      freezeHelperAtEdge(cx, cy);
-    }
-
-    function toReorderMode(){
-      if (!exporting) return;
-      exporting = false;
-      hideGhost();
-      if ($placeholder) $placeholder.removeClass('setlist-exporting');
-      unfreezeHelper();
-    }
-
-    function hardCleanup(){
-      exporting = false; hideGhost(); unfreezeHelper();
-      if ($placeholder) $placeholder.removeClass('setlist-exporting');
-      $placeholder = null; $currentItem = null; startIndex = null; rect = null; frozenAt = null;
-    }
-
-    function keepPlaceholderPinned(){
-      if (!exporting || !$placeholder || startIndex == null) return;
-      var $children = $list.children(':visible');
-      if (!$children.length) return;
-      var idx = Math.max(0, Math.min(startIndex, $children.length - 1));
-      var $anchor = $children.eq(idx);
-      if ($anchor.length && !$placeholder.is($anchor.next())){ $placeholder.insertAfter($anchor); }
-      $placeholder.addClass('setlist-exporting');
-    }
-
-    $list.sortable('option','start', function(e, ui){
-      exporting = false;
-      $placeholder = ui.placeholder; $currentItem = ui.item; startIndex = ui.item.index();
-      updateRect(); hideGhost(); unfreezeHelper();
-      if (orig.start) orig.start.call(this, e, ui);
-    });
-
-    $list.sortable('option','sort', function(e, ui){
-      if (!rect) updateRect();
-      var p = eventClientXY(e);
-      if (inside(p.x, p.y)){
-        toReorderMode();
-      } else {
-        if (!exporting) toExportMode(p.x, p.y);
-        showGhostAt(p.x, p.y);
-        updateFrozenHelper();
-        keepPlaceholderPinned();
-      }
-      if (orig.sort) orig.sort.call(this, e, ui);
-    });
-
-    $list.sortable('option','over', function(e, ui){
-      toReorderMode();
-      if (orig.over) orig.over.call(this, e, ui);
-    });
-
-    $list.sortable('option','out', function(e, ui){
-      var p = eventClientXY(e);
-      if (!rect) updateRect();
-      toExportMode(p.x, p.y);
-      if (orig.out) orig.out.call(this, e, ui);
-    });
-
-    $list.sortable('option','change', function(e, ui){
-      keepPlaceholderPinned();
-      if (orig.change) orig.change.call(this, e, ui);
-    });
-
-    $list.sortable('option','stop', function(e, ui){
-      hardCleanup();
-      if (orig.stop) orig.stop.call(this, e, ui);
-    });
-
-    window.addEventListener('scroll', function(){ if ($currentItem) updateRect(); }, { passive:true });
-    window.addEventListener('resize', function(){ if ($currentItem) updateRect(); }, { passive:true });
-  }
-
-  function init(){
-    var $list = $('#setlist-list'); // adjust if your setlist uses a different selector
-    if ($list.length){ attach($list); }
-  }
-
-  init();
-  var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
-})();
-</script>
-
-
-<style id="setlist-export-chip-styles">
-#setlist-export-ghost{
-  position:fixed; top:0; left:0;
-  transform:translate(-9999px,-9999px);
-  padding:6px 10px; border-radius:8px;
-  background:rgba(59,130,246,.95); color:#fff;
-  font-size:14px; line-height:1.2;
-  box-shadow:0 6px 16px rgba(0,0,0,.25);
-  border:1px solid rgba(59,130,246,1);
-  max-width:50vw; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;
-  pointer-events:none; z-index:2147483646; opacity:0; transition:opacity 50ms linear;
-}
-.ui-sortable-placeholder.setlist-exporting{
-  visibility:hidden!important; height:0!important; margin:0!important; padding:0!important; border:0!important;
-}
-.ui-sortable-helper.setlist-helper-frozen{
-  position:fixed !important; pointer-events:none !important; z-index:2147483645 !important;
-}
-</style>
-<script>
-(function(){
-  if (window.__SetlistExportBehavior_v13) return;
-  window.__SetlistExportBehavior_v13 = true;
-  function $jq(){ return window.jQuery || window.$; }
-  var $ = $jq(); if (!$) return;
-
-  var ghost = document.createElement('div');
-  ghost.id = 'setlist-export-ghost';
-  document.body.appendChild(ghost);
-
-  function setGhost(text){ ghost.textContent = text || ''; }
-  function showGhostAt(cx, cy){ ghost.style.transform = 'translate('+(cx+8)+'px,'+(cy+8)+'px)'; ghost.style.opacity = '1'; }
-  function hideGhost(){ ghost.style.opacity = '0'; ghost.style.transform = 'translate(-9999px,-9999px)'; }
-
-  function getItemName($item){
-    var n=''; try{ var $n=$item.find('.song-name, .song-name-text, .file-name, [data-role="song-name"]').first();
-      n = ($n.text()||'').trim(); if(!n) n=($item.text()||'').trim(); }catch(e){}
-    return n || 'Untitled';
-  }
-  function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
-
-  function attach($list){
-    var inst = $list.data('ui-sortable') || $list.data('sortable'); if(!inst) return;
-    var exporting=false, $ph=null, $item=null, startIndex=null, rect=null, frozenAt=null;
-
-    var orig = {
-      start:$list.sortable('option','start'),
-      sort:$list.sortable('option','sort'),
-      change:$list.sortable('option','change'),
-      over:$list.sortable('option','over'),
-      out:$list.sortable('option','out'),
-      stop:$list.sortable('option','stop'),
-      update:$list.sortable('option','update'),
-      receive:$list.sortable('option','receive')
-    };
-
-    function updateRect(){ var r=$list.get(0).getBoundingClientRect(); rect={left:r.left, top:r.top, right:r.right, bottom:r.bottom}; }
-    function inside(x,y){ return x>=rect.left && x<=rect.right && y>=rect.top && y<=rect.bottom; }
-    function evtXY(e){
-      var oe=(e&&e.originalEvent)||e, t=(oe&&oe.touches&&oe.touches[0])||(oe&&oe.changedTouches&&oe.changedTouches[0]);
-      if(t) return {x:t.clientX,y:t.clientY}; if(typeof e.clientX==='number') return {x:e.clientX,y:e.clientY};
-      return {x:rect.left,y:rect.top};
-    }
-
-    function freezeAtEdge(cx,cy){
-      var $h=$('.ui-sortable-helper'); if(!$h.length) return;
-      var fx=clamp(cx,rect.left,rect.right), fy=clamp(cy,rect.top,rect.bottom);
-      if(cx<rect.left)fx=rect.left; if(cx>rect.right)fx=rect.right; if(cy<rect.top)fy=rect.top; if(cy>rect.bottom)fy=rect.bottom;
-      frozenAt={x:fx,y:fy};
-      var w=$h.outerWidth(), h=$h.outerHeight();
-      $h.addClass('setlist-helper-frozen').css({ left:(fx-Math.round(w/2))+'px', top:(fy-Math.round(h/2))+'px' });
-    }
-    function updateFrozen(){
-      if(!frozenAt) return; var $h=$('.ui-sortable-helper');
-      if($h.length && $h.hasClass('setlist-helper-frozen')){
-        var w=$h.outerWidth(), h=$h.outerHeight();
-        $h.css({ left:(frozenAt.x-Math.round(w/2))+'px', top:(frozenAt.y-Math.round(h/2))+'px' });
-      }
-    }
-    function unfreeze(){ var $h=$('.ui-sortable-helper'); if($h.length){ $h.removeClass('setlist-helper-frozen').css({left:'',top:''}); } frozenAt=null; }
-
-    function toExport(cx,cy){
-      if(exporting) return; exporting=true;
-      setGhost(getItemName($item)); showGhostAt(cx,cy);
-      if($ph) $ph.addClass('setlist-exporting');
-      freezeAtEdge(cx,cy);
-    }
-    function toReorder(){ if(!exporting) return; exporting=false; hideGhost(); if($ph) $ph.removeClass('setlist-exporting'); unfreeze(); }
-    function keepPinned(){
-      if(!exporting||!$ph||startIndex==null) return;
-      var kids=$list.children(':visible'); if(!kids.length) return;
-      var idx=Math.max(0,Math.min(startIndex,kids.length-1)), $a=kids.eq(idx);
-      if($a.length && !$ph.is($a.next())) $ph.insertAfter($a);
-      $ph.addClass('setlist-exporting');
-    }
-    function cleanup(){ exporting=false; hideGhost(); unfreeze(); if($ph) $ph.removeClass('setlist-exporting'); $ph=null; $item=null; startIndex=null; rect=null; frozenAt=null; }
-
-    $list.sortable('option','start', function(e,ui){
-      exporting=false; $ph=ui.placeholder; $item=ui.item; startIndex=ui.item.index(); updateRect(); hideGhost(); unfreeze();
-      if(orig.start) orig.start.call(this,e,ui);
-    });
-    $list.sortable('option','sort', function(e,ui){
-      if(!rect) updateRect(); var p=evtXY(e);
-      if(inside(p.x,p.y)){ toReorder(); }
-      else { if(!exporting) toExport(p.x,p.y); showGhostAt(p.x,p.y); updateFrozen(); keepPinned(); }
-      if(orig.sort) orig.sort.call(this,e,ui);
-    });
-    $list.sortable('option','over', function(e,ui){ toReorder(); if(orig.over) orig.over.call(this,e,ui); });
-    $list.sortable('option','out', function(e,ui){ var p=evtXY(e); if(!rect) updateRect(); toExport(p.x,p.y); if(orig.out) orig.out.call(this,e,ui); });
-    $list.sortable('option','change', function(e,ui){ keepPinned(); if(orig.change) orig.change.call(this,e,ui); });
-
-    // Prevent reorder when outside: cancel on update/receive
-    $list.sortable('option','update', function(e,ui){ if(exporting){ try{$list.sortable('cancel');}catch(_){ } return; } if(orig.update) orig.update.call(this,e,ui); });
-    $list.sortable('option','receive', function(e,ui){ if(exporting){ try{$list.sortable('cancel');}catch(_){ } return; } if(orig.receive) orig.receive.call(this,e,ui); });
-
-    $list.sortable('option','stop', function(e,ui){
-      if(exporting){ try{$list.sortable('cancel');}catch(_){ } }
-      cleanup(); if(orig.stop) orig.stop.call(this,e,ui);
-    });
-
-    window.addEventListener('scroll', function(){ if($item) updateRect(); }, {passive:true});
-    window.addEventListener('resize', function(){ if($item) updateRect(); }, {passive:true});
-  }
-
-  function init(){ var $list=$('#setlist-list'); if($list.length) attach($list); }
-  init(); var tries=0, t=setInterval(function(){ tries++; init(); if(tries>20) clearInterval(t); }, 200);
-})();
-</script>
-<script>
-
-        // === Simple View toggles: sync + body class ===
-        (function(){
-            function setSimple(on){
-                document.body.classList.toggle('simple-view-on', !!on);
-                var a=document.getElementById('simple-view-toggle');
-                var b=document.getElementById('simple-view-toggle-setlist');
-                if(a) a.checked=!!on; if(b) b.checked=!!on;
-            }
-            function init(){
-                var a=document.getElementById('simple-view-toggle');
-                var b=document.getElementById('simple-view-toggle-setlist');
-                function onChange(e){ setSimple((e.target||a||b).checked); }
-                if(a) a.addEventListener('change', onChange);
-                if(b) b.addEventListener('change', onChange);
-                setSimple(document.body.classList.contains('simple-view-on'));
-            }
-            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
-        })();
-
-        // === Drag-to-toggle behavior for Simple + Dark/Light ===
-        (function(){
-            function makeDraggableToggle(input){
-                if(!input) return;
-                var track=input.nextElementSibling, dot=track?track.nextElementSibling:null;
-                var dragging=false,startX=0;
-                function down(e){ dragging=true; startX=(e.touches?e.touches[0].clientX:e.clientX);
-                    document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);
-                    document.addEventListener('touchmove',move,{passive:false});document.addEventListener('touchend',up);
-                }
-                function move(e){ if(!dragging) return; var x=(e.touches?e.touches[0].clientX:e.clientX); var dx=x-startX;
-                    if(Math.abs(dx)>10){ input.checked = dx>0; input.dispatchEvent(new Event('change',{bubbles:true})); }
-                    if(e.cancelable) e.preventDefault();
-                }
-                function up(){ dragging=false;
-                    document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);
-                    document.removeEventListener('touchmove',move);document.removeEventListener('touchend',up);
-                }
-                if(track){ track.style.cursor='pointer'; track.addEventListener('pointerdown',down); track.addEventListener('touchstart',down,{passive:true}); }
-                if(dot){ dot.style.cursor='pointer'; dot.addEventListener('pointerdown',down); dot.addEventListener('touchstart',down,{passive:true}); }
-            }
-            function init(){
-                var a=document.getElementById('simple-view-toggle');
-                var b=document.getElementById('simple-view-toggle-setlist');
-                var d=document.getElementById('dark-mode-toggle') || document.querySelector('#dark-mode-container input[type="checkbox"]');
-                [a,b,d].forEach(makeDraggableToggle);
-            }
-            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
-        })();
-
-        // === Enforce exact empty state for All Songs ===
-        (function(){
-            var LINE1='No songs yet';
-            var LINE2='Drag & drop PDF files onto this page or use the Add files button';
-            function enforce(){
-                var ul=document.getElementById('master-list');
-                if(!ul) return;
-                var hasItems=ul.querySelector('li');
-                if(hasItems) return;
-                ul.innerHTML = '<li class="p-4 text-center text-gray-500 dark:text-gray-400">'+LINE1+'</li>' +
-                               '<li class="pb-6 -mt-2 text-center text-sm text-gray-400 dark:text-gray-500">'+LINE2+'</li>';
-            }
-            function start(){
-                var ul=document.getElementById('master-list');
-                if(ul){ new MutationObserver(enforce).observe(ul,{childList:true}); }
-                enforce(); setTimeout(enforce,50); setTimeout(enforce,200); setTimeout(enforce,600);
-            }
-            if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',start);}else{start();}
-        })();
-
-</script>
-<script>
-
-        // === PATCH: Homepage Sort dropdown & Genre flyout (precise targeting) ===
-        (function(){
-            function el(id){ return document.getElementById(id); }
-            function once(fn){ var ran=false; return function(){ if(ran) return; ran=true; fn(); }; }
-            function initSort(){
-                var select = el('sort-dropdown');
-                if (!select) return;
-                // Rename "Sort by Name" -> "Sort By" inside this select only
-                Array.from(select.options).forEach(function(opt){
-                    if ((opt.textContent||'').trim().toLowerCase()==='sort by name'){ opt.textContent='Sort By'; }
-                });
-                // Remove "Last played" option
-                Array.from(select.options).forEach(function(opt){
-                    var t=(opt.textContent||'').trim().toLowerCase();
-                    if (t==='sort by last played' || opt.value==='lastPlayed'){ opt.remove(); }
-                });
-                // Ensure "Genre" option exists
-                var hasGenre = !!select.querySelector('option[value="genre"]');
-                if (!hasGenre){
-                    var opt = document.createElement('option');
-                    opt.value='genre'; opt.textContent='Genre';
-                    // Insert after Energy if present, else append
-                    var after = select.querySelector('option[value="energy"]');
-                    if (after && after.nextSibling){ select.insertBefore(opt, after.nextSibling); }
-                    else { select.appendChild(opt); }
-                }
-                // Prepare flyout
-                var fly = el('sort-genre-flyout');
-                var slot = el('sort-genre-slot');
-                var rightContainer = el('genre-list-container') || el('genre-filter-container') || (el('genre-view') && el('genre-view').parentElement);
-                var dropdown = el('genre-filter-dropdown');
-                // If there's no standalone dropdown, try the common ID pattern
-                if (!dropdown){ dropdown = el('genre-list') || el('genre-sort-dropdown'); }
-                if (!fly || !slot || !dropdown) return;
-                // Mount dropdown into fly slot (without changing width elsewhere)
-                if (!slot.contains(dropdown)){ slot.appendChild(dropdown); }
-                // Hide the original right-side container *visually* only when genre is chosen
-                function setRightContainerHidden(hide){
-                    if (!rightContainer) return;
-                    if (hide){
-                        rightContainer.style.visibility = 'hidden';
-                        rightContainer.style.pointerEvents = 'none';
-                    } else {
-                        rightContainer.style.visibility = '';
-                        rightContainer.style.pointerEvents = '';
-                    }
-                }
-                function update(){
-                    if (select.value==='genre'){
-                        fly.style.display='block';
-                        dropdown.classList.remove('hidden');
-                        setRightContainerHidden(true);
-                    } else {
-                        fly.style.display='none';
-                        dropdown.classList.add('hidden');
-                        setRightContainerHidden(false);
-                    }
-                }
-                select.addEventListener('change', update);
-                if (!select.value) select.value='name';
-                update();
-            }
-            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', initSort); } else { initSort(); }
-        })();
-
-        // === PATCH: Sidebar open fade-in only (no overlays; no layout changes) ===
-        (function(){
-            function initSidebarFade(){
-                var sb = document.querySelector('.left-col');
-                if (!sb || typeof ResizeObserver==='undefined') return;
-                var lastW = sb.getBoundingClientRect().width;
-                var ro = new ResizeObserver(function(){
-                    var w = sb.getBoundingClientRect().width;
-                    var delta = w - lastW;
-                    if (Math.abs(delta) < 0.5){ lastW = w; return; }
-                    if (delta > 0){ // opening
-                        sb.classList.add('opening-fade');
-                        sb.classList.remove('ready');
-                        // allow layout to settle, then fade in
-                        requestAnimationFrame(function(){ sb.classList.add('ready'); });
-                        setTimeout(function(){
-                            sb.classList.remove('opening-fade');
-                            sb.classList.remove('ready');
-                        }, 260);
-                    }
-                    lastW = w;
-                });
-                try{ ro.observe(sb); }catch(e){}
-            }
-            if (document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', initSidebarFade); } else { initSidebarFade(); }
-        })();
-
-</script>
 </body>
+
 </html>
-
-
-/* === In-place Notes behavior (autosize downwards, fixed width, × collapse, ▼ reopen) === */
-(function(){
-  if (window.__NotesInline_v4) return;
-  window.__NotesInline_v4 = true;
-
-  function lockWidth(el){
-    // Lock width to rendered pixel width of the original field to prevent horizontal growth
-    var r = el.getBoundingClientRect();
-    var w = Math.round(r.width || el.clientWidth || el.offsetWidth);
-    if (w && w > 0) {
-      el.style.width = w + 'px';
-      el.style.maxWidth = w + 'px';
-      el.style.minWidth = w + 'px';
-    }
-    return w;
-  }
-
-  function autosize(t){
-    if (!t) return;
-    t.style.height = 'auto';
-    // Use scrollHeight to expand downwards
-    var h = t.scrollHeight;
-    if (!h || h < 36) h = 36;
-    // Cap to max-height via CSS; extra will scroll vertically
-    t.style.height = h + 'px';
-  }
-
-  function makeInlineNotes(input){
-    if (!input || input.__notesInlineBuilt) return;
-    input.__notesInlineBuilt = true;
-
-    // Create wrapper
-    var wrap = document.createElement('div');
-    wrap.className = 'notes-inline';
-    // Clone relevant class styling; we will use a <textarea>
-    var ta = document.createElement('textarea');
-    ta.className = (input.className || '').replace(/\bnotes-input\b/, 'notes-input') + ' notes-textarea';
-    ta.placeholder = input.placeholder || 'Notes';
-    ta.value = input.value || '';
-    ta.setAttribute('spellcheck', 'false');
-
-    // Insert wrapper in place and move input out
-    input.parentNode.insertBefore(wrap, input);
-    input.remove(); // remove the original input element
-    wrap.appendChild(ta);
-
-    // Buttons
-    var btnClose = document.createElement('button');
-    btnClose.type = 'button';
-    btnClose.className = 'notes-btn close';
-    btnClose.setAttribute('aria-label', 'Close notes');
-    btnClose.textContent = '×';
-
-    var btnDrop = document.createElement('button');
-    btnDrop.type = 'button';
-    btnDrop.className = 'notes-btn dropdown';
-    btnDrop.setAttribute('aria-label', 'Expand notes');
-    btnDrop.textContent = '▼';
-
-    wrap.appendChild(btnClose);
-    wrap.appendChild(btnDrop);
-
-    // Lock width to the initial width of the field
-    lockWidth(wrap);
-    // Also ensure the textarea obeys the locked width via wrapper's width
-    ta.style.width = '100%'; // wrapper handles pixel width
-
-    // Start collapsed; show ▼
-    wrap.classList.add('collapsed');
-    autosize(ta);
-
-    // Open: remove collapsed state to allow autosize to show full height
-    function openFull(){
-      wrap.classList.remove('collapsed');
-      autosize(ta);
-      ta.focus({preventScroll:true});
-      try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch(_){}
-    }
-
-    // Close: collapse back to single-line look, keep ▼ to reopen
-    function closeToCollapsed(){
-      // Keep current value, and notify change listeners
-      try { ta.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
-      wrap.classList.add('collapsed');
-      autosize(ta);
-    }
-
-    // Typing: keep width fixed; grow downward
-    ta.addEventListener('input', function(){
-      autosize(ta);
-    });
-
-    // Open on focus/click so user always sees all text while typing
-    ta.addEventListener('focus', openFull);
-    ta.addEventListener('pointerdown', function(){ if (wrap.classList.contains('collapsed')) openFull(); }, true);
-
-    // Close with ×
-    btnClose.addEventListener('click', function(e){ e.preventDefault(); closeToCollapsed(); });
-
-    // Reopen with ▼
-    btnDrop.addEventListener('click', function(e){ e.preventDefault(); openFull(); });
-
-    // Relock width on window resize (in case layout changes)
-    window.addEventListener('resize', function(){
-      lockWidth(wrap);
-    });
-  }
-
-  function initAll(){
-    document.querySelectorAll('input.notes-input, textarea.notes-input').forEach(makeInlineNotes);
-  }
-  initAll();
-
-  // Handle dynamically added notes fields
-  var mo = new MutationObserver(function(muts){
-    for (var i=0;i<muts.length;i++){
-      var n = muts[i].addedNodes || [];
-      for (var j=0;j<n.length;j++){
-        var node = n[j];
-        if (node.nodeType !== 1) continue;
-        if (node.matches && (node.matches('input.notes-input') || node.matches('textarea.notes-input'))) {
-          makeInlineNotes(node);
-        } else if (node.querySelectorAll) {
-          node.querySelectorAll('input.notes-input, textarea.notes-input').forEach(makeInlineNotes);
-        }
-      }
-    }
-  });
-  try { mo.observe(document.documentElement, {childList:true, subtree:true}); } catch(_){}
-
-})();
