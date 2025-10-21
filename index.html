@@ -1667,6 +1667,27 @@ html.dark .notes-inline .notes-textarea {
   line-height: 1.28;
 }
 
+
+/* === All Songs toolbar alignment (minimal + surgical) === */
+/* 1) Narrow Sort by without moving its LEFT edge */
+#controls-row #filters-group #sort-dropdown {
+  width: 150px !important;
+  max-width: 150px !important;
+  flex: 0 0 150px !important;   /* if in a flex container, fixes basis */
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* 2) Shift Add files and Delete All buttons left to align with row columns */
+#master-view-buttons #upload-master-btn {
+  position: relative;
+  left: -14px;   /* align above Artist */
+}
+#master-view-buttons #delete-all-btn {
+  position: relative;
+  left: -42px;   /* align above per-row Delete */
+}
+
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
 </head>
