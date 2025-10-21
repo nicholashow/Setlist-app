@@ -1704,7 +1704,7 @@ html.dark .notes-inline .notes-textarea {
 }
 
 
-/* === Setlist drag: name-only when outside box, keep position locked === */
+/* === Setlist drag: name-only when outside box, keep position locked (improved) === */
 body.setlist-drag-outside .ui-sortable-helper {
   width: auto !important;
   min-width: 0 !important;
@@ -1719,6 +1719,38 @@ body.setlist-drag-outside .ui-sortable-helper .song-name-text {
   display: block !important;
   color: #2563eb !important;
   font-weight: 700 !important;
+}
+
+
+/* Name-only chip styling outside the setlist box */
+body.setlist-drag-outside .ui-sortable-helper {
+  background: #2563eb !important;   /* solid blue chip */
+  color: #fff !important;
+  padding: 6px 12px !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,.15) !important;
+  border: none !important;
+  outline: none !important;
+  width: auto !important;
+  min-width: 0 !important;
+}
+/* Hide original internals but show our chip */
+body.setlist-drag-outside .ui-sortable-helper > * { visibility: hidden !important; }
+body.setlist-drag-outside .ui-sortable-helper .drag-name-chip {
+  visibility: visible !important;
+  display: inline !important;
+  font-weight: 700 !important;
+  letter-spacing: .01em;
+}
+
+/* When inside the setlist box, show the normal drag (blue rearrange highlight) */
+body:not(.setlist-drag-outside) .ui-sortable-helper {
+  background: inherit !important;
+  color: inherit !important;
+  padding: inherit !important;
+  border: inherit !important;
+  outline: none !important;
+  box-shadow: inherit !important;
 }
 
 </style>
@@ -4322,6 +4354,58 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   });
 
   $list.on('sortstop', function(){
+    document.body.classList.remove('setlist-drag-outside');
+    originalPrev = null;
+  });
+})();
+
+</script>
+<script>
+
+(function(){
+  const $ = window.jQuery;
+  const $list = $('#setlist-list');
+  const $panel = $('.setlist-view-container .setlist-panel');
+  if (!$list.length || !$panel.length || !$.fn.sortable) return;
+
+  let originalPrev = null;
+
+  $list.off('sortstart.setlistdrag sort.setlistdrag sortstop.setlistdrag'); // avoid double-binding
+
+  $list.on('sortstart.setlistdrag', function(e, ui){
+    originalPrev = ui.item.prev()[0] || null;
+
+    // Build a visible name chip we can show when outside
+    const name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
+    let chip = ui.helper.find('.drag-name-chip');
+    if (!chip.length){
+      chip = $('<span class="drag-name-chip"></span>');
+      ui.helper.append(chip);
+    }
+    chip.text(name);
+  });
+
+  $list.on('sort.setlistdrag', function(e, ui){
+    const rect = $panel[0].getBoundingClientRect();
+    // Use client coordinates to avoid scroll issues
+    const x = e.clientX;
+    const y = e.clientY;
+    const outside = (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom);
+
+    if (outside){
+      document.body.classList.add('setlist-drag-outside');
+      // Keep placeholder anchored at the original position
+      if (originalPrev){
+        $(ui.placeholder).insertAfter(originalPrev);
+      } else {
+        $(ui.placeholder).prependTo($list);
+      }
+    } else {
+      document.body.classList.remove('setlist-drag-outside');
+    }
+  });
+
+  $list.on('sortstop.setlistdrag', function(){
     document.body.classList.remove('setlist-drag-outside');
     originalPrev = null;
   });
