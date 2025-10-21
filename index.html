@@ -1732,24 +1732,10 @@ html.dark .notes-inline .notes-textarea {
 #pinned-setlist-clone .song-name-text { color:#fff; }
 
 /* While outside, hide helper+placeholder so no reflow occurs */
-body.setlist-drag-outside .ui-sortable-helper { display: none !important; }
-body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none !important; visibility: hidden !important; }
+/* removed: keep helper + placeholder visible outside */
 
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
-
-<script>
-// Deduplicate any stray #drag-proxy-nameonly nodes created by previous versions
-(function(){
-  try {
-    const proxies = Array.from(document.querySelectorAll('#drag-proxy-nameonly'));
-    if (proxies.length > 1) {
-      proxies.slice(1).forEach(n => n.remove());
-    }
-  } catch(e) {}
-})();
-</script>
-
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2253,20 +2239,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#delete-all-btn').click(()=>{if(confirm('Are you sure you want to delete ALL songs?')){masterSongs.forEach(s=>{if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}});masterSongs=[];setlists={};playCounts={};renderAll();updateTopLeast();save()}});
             $('#record-show').on('click',()=>{if(!currentSetlist)return alert('Select a setlist first');if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:!0}).then(s=>{recorder=new MediaRecorder(s);recorder.ondataavailable=e=>audioChunks.push(e.data);recorder.onstop=()=>{const b=new Blob(audioChunks,{type:'audio/webm'});audioChunks=[];saveRecording(b)};recorder.start();$('#record-show, #stop-record').toggleClass('hidden')}).catch(err=>{console.error('Error accessing microphone:',err);alert('Could not access microphone')})}else{alert('Microphone access not supported')}});
             $('#stop-record').on('click',()=>{if(recorder){recorder.stop();$('#record-show, #stop-record').toggleClass('hidden')}});
-            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style>
-<script>
-// Deduplicate any stray #drag-proxy-nameonly nodes created by previous versions
-(function(){
-  try {
-    const proxies = Array.from(document.querySelectorAll('#drag-proxy-nameonly'));
-    if (proxies.length > 1) {
-      proxies.slice(1).forEach(n => n.remove());
-    }
-  } catch(e) {}
-})();
-</script>
-
-</head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
+            $('#print-setlist').click(()=>{if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),p=window.open('','_blank');if(!p){alert('Please allow popups for this feature to work.');return}let h=`<html><head><title>Setlist: ${escapeHtml(currentSetlist)}</title><style>body{font-family:Arial,sans-serif;margin:20mm}h1{font-size:24pt;border-bottom:2px solid #333;padding-bottom:10px}h2{font-size:18pt}ol{font-size:14pt;padding-left:30px}li{margin-bottom:8px}.info{font-size:14pt;color:#555;margin-bottom:20px}.page-break{page-break-before:always}iframe{border:none;width:100%;height:95vh}@media print{body{margin:15mm}h1{font-size:20pt}}</style></head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
             $('#share-email').on('click',e=>{e.preventDefault();shareSetlist('email')});
@@ -3701,7 +3674,9 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   pointer-events:none; z-index:2147483646; opacity:0; transition:opacity 50ms linear;
 }
 /* Keep placeholder from jumping while exporting */
-/* removed to keep helper visible outside */
+.ui-sortable-placeholder.setlist-exporting{
+  visibility:hidden!important; height:0!important; margin:0!important; padding:0!important; border:0!important;
+}
 /* Freeze the big helper at the edge (don’t let it move outside) */
 .ui-sortable-helper.setlist-helper-frozen{
   position:fixed !important; pointer-events:none !important; z-index:2147483645 !important;
@@ -3918,7 +3893,9 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   max-width:50vw; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;
   pointer-events:none; z-index:2147483646; opacity:0; transition:opacity 50ms linear;
 }
-/* removed to keep helper visible outside */
+.ui-sortable-placeholder.setlist-exporting{
+  visibility:hidden!important; height:0!important; margin:0!important; padding:0!important; border:0!important;
+}
 .ui-sortable-helper.setlist-helper-frozen{
   position:fixed !important; pointer-events:none !important; z-index:2147483645 !important;
 }
@@ -4359,7 +4336,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   $list.on('sortstart.pinnedProxy', function(e, ui){
     // Build proxy name text
     var name = (ui.item.find('.song-name-text').text() || ui.item.text() || '').trim();
-    $proxy.text( name );
+    $proxy.text(name);
     // Capture the *on-screen* rect of the original spot (placeholder will replace item)
     pinnedRect = rectOf(ui.item);
   });
@@ -4372,7 +4349,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     if (outside){
       if (!wasOutside){
         wasOutside = true;
-        // removed: no body class, we keep helper visible
+        document.body.classList.add('setlist-drag-outside');
         // Pin a visual clone at the original on-screen coordinates
         // Use the current helper so the look matches the "dragging to reorder" style exactly
         var helperHtml = ui.helper.prop('outerHTML');
@@ -4390,7 +4367,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       }
       setProxyPosition(e);
     } else {
-      if (wasOutside){ ui.helper && ui.helper.removeClass('setlist-helper-frozen').css({position:'', left:'', top:'', width:'', height:'', opacity:'', visibility:'', display:''}); ui.helper.show(); $proxy.hide().css('transform','translate(-9999px,-9999px)');
+      if (wasOutside){ document.body.classList.remove('setlist-drag-outside'); ui.helper.show(); $proxy.hide().css('transform','translate(-9999px,-9999px)');
         $pinned.hide().empty();
       }
     }
@@ -4400,7 +4377,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     // Clean up floats
     $proxy.hide().css('transform','translate(-9999px,-9999px)');
     $pinned.hide().empty();
-    ui.helper && ui.helper.removeClass('setlist-helper-frozen').css({position:'', left:'', top:'', width:'', height:'', opacity:'', visibility:'', display:''});
+    document.body.classList.remove('setlist-drag-outside');
     try{ ui.helper.show(); }catch(_){}
     wasOutside = false;
   });
@@ -4414,6 +4391,23 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 
 </script>
+
+<script>
+// Minimal, defensive fix: prevent duplicate filename "ghost"
+(function(){
+  function dedupeDragProxies(){
+    try {
+      const nodes = Array.from(document.querySelectorAll('#drag-proxy-nameonly'));
+      if (nodes.length > 1) nodes.slice(1).forEach(n => n.remove());
+    } catch(e) {}
+  }
+  dedupeDragProxies();
+  ['pointerdown','touchstart','mousedown'].forEach(ev => {
+    window.addEventListener(ev, dedupeDragProxies, {passive:true});
+  });
+})();
+</script>
+
 </body>
 </html>
 
