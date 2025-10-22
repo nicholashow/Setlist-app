@@ -726,6 +726,22 @@
             transition: background-color 0.2s;
             overflow: hidden; /* Fix width issues */
         }
+/* === ALIGN FAVORITES/ENERGY ICONS WITH "ADD" BUTTONS === */
+#nav-favorites, #nav-energy { 
+  position: relative; 
+  padding-right: 36px; /* 8px container padding + 20px icon + ~8px spacing */
+  justify-content: flex-start;
+}
+#nav-favorites .sidebar-icon-right, #nav-energy .sidebar-icon-right {
+  position: absolute;
+  right: 8px;         
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: 20px; 
+  height: 20px;
+}
         .sidebar-item:hover {
             background: #4b5563;
         }
@@ -1798,30 +1814,6 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
-
-<style id="setlist-toolbar-unify-css">
-  /* Uniform size for the four action buttons in setlist */
-  .btn-setlist-action {
-    min-width: 150px;
-    min-height: 40px;
-    padding: 0.5rem 0.75rem !important;
-    font-weight: 600;
-    border-radius: 0.5rem !important;
-    white-space: nowrap;
-  }
-  /* Keep icons/text from shifting */
-  #record-show.btn-setlist-action,
-  #print-setlist.btn-setlist-action,
-  #share-setlist-btn.btn-setlist-action,
-  #add-files-setlist.btn-setlist-action { display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem; }
-
-  /* Nudge the 'Simple view' toggle up to align with header row */
-  #simple-view-container-setlist { align-self: flex-start; margin-top: -6px; }
-  @media (max-width: 640px){
-    #simple-view-container-setlist { margin-top: 0; } /* avoid odd stacking on tiny screens */
-  }
-</style>
-
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2251,7 +2243,7 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
         $(document).on('click','.genre-dot',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(!s)return;const g=[''].concat(genres.map(g=>g.name));s.genre=g[(g.indexOf(s.genre||'')+1)%g.length];const n=`<span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span>`;$(`li[id="${s.id}"]`).find('.genre-dot').parent().html(n);if($('#genre-view').is(':visible')){renderGenreView(currentGenre)}save()});
         $(document).on('click','.energy-icon',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(s){s.energy=((s.energy||0)+1)%4;const n=energyIcons[s.energy||0];$(`li[id="${s.id}"]`).find('.energy-icon').html(n);if($('#energy-view').is(':visible')){renderEnergyLevels()}save()}});
         $('#genre-color').on('input',function(){$('#genre-color-display').css({'background-image':'none','background-color':$(this).val()})});
-        $('#add-genre').click(function(){const n=$('#genre-name').val().trim(),c=$('#genre-color').val();if(!n)return alert('Enter a genre name');if(genres.some(g=>g.name.toLowerCase()===n.toLowerCase()))return alert('Genre already exists');genres.push({name:n,color:c});$('#genre-name').val('');renderGenres(ds);$('#genre-color-display').css({'background-image':'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)','background-color':''});save()});
+        $('#add-genre').click(function(){const n=$('#genre-name').val().trim(),c=$('#genre-color').val();if(!n)return alert('Enter a genre name');if(genres.some(g=>g.name.toLowerCase()===n.toLowerCase()))return alert('Genre already exists');genres.unshift({name:n,color:c});$('#genre-name').val('');renderGenres(ds);$('#genre-color-display').css({'background-image':'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)','background-color':''});save()});
         $('#add-venue').click(function(){const n=$('#venue-name').val().trim();if(!n)return alert('Enter a venue name');if(venues.some(v=>v.name.toLowerCase()===n.toLowerCase()))return alert('Venue already exists');venues.push({name:n});$('#venue-name').val('');renderVenues(ds);save()});
         $('#sidebar-toggle').click(function(){
 const s=$('.left-col');s.toggleClass('collapsed');
@@ -2384,30 +2376,6 @@ const s=$('.left-col');s.toggleClass('collapsed');
   }
   /* Hide any legacy big proxy if injected elsewhere */
   #drag-proxy-nameonly-large { display: none !important; }
-</style>
-
-
-<style id="setlist-toolbar-unify-css">
-  /* Uniform size for the four action buttons in setlist */
-  .btn-setlist-action {
-    min-width: 150px;
-    min-height: 40px;
-    padding: 0.5rem 0.75rem !important;
-    font-weight: 600;
-    border-radius: 0.5rem !important;
-    white-space: nowrap;
-  }
-  /* Keep icons/text from shifting */
-  #record-show.btn-setlist-action,
-  #print-setlist.btn-setlist-action,
-  #share-setlist-btn.btn-setlist-action,
-  #add-files-setlist.btn-setlist-action { display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem; }
-
-  /* Nudge the 'Simple view' toggle up to align with header row */
-  #simple-view-container-setlist { align-self: flex-start; margin-top: -6px; }
-  @media (max-width: 640px){
-    #simple-view-container-setlist { margin-top: 0; } /* avoid odd stacking on tiny screens */
-  }
 </style>
 
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
@@ -5169,49 +5137,176 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 
 
-<script id="setlist-toolbar-unify-js">
+<!-- === BEGIN: Add-Setlist focus-on-empty-name (minimal, non-invasive) === -->
+<script>
 (function(){
-  function $(s){ return document.querySelector(s); }
-  function insertAfter(newNode, referenceNode){ referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling); }
+  if (window.__ADD_SETLIST_FOCUS_FIX__) return; window.__ADD_SETLIST_FOCUS_FIX__ = true;
 
-  function init(){
-    var record = $('#record-show');
-    var printBtn = $('#print-setlist');
-    var shareBtn = $('#share-setlist-btn');
-    if (!record || !printBtn || !shareBtn) return;
-
-    // Add our fourth button: Add files (same style family as print/share)
-    if (!$('#add-files-setlist')){
-      var add = document.createElement('button');
-      add.id = 'add-files-setlist';
-      add.className = 'p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow btn-setlist-action';
-      add.textContent = 'Add files';
-      // Place it before Print Setlist for a logical order
-      printBtn.parentNode.insertBefore(add, printBtn);
-      // Hook to the same file input the All Songs page uses
-      var masterUpload = $('#master-upload');
-      add.addEventListener('click', function(e){
-        e.preventDefault();
-        if (masterUpload) { masterUpload.click(); }
-      });
+  function getNameInput(){
+    // Prefer specific ids if present
+    var el = document.getElementById('new-setlist-name') || document.getElementById('setlist-name');
+    if (!el) {
+      el = document.querySelector('input[placeholder="New setlist" i]') ||
+           document.querySelector('input[placeholder*="setlist" i]') ||
+           document.querySelector('input[name*="setlist" i]');
     }
-
-    // Apply uniform size class to the 4 action buttons
-    [record, $('#add-files-setlist'), printBtn, shareBtn].forEach(function(btn){
-      if (btn && !btn.classList.contains('btn-setlist-action')) btn.classList.add('btn-setlist-action');
-    });
+    return el;
   }
 
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
+  function isAddSetlistButton(el){
+    if (!el) return false;
+    if (el.id === 'add-setlist') return true;
+    if (el.matches && el.matches('.add-setlist,[data-action="add-setlist"]')) return true;
+    // fallback: match by visible text
+    var txt = (el.textContent || '').trim().toLowerCase();
+    if (txt === 'add setlist' || txt === 'add new setlist' || txt === 'create setlist') return true;
+    return false;
   }
-  window.addEventListener('load', init, {once:true});
+
+  function closestAddSetlistButton(target){
+    return target && target.closest && target.closest('#add-setlist, .add-setlist, [data-action="add-setlist"], button, a');
+  }
+
+  function focusNameAndStop(e, nameInput){
+    try{
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      e.stopPropagation();
+    }catch(_){}
+    try{
+      nameInput.focus();
+      nameInput.scrollIntoView({behavior:'smooth', block:'center'});
+      // optional micro-feedback (no CSS dependency)
+      nameInput.style.outline = '2px solid #3b82f6';
+      setTimeout(function(){ nameInput.style.outline = ''; }, 600);
+    }catch(_){}
+  }
+
+  // Intercept clicks (CAPTURE) before app code sees them
+  document.addEventListener('click', function(e){
+    var btn = closestAddSetlistButton(e.target);
+    if (!btn || !isAddSetlistButton(btn)) return;
+    var nameInput = getNameInput();
+    if (!nameInput) return;
+    var val = (nameInput.value || '').trim();
+    if (!val){
+      focusNameAndStop(e, nameInput);
+    }
+  }, true);
+
+  // Intercept form submit in case "Add setlist" triggers submit
+  document.addEventListener('submit', function(e){
+    var form = e.target;
+    if (!form) return;
+    // Heuristic: if the form contains a likely add-setlist button or the name field
+    var nameInput = getNameInput();
+    if (!nameInput) return;
+    if (!form.contains(nameInput)) return;
+    var val = (nameInput.value || '').trim();
+    if (!val){
+      focusNameAndStop(e, nameInput);
+    }
+  }, true);
 })();
 </script>
+<!-- === END: Add-Setlist focus-on-empty-name === -->
+\n
 
-</body>
+\n
+<!-- === BEGIN: Sidebar Icons (RIGHT side, star white, bolt red outline) === -->
+<style>
+  /* Right-side inline icon; keep original text flow unchanged */
+  .sidebar-icon-right {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: auto;
+    width: 20px;
+    height: 20px;
+    line-height: 0;
+  }
+/* Align icons to the extreme right edge like the 'Add' buttons */
+#nav-favorites .sidebar-icon-right,
+#nav-energy .sidebar-icon-right { margin-left: auto; }
+  /* Star = solid white (like filled favorite) */
+  .sidebar-icon-right.star svg {
+    width: 20px; height: 20px;
+    fill: #ffffff;
+    stroke: none;
+  }
+  /* Bolt = red/amber outline only, no fill (match selected energy outline color) */
+  .sidebar-icon-right.bolt svg {
+    width: 20px; height: 20px;
+    fill: none;
+    stroke: #b45309; /* Tailwind amber-700 used in energy SVGs */
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+  /* Dark mode: keep star white; bolt outline unchanged */
+  html.dark .sidebar-icon-right.star svg { fill: #ffffff; }
+</style>
+<script>
+(function(){
+  if (window.__SIDEBAR_ICONS_RIGHT__) return; window.__SIDEBAR_ICONS_RIGHT__ = true;
+
+  // Clean any previous left-side icons to avoid duplicates
+  function removeOldIcons(id){
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.querySelectorAll('.sidebar-icon, .sidebar-icon-right').forEach(function(n){ n.remove(); });
+  }
+
+  function appendRightIcon(target, cls, svg){
+    if (!target) return;
+    var span = document.createElement('span');
+    span.className = 'sidebar-icon-right ' + cls;
+    span.innerHTML = svg.trim();
+    target.appendChild(span); // append to the RIGHT of the text
+  }
+
+  var fav = document.getElementById('nav-favorites');
+  var eng = document.getElementById('nav-energy');
+
+  removeOldIcons('nav-favorites');
+  removeOldIcons('nav-energy');
+
+  // Solid star (Material-style) — white fill
+  var STAR_SOLID = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg>';
+
+  // Bolt outline (simple, unfilled)
+  var BOLT_OUTLINE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L5 14h6l-2 8 10-13h-6l2-9z"></path></svg>';
+
+  if (fav) appendRightIcon(fav, 'star', STAR_SOLID);
+  if (eng) appendRightIcon(eng, 'bolt', BOLT_OUTLINE);
+})();
+</script>
+<!-- === END: Sidebar Icons (RIGHT side) === -->
+\n
+<!-- === BEGIN: Sidebar text alignment restore & left icon removal === -->
+<style>
+  /* Restore original block layout (override earlier flex) */
+  #nav-favorites, #nav-energy {
+    display: block !important;
+    align-items: initial !important;
+    gap: 0 !important;
+  }
+</style>
+<script>
+(function(){
+  if (window.__SIDEBAR_LEFT_ICON_CLEAN__) return; window.__SIDEBAR_LEFT_ICON_CLEAN__ = true;
+
+  function cleanLeftIcons(id){
+    var el = document.getElementById(id);
+    if (!el) return;
+    // Remove any previously injected LEFT-side icons
+    el.querySelectorAll('.sidebar-icon').forEach(function(n){ n.remove(); });
+  }
+
+  cleanLeftIcons('nav-favorites');
+  cleanLeftIcons('nav-energy');
+})();
+</script>
+<!-- === END: Sidebar text alignment restore === -->
+\n</body>
 </html>
 
 
