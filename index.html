@@ -5195,77 +5195,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 <!-- === END: Add-Setlist focus-on-empty-name === -->
 \n
-<!-- === BEGIN: Sidebar Icons (Favorites Star + Energy Bolt) — minimal, safe === -->
-<style>
-  /* Only affect the two target items */
-  #nav-favorites, #nav-energy {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  #nav-favorites .sidebar-icon svg,
-  #nav-energy .sidebar-icon svg {
-    display: block;
-    width: 20px;
-    height: 20px;
-  }
-  /* Reuse existing favorite styling if present; provide fallback */
-  #nav-favorites .sidebar-icon svg {
-    fill: none;
-    stroke: #9ca3af; /* gray outline by default (matches file star) */
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  /* Energy bolt visual (default/no-level): gray outline, same weight as star */
-  #nav-energy .sidebar-icon svg {
-    fill: none;
-    stroke: #9ca3af;
-    stroke-width: 1.8;
-    stroke-linejoin: round;
-  }
-  /* Dark mode tweak: slightly lighter gray */
-  html.dark #nav-favorites .sidebar-icon svg,
-  html.dark #nav-energy .sidebar-icon svg {
-    stroke: #cbd5e1;
-  }
-</style>
-<script>
-(function(){
-  if (window.__SIDEBAR_ICONS_PATCH__) return; window.__SIDEBAR_ICONS_PATCH__ = true;
 
-  function ensureIcon(target, svgMarkup){
-    if (!target) return;
-    if (target.querySelector('.sidebar-icon')) return; // don't duplicate
-    var span = document.createElement('span');
-    span.className = 'sidebar-icon';
-    span.innerHTML = svgMarkup.trim();
-    // Prepend icon before text
-    if (target.firstChild) target.insertBefore(span, target.firstChild);
-    else target.appendChild(span);
-  }
-
-  // Heroicons-style Star (outline) — matches "not yet white" favorite look
-  var STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 0 0 .95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.977 2.89a1 1 0 0 0-.364 1.118l1.519 4.674c.3.921-.755 1.688-1.538 1.118l-3.977-2.89a1 1 0 0 0-1.175 0l-3.977 2.89c-.783.57-1.838-.197-1.538-1.118l1.519-4.674a1 1 0 0 0-.364-1.118l-3.977-2.89c-.783-.57-.38-1.81.588-1.81h4.915a1 1 0 0 0 .95-.69l1.519-4.674z"/></svg>';
-
-  // Bolt (outline) — simple, readable shape akin to the file's unselected energy icon
-  var BOLT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>';
-
-  function run(){
-    var fav = document.getElementById('nav-favorites');
-    var eng = document.getElementById('nav-energy');
-    ensureIcon(fav, STAR_SVG);
-    ensureIcon(eng, BOLT_SVG);
-  }
-
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', run);
-  } else {
-    run();
-  }
-})();
-</script>
-<!-- === END: Sidebar Icons patch === -->
 \n
 <!-- === BEGIN: Sidebar Icons (RIGHT side, star white, bolt red outline) === -->
 <style>
@@ -5273,11 +5203,14 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   .sidebar-icon-right {
     display: inline-block;
     vertical-align: middle;
-    margin-left: 8px;
+    margin-left: auto;
     width: 20px;
     height: 20px;
     line-height: 0;
   }
+/* Align icons to the extreme right edge like the 'Add' buttons */
+#nav-favorites .sidebar-icon-right,
+#nav-energy .sidebar-icon-right { margin-left: auto; }
   /* Star = solid white (like filled favorite) */
   .sidebar-icon-right.star svg {
     width: 20px; height: 20px;
@@ -5288,7 +5221,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   .sidebar-icon-right.bolt svg {
     width: 20px; height: 20px;
     fill: none;
-    stroke: #b45309; /* Tailwind amber-700 used in energy SVGs */
+    stroke: #ef4444; /* Tailwind amber-700 used in energy SVGs */
     stroke-width: 2;
     stroke-linejoin: round;
   }
