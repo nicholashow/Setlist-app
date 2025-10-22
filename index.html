@@ -5331,6 +5331,32 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 <!-- === END: Sidebar Icons (RIGHT side) === -->
+\n
+<!-- === BEGIN: Sidebar text alignment restore & left icon removal === -->
+<style>
+  /* Restore original block layout (override earlier flex) */
+  #nav-favorites, #nav-energy {
+    display: block !important;
+    align-items: initial !important;
+    gap: 0 !important;
+  }
+</style>
+<script>
+(function(){
+  if (window.__SIDEBAR_LEFT_ICON_CLEAN__) return; window.__SIDEBAR_LEFT_ICON_CLEAN__ = true;
+
+  function cleanLeftIcons(id){
+    var el = document.getElementById(id);
+    if (!el) return;
+    // Remove any previously injected LEFT-side icons
+    el.querySelectorAll('.sidebar-icon').forEach(function(n){ n.remove(); });
+  }
+
+  cleanLeftIcons('nav-favorites');
+  cleanLeftIcons('nav-energy');
+})();
+</script>
+<!-- === END: Sidebar text alignment restore === -->
 \n</body>
 </html>
 
