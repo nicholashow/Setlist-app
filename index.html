@@ -1809,43 +1809,27 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   #genre-color-popover .sheet {
     background: #ffffff;
     color: #111827;
-    border-radius: 0.75rem;
-    padding: 1rem;
+    border-radius: 12px;
+    padding: 16px;
     min-width: 260px;
     box-shadow: 0 12px 40px rgba(0,0,0,0.25);
   }
-  html.dark #genre-color-popover .sheet {
-    background: #111827; color: #e5e7eb;
-  }
+  html.dark #genre-color-popover .sheet { background: #111827; color: #e5e7eb; }
   #genre-color-popover .titlebar {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 0.75rem;
+    margin-bottom: 12px;
   }
   #genre-color-popover .close-btn {
     appearance: none; border: none; background: transparent;
-    font-size: 20px; line-height: 1; cursor: pointer;
-    padding: 0.25rem 0.5rem; border-radius: 0.375rem;
-    color: inherit;
+    font-size: 18px; line-height: 1; cursor: pointer;
+    padding: 4px 8px; border-radius: 6px; color: inherit;
   }
-  #genre-color-popover .close-btn:hover {
-    background: rgba(0,0,0,0.06);
-  }
-  html.dark #genre-color-popover .close-btn:hover {
-    background: rgba(255,255,255,0.08);
-  }
-  #genre-color-popover .actions {
-    display:flex; gap:.5rem; justify-content:flex-end; margin-top: .75rem;
-  }
-  #genre-color-popover .btn {
-    border: none; border-radius: 0.5rem; padding: 0.5rem 0.75rem;
-    cursor: pointer;
-  }
-  #genre-color-popover .btn-apply {
-    background: #3b82f6; color: #fff;
-  }
-  #genre-color-popover .btn-apply:hover {
-    background: #2563eb;
-  }
+  #genre-color-popover .close-btn:hover { background: rgba(0,0,0,0.06); }
+  html.dark #genre-color-popover .close-btn:hover { background: rgba(255,255,255,0.08); }
+  #genre-color-popover .actions { display:flex; gap:8px; justify-content:flex-end; margin-top: 12px; }
+  #genre-color-popover .btn { border: none; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+  #genre-color-popover .btn-apply { background: #3b82f6; color: #fff; }
+  #genre-color-popover .btn-apply:hover { background: #2563eb; }
 </style>
 
 </head>
@@ -2423,43 +2407,27 @@ const s=$('.left-col');s.toggleClass('collapsed');
   #genre-color-popover .sheet {
     background: #ffffff;
     color: #111827;
-    border-radius: 0.75rem;
-    padding: 1rem;
+    border-radius: 12px;
+    padding: 16px;
     min-width: 260px;
     box-shadow: 0 12px 40px rgba(0,0,0,0.25);
   }
-  html.dark #genre-color-popover .sheet {
-    background: #111827; color: #e5e7eb;
-  }
+  html.dark #genre-color-popover .sheet { background: #111827; color: #e5e7eb; }
   #genre-color-popover .titlebar {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 0.75rem;
+    margin-bottom: 12px;
   }
   #genre-color-popover .close-btn {
     appearance: none; border: none; background: transparent;
-    font-size: 20px; line-height: 1; cursor: pointer;
-    padding: 0.25rem 0.5rem; border-radius: 0.375rem;
-    color: inherit;
+    font-size: 18px; line-height: 1; cursor: pointer;
+    padding: 4px 8px; border-radius: 6px; color: inherit;
   }
-  #genre-color-popover .close-btn:hover {
-    background: rgba(0,0,0,0.06);
-  }
-  html.dark #genre-color-popover .close-btn:hover {
-    background: rgba(255,255,255,0.08);
-  }
-  #genre-color-popover .actions {
-    display:flex; gap:.5rem; justify-content:flex-end; margin-top: .75rem;
-  }
-  #genre-color-popover .btn {
-    border: none; border-radius: 0.5rem; padding: 0.5rem 0.75rem;
-    cursor: pointer;
-  }
-  #genre-color-popover .btn-apply {
-    background: #3b82f6; color: #fff;
-  }
-  #genre-color-popover .btn-apply:hover {
-    background: #2563eb;
-  }
+  #genre-color-popover .close-btn:hover { background: rgba(0,0,0,0.06); }
+  html.dark #genre-color-popover .close-btn:hover { background: rgba(255,255,255,0.08); }
+  #genre-color-popover .actions { display:flex; gap:8px; justify-content:flex-end; margin-top: 12px; }
+  #genre-color-popover .btn { border: none; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+  #genre-color-popover .btn-apply { background: #3b82f6; color: #fff; }
+  #genre-color-popover .btn-apply:hover { background: #2563eb; }
 </style>
 
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
@@ -5355,105 +5323,3 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   try { mo.observe(document.documentElement, {childList:true, subtree:true}); } catch(_){}
 
 })();
-
-
-<div id="genre-color-popover" aria-hidden="true" style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:100000;">
-  <div class="sheet" style="background:#fff;color:#111827;border-radius:12px;padding:16px;min-width:260px;box-shadow:0 12px 40px rgba(0,0,0,0.25)">
-    <div class="titlebar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-      <div class="font-semibold">Pick a color</div>
-      <button class="close-btn" id="genre-color-popover-close" aria-label="Close" style="appearance:none;border:none;background:transparent;font-size:20px;line-height:1;cursor:pointer;padding:4px 8px;border-radius:6px;color:inherit">×</button>
-    </div>
-    <div class="flex items-center gap-3" style="display:flex;align-items:center;gap:12px;">
-      <input type="color" id="genre-color-popover-input" value="#3b82f6" style="width:44px;height:44px;border:none;background:transparent;cursor:pointer;">
-      <div class="text-sm" style="opacity:.8">Choose a genre color before naming it.</div>
-    </div>
-    <div class="actions" style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
-      <button class="btn btn-apply" id="genre-color-popover-apply" style="border:none;border-radius:8px;padding:8px 12px;background:#3b82f6;color:#fff;cursor:pointer">Use this color</button>
-    </div>
-  </div>
-</div>
-
-
-<script>
-(function(){
-  function $(sel){ return document.querySelector(sel); }
-  function on(el, ev, fn, opts){ if(el) el.addEventListener(ev, fn, opts||false); }
-
-  var pop = document.getElementById('genre-color-popover');
-  if (!pop){
-    // If we somehow run before insertion, retry later
-    return setTimeout(arguments.callee, 100);
-  }
-  var input = $('#genre-color-popover-input');
-  var btnClose = $('#genre-color-popover-close');
-  var btnApply = $('#genre-color-popover-apply');
-
-  // Sidebar elements that already exist in this app:
-  var nameInput = document.getElementById('genre-name');
-  var colorCircle = document.getElementById('genre-color-display');
-  var colorHidden = document.getElementById('genre-color');
-  var addBtn = document.getElementById('add-genre');
-
-  var requireColorFirst = true;
-
-  function openPopover(seed){
-    if (seed) input.value = seed;
-    pop.style.display = 'flex';
-    pop.setAttribute('aria-hidden', 'false');
-    setTimeout(function(){ input.focus(); }, 0);
-  }
-  function closePopover(){
-    pop.style.display = 'none';
-    pop.setAttribute('aria-hidden', 'true');
-  }
-  function applyColor(){
-    var val = input.value || '#3b82f6';
-    if (colorCircle){ colorCircle.style.background = val; colorCircle.style.backgroundImage = 'none'; }
-    if (colorHidden){ colorHidden.value = val; }
-    requireColorFirst = false;
-    closePopover();
-    if (nameInput) nameInput.focus();
-  }
-
-  // Gate typing until a color is chosen the first time
-  if (nameInput){
-    function gate(e){
-      if (!requireColorFirst) return;
-      e.preventDefault(); e.stopPropagation();
-      nameInput.blur();
-      var seed = (colorHidden && colorHidden.value) ? colorHidden.value : '#3b82f6';
-      openPopover(seed);
-    }
-    on(nameInput, 'focus', gate, true);
-    on(nameInput, 'mousedown', gate, true);
-    on(nameInput, 'touchstart', gate, {passive:false});
-  }
-
-  // Also prevent clicking "Add" before color selection
-  if (addBtn){
-    on(addBtn, 'click', function(e){
-      if (!requireColorFirst) return;
-      e.preventDefault(); e.stopPropagation();
-      var seed = (colorHidden && colorHidden.value) ? colorHidden.value : '#3b82f6';
-      openPopover(seed);
-    });
-  }
-
-  // Tapping the small color circle opens the popover any time
-  if (colorCircle){
-    colorCircle.style.cursor = 'pointer';
-    on(colorCircle, 'click', function(){
-      var seed = (colorHidden && colorHidden.value) ? colorHidden.value : '#3b82f6';
-      openPopover(seed);
-    });
-  }
-
-  on(btnClose, 'click', function(){
-    // Closing without applying keeps gate on; user must pick a color later
-    closePopover();
-    if (nameInput) nameInput.blur();
-  });
-  on(btnApply, 'click', applyColor);
-  on(input, 'keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); applyColor(); } });
-})();
-</script>
