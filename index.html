@@ -1799,47 +1799,28 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
 </style>
 
 
-<style id="genre-color-modal-styles">
-  #genre-color-modal {
-    position: fixed; inset: 0; display: none;
-    align-items: center; justify-content: center;
-    background: rgba(0,0,0,0.45);
+<style id="genre-picker-fab-css">
+  /* Small floating “X” close button shown while the color picker is open */
+  #genre-color-close-fab {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    line-height: 26px;
+    border-radius: 9999px;
+    text-align: center;
+    font-weight: 700;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    background: rgba(17,24,39,0.9);
+    color: #fff;
+    border: 0;
+    cursor: pointer;
     z-index: 100000;
+    display: none;
   }
-  #genre-color-modal .sheet {
-    position: relative;
-    background: #ffffff;
-    color: #111827;
-    border-radius: 12px;
-    padding: 16px;
-    min-width: 280px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-  }
-  html.dark #genre-color-modal .sheet { background: #111827; color: #e5e7eb; }
-  #genre-color-modal .title {
-    margin: 0 0 12px 0;
-    font-weight: 600;
-  }
-  #genre-color-modal .close-x {
-    position: absolute; top: 8px; right: 10px;
-    width: 22px; height: 22px; line-height: 22px;
-    border-radius: 9999px; text-align: center;
-    border: 0; cursor: pointer;
-    background: rgba(17,24,39,0.08); color: inherit; font-weight: 700;
-  }
-  #genre-color-modal .close-x:hover { background: rgba(17,24,39,0.16); }
-  html.dark #genre-color-modal .close-x { background: rgba(255,255,255,0.12); }
-  html.dark #genre-color-modal .close-x:hover { background: rgba(255,255,255,0.20); }
-  #genre-color-modal .row { display:flex; align-items:center; gap:12px; }
-  #genre-color-modal input[type="color"] {
-    width: 44px; height: 44px; border: none; background: transparent; cursor: pointer;
-  }
-  #genre-color-modal .actions { margin-top: 12px; display:flex; justify-content:flex-end; gap: 8px; }
-  #genre-color-modal .btn {
-    border: none; border-radius: 8px; padding: 8px 12px; cursor: pointer;
-  }
-  #genre-color-modal .btn-apply { background: #3b82f6; color: #fff; }
-  #genre-color-modal .btn-apply:hover { background: #2563eb; }
+  html.dark #genre-color-close-fab { background: rgba(255,255,255,0.85); color: #111827; }
+  #genre-color-close-fab:hover { filter: brightness(1.05); }
 </style>
 
 </head>
@@ -2407,47 +2388,28 @@ const s=$('.left-col');s.toggleClass('collapsed');
 </style>
 
 
-<style id="genre-color-modal-styles">
-  #genre-color-modal {
-    position: fixed; inset: 0; display: none;
-    align-items: center; justify-content: center;
-    background: rgba(0,0,0,0.45);
+<style id="genre-picker-fab-css">
+  /* Small floating “X” close button shown while the color picker is open */
+  #genre-color-close-fab {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    line-height: 26px;
+    border-radius: 9999px;
+    text-align: center;
+    font-weight: 700;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    background: rgba(17,24,39,0.9);
+    color: #fff;
+    border: 0;
+    cursor: pointer;
     z-index: 100000;
+    display: none;
   }
-  #genre-color-modal .sheet {
-    position: relative;
-    background: #ffffff;
-    color: #111827;
-    border-radius: 12px;
-    padding: 16px;
-    min-width: 280px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-  }
-  html.dark #genre-color-modal .sheet { background: #111827; color: #e5e7eb; }
-  #genre-color-modal .title {
-    margin: 0 0 12px 0;
-    font-weight: 600;
-  }
-  #genre-color-modal .close-x {
-    position: absolute; top: 8px; right: 10px;
-    width: 22px; height: 22px; line-height: 22px;
-    border-radius: 9999px; text-align: center;
-    border: 0; cursor: pointer;
-    background: rgba(17,24,39,0.08); color: inherit; font-weight: 700;
-  }
-  #genre-color-modal .close-x:hover { background: rgba(17,24,39,0.16); }
-  html.dark #genre-color-modal .close-x { background: rgba(255,255,255,0.12); }
-  html.dark #genre-color-modal .close-x:hover { background: rgba(255,255,255,0.20); }
-  #genre-color-modal .row { display:flex; align-items:center; gap:12px; }
-  #genre-color-modal input[type="color"] {
-    width: 44px; height: 44px; border: none; background: transparent; cursor: pointer;
-  }
-  #genre-color-modal .actions { margin-top: 12px; display:flex; justify-content:flex-end; gap: 8px; }
-  #genre-color-modal .btn {
-    border: none; border-radius: 8px; padding: 8px 12px; cursor: pointer;
-  }
-  #genre-color-modal .btn-apply { background: #3b82f6; color: #fff; }
-  #genre-color-modal .btn-apply:hover { background: #2563eb; }
+  html.dark #genre-color-close-fab { background: rgba(255,255,255,0.85); color: #111827; }
+  #genre-color-close-fab:hover { filter: brightness(1.05); }
 </style>
 
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
@@ -5205,6 +5167,100 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       // no-op
     });
   }
+})();
+</script>
+
+
+<script id="genre-picker-gate">
+(function(){
+  var gateActive = true; // block typing until color chosen or closed
+
+  function $(sel){ return document.querySelector(sel); }
+  function on(el, ev, fn, opts){ if (el) el.addEventListener(ev, fn, opts||false); }
+
+  var nameInput   = $('#genre-name');
+  // Fallback: find input with placeholder "new genre"
+  if (!nameInput){
+    var inputs = Array.from(document.querySelectorAll('input,textarea'));
+    nameInput = inputs.find(function(n){ return (n.placeholder||'').toLowerCase().includes('new genre'); });
+  }
+  var colorHidden = $('#genre-color');
+  var wheel       = $('#genre-color-display');
+  var fab         = $('#genre-color-close-fab');
+
+  function showFab(){ if (fab) fab.style.display = 'block'; }
+  function hideFab(){ if (fab) fab.style.display = 'none'; }
+
+  function openPicker(){
+    // Prefer the app's rainbow wheel; fall back to native color input
+    var opened = false;
+    if (wheel){
+      try { wheel.click(); opened = true; } catch(e){}
+    }
+    if (!opened && colorHidden){
+      try { colorHidden.focus(); colorHidden.click(); opened = true; } catch(e){}
+    }
+    // Show our universal close button either way
+    showFab();
+  }
+
+  function closePicker(){
+    // Try to close any custom picker: ESC often works
+    try {
+      var evt = new KeyboardEvent('keydown', {key:'Escape', keyCode:27, which:27, bubbles:true});
+      document.dispatchEvent(evt);
+    } catch(e){}
+    // Hide any obvious picker containers
+    var candidates = Array.from(document.body.querySelectorAll('[role="dialog"], .popover, .popup, .menu, .dropdown, .picker, .color, .colorpicker'));
+    candidates.forEach(function(n){ n.style.display = 'none'; });
+    hideFab();
+  }
+
+  function allowTyping(){
+    gateActive = false;
+    if (nameInput){ nameInput.focus(); nameInput.select && nameInput.select(); }
+  }
+
+  function gateHandler(e){
+    if (!gateActive) return;
+    e.preventDefault(); e.stopPropagation();
+    if (nameInput) nameInput.blur();
+    openPicker();
+  }
+
+  // Wire the gate to the first click/focus into the New genre textbox
+  function wireOnce(){
+    if (!nameInput) return;
+    nameInput.addEventListener('focus', gateHandler, true);
+    nameInput.addEventListener('mousedown', gateHandler, true);
+    nameInput.addEventListener('touchstart', gateHandler, {passive:false});
+  }
+
+  // When user picks a color (hidden input value changes), allow typing
+  if (colorHidden){
+    on(colorHidden, 'change', function(){
+      allowTyping();
+      hideFab();
+    });
+    // In case the app updates value programmatically
+    var mo = new MutationObserver(function(){ allowTyping(); hideFab(); });
+    try{ mo.observe(colorHidden, {attributes:true, attributeFilter:['value']}); }catch(e){}
+  }
+
+  // Close FAB
+  if (fab){
+    on(fab, 'click', function(){
+      closePicker();
+      allowTyping();
+    });
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', wireOnce);
+  } else {
+    wireOnce();
+  }
+  window.addEventListener('load', wireOnce, {once:true});
 })();
 </script>
 
