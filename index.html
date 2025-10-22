@@ -1798,6 +1798,56 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
+
+<style id="genre-color-popover-styles">
+  #genre-color-popover {
+    position: fixed; inset: 0; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.45);
+    z-index: 100000;
+  }
+  #genre-color-popover .sheet {
+    background: #ffffff;
+    color: #111827;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    min-width: 260px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+  }
+  html.dark #genre-color-popover .sheet {
+    background: #111827; color: #e5e7eb;
+  }
+  #genre-color-popover .titlebar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  #genre-color-popover .close-btn {
+    appearance: none; border: none; background: transparent;
+    font-size: 20px; line-height: 1; cursor: pointer;
+    padding: 0.25rem 0.5rem; border-radius: 0.375rem;
+    color: inherit;
+  }
+  #genre-color-popover .close-btn:hover {
+    background: rgba(0,0,0,0.06);
+  }
+  html.dark #genre-color-popover .close-btn:hover {
+    background: rgba(255,255,255,0.08);
+  }
+  #genre-color-popover .actions {
+    display:flex; gap:.5rem; justify-content:flex-end; margin-top: .75rem;
+  }
+  #genre-color-popover .btn {
+    border: none; border-radius: 0.5rem; padding: 0.5rem 0.75rem;
+    cursor: pointer;
+  }
+  #genre-color-popover .btn-apply {
+    background: #3b82f6; color: #fff;
+  }
+  #genre-color-popover .btn-apply:hover {
+    background: #2563eb;
+  }
+</style>
+
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2360,6 +2410,56 @@ const s=$('.left-col');s.toggleClass('collapsed');
   }
   /* Hide any legacy big proxy if injected elsewhere */
   #drag-proxy-nameonly-large { display: none !important; }
+</style>
+
+
+<style id="genre-color-popover-styles">
+  #genre-color-popover {
+    position: fixed; inset: 0; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.45);
+    z-index: 100000;
+  }
+  #genre-color-popover .sheet {
+    background: #ffffff;
+    color: #111827;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    min-width: 260px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+  }
+  html.dark #genre-color-popover .sheet {
+    background: #111827; color: #e5e7eb;
+  }
+  #genre-color-popover .titlebar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  #genre-color-popover .close-btn {
+    appearance: none; border: none; background: transparent;
+    font-size: 20px; line-height: 1; cursor: pointer;
+    padding: 0.25rem 0.5rem; border-radius: 0.375rem;
+    color: inherit;
+  }
+  #genre-color-popover .close-btn:hover {
+    background: rgba(0,0,0,0.06);
+  }
+  html.dark #genre-color-popover .close-btn:hover {
+    background: rgba(255,255,255,0.08);
+  }
+  #genre-color-popover .actions {
+    display:flex; gap:.5rem; justify-content:flex-end; margin-top: .75rem;
+  }
+  #genre-color-popover .btn {
+    border: none; border-radius: 0.5rem; padding: 0.5rem 0.75rem;
+    cursor: pointer;
+  }
+  #genre-color-popover .btn-apply {
+    background: #3b82f6; color: #fff;
+  }
+  #genre-color-popover .btn-apply:hover {
+    background: #2563eb;
+  }
 </style>
 
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
