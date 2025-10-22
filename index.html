@@ -5213,6 +5213,35 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 
+
+<button id="genre-native-close" aria-label="Close color picker">×</button>
+
+<script>
+(function genreNativePickerCloseInit() {
+  try {
+    var colorInput = document.getElementById('genre-color');
+    var closeBtn = document.getElementById('genre-native-close');
+    if (!colorInput || !closeBtn) return;
+
+    function showClose() { closeBtn.style.display = 'block'; }
+    function hideClose() { closeBtn.style.display = 'none'; }
+
+    // Show the × when the native picker likely opens.
+    colorInput.addEventListener('click', showClose, { passive: true });
+    colorInput.addEventListener('focus', showClose, { passive: true });
+
+    // Hide once user picks a color or the input loses focus.
+    colorInput.addEventListener('change', hideClose);
+    colorInput.addEventListener('blur', hideClose);
+
+    // Allow the × to dismiss the picker via blur.
+    closeBtn.addEventListener('click', function () {
+      try { colorInput.blur(); } catch (e) {}
+      hideClose();
+    });
+  } catch (e) {}
+})();
+</script>
 </body>
 </html>
 
