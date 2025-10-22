@@ -5120,42 +5120,6 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 
-
-
-<button id="genre-native-close" aria-label="Close color picker"
-  style="position:fixed;top:12px;right:12px;width:28px;height:28px;line-height:26px;
-         border-radius:9999px;text-align:center;font-weight:700;background:rgba(17,24,39,.92);
-         color:#fff;border:0;cursor:pointer;z-index:2147483647;display:none;">×</button>
-
-
-<script>
-(function(){
-  function init(){
-    var colorInput = document.getElementById('genre-color') || document.querySelector('input[type="color"]');
-    var closeBtn = document.getElementById('genre-native-close');
-    if(!colorInput || !closeBtn) return;
-
-    function show(){ closeBtn.style.display = 'block'; }
-    function hide(){ closeBtn.style.display = 'none'; }
-
-    colorInput.addEventListener('click', show, {passive:true});
-    colorInput.addEventListener('focus', show, {passive:true});
-    colorInput.addEventListener('change', hide);
-    colorInput.addEventListener('blur', hide);
-
-    closeBtn.addEventListener('click', function(){
-      try { colorInput.blur(); } catch(e){}
-      hide();
-    });
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-})();
-</script>
-
 </body>
 </html>
 
