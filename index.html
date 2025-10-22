@@ -1798,33 +1798,6 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
-
-<style id="genre-native-picker-close-css">
-  #genre-native-close {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    width: 28px;
-    height: 28px;
-    line-height: 26px;
-    border-radius: 9999px;
-    text-align: center;
-    font-weight: 700;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    background: rgba(17,24,39,0.9);
-    color: #fff;
-    border: 0;
-    cursor: pointer;
-    z-index: 100000;
-    display: none; /* only visible when picker is open */
-  }
-  html.dark #genre-native-close {
-    background: rgba(255,255,255,0.85);
-    color: #111827;
-  }
-  #genre-native-close:hover { filter: brightness(1.05); }
-</style>
-
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2387,33 +2360,6 @@ const s=$('.left-col');s.toggleClass('collapsed');
   }
   /* Hide any legacy big proxy if injected elsewhere */
   #drag-proxy-nameonly-large { display: none !important; }
-</style>
-
-
-<style id="genre-native-picker-close-css">
-  #genre-native-close {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    width: 28px;
-    height: 28px;
-    line-height: 26px;
-    border-radius: 9999px;
-    text-align: center;
-    font-weight: 700;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    background: rgba(17,24,39,0.9);
-    color: #fff;
-    border: 0;
-    cursor: pointer;
-    z-index: 100000;
-    display: none; /* only visible when picker is open */
-  }
-  html.dark #genre-native-close {
-    background: rgba(255,255,255,0.85);
-    color: #111827;
-  }
-  #genre-native-close:hover { filter: brightness(1.05); }
 </style>
 
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
@@ -5175,49 +5121,10 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 
 
-<script id="genre-native-picker-close-js">
-(function(){
-  function $(s){ return document.querySelector(s); }
-  function on(el, ev, fn, opts){ if (el) el.addEventListener(ev, fn, opts||false); }
-
-  var colorInput = $('#genre-color');           // native <input type="color">
-  var closeBtn   = $('#genre-native-close');    // floating ×
-
-  if (!colorInput) return;
-
-  function showClose(){ if (closeBtn) closeBtn.style.display = 'block'; }
-  function hideClose(){ if (closeBtn) closeBtn.style.display = 'none'; }
-
-  function openHandler(){ showClose(); }
-  function pickedHandler(){ hideClose(); }      // fires when user picks a color
-  function blurHandler(){ hideClose(); }        // fires when native picker closes
-
-  // Wire up native color input signals
-  on(colorInput, 'focus', openHandler, true);
-  on(colorInput, 'click', openHandler, true);
-  on(colorInput, 'change', pickedHandler);
-  on(colorInput, 'blur', blurHandler);
-
-  // Clicking × simulates closing the native picker
-  if (closeBtn){
-    on(closeBtn, 'click', function(){
-      // Best-effort close: blur the input and send ESC
-      try { colorInput.blur(); } catch(e){}
-      try {
-        var evt = new KeyboardEvent('keydown', {key:'Escape', keyCode:27, which:27, bubbles:true});
-        document.dispatchEvent(evt);
-      } catch(e){}
-      hideClose();
-    });
-  }
-})();
-</script>
-
-
 
 <button id="genre-native-close" aria-label="Close color picker"
   style="position:fixed;top:12px;right:12px;width:28px;height:28px;line-height:26px;
-         border-radius:9999px;text-align:center;font-weight:700;background:rgba(17,24,39,.9);
+         border-radius:9999px;text-align:center;font-weight:700;background:rgba(17,24,39,.92);
          color:#fff;border:0;cursor:pointer;z-index:2147483647;display:none;">×</button>
 
 
