@@ -726,6 +726,18 @@
             transition: background-color 0.2s;
             overflow: hidden; /* Fix width issues */
         }
+/* === ALIGN FAVORITES/ENERGY ICONS WITH "ADD" BUTTONS === */
+#nav-favorites, #nav-energy { 
+  position: relative; 
+  padding-right: 36px; /* 8px container padding + 20px icon + ~8px spacing */
+  justify-content: flex-start;
+}
+#nav-favorites .sidebar-icon-right, #nav-energy .sidebar-icon-right {
+  position: absolute;
+  right: 8px;         
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
         .sidebar-item:hover {
             background: #4b5563;
         }
@@ -5221,7 +5233,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   .sidebar-icon-right.bolt svg {
     width: 20px; height: 20px;
     fill: none;
-    stroke: #ef4444; /* Tailwind amber-700 used in energy SVGs */
+    stroke: #b45309; /* Tailwind amber-700 used in energy SVGs */
     stroke-width: 2;
     stroke-linejoin: round;
   }
