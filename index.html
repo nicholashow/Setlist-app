@@ -5067,6 +5067,59 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 
+
+<script>
+// === Hard cleanup: keep only ONE floating name-only label (the bigger one) ===
+(function(){
+  function isFloaty(el){
+    var cs = window.getComputedStyle(el);
+    return (cs.position === 'fixed' || cs.position === 'absolute') && cs.pointerEvents === 'none';
+  }
+  function removeDuplicateFloaters(primary){
+    var text = primary && primary.textContent && primary.textContent.trim();
+    if (!text) return;
+    var nodes = Array.from(document.body.querySelectorAll('*')).filter(function(el){
+      if (el === primary) return false;
+      if (!el.textContent) return false;
+      if (el.textContent.trim() !== text) return false;
+      if (!isFloaty(el)) return false;
+      // Ignore hidden
+      var cs = getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+      return true;
+    });
+    nodes.forEach(function(n){ n.remove(); });
+  }
+
+  function loopWhileVisible(){
+    var primary = document.getElementById('drag-proxy-nameonly');
+    if (primary && primary.style.display !== 'none'){
+      removeDuplicateFloaters(primary);
+      requestAnimationFrame(loopWhileVisible);
+    }
+  }
+
+  // Hook into drag lifecycle
+  var $list = $('#setlist-list');
+  if ($list.length){
+    $list.off('.oneLabelCleanup');
+    $list.on('sortstart.oneLabelCleanup', function(){
+      // Nothing; start loop when we first show it
+    });
+    $list.on('sort.oneLabelCleanup', function(){
+      var primary = document.getElementById('drag-proxy-nameonly');
+      if (primary && primary.style.display !== 'none'){
+        removeDuplicateFloaters(primary);
+        requestAnimationFrame(loopWhileVisible);
+      }
+    });
+    $list.on('sortstop.oneLabelCleanup', function(){
+      // no-op
+    });
+  }
+})();
+</script>
+
 </body>
 </html>
 
