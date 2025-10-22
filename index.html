@@ -1799,45 +1799,30 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
 </style>
 
 
-<style id="genre-custom-picker-css">
-  #genre-picker-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-    display: none; align-items: center; justify-content: center;
+<style id="genre-native-picker-close-css">
+  #genre-native-close {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    line-height: 26px;
+    border-radius: 9999px;
+    text-align: center;
+    font-weight: 700;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    background: rgba(17,24,39,0.9);
+    color: #fff;
+    border: 0;
+    cursor: pointer;
     z-index: 100000;
+    display: none; /* only visible when picker is open */
   }
-  #genre-picker {
-    position: relative; width: 320px; max-width: 92vw;
-    background: #ffffff; color: #111827; border-radius: 12px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-    padding: 14px 14px 16px;
+  html.dark #genre-native-close {
+    background: rgba(255,255,255,0.85);
+    color: #111827;
   }
-  html.dark #genre-picker { background: #111827; color: #e5e7eb; }
-  #genre-picker .title { font-weight: 700; margin: 0 0 8px; }
-  #genre-picker .close-x {
-    position: absolute; right: 8px; top: 8px;
-    width: 24px; height: 24px; line-height: 24px;
-    text-align: center; border-radius: 9999px;
-    background: rgba(17,24,39,0.12); color: inherit;
-    border: 0; cursor: pointer; font-weight: 700;
-  }
-  #genre-picker .close-x:hover { background: rgba(17,24,39,0.22); }
-  html.dark #genre-picker .close-x { background: rgba(255,255,255,0.12); }
-  html.dark #genre-picker .close-x:hover { background: rgba(255,255,255,0.22); }
-
-  .swatch-grid {
-    display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px;
-    margin: 8px 0 10px;
-  }
-  .swatch, .used-swatch {
-    border: 2px solid rgba(0,0,0,0.08); border-radius: 9999px; cursor: pointer;
-  }
-  .swatch { width: 28px; height: 28px; }
-  .used-swatch { width: 22px; height: 22px; }
-  html.dark .swatch, html.dark .used-swatch { border-color: rgba(255,255,255,0.15); }
-  .swatch:hover, .used-swatch:hover { filter: brightness(1.05); transform: scale(1.05); }
-
-  .used-title { font-size: 12px; opacity: .75; margin-top: 6px; }
-  .used-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin-top: 6px; }
+  #genre-native-close:hover { filter: brightness(1.05); }
 </style>
 
 </head>
@@ -2405,45 +2390,30 @@ const s=$('.left-col');s.toggleClass('collapsed');
 </style>
 
 
-<style id="genre-custom-picker-css">
-  #genre-picker-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-    display: none; align-items: center; justify-content: center;
+<style id="genre-native-picker-close-css">
+  #genre-native-close {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    line-height: 26px;
+    border-radius: 9999px;
+    text-align: center;
+    font-weight: 700;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    background: rgba(17,24,39,0.9);
+    color: #fff;
+    border: 0;
+    cursor: pointer;
     z-index: 100000;
+    display: none; /* only visible when picker is open */
   }
-  #genre-picker {
-    position: relative; width: 320px; max-width: 92vw;
-    background: #ffffff; color: #111827; border-radius: 12px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
-    padding: 14px 14px 16px;
+  html.dark #genre-native-close {
+    background: rgba(255,255,255,0.85);
+    color: #111827;
   }
-  html.dark #genre-picker { background: #111827; color: #e5e7eb; }
-  #genre-picker .title { font-weight: 700; margin: 0 0 8px; }
-  #genre-picker .close-x {
-    position: absolute; right: 8px; top: 8px;
-    width: 24px; height: 24px; line-height: 24px;
-    text-align: center; border-radius: 9999px;
-    background: rgba(17,24,39,0.12); color: inherit;
-    border: 0; cursor: pointer; font-weight: 700;
-  }
-  #genre-picker .close-x:hover { background: rgba(17,24,39,0.22); }
-  html.dark #genre-picker .close-x { background: rgba(255,255,255,0.12); }
-  html.dark #genre-picker .close-x:hover { background: rgba(255,255,255,0.22); }
-
-  .swatch-grid {
-    display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px;
-    margin: 8px 0 10px;
-  }
-  .swatch, .used-swatch {
-    border: 2px solid rgba(0,0,0,0.08); border-radius: 9999px; cursor: pointer;
-  }
-  .swatch { width: 28px; height: 28px; }
-  .used-swatch { width: 22px; height: 22px; }
-  html.dark .swatch, html.dark .used-swatch { border-color: rgba(255,255,255,0.15); }
-  .swatch:hover, .used-swatch:hover { filter: brightness(1.05); transform: scale(1.05); }
-
-  .used-title { font-size: 12px; opacity: .75; margin-top: 6px; }
-  .used-row { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; margin-top: 6px; }
+  #genre-native-close:hover { filter: brightness(1.05); }
 </style>
 
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
@@ -5205,134 +5175,41 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 
 
-<div id="genre-picker-overlay" aria-hidden="true">
-  <div id="genre-picker">
-    <button class="close-x" id="genre-picker-close" aria-label="Close">×</button>
-    <div class="title">Pick a color</div>
-    <div class="swatch-grid" id="genre-main-swatches"></div>
-    <div class="used-title">Used colors</div>
-    <div class="used-row" id="genre-used-swatches"></div>
-  </div>
-</div>
-
-<script id="genre-custom-picker-js">
+<script id="genre-native-picker-close-js">
 (function(){
-  var DEFAULT_GREY = '#cbd5e1'; // same grey used for unassigned
-  function qs(s){ return document.querySelector(s); }
-  function qsa(s){ return Array.from(document.querySelectorAll(s)); }
-  function on(el, ev, fn, opt){ if (el) el.addEventListener(ev, fn, opt||false); }
+  function $(s){ return document.querySelector(s); }
+  function on(el, ev, fn, opts){ if (el) el.addEventListener(ev, fn, opts||false); }
 
-  var overlay = qs('#genre-picker-overlay');
-  var panel   = qs('#genre-picker');
-  var closeX  = qs('#genre-picker-close');
-  var grid    = qs('#genre-main-swatches');
-  var used    = qs('#genre-used-swatches');
+  var colorInput = $('#genre-color');           // native <input type="color">
+  var closeBtn   = $('#genre-native-close');    // floating ×
 
-  var wheel   = qs('#genre-color-display');
-  var native  = qs('#genre-color'); // existing hidden/native input
+  if (!colorInput) return;
 
-  // 8 main colors (replace the old 7 + plus)
-  var MAIN = ['#ef4444','#f59e0b','#22c55e','#06b6d4','#3b82f6','#8b5cf6','#ec4899','#a3e635'];
+  function showClose(){ if (closeBtn) closeBtn.style.display = 'block'; }
+  function hideClose(){ if (closeBtn) closeBtn.style.display = 'none'; }
 
-  function openPicker(){
-    buildMain();
-    buildUsed();
-    overlay.style.display = 'flex';
-    overlay.setAttribute('aria-hidden','false');
-  }
-  function closePicker(){
-    overlay.style.display = 'none';
-    overlay.setAttribute('aria-hidden','true');
-  }
-  function applyColor(val){
-    try{
-      if (native) {
-        native.value = val;
-        native.dispatchEvent(new Event('input', {bubbles:true}));
-        native.dispatchEvent(new Event('change', {bubbles:true}));
-      }
-      if (wheel) {
-        wheel.style.backgroundImage = 'none';
-        wheel.style.backgroundColor = val;
-      }
-    }catch(e){}
-    closePicker();
-  }
-  function buildMain(){
-    if (!grid) return;
-    grid.innerHTML = '';
-    MAIN.forEach(function(c){
-      var b = document.createElement('button');
-      b.className = 'swatch'; b.type = 'button';
-      b.style.background = c;
-      b.addEventListener('click', function(){ applyColor(c); });
-      grid.appendChild(b);
+  function openHandler(){ showClose(); }
+  function pickedHandler(){ hideClose(); }      // fires when user picks a color
+  function blurHandler(){ hideClose(); }        // fires when native picker closes
+
+  // Wire up native color input signals
+  on(colorInput, 'focus', openHandler, true);
+  on(colorInput, 'click', openHandler, true);
+  on(colorInput, 'change', pickedHandler);
+  on(colorInput, 'blur', blurHandler);
+
+  // Clicking × simulates closing the native picker
+  if (closeBtn){
+    on(closeBtn, 'click', function(){
+      // Best-effort close: blur the input and send ESC
+      try { colorInput.blur(); } catch(e){}
+      try {
+        var evt = new KeyboardEvent('keydown', {key:'Escape', keyCode:27, which:27, bubbles:true});
+        document.dispatchEvent(evt);
+      } catch(e){}
+      hideClose();
     });
   }
-  function rgbToHex(rgb){
-    var m = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
-    if (!m) return rgb;
-    var r = (+m[1])|0, g=(+m[2])|0, b=(+m[3])|0;
-    return '#' + [r,g,b].map(function(x){ return x.toString(16).padStart(2,'0'); }).join('');
-  }
-  function unique8(arr){
-    var out = [];
-    arr.forEach(function(c){
-      var v = (c||'').toLowerCase();
-      if (v && out.indexOf(v) === -1) out.push(v);
-    });
-    while (out.length < 8) out.push(DEFAULT_GREY);
-    return out.slice(0,8);
-  }
-  function readUsedColors(){
-    // Prefer explicit genres array if present
-    var colors = [];
-    try {
-      if (window.genres && Array.isArray(window.genres)) {
-        colors = window.genres.map(function(g){ return g && g.color; }).filter(Boolean);
-      } else {
-        // Fallback: scrape sidebar dots
-        colors = qsa('#genre-list .genre-dot').map(function(dot){
-          var cs = getComputedStyle(dot);
-          return cs.backgroundColor || cs.background;
-        }).map(rgbToHex);
-      }
-    } catch(e){}
-    if (!colors || colors.length === 0) {
-      colors = new Array(8).fill(DEFAULT_GREY);
-    }
-    return unique8(colors);
-  }
-  function buildUsed(){
-    if (!used) return;
-    used.innerHTML = '';
-    readUsedColors().forEach(function(c){
-      var b = document.createElement('button');
-      b.className = 'used-swatch'; b.type = 'button';
-      b.style.background = c;
-      b.addEventListener('click', function(){ applyColor(c); });
-      used.appendChild(b);
-    });
-  }
-
-  // Open our custom picker when the rainbow wheel is clicked
-  if (wheel){
-    wheel.style.cursor = 'pointer';
-    on(wheel, 'click', function(e){
-      e.preventDefault(); e.stopPropagation();
-      openPicker();
-    });
-  }
-  // Intercept native input so it doesn't show the OS picker
-  if (native){
-    on(native, 'click', function(e){ e.preventDefault(); e.stopPropagation(); openPicker(); });
-    on(native, 'focus', function(e){ e.preventDefault(); native.blur(); openPicker(); });
-  }
-
-  // Close handlers
-  if (closeX) on(closeX, 'click', closePicker);
-  if (overlay) on(overlay, 'click', function(e){ if (e.target === overlay) closePicker(); });
-  on(document, 'keydown', function(e){ if (e.key === 'Escape') closePicker(); });
 })();
 </script>
 
