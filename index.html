@@ -5120,6 +5120,418 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 
+
+<!-- ==== BEGIN: Custom New-Genre Color Picker (NGP) - isolated, no existing code touched ==== -->
+<style id="ngp-styles">
+  :root {
+    --ngp-z: 2147483000;
+    --ngp-radius: 14px;
+  }
+  #ngp-modal[hidden] { display:none; }
+  #ngp-modal {
+    position: fixed;
+    inset: 0;
+    z-index: var(--ngp-z);
+    background: rgba(0,0,0,.4);
+    -webkit-backdrop-filter: blur(1.5px);
+            backdrop-filter: blur(1.5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ngp-panel {
+    width: min(520px, calc(100vw - 28px));
+    background: #fff;
+    color:#111;
+    border-radius: var(--ngp-radius);
+    box-shadow: 0 18px 48px rgba(0,0,0,.35);
+    overflow: hidden;
+    font-family: ui-sans-serif, -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+  }
+  html.dark .ngp-panel { background:#111827; color:#e5e7eb; }
+  .ngp-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(0,0,0,.06);
+  }
+  html.dark .ngp-head { border-color: rgba(255,255,255,.1); }
+  .ngp-title { font-weight:600; font-size: 15px; }
+  .ngp-close {
+    appearance:none; border:0; background: transparent; font-size:20px; line-height:1;
+    width: 32px; height: 32px; border-radius: 999px; cursor:pointer; color: inherit;
+  }
+  .ngp-close:active { transform: scale(.96); }
+  .ngp-tabs {
+    display:flex; gap:8px; padding: 10px 12px 0 12px;
+  }
+  .ngp-tab {
+    appearance:none; border:1px solid rgba(0,0,0,.12);
+    background:#f8fafc; color:#111; font-size: 13px; padding: 6px 10px;
+    border-radius: 9px; cursor:pointer;
+  }
+  html.dark .ngp-tab { background:#111827; color:#e5e7eb; border-color: rgba(255,255,255,.14); }
+  .ngp-tab[aria-selected="true"] { outline:2px solid #3b82f6; outline-offset: -2px; }
+  .ngp-body { padding: 12px; }
+  /* Grid */
+  .ngp-grid {
+    display:grid; gap: 10px;
+    grid-template-columns: repeat(8, 1fr);
+    padding: 12px 0 2px;
+  }
+  .ngp-swatch {
+    width: 28px; height: 28px; border-radius:999px;
+    border: 1px solid rgba(0,0,0,.18); cursor: pointer;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.5);
+  }
+  html.dark .ngp-swatch { border-color: rgba(255,255,255,.18); box-shadow: inset 0 0 0 2px rgba(0,0,0,.25); }
+  .ngp-recent {
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px dashed rgba(0,0,0,.1);
+    display:grid; gap:10px; grid-template-columns: repeat(8, 1fr);
+  }
+  /* Spectrum */
+  .ngp-spectrum-wrap { display:flex; flex-direction:column; gap:10px; padding: 8px 0; }
+  .ngp-spectrum {
+    width:100%; height:200px; border-radius: 10px; overflow:hidden;
+    border: 1px solid rgba(0,0,0,.12); touch-action: none; position: relative;
+    background: linear-gradient(to right, #fff 0%, rgba(255,255,255,0) 100%);
+  }
+  html.dark .ngp-spectrum { border-color: rgba(255,255,255,.14); }
+  .ngp-spectrum-caret {
+    position:absolute; width:14px; height:14px; border-radius:999px;
+    border:2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.35); pointer-events:none;
+    transform: translate(-50%, -50%);
+  }
+  .ngp-hue {
+    height: 16px; border-radius: 10px; position: relative; border:1px solid rgba(0,0,0,.12);
+    background: linear-gradient(to right, red, #ff0, #0f0, #0ff, #00f, #f0f, red);
+    touch-action: none;
+  }
+  html.dark .ngp-hue { border-color: rgba(255,255,255,.14); }
+  .ngp-hue-caret { position:absolute; top:-3px; width:8px; height:22px; border-radius:5px; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.35); transform: translateX(-50%); pointer-events:none; }
+  /* Sliders */
+  .ngp-sliders { display:grid; gap:12px; padding: 8px 0; }
+  .ngp-row { display:grid; grid-template-columns: 60px 1fr 56px; gap:8px; align-items:center; }
+  .ngp-row label { font-size:12px; opacity:.8; }
+  .ngp-row input[type="range"] { width:100%; }
+  .ngp-row input[type="number"], .ngp-hex { width:100%; box-sizing:border-box; padding:6px 8px; border-radius:8px; border:1px solid rgba(0,0,0,.2); background:#fff; color:#111; }
+  html.dark .ngp-row input[type="number"], html.dark .ngp-hex { background:#0b1220; color:#e5e7eb; border-color: rgba(255,255,255,.14); }
+  .ngp-footer { display:flex; justify-content:flex-end; gap:8px; padding: 8px 12px 12px; }
+  .ngp-btn {
+    appearance:none; border:1px solid rgba(0,0,0,.2); background:#fff; color:#111;
+    padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600; font-size:13px;
+  }
+  .ngp-primary { background:#2563eb; color:#fff; border-color: #1d4ed8; }
+  .ngp-btn:active { transform: translateY(1px); }
+</style>
+
+<div id="ngp-modal" hidden aria-modal="true" role="dialog">
+  <div class="ngp-panel" role="document" aria-label="Color Picker">
+    <div class="ngp-head">
+      <div class="ngp-title">Color</div>
+      <button class="ngp-close" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="ngp-tabs" role="tablist" aria-label="Color Picker Tabs">
+      <button class="ngp-tab" role="tab" data-tab="grid" aria-selected="true">Grid</button>
+      <button class="ngp-tab" role="tab" data-tab="spectrum" aria-selected="false">Spectrum</button>
+      <button class="ngp-tab" role="tab" data-tab="sliders" aria-selected="false">Sliders</button>
+    </div>
+    <div class="ngp-body">
+      <div class="ngp-page" data-page="grid">
+        <div class="ngp-grid" id="ngp-grid"></div>
+        <div class="ngp-recent" id="ngp-recent"></div>
+      </div>
+      <div class="ngp-page" data-page="spectrum" hidden>
+        <div class="ngp-spectrum-wrap">
+          <div class="ngp-spectrum" id="ngp-spectrum"><div class="ngp-spectrum-caret" id="ngp-spec-caret"></div></div>
+          <div class="ngp-hue" id="ngp-hue"><div class="ngp-hue-caret" id="ngp-hue-caret" style="left:0%"></div></div>
+        </div>
+      </div>
+      <div class="ngp-page" data-page="sliders" hidden>
+        <div class="ngp-sliders">
+          <div class="ngp-row"><label>R</label><input type="range" min="0" max="255" id="ngp-r"><input type="number" min="0" max="255" id="ngp-rn"></div>
+          <div class="ngp-row"><label>G</label><input type="range" min="0" max="255" id="ngp-g"><input type="number" min="0" max="255" id="ngp-gn"></div>
+          <div class="ngp-row"><label>B</label><input type="range" min="0" max="255" id="ngp-b"><input type="number" min="0" max="255" id="ngp-bn"></div>
+          <div class="ngp-row" style="grid-template-columns: 60px 1fr 96px;">
+            <label>HEX</label>
+            <input class="ngp-hex" id="ngp-hex" placeholder="#000000" />
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div class="ngp-swatch" id="ngp-preview" style="width:32px;height:32px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ngp-footer">
+      <button class="ngp-btn" id="ngp-cancel" type="button">Cancel</button>
+      <button class="ngp-btn ngp-primary" id="ngp-apply" type="button">Done</button>
+    </div>
+  </div>
+</div>
+
+<script id="ngp-script">
+(function(){
+  if (window.__NGP_INSTALLED__) return; window.__NGP_INSTALLED__ = true;
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+  // Find controls for New Genre
+  function findNewGenreControls(){
+    let name = $('#genre-name') || $('input[placeholder="New genre" i]');
+    let color = $('#genre-color');
+    if (!color && name){
+      const host = name.closest('.sidebar, .left, .new-genre, form, div') || document;
+      color = host.querySelector('input[type="color"]');
+    }
+    if (!color) color = document.querySelector('input[type="color"]');
+    return {name, color};
+  }
+
+  const controls = findNewGenreControls();
+  if (!controls || !controls.color) return; // Nothing to do
+
+  // Helpers
+  const clamp = (n,min,max)=>Math.max(min,Math.min(max,n));
+  const pad2 = n => n.toString(16).padStart(2,'0');
+  function rgbToHex(r,g,b){ return '#' + pad2(clamp(Math.round(r),0,255)) + pad2(clamp(Math.round(g),0,255)) + pad2(clamp(Math.round(b),0,255)); }
+  function hexToRgb(hex){
+    if (!hex) return {r:0,g:0,b:0};
+    hex = hex.replace('#','');
+    if (hex.length===3){ hex = hex.split('').map(c=>c+c).join(''); }
+    const num = parseInt(hex,16);
+    if (Number.isNaN(num)) return {r:0,g:0,b:0};
+    return { r:(num>>16)&255, g:(num>>8)&255, b:num&255 };
+  }
+  function rgbStrToHexStr(rgbStr){
+    if (!rgbStr) return null;
+    const m = rgbStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+    return m ? rgbToHex(+m[1],+m[2],+m[3]) : null;
+  }
+
+  // HSV helpers for Spectrum
+  function hsvToRgb(h,s,v){
+    h = ((h%360)+360)%360;
+    let c = v*s, x = c*(1-Math.abs((h/60)%2-1)), m=v-c;
+    let r=0,g=0,b=0;
+    if (h<60){ r=c; g=x; }
+    else if (h<120){ r=x; g=c; }
+    else if (h<180){ g=c; b=x; }
+    else if (h<240){ g=x; b=c; }
+    else if (h<300){ r=x; b=c; }
+    else { r=c; b=x; }
+    return { r:Math.round((r+m)*255), g:Math.round((g+m)*255), b:Math.round((b+m)*255) };
+  }
+  function rgbToHsv(r,g,b){
+    r/=255; g/=255; b/=255;
+    let max=Math.max(r,g,b), min=Math.min(r,g,b);
+    let h=0, s=max===0?0:(max-min)/max, v=max;
+    let d = max-min;
+    if (d===0) h=0;
+    else if (max===r) h=60*(((g-b)/d)%6);
+    else if (max===g) h=60*(((b-r)/d)+2);
+    else h=60*(((r-g)/d)+4);
+    if (h<0) h+=360;
+    return {h,s,v};
+  }
+
+  // Build UI refs
+  const modal   = $('#ngp-modal');
+  const panel   = $('.ngp-panel', modal);
+  const closeX  = $('.ngp-close', modal);
+  const tabs    = $$('.ngp-tab', modal);
+  const pages   = $$('.ngp-page', modal);
+  const gridEl  = $('#ngp-grid', modal);
+  const recentEl= $('#ngp-recent', modal);
+  const spectrumEl = $('#ngp-spectrum', modal);
+  const specCaret = $('#ngp-spec-caret', modal);
+  const hueEl      = $('#ngp-hue', modal);
+  const hueCaret   = $('#ngp-hue-caret', modal);
+  const rRange = $('#ngp-r', modal), gRange = $('#ngp-g', modal), bRange = $('#ngp-b', modal);
+  const rNum   = $('#ngp-rn', modal), gNum   = $('#ngp-gn', modal), bNum   = $('#ngp-bn', modal);
+  const hexIn  = $('#ngp-hex', modal), preview = $('#ngp-preview', modal);
+  const applyBtn = $('#ngp-apply', modal), cancelBtn = $('#ngp-cancel', modal);
+
+  // Base grid (16 swatches -> exactly 8 columns x 2 rows), plus "recent/used" (8 slots)
+  const BASE_SWATCHES = [
+    '#000000','#7f7f7f','#ffffff','#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6',
+    '#f472b6','#ec4899','#22d3ee','#14b8a6','#84cc16','#fde047','#fb923c','#b91c1c'
+  ];
+  function getUsedGenreColors(){
+    const out = new Set();
+    // Try commonly used attributes/classes in sidebars
+    $$('[data-genre-color]').forEach(el=> out.add(String(el.getAttribute('data-genre-color')).trim()));
+    $$('.genre, .genre-chip, .genre-dot, .genre-tag, .sidebar .color, .sidebar [style*="background"]').forEach(el=>{
+      const bg = getComputedStyle(el).backgroundColor;
+      const hex = rgbStrToHexStr(bg);
+      if (hex) out.add(hex);
+    });
+    return Array.from(out).filter(Boolean).slice(0,8);
+  }
+
+  // State
+  let anchorInput = controls.color;
+  let current = hexToRgb(anchorInput.value || '#000000');
+  let hsv = rgbToHsv(current.r, current.g, current.b);
+  let used = getUsedGenreColors();
+  if (used.length===0) used = Array(8).fill('#9ca3af'); // grey placeholders when none
+
+  // Render Grid
+  function renderGrid(){
+    gridEl.innerHTML = '';
+    BASE_SWATCHES.forEach(hex=>{
+      const d = document.createElement('button');
+      d.type = 'button'; d.className = 'ngp-swatch'; d.style.background = hex;
+      d.setAttribute('aria-label', hex);
+      d.addEventListener('click', ()=> setHex(hex, true));
+      gridEl.appendChild(d);
+    });
+    recentEl.innerHTML = '';
+    used.forEach(hex=>{
+      const d = document.createElement('button');
+      d.type = 'button'; d.className = 'ngp-swatch'; d.style.background = hex;
+      d.setAttribute('aria-label', hex);
+      d.addEventListener('click', ()=> setHex(hex, true));
+      recentEl.appendChild(d);
+    });
+  }
+
+  // Spectrum drawing: SV rectangle at current hue; hue slider below
+  function setHue(h){
+    hsv.h = clamp(h,0,359.9);
+    const gradSat = 'linear-gradient(to right, #fff 0%, rgba(255,255,255,0) 100%)';
+    const gradVal = 'linear-gradient(to top, #000, rgba(0,0,0,0))';
+    spectrumEl.style.backgroundImage = gradSat + ',' + gradVal + ', ' + 'linear-gradient(' + 'to right, ' +
+      'hsl(' + hsv.h + ',100%,50%), hsl(' + hsv.h + ',100%,50%)' + ')';
+    const pct = (hsv.h/360)*100;
+    hueCaret.style.left = pct + '%';
+    updateFromHSV();
+    positionSpectrumCaret();
+  }
+  function positionSpectrumCaret(){
+    const rect = spectrumEl.getBoundingClientRect();
+    const x = hsv.s * rect.width;
+    const y = (1 - hsv.v) * rect.height;
+    specCaret.style.left = x + 'px';
+    specCaret.style.top  = y + 'px';
+  }
+  function attachSpectrum(){
+    function handle(e){
+      const rect = spectrumEl.getBoundingClientRect();
+      const x = clamp((e.clientX - rect.left), 0, rect.width);
+      const y = clamp((e.clientY - rect.top),  0, rect.height);
+      hsv.s = clamp(x / rect.width, 0, 1);
+      hsv.v = clamp(1 - (y / rect.height), 0, 1);
+      updateFromHSV();
+      positionSpectrumCaret();
+    }
+    spectrumEl.addEventListener('pointerdown', e=>{ spectrumEl.setPointerCapture(e.pointerId); handle(e); });
+    spectrumEl.addEventListener('pointermove', e=>{ if (spectrumEl.hasPointerCapture(e.pointerId)) handle(e); });
+    spectrumEl.addEventListener('pointerup',   e=>{ try{spectrumEl.releasePointerCapture(e.pointerId);}catch(_){} });
+    hueEl.addEventListener('pointerdown', e=>{
+      hueEl.setPointerCapture(e.pointerId);
+      const rect = hueEl.getBoundingClientRect();
+      const x = clamp((e.clientX - rect.left), 0, rect.width);
+      const h = (x / rect.width) * 360;
+      setHue(h);
+    });
+    hueEl.addEventListener('pointermove', e=>{
+      if (hueEl.hasPointerCapture(e.pointerId)){
+        const rect = hueEl.getBoundingClientRect();
+        const x = clamp((e.clientX - rect.left), 0, rect.width);
+        const h = (x / rect.width) * 360;
+        setHue(h);
+      }
+    });
+    hueEl.addEventListener('pointerup', e=>{ try{hueEl.releasePointerCapture(e.pointerId);}catch(_){} });
+  }
+
+  // Sliders sync
+  function setRGB(r,g,b, pushHex=true){
+    r = clamp(r,0,255); g=clamp(g,0,255); b=clamp(b,0,255);
+    rRange.value = r; rNum.value = r;
+    gRange.value = g; gNum.value = g;
+    bRange.value = b; bNum.value = b;
+    const hex = rgbToHex(r,g,b);
+    preview.style.background = hex;
+    if (pushHex) hexIn.value = hex;
+    hsv = rgbToHsv(r,g,b);
+  }
+  function setHex(hex, updateControls){
+    const {r,g,b} = hexToRgb(hex || '#000000');
+    setRGB(r,g,b, true);
+    if (updateControls){
+      setHue(hsv.h);
+      positionSpectrumCaret();
+    }
+  }
+  function updateFromHSV(){
+    const {r,g,b} = hsvToRgb(hsv.h, hsv.s, hsv.v);
+    setRGB(r,g,b, true);
+  }
+  function bindSliders(){
+    function link(slider, num){
+      const sync = v => setRGB(+rRange.value, +gRange.value, +bRange.value, true);
+      slider.addEventListener('input', sync);
+      num.addEventListener('input', sync);
+      ['change','blur'].forEach(evt=> num.addEventListener(evt, sync));
+    }
+    link(rRange, rNum); link(gRange, gNum); link(bRange, bNum);
+    hexIn.addEventListener('input', ()=> setHex(hexIn.value, true));
+  }
+
+  // Tabs
+  function showTab(which){
+    tabs.forEach(t=> t.setAttribute('aria-selected', String(t.dataset.tab===which)));
+    pages.forEach(p=> p.hidden = p.dataset.page !== which);
+  }
+  tabs.forEach(t=> t.addEventListener('click', ()=> showTab(t.dataset.tab)));
+
+  // Open/Close
+  function openPicker(){
+    // Initialize from current input value
+    setHex(anchorInput.value || '#000000', true);
+    renderGrid();
+    setHue(hsv.h);
+    positionSpectrumCaret();
+    showTab('grid');
+    modal.hidden = false;
+    // focus panel for accessibility
+    panel.focus?.();
+  }
+  function closePicker(){
+    modal.hidden = true;
+  }
+
+  // Apply result
+  applyBtn.addEventListener('click', ()=>{
+    // Write back to the original input
+    const hex = hexIn.value && hexIn.value.startsWith('#') ? hexIn.value : rgbToHex(+rRange.value,+gRange.value,+bRange.value);
+    anchorInput.value = hex;
+    anchorInput.dispatchEvent(new Event('input', {bubbles:true}));
+    anchorInput.dispatchEvent(new Event('change', {bubbles:true}));
+    closePicker();
+  });
+  cancelBtn.addEventListener('click', closePicker);
+  closeX.addEventListener('click', closePicker);
+  modal.addEventListener('click', (e)=>{ if (e.target === modal) closePicker(); });
+
+  // Prevent native iOS picker and open custom instead
+  function intercept(e){
+    try { e.preventDefault(); e.stopPropagation(); } catch(_) {}
+    openPicker();
+  }
+  // We attach on pointerdown/touchstart so the click never reaches the color input
+  controls.color.addEventListener('pointerdown', intercept, {passive:false});
+  controls.color.addEventListener('touchstart', intercept, {passive:false});
+  controls.color.addEventListener('click', intercept, {passive:false});
+
+  // Initial bindings
+  attachSpectrum();
+  bindSliders();
+})();
+</script>
+<!-- ==== END: Custom New-Genre Color Picker (NGP) ==== -->
+
 </body>
 </html>
 
