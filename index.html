@@ -1798,31 +1798,6 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
-
-<style id="genre-inplace-x-css">
-  /* Only styles the *injected* X inside your existing picker */
-  .genre-picker-x { 
-    all: unset;
-    position: absolute;
-    top: 8px;
-    right: 10px;
-    display: inline-block;
-    width: 22px;
-    height: 22px;
-    line-height: 22px;
-    text-align: center;
-    border-radius: 9999px;
-    background: rgba(17,24,39,0.12);
-    color: currentColor;
-    cursor: pointer;
-    z-index: 2147483647;
-    font-weight: 700;
-  }
-  .genre-picker-x:hover { background: rgba(17,24,39,0.22); }
-  html.dark .genre-picker-x { background: rgba(255,255,255,0.12); }
-  html.dark .genre-picker-x:hover { background: rgba(255,255,255,0.22); }
-</style>
-
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2385,31 +2360,6 @@ const s=$('.left-col');s.toggleClass('collapsed');
   }
   /* Hide any legacy big proxy if injected elsewhere */
   #drag-proxy-nameonly-large { display: none !important; }
-</style>
-
-
-<style id="genre-inplace-x-css">
-  /* Only styles the *injected* X inside your existing picker */
-  .genre-picker-x { 
-    all: unset;
-    position: absolute;
-    top: 8px;
-    right: 10px;
-    display: inline-block;
-    width: 22px;
-    height: 22px;
-    line-height: 22px;
-    text-align: center;
-    border-radius: 9999px;
-    background: rgba(17,24,39,0.12);
-    color: currentColor;
-    cursor: pointer;
-    z-index: 2147483647;
-    font-weight: 700;
-  }
-  .genre-picker-x:hover { background: rgba(17,24,39,0.22); }
-  html.dark .genre-picker-x { background: rgba(255,255,255,0.12); }
-  html.dark .genre-picker-x:hover { background: rgba(255,255,255,0.22); }
 </style>
 
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
@@ -5171,81 +5121,215 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 
 
-<script id="genre-inplace-x-js">
+<!-- === BEGIN: Add-Setlist focus-on-empty-name (minimal, non-invasive) === -->
+<script>
 (function(){
-  function $(s){ return document.querySelector(s); }
-  function qsa(s){ return Array.from(document.querySelectorAll(s)); }
-  function isVisible(el){
-    if (!el) return false;
-    var cs = getComputedStyle(el);
-    if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) return false;
-    if (!el.getClientRects().length) return false;
-    return true;
+  if (window.__ADD_SETLIST_FOCUS_FIX__) return; window.__ADD_SETLIST_FOCUS_FIX__ = true;
+
+  function getNameInput(){
+    // Prefer specific ids if present
+    var el = document.getElementById('new-setlist-name') || document.getElementById('setlist-name');
+    if (!el) {
+      el = document.querySelector('input[placeholder="New setlist" i]') ||
+           document.querySelector('input[placeholder*="setlist" i]') ||
+           document.querySelector('input[name*="setlist" i]');
+    }
+    return el;
   }
-  function looksLikePicker(el){
+
+  function isAddSetlistButton(el){
     if (!el) return false;
-    var idc = ((el.id||'') + ' ' + (el.className||'')).toLowerCase();
-    if (/(color|picker|popover|dialog|popup|menu|dropdown|palette)/.test(idc)) return true;
-    var pos = getComputedStyle(el).position;
-    var z = parseInt(getComputedStyle(el).zIndex||'0',10);
-    if ((pos === 'fixed' || pos === 'absolute') && z >= 100) return true;
-    if (el.querySelector && (el.querySelector('input[type="color"]') || el.querySelector('[style*="background"]'))) return true;
+    if (el.id === 'add-setlist') return true;
+    if (el.matches && el.matches('.add-setlist,[data-action="add-setlist"]')) return true;
+    // fallback: match by visible text
+    var txt = (el.textContent || '').trim().toLowerCase();
+    if (txt === 'add setlist' || txt === 'add new setlist' || txt === 'create setlist') return true;
     return false;
   }
-  function findPicker(){
-    var nodes = qsa('body *').filter(isVisible);
-    for (var i = nodes.length - 1; i >= 0; i--){
-      var n = nodes[i];
-      if (looksLikePicker(n)) return n;
+
+  function closestAddSetlistButton(target){
+    return target && target.closest && target.closest('#add-setlist, .add-setlist, [data-action="add-setlist"], button, a');
+  }
+
+  function focusNameAndStop(e, nameInput){
+    try{
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      e.stopPropagation();
+    }catch(_){}
+    try{
+      nameInput.focus();
+      nameInput.scrollIntoView({behavior:'smooth', block:'center'});
+      // optional micro-feedback (no CSS dependency)
+      nameInput.style.outline = '2px solid #3b82f6';
+      setTimeout(function(){ nameInput.style.outline = ''; }, 600);
+    }catch(_){}
+  }
+
+  // Intercept clicks (CAPTURE) before app code sees them
+  document.addEventListener('click', function(e){
+    var btn = closestAddSetlistButton(e.target);
+    if (!btn || !isAddSetlistButton(btn)) return;
+    var nameInput = getNameInput();
+    if (!nameInput) return;
+    var val = (nameInput.value || '').trim();
+    if (!val){
+      focusNameAndStop(e, nameInput);
     }
-    return null;
-  }
-  function injectX(container){
-    if (!container) return;
-    if (container.querySelector('.genre-picker-x')) return;
-    var cs = getComputedStyle(container);
-    if (cs.position === 'static') container.style.position = 'relative';
-    var btn = document.createElement('button');
-    btn.className = 'genre-picker-x';
-    btn.setAttribute('aria-label','Close');
-    btn.textContent = '×';
-    container.appendChild(btn);
-    btn.addEventListener('click', function(e){
-      e.preventDefault(); e.stopPropagation();
-      try { container.style.display = 'none'; } catch(e){}
-      var colorInput = $('#genre-color');
-      try { (colorInput || document.activeElement).blur(); } catch(e){}
-      // Also attempt ESC close if the picker listens for it
-      try {
-        var evt = new KeyboardEvent('keydown', {key:'Escape', keyCode:27, which:27, bubbles:true});
-        document.dispatchEvent(evt);
-      } catch(e){}
-    });
-  }
-  function onOpen(){
-    setTimeout(function(){ injectX(findPicker()); }, 40);
-    setTimeout(function(){ injectX(findPicker()); }, 120);
-    setTimeout(function(){ injectX(findPicker()); }, 300);
-  }
-  var wheel = $('#genre-color-display');
-  var input = $('#genre-color');
-  if (wheel){
-    wheel.addEventListener('click', onOpen, true);
-    wheel.addEventListener('mousedown', onOpen, true);
-    wheel.addEventListener('touchstart', onOpen, {passive:true});
-  }
-  if (input){
-    input.addEventListener('focus', onOpen, true);
-    input.addEventListener('click', onOpen, true);
-  }
-  // Watch new DOM nodes and try once if a picker appears
-  var mo = new MutationObserver(function(muts){
-    var c = findPicker();
-    if (c) injectX(c);
-  });
-  try { mo.observe(document.body, {childList:true, subtree:true}); } catch(e){}
+  }, true);
+
+  // Intercept form submit in case "Add setlist" triggers submit
+  document.addEventListener('submit', function(e){
+    var form = e.target;
+    if (!form) return;
+    // Heuristic: if the form contains a likely add-setlist button or the name field
+    var nameInput = getNameInput();
+    if (!nameInput) return;
+    if (!form.contains(nameInput)) return;
+    var val = (nameInput.value || '').trim();
+    if (!val){
+      focusNameAndStop(e, nameInput);
+    }
+  }, true);
 })();
 </script>
+<!-- === END: Add-Setlist focus-on-empty-name === -->
+\n
+<!-- === BEGIN: Sidebar Icons (Favorites Star + Energy Bolt) — minimal, safe === -->
+<style>
+  /* Only affect the two target items */
+  #nav-favorites, #nav-energy {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #nav-favorites .sidebar-icon svg,
+  #nav-energy .sidebar-icon svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+  }
+  /* Reuse existing favorite styling if present; provide fallback */
+  #nav-favorites .sidebar-icon svg {
+    fill: none;
+    stroke: #9ca3af; /* gray outline by default (matches file star) */
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  /* Energy bolt visual (default/no-level): gray outline, same weight as star */
+  #nav-energy .sidebar-icon svg {
+    fill: none;
+    stroke: #9ca3af;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+  }
+  /* Dark mode tweak: slightly lighter gray */
+  html.dark #nav-favorites .sidebar-icon svg,
+  html.dark #nav-energy .sidebar-icon svg {
+    stroke: #cbd5e1;
+  }
+</style>
+<script>
+(function(){
+  if (window.__SIDEBAR_ICONS_PATCH__) return; window.__SIDEBAR_ICONS_PATCH__ = true;
+
+  function ensureIcon(target, svgMarkup){
+    if (!target) return;
+    if (target.querySelector('.sidebar-icon')) return; // don't duplicate
+    var span = document.createElement('span');
+    span.className = 'sidebar-icon';
+    span.innerHTML = svgMarkup.trim();
+    // Prepend icon before text
+    if (target.firstChild) target.insertBefore(span, target.firstChild);
+    else target.appendChild(span);
+  }
+
+  // Heroicons-style Star (outline) — matches "not yet white" favorite look
+  var STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 0 0 .95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.977 2.89a1 1 0 0 0-.364 1.118l1.519 4.674c.3.921-.755 1.688-1.538 1.118l-3.977-2.89a1 1 0 0 0-1.175 0l-3.977 2.89c-.783.57-1.838-.197-1.538-1.118l1.519-4.674a1 1 0 0 0-.364-1.118l-3.977-2.89c-.783-.57-.38-1.81.588-1.81h4.915a1 1 0 0 0 .95-.69l1.519-4.674z"/></svg>';
+
+  // Bolt (outline) — simple, readable shape akin to the file's unselected energy icon
+  var BOLT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>';
+
+  function run(){
+    var fav = document.getElementById('nav-favorites');
+    var eng = document.getElementById('nav-energy');
+    ensureIcon(fav, STAR_SVG);
+    ensureIcon(eng, BOLT_SVG);
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
+})();
+</script>
+<!-- === END: Sidebar Icons patch === -->
+\n
+<!-- === BEGIN: Right-side sidebar emblems (layout-safe) === -->
+<style>
+  /* Right icon container (inline, no layout changes to parent) */
+  .sidebar-icon-right {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    line-height: 0;
+    margin-left: 8px; /* small breathing room if text and icon end up adjacent */
+  }
+  /* Favorites star = solid white (like filled favorite) */
+  #nav-favorites .sidebar-icon-right.star svg {
+    width: 20px; height: 20px;
+    fill: #ffffff;  /* white fill */
+    stroke: none;
+  }
+  /* Energy bolt = red outline only, no fill, no animation */
+  #nav-energy .sidebar-icon-right.bolt svg {
+    width: 20px; height: 20px;
+    fill: none;
+    stroke: #ef4444;           /* Tailwind red-500: adjust if you use a different red */
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+</style>
+<script>
+(function(){
+  if (window.__SIDEBAR_EMBLEMS_RIGHT_CLEAN__) return; window.__SIDEBAR_EMBLEMS_RIGHT_CLEAN__ = true;
+
+  // 1) Clean any *left-side* icons previously injected
+  ['nav-favorites','nav-energy'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (!el) return;
+    var lefts = el.querySelectorAll('.sidebar-icon');
+    lefts.forEach(function(n){ n.remove(); });
+  });
+
+  // 2) Append right-side icons only if not already present
+  function appendRightIcon(id, cls, svg){
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (el.querySelector('.sidebar-icon-right.'+cls)) return; // don't duplicate
+    var span = document.createElement('span');
+    span.className = 'sidebar-icon-right ' + cls;
+    span.innerHTML = svg;
+    // Because .sidebar-item is already display:flex; justify-between,
+    // simply appending will place the icon at the RIGHT, text stays left.
+    el.appendChild(span);
+  }
+
+  // White filled star (classic shape)
+  var STAR_WHITE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg>';
+  // Red outline lightning bolt (no fill)
+  var BOLT_RED  = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"></path></svg>';
+
+  appendRightIcon('nav-favorites', 'star', STAR_WHITE);
+  appendRightIcon('nav-energy',    'bolt', BOLT_RED);
+})();
+</script>
+<!-- === END: Right-side sidebar emblems (layout-safe) === -->
 
 </body>
 </html>
