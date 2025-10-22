@@ -1799,28 +1799,74 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
 </style>
 
 
-<style id="genre-picker-fab-css">
-  /* Small floating “X” close button shown while the color picker is open */
-  #genre-color-close-fab {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    width: 28px;
-    height: 28px;
-    line-height: 26px;
-    border-radius: 9999px;
-    text-align: center;
-    font-weight: 700;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    background: rgba(17,24,39,0.9);
-    color: #fff;
-    border: 0;
-    cursor: pointer;
+<style id="custom-genre-color-picker-styles">
+  /* Overlay */
+  #genre-color-overlay {
+    position: fixed; inset: 0; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.45);
     z-index: 100000;
-    display: none;
   }
-  html.dark #genre-color-close-fab { background: rgba(255,255,255,0.85); color: #111827; }
-  #genre-color-close-fab:hover { filter: brightness(1.05); }
+  /* Picker panel */
+  #genre-color-picker {
+    position: relative;
+    background: #fff;
+    color: #111827;
+    border-radius: 12px;
+    padding: 16px;
+    width: 320px;
+    max-width: 92vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  }
+  html.dark #genre-color-picker { background: #111827; color: #e5e7eb; }
+  #genre-color-picker .title { font-weight: 700; margin: 0 0 10px; }
+  /* Close X */
+  #genre-color-picker .close-x {
+    position: absolute;
+    top: 8px; right: 10px;
+    width: 24px; height: 24px; line-height: 24px;
+    border-radius: 9999px; text-align: center;
+    border: 0; cursor: pointer;
+    background: rgba(17,24,39,0.1); color: inherit; font-weight: 700;
+  }
+  #genre-color-picker .close-x:hover { background: rgba(17,24,39,0.2); }
+  html.dark #genre-color-picker .close-x { background: rgba(255,255,255,0.12); }
+  html.dark #genre-color-picker .close-x:hover { background: rgba(255,255,255,0.22); }
+
+  /* Grid of main swatches (8 circles) */
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+    margin: 8px 0 12px;
+  }
+  .swatch {
+    width: 28px; height: 28px; border-radius: 9999px;
+    border: 2px solid rgba(0,0,0,0.1);
+    cursor: pointer;
+  }
+  html.dark .swatch { border-color: rgba(255,255,255,0.15); }
+  .swatch:hover { filter: brightness(1.05); transform: scale(1.06); }
+
+  /* Used colors row */
+  .used-title { font-size: 12px; opacity: .75; margin-top: 6px; }
+  .used-row {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .used-swatch {
+    width: 22px; height: 22px; border-radius: 9999px;
+    border: 2px solid rgba(0,0,0,0.08);
+    cursor: pointer;
+  }
+  html.dark .used-swatch { border-color: rgba(255,255,255,0.12); }
+
+  /* Native color input bridge (hidden, just to leverage the browser) */
+  #genre-color-bridge {
+    position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none;
+  }
 </style>
 
 </head>
@@ -2388,28 +2434,74 @@ const s=$('.left-col');s.toggleClass('collapsed');
 </style>
 
 
-<style id="genre-picker-fab-css">
-  /* Small floating “X” close button shown while the color picker is open */
-  #genre-color-close-fab {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    width: 28px;
-    height: 28px;
-    line-height: 26px;
-    border-radius: 9999px;
-    text-align: center;
-    font-weight: 700;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    background: rgba(17,24,39,0.9);
-    color: #fff;
-    border: 0;
-    cursor: pointer;
+<style id="custom-genre-color-picker-styles">
+  /* Overlay */
+  #genre-color-overlay {
+    position: fixed; inset: 0; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.45);
     z-index: 100000;
-    display: none;
   }
-  html.dark #genre-color-close-fab { background: rgba(255,255,255,0.85); color: #111827; }
-  #genre-color-close-fab:hover { filter: brightness(1.05); }
+  /* Picker panel */
+  #genre-color-picker {
+    position: relative;
+    background: #fff;
+    color: #111827;
+    border-radius: 12px;
+    padding: 16px;
+    width: 320px;
+    max-width: 92vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  }
+  html.dark #genre-color-picker { background: #111827; color: #e5e7eb; }
+  #genre-color-picker .title { font-weight: 700; margin: 0 0 10px; }
+  /* Close X */
+  #genre-color-picker .close-x {
+    position: absolute;
+    top: 8px; right: 10px;
+    width: 24px; height: 24px; line-height: 24px;
+    border-radius: 9999px; text-align: center;
+    border: 0; cursor: pointer;
+    background: rgba(17,24,39,0.1); color: inherit; font-weight: 700;
+  }
+  #genre-color-picker .close-x:hover { background: rgba(17,24,39,0.2); }
+  html.dark #genre-color-picker .close-x { background: rgba(255,255,255,0.12); }
+  html.dark #genre-color-picker .close-x:hover { background: rgba(255,255,255,0.22); }
+
+  /* Grid of main swatches (8 circles) */
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+    margin: 8px 0 12px;
+  }
+  .swatch {
+    width: 28px; height: 28px; border-radius: 9999px;
+    border: 2px solid rgba(0,0,0,0.1);
+    cursor: pointer;
+  }
+  html.dark .swatch { border-color: rgba(255,255,255,0.15); }
+  .swatch:hover { filter: brightness(1.05); transform: scale(1.06); }
+
+  /* Used colors row */
+  .used-title { font-size: 12px; opacity: .75; margin-top: 6px; }
+  .used-row {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .used-swatch {
+    width: 22px; height: 22px; border-radius: 9999px;
+    border: 2px solid rgba(0,0,0,0.08);
+    cursor: pointer;
+  }
+  html.dark .used-swatch { border-color: rgba(255,255,255,0.12); }
+
+  /* Native color input bridge (hidden, just to leverage the browser) */
+  #genre-color-bridge {
+    position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none;
+  }
 </style>
 
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
@@ -5171,96 +5263,157 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 
 
-<script id="genre-picker-gate">
+<div id="genre-color-overlay" aria-hidden="true">
+  <div id="genre-color-picker">
+    <button class="close-x" id="genre-color-close" aria-label="Close">×</button>
+    <div class="title">Pick a color</div>
+    <div class="swatch-grid" id="genre-swatch-grid"></div>
+    <div class="used-title">Used colors</div>
+    <div class="used-row" id="genre-used-row"></div>
+    <input id="genre-color-bridge" type="color" value="#3b82f6" />
+  </div>
+</div>
+
+<script id="custom-genre-color-picker-logic">
 (function(){
-  var gateActive = true; // block typing until color chosen or closed
+  var DEFAULT_GREY = '#cbd5e1'; // same as getGenreColor default
+  function qs(s){ return document.querySelector(s); }
+  function qsa(s){ return Array.from(document.querySelectorAll(s)); }
+  function on(el, ev, fn, opt){ if (el) el.addEventListener(ev, fn, opt||false); }
 
-  function $(sel){ return document.querySelector(sel); }
-  function on(el, ev, fn, opts){ if (el) el.addEventListener(ev, fn, opts||false); }
+  var overlay = qs('#genre-color-overlay');
+  var picker  = qs('#genre-color-picker');
+  var gridEl  = qs('#genre-swatch-grid');
+  var usedEl  = qs('#genre-used-row');
+  var closeX  = qs('#genre-color-close');
+  var bridge  = qs('#genre-color-bridge');
 
-  var nameInput   = $('#genre-name');
-  // Fallback: find input with placeholder "new genre"
-  if (!nameInput){
-    var inputs = Array.from(document.querySelectorAll('input,textarea'));
-    nameInput = inputs.find(function(n){ return (n.placeholder||'').toLowerCase().includes('new genre'); });
-  }
-  var colorHidden = $('#genre-color');
-  var wheel       = $('#genre-color-display');
-  var fab         = $('#genre-color-close-fab');
+  var rainbow = qs('#genre-color-display');   // the wheel
+  var hidden  = qs('#genre-color');           // existing hidden input
+  var nameInp = qs('#genre-name');
 
-  function showFab(){ if (fab) fab.style.display = 'block'; }
-  function hideFab(){ if (fab) fab.style.display = 'none'; }
+  // Build the main 8 swatches (replace "7 + plus" by a real 8th circle)
+  var MAIN_SWATCHES = [
+    '#ef4444', // red-500
+    '#f59e0b', // amber-500
+    '#22c55e', // green-500
+    '#06b6d4', // cyan-500
+    '#3b82f6', // blue-500
+    '#8b5cf6', // violet-500
+    '#ec4899', // pink-500
+    '#a3e635'  // lime-400 (replaces the old + button)
+  ];
 
   function openPicker(){
-    // Prefer the app's rainbow wheel; fall back to native color input
-    var opened = false;
-    if (wheel){
-      try { wheel.click(); opened = true; } catch(e){}
-    }
-    if (!opened && colorHidden){
-      try { colorHidden.focus(); colorHidden.click(); opened = true; } catch(e){}
-    }
-    // Show our universal close button either way
-    showFab();
+    renderGrid();
+    renderUsed();
+    overlay.style.display = 'flex';
+    overlay.setAttribute('aria-hidden','false');
   }
-
   function closePicker(){
-    // Try to close any custom picker: ESC often works
+    overlay.style.display = 'none';
+    overlay.setAttribute('aria-hidden','true');
+  }
+
+  function applyColor(val){
+    if (!val) return;
     try {
-      var evt = new KeyboardEvent('keydown', {key:'Escape', keyCode:27, which:27, bubbles:true});
-      document.dispatchEvent(evt);
-    } catch(e){}
-    // Hide any obvious picker containers
-    var candidates = Array.from(document.body.querySelectorAll('[role="dialog"], .popover, .popup, .menu, .dropdown, .picker, .color, .colorpicker'));
-    candidates.forEach(function(n){ n.style.display = 'none'; });
-    hideFab();
+      // Update existing hidden color and rainbow wheel look
+      if (hidden){ hidden.value = val; hidden.dispatchEvent(new Event('change', {bubbles:true})); }
+      if (rainbow){ rainbow.style.backgroundImage = 'none'; rainbow.style.backgroundColor = val; }
+    }catch(e){}
+    closePicker();
   }
 
-  function allowTyping(){
-    gateActive = false;
-    if (nameInput){ nameInput.focus(); nameInput.select && nameInput.select(); }
-  }
-
-  function gateHandler(e){
-    if (!gateActive) return;
-    e.preventDefault(); e.stopPropagation();
-    if (nameInput) nameInput.blur();
-    openPicker();
-  }
-
-  // Wire the gate to the first click/focus into the New genre textbox
-  function wireOnce(){
-    if (!nameInput) return;
-    nameInput.addEventListener('focus', gateHandler, true);
-    nameInput.addEventListener('mousedown', gateHandler, true);
-    nameInput.addEventListener('touchstart', gateHandler, {passive:false});
-  }
-
-  // When user picks a color (hidden input value changes), allow typing
-  if (colorHidden){
-    on(colorHidden, 'change', function(){
-      allowTyping();
-      hideFab();
-    });
-    // In case the app updates value programmatically
-    var mo = new MutationObserver(function(){ allowTyping(); hideFab(); });
-    try{ mo.observe(colorHidden, {attributes:true, attributeFilter:['value']}); }catch(e){}
-  }
-
-  // Close FAB
-  if (fab){
-    on(fab, 'click', function(){
-      closePicker();
-      allowTyping();
+  function renderGrid(){
+    if (!gridEl) return;
+    gridEl.innerHTML = '';
+    MAIN_SWATCHES.forEach(function(color){
+      var b = document.createElement('button');
+      b.className = 'swatch'; b.type = 'button';
+      b.style.background = color;
+      b.addEventListener('click', function(){ applyColor(color); });
+      gridEl.appendChild(b);
     });
   }
 
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', wireOnce);
-  } else {
-    wireOnce();
+  function uniqueColors(arr){
+    var out = [];
+    arr.forEach(function(c){
+      if (!c) return;
+      var v = c.toLowerCase();
+      if (!out.includes(v)) out.push(v);
+    });
+    return out.slice(0,8);
   }
-  window.addEventListener('load', wireOnce, {once:true});
+
+  function readUsedGenreColors(){
+    // Try to read colors from .genre-dot items in the sidebar
+    var els = qsa('#genre-list .genre-dot');
+    var colors = els.map(function(el){
+      var cs = getComputedStyle(el);
+      return cs.backgroundColor || cs.background || '';
+    }).map(function(c){
+      // Normalize rgb(...) to hex when possible
+      var m = c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+      if (m){
+        var r = (+m[1])|0, g=(+m[2])|0, b=(+m[3])|0;
+        var hex = '#' + [r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+        return hex;
+      }
+      return c || '';
+    });
+    colors = uniqueColors(colors);
+    if (!colors.length){
+      // If none exist yet, return 8 grey placeholders
+      return new Array(8).fill(DEFAULT_GREY);
+    }
+    // Fill to 8 with greys if fewer
+    while (colors.length < 8) colors.push(DEFAULT_GREY);
+    return colors.slice(0,8);
+  }
+
+  function renderUsed(){
+    if (!usedEl) return;
+    usedEl.innerHTML = '';
+    var colors = readUsedGenreColors();
+    colors.forEach(function(color){
+      var b = document.createElement('button');
+      b.className = 'used-swatch'; b.type = 'button';
+      b.style.background = color;
+      b.addEventListener('click', function(){ applyColor(color); });
+      usedEl.appendChild(b);
+    });
+  }
+
+  // Open picker when rainbow wheel is clicked
+  if (rainbow){
+    rainbow.style.cursor = 'pointer';
+    rainbow.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();
+      openPicker();
+    });
+  }
+  // Also intercept native color input click; we open our custom picker
+  if (hidden){
+    hidden.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();
+      openPicker();
+    });
+  }
+
+  // Close behaviors
+  if (closeX) closeX.addEventListener('click', closePicker);
+  if (overlay){
+    overlay.addEventListener('click', function(e){
+      if (e.target === overlay) closePicker();
+    });
+  }
+
+  // Optional: allow Enter to apply via bridge input (if used later)
+  if (bridge){
+    bridge.addEventListener('input', function(){ applyColor(bridge.value); });
+  }
 })();
 </script>
 
