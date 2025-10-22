@@ -5121,79 +5121,472 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 
 
-<!-- === BEGIN: Add-Setlist focus-on-empty-name (minimal, non-invasive) === -->
-<script>
+<!-- ========== BEGIN iOS-like Color Picker (anchored popover) ========== -->
+<style id="ioscp-styles">
+  :root {
+    --ioscp-bg: #ffffff;
+    --ioscp-fg: #111827;
+    --ioscp-border: rgba(0,0,0,.12);
+    --ioscp-shadow: 0 20px 50px rgba(0,0,0,.35);
+    --ioscp-radius: 14px;
+    --ioscp-blue: #0a84ff; /* iOS system blue */
+    --ioscp-muted: #f3f4f6;
+    --ioscp-seg-bg: #e5e7eb;
+  }
+  html.dark :root {
+    --ioscp-bg: #111827;
+    --ioscp-fg: #e5e7eb;
+    --ioscp-border: rgba(255,255,255,.14);
+    --ioscp-shadow: 0 20px 50px rgba(0,0,0,.55);
+    --ioscp-muted: #0b1220;
+    --ioscp-seg-bg: #0f172a;
+  }
+
+  #ioscp-pop[hidden] { display:none; }
+  #ioscp-pop {
+    position: absolute;
+    z-index: 2147483000;
+    width: 360px;
+    max-width: calc(100vw - 24px);
+    background: var(--ioscp-bg);
+    color: var(--ioscp-fg);
+    border: 1px solid var(--ioscp-border);
+    border-radius: var(--ioscp-radius);
+    box-shadow: var(--ioscp-shadow);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, Segoe UI, Roboto, Helvetica, Arial;
+  }
+  #ioscp-arrow {
+    position: absolute;
+    top: -8px; left: 24px;
+    width: 16px; height: 16px;
+    background: var(--ioscp-bg);
+    border-left: 1px solid var(--ioscp-border);
+    border-top: 1px solid var(--ioscp-border);
+    transform: rotate(45deg);
+    box-shadow: -2px -2px 6px rgba(0,0,0,.05);
+  }
+  .ioscp-head {
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--ioscp-border);
+  }
+  .ioscp-title { font-size: 14px; font-weight: 600; }
+  .ioscp-close {
+    appearance: none; border: 0; background: transparent;
+    width: 32px; height: 28px; border-radius: 10px; color: inherit; font-size: 18px;
+  }
+  .ioscp-close:active { transform: scale(.96); }
+
+  /* Segmented control */
+  .ioscp-seg {
+    margin: 10px auto 0 auto;
+    background: var(--ioscp-seg-bg);
+    border-radius: 10px;
+    padding: 4px;
+    width: fit-content;
+    display: flex; gap: 4px;
+  }
+  .ioscp-seg button {
+    appearance: none; border: none; cursor: pointer;
+    font-size: 12px; padding: 6px 10px; border-radius: 8px;
+    color: var(--ioscp-fg); background: transparent;
+  }
+  .ioscp-seg button[aria-pressed="true"] {
+    background: #fff; color: #111; box-shadow: inset 0 0 0 1.5px var(--ioscp-blue);
+  }
+  html.dark .ioscp-seg button[aria-pressed="true"] {
+    background: #0b1220; color: #e5e7eb; box-shadow: inset 0 0 0 1.5px var(--ioscp-blue);
+  }
+
+  .ioscp-body { padding: 12px; }
+
+  /* Grid page */
+  .ioscp-grid-wrap { display: grid; gap: 10px; grid-template-columns: repeat(8, 1fr); margin-top: 8px; }
+  .ioscp-swatch {
+    width: 28px; height: 28px; border-radius: 999px; cursor: pointer;
+    border: 1px solid rgba(0,0,0,.18);
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.6);
+  }
+  html.dark .ioscp-swatch { border-color: rgba(255,255,255,.18); box-shadow: inset 0 0 0 2px rgba(0,0,0,.25); }
+  .ioscp-plus {
+    width: 28px; height: 28px; border-radius: 999px; cursor: pointer;
+    border: 1px dashed var(--ioscp-border); display:flex; align-items:center; justify-content:center;
+    font-weight: 700; font-size: 18px; color: var(--ioscp-fg); background: var(--ioscp-muted);
+  }
+  .ioscp-section-title { font-size: 11px; opacity: .7; margin-top: 4px; }
+
+  /* Spectrum page */
+  .ioscp-spec {
+    margin-top: 10px; display:flex; flex-direction: column; gap: 10px;
+  }
+  .ioscp-sv {
+    position: relative; height: 200px; border-radius: 10px; overflow: hidden; border: 1px solid var(--ioscp-border);
+    background: linear-gradient(to right, #fff, rgba(255,255,255,0)), linear-gradient(to top, #000, rgba(0,0,0,0));
+    touch-action: none;
+  }
+  .ioscp-sv-caret {
+    position:absolute; width: 16px; height: 16px; border-radius: 999px; border:2px solid #fff;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.4); transform: translate(-50%, -50%); pointer-events: none;
+  }
+  .ioscp-hue {
+    position: relative; height: 16px; border-radius: 10px; border:1px solid var(--ioscp-border);
+    background: linear-gradient(to right, red, #ff0, #0f0, #0ff, #00f, #f0f, red);
+    touch-action: none;
+  }
+  .ioscp-hue-caret {
+    position:absolute; top:-3px; width: 8px; height: 22px; border-radius: 4px; background: #fff;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.4); transform: translateX(-50%); pointer-events: none;
+  }
+
+  /* Sliders page */
+  .ioscp-sliders { display: grid; gap: 12px; margin-top: 10px; }
+  .ioscp-row { display: grid; grid-template-columns: 56px 1fr 60px; gap: 8px; align-items: center; }
+  .ioscp-row label { font-size: 12px; opacity: .8; }
+  .ioscp-row input[type="range"] { width: 100%; }
+  .ioscp-num, .ioscp-hex {
+    width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--ioscp-border);
+    background: var(--ioscp-bg); color: var(--ioscp-fg);
+  }
+
+  .ioscp-footer {
+    display:flex; justify-content: flex-end; gap: 8px; padding: 8px 12px 12px;
+  }
+  .ioscp-btn {
+    appearance:none; border:1px solid var(--ioscp-border); background: var(--ioscp-bg); color: var(--ioscp-fg);
+    padding: 8px 12px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 13px;
+  }
+  .ioscp-primary { background: var(--ioscp-blue); color: #fff; border-color: #076ddd; }
+</style>
+
+<div id="ioscp-pop" hidden>
+  <div id="ioscp-arrow" aria-hidden="true"></div>
+  <div class="ioscp-head">
+    <div class="ioscp-title">Color</div>
+    <button class="ioscp-close" type="button" aria-label="Close">×</button>
+  </div>
+  <div style="display:flex; justify-content:center;">
+    <div class="ioscp-seg" role="tablist" aria-label="Color tabs">
+      <button class="ioscp-tab" data-tab="grid" aria-pressed="true">Grid</button>
+      <button class="ioscp-tab" data-tab="spectrum" aria-pressed="false">Spectrum</button>
+      <button class="ioscp-tab" data-tab="sliders" aria-pressed="false">Sliders</button>
+    </div>
+  </div>
+  <div class="ioscp-body">
+    <!-- GRID -->
+    <div class="ioscp-page" data-page="grid">
+      <div class="ioscp-grid-wrap" id="ioscp-grid"></div>
+      <div class="ioscp-section-title">Recently Used</div>
+      <div class="ioscp-grid-wrap" id="ioscp-recent"></div>
+    </div>
+    <!-- SPECTRUM -->
+    <div class="ioscp-page" data-page="spectrum" hidden>
+      <div class="ioscp-spec">
+        <div class="ioscp-sv" id="ioscp-sv"><div class="ioscp-sv-caret" id="ioscp-sv-caret"></div></div>
+        <div class="ioscp-hue" id="ioscp-hue"><div class="ioscp-hue-caret" id="ioscp-hue-caret" style="left:0%"></div></div>
+      </div>
+    </div>
+    <!-- SLIDERS -->
+    <div class="ioscp-page" data-page="sliders" hidden>
+      <div class="ioscp-sliders">
+        <div class="ioscp-row"><label>Red</label><input id="ioscp-r" type="range" min="0" max="255"><input id="ioscp-rn" class="ioscp-num" type="number" min="0" max="255"></div>
+        <div class="ioscp-row"><label>Green</label><input id="ioscp-g" type="range" min="0" max="255"><input id="ioscp-gn" class="ioscp-num" type="number" min="0" max="255"></div>
+        <div class="ioscp-row"><label>Blue</label><input id="ioscp-b" type="range" min="0" max="255"><input id="ioscp-bn" class="ioscp-num" type="number" min="0" max="255"></div>
+        <div class="ioscp-row" style="grid-template-columns: 56px 1fr 96px;">
+          <label>HEX</label><input id="ioscp-hex" class="ioscp-hex" placeholder="#000000"><div style="display:flex;align-items:center;gap:8px;"><div id="ioscp-prev" class="ioscp-swatch" style="width:32px;height:32px;"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ioscp-footer">
+    <button class="ioscp-btn" id="ioscp-cancel" type="button">Cancel</button>
+    <button class="ioscp-btn ioscp-primary" id="ioscp-done" type="button">Done</button>
+  </div>
+</div>
+
+<script id="ioscp-script">
 (function(){
-  if (window.__ADD_SETLIST_FOCUS_FIX__) return; window.__ADD_SETLIST_FOCUS_FIX__ = true;
-
-  function getNameInput(){
-    // Prefer specific ids if present
-    var el = document.getElementById('new-setlist-name') || document.getElementById('setlist-name');
-    if (!el) {
-      el = document.querySelector('input[placeholder="New setlist" i]') ||
-           document.querySelector('input[placeholder*="setlist" i]') ||
-           document.querySelector('input[name*="setlist" i]');
+  if (window.__IOSCP__) return; window.__IOSCP__ = true;
+  const $ = (s, r=document)=>r.querySelector(s);
+  const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
+  const clamp = (n,a,b)=>Math.max(a,Math.min(b,n));
+  const pad2 = n => n.toString(16).padStart(2,'0');
+  function rgbToHex(r,g,b){ return '#' + pad2(clamp(r,0,255)) + pad2(clamp(g,0,255)) + pad2(clamp(b,0,255)); }
+  function hexToRgb(hex){
+    if (!hex) return {r:0,g:0,b:0};
+    hex = hex.replace('#',''); if (hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+    const num = parseInt(hex,16); if (isNaN(num)) return {r:0,g:0,b:0};
+    return {r:(num>>16)&255, g:(num>>8)&255, b:num&255};
+  }
+  function rgbToHsv(r,g,b){
+    r/=255; g/=255; b/=255;
+    const max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min;
+    let h=0, s=max===0?0:d/max, v=max;
+    if (d!==0){
+      switch(max){
+        case r: h=((g-b)/d)%6; break;
+        case g: h=(b-r)/d+2; break;
+        case b: h=(r-g)/d+4; break;
+      }
+      h=Math.round(h*60); if (h<0) h+=360;
     }
-    return el;
+    return {h,s,v};
   }
-
-  function isAddSetlistButton(el){
-    if (!el) return false;
-    if (el.id === 'add-setlist') return true;
-    if (el.matches && el.matches('.add-setlist,[data-action="add-setlist"]')) return true;
-    // fallback: match by visible text
-    var txt = (el.textContent || '').trim().toLowerCase();
-    if (txt === 'add setlist' || txt === 'add new setlist' || txt === 'create setlist') return true;
-    return false;
+  function hsvToRgb(h,s,v){
+    h=((h%360)+360)%360; const c=v*s, x=c*(1-Math.abs((h/60)%2-1)), m=v-c;
+    let r=0,g=0,b=0;
+    if (h<60){r=c;g=x;} else if (h<120){r=x;g=c;} else if (h<180){g=c;b=x;}
+    else if (h<240){g=x;b=c;} else if (h<300){r=x;b=c;} else {r=c;b=x;}
+    return { r: Math.round((r+m)*255), g: Math.round((g+m)*255), b: Math.round((b+m)*255) };
   }
+  function rgbStrToHexStr(s){ const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/i.exec(s||''); return m ? rgbToHex(+m[1],+m[2],+m[3]) : null; }
 
-  function closestAddSetlistButton(target){
-    return target && target.closest && target.closest('#add-setlist, .add-setlist, [data-action="add-setlist"], button, a');
-  }
-
-  function focusNameAndStop(e, nameInput){
-    try{
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      e.stopPropagation();
-    }catch(_){}
-    try{
-      nameInput.focus();
-      nameInput.scrollIntoView({behavior:'smooth', block:'center'});
-      // optional micro-feedback (no CSS dependency)
-      nameInput.style.outline = '2px solid #3b82f6';
-      setTimeout(function(){ nameInput.style.outline = ''; }, 600);
-    }catch(_){}
-  }
-
-  // Intercept clicks (CAPTURE) before app code sees them
-  document.addEventListener('click', function(e){
-    var btn = closestAddSetlistButton(e.target);
-    if (!btn || !isAddSetlistButton(btn)) return;
-    var nameInput = getNameInput();
-    if (!nameInput) return;
-    var val = (nameInput.value || '').trim();
-    if (!val){
-      focusNameAndStop(e, nameInput);
+  // Identify the New Genre color input: prefer #genre-color, else the first color input near "New genre"
+  function findColorInput(){
+    let input = $('#genre-color');
+    if (input) return input;
+    const name = $('input[placeholder="New genre" i]') || $('#genre-name');
+    if (name){
+      const host = name.closest('.sidebar, .left, .new-genre, form, div') || document;
+      input = host.querySelector('input[type="color"]');
     }
-  }, true);
+    return input || document.querySelector('input[type="color"]');
+  }
 
-  // Intercept form submit in case "Add setlist" triggers submit
-  document.addEventListener('submit', function(e){
-    var form = e.target;
-    if (!form) return;
-    // Heuristic: if the form contains a likely add-setlist button or the name field
-    var nameInput = getNameInput();
-    if (!nameInput) return;
-    if (!form.contains(nameInput)) return;
-    var val = (nameInput.value || '').trim();
-    if (!val){
-      focusNameAndStop(e, nameInput);
+  const input = findColorInput();
+  if (!input) return;
+
+  const pop = $('#ioscp-pop');
+  const arrow = $('#ioscp-arrow');
+  const closeBtn = $('.ioscp-close', pop);
+  const doneBtn = $('#ioscp-done', pop);
+  const cancelBtn = $('#ioscp-cancel', pop);
+  const tabs = $$('.ioscp-tab', pop);
+  const pages = $$('.ioscp-page', pop);
+
+  // Grid elements
+  const grid = $('#ioscp-grid', pop);
+  const recent = $('#ioscp-recent', pop);
+
+  // Spectrum elements
+  const sv = $('#ioscp-sv', pop);
+  const svCaret = $('#ioscp-sv-caret', pop);
+  const hue = $('#ioscp-hue', pop);
+  const hueCaret = $('#ioscp-hue-caret', pop);
+
+  // Slider elements
+  const rR = $('#ioscp-r', pop), gR = $('#ioscp-g', pop), bR = $('#ioscp-b', pop);
+  const rN = $('#ioscp-rn', pop), gN = $('#ioscp-gn', pop), bN = $('#ioscp-bn', pop);
+  const hexIn = $('#ioscp-hex', pop), prev = $('#ioscp-prev', pop);
+
+  // Base Apple-like grid: 7 circles + one "+" (we'll render + as a special tile)
+  const BASE = ['#000000','#ffffff','#ff3b30','#ff9f0a','#34c759','#007aff','#af52de'];
+  let recents = (()=>{ try { return JSON.parse(localStorage.getItem('ioscp.recents')||'[]'); } catch(_) { return []; } })();
+  function saveRecents(){ try { localStorage.setItem('ioscp.recents', JSON.stringify(recents.slice(0,8))); } catch(_){} }
+
+  // State
+  let hsv = rgbToHsv(...Object.values(hexToRgb(input.value || '#000000')));
+  function currentHex(){
+    const {r,g,b} = hsvToRgb(hsv.h, hsv.s, hsv.v);
+    return rgbToHex(r,g,b);
+  }
+
+  // Rendering
+  function renderGrid(){
+    grid.innerHTML = '';
+    // 7 swatches
+    BASE.forEach(hex=>{
+      const b = document.createElement('button');
+      b.type='button'; b.className='ioscp-swatch'; b.style.background = hex; b.setAttribute('aria-label', hex);
+      b.addEventListener('click', ()=> setHex(hex, true));
+      grid.appendChild(b);
+    });
+    // Plus tile (adds current color to recents)
+    const plus = document.createElement('button');
+    plus.type='button'; plus.className='ioscp-plus'; plus.textContent = '+'; plus.setAttribute('aria-label','Add to Recents');
+    plus.addEventListener('click', ()=>{
+      const hex = currentHex();
+      recents = [hex, ...recents.filter(c=>c.toLowerCase()!==hex.toLowerCase())].slice(0,8);
+      saveRecents();
+      renderRecents();
+    });
+    grid.appendChild(plus);
+  }
+  function deriveUsedColorsFromSidebar(){
+    // Heuristic scrape
+    const set = new Set();
+    $$('[data-genre-color]').forEach(el=>{ const v = String(el.getAttribute('data-genre-color')).trim(); if (v) set.add(v); });
+    $$('.genre, .genre-chip, .genre-tag, .genre-dot, .sidebar [style*="background"]').forEach(el=>{
+      const hx = rgbStrToHexStr(getComputedStyle(el).backgroundColor); if (hx) set.add(hx);
+    });
+    return Array.from(set).slice(0,8);
+  }
+  function renderRecents(){
+    if (!recents.length){
+      const inferred = deriveUsedColorsFromSidebar();
+      if (inferred.length) recents = inferred;
     }
-  }, true);
+    recent.innerHTML = '';
+    if (!recents.length){
+      // grey placeholders when none
+      for (let i=0;i<8;i++){
+        const d = document.createElement('div'); d.className='ioscp-swatch'; d.style.background = '#9ca3af'; d.style.opacity = '.6';
+        recent.appendChild(d);
+      }
+      return;
+    }
+    recents.slice(0,8).forEach(hex=>{
+      const b = document.createElement('button');
+      b.type='button'; b.className='ioscp-swatch'; b.style.background = hex; b.setAttribute('aria-label', hex);
+      b.addEventListener('click', ()=> setHex(hex, true));
+      recent.appendChild(b);
+    });
+  }
+
+  // Spectrum mechanics
+  function setHue(h){
+    hsv.h = clamp(h, 0, 359.9);
+    // Update SV background base to current hue
+    sv.style.backgroundImage = 'linear-gradient(to right, #fff, rgba(255,255,255,0)),' + 'linear-gradient(to top, #000, rgba(0,0,0,0)),' + 'linear-gradient(to right, hsl(' + hsv.h + ',100%,50%), hsl(' + hsv.h + ',100%,50%))';
+    hueCaret.style.left = (hsv.h/360*100) + '%';
+    syncFromHSV(false);
+    positionSVCaret();
+  }
+  function positionSVCaret(){
+    const r = sv.getBoundingClientRect();
+    svCaret.style.left = (hsv.s * r.width) + 'px';
+    svCaret.style.top  = ((1 - hsv.v) * r.height) + 'px';
+  }
+  function attachSpectrum(){
+    function updateAt(e){
+      const r = sv.getBoundingClientRect();
+      const x = clamp(e.clientX - r.left, 0, r.width);
+      const y = clamp(e.clientY - r.top,  0, r.height);
+      hsv.s = x / r.width;
+      hsv.v = 1 - (y / r.height);
+      syncFromHSV(false);
+      positionSVCaret();
+    }
+    sv.addEventListener('pointerdown', e=>{ sv.setPointerCapture(e.pointerId); updateAt(e); });
+    sv.addEventListener('pointermove', e=>{ if (sv.hasPointerCapture(e.pointerId)) updateAt(e); });
+    sv.addEventListener('pointerup',   e=>{ try{sv.releasePointerCapture(e.pointerId);}catch(_){} });
+
+    function updateHueAt(e){
+      const r = hue.getBoundingClientRect();
+      const x = clamp(e.clientX - r.left, 0, r.width);
+      setHue((x / r.width) * 360);
+    }
+    hue.addEventListener('pointerdown', e=>{ hue.setPointerCapture(e.pointerId); updateHueAt(e); });
+    hue.addEventListener('pointermove', e=>{ if (hue.hasPointerCapture(e.pointerId)) updateHueAt(e); });
+    hue.addEventListener('pointerup',   e=>{ try{hue.releasePointerCapture(e.pointerId);}catch(_){} });
+  }
+
+  // Sliders sync
+  function syncFromHSV(pushHex=true){
+    const {r,g,b} = hsvToRgb(hsv.h, hsv.s, hsv.v);
+    rR.value=r; gR.value=g; bR.value=b;
+    rN.value=r; gN.value=g; bN.value=b;
+    const hex = rgbToHex(r,g,b);
+    prev.style.background = hex;
+    if (pushHex) hexIn.value = hex;
+  }
+  function setHex(hex, pushToHSV){
+    const {r,g,b} = hexToRgb(hex);
+    rR.value=r; rN.value=r; gR.value=g; gN.value=g; bR.value=b; bN.value=b;
+    const hsvNew = rgbToHsv(r,g,b);
+    if (pushToHSV){ hsv = hsvNew; setHue(hsv.h); positionSVCaret(); }
+    prev.style.background = hex;
+    hexIn.value = hex;
+  }
+  function bindSliders(){
+    function link(range, num){
+      const sync = ()=>{
+        let r=+rR.value|0, g=+gR.value|0, b=+bR.value|0;
+        rN.value=r; gN.value=g; bN.value=b;
+        hsv = rgbToHsv(r,g,b);
+        syncFromHSV(true);
+        positionSVCaret();
+      };
+      range.addEventListener('input', sync);
+      num.addEventListener('input', ()=>{
+        range.value = clamp(+num.value|0,0,255);
+        sync();
+      });
+    }
+    link(rR,rN); link(gR,gN); link(bR,bN);
+    hexIn.addEventListener('input', ()=> setHex(hexIn.value, true));
+  }
+
+  // Tabs
+  function showTab(key){
+    tabs.forEach(t=> t.setAttribute('aria-pressed', String(t.dataset.tab===key)));
+    pages.forEach(p=> p.hidden = (p.dataset.page !== key));
+  }
+  tabs.forEach(t=> t.addEventListener('click', ()=> showTab(t.dataset.tab)));
+
+  // Position popover near the input with an arrow
+  function positionPopover(){
+    const r = input.getBoundingClientRect();
+    const top = window.pageYOffset + r.bottom + 10;
+    let left = window.pageXOffset + r.left;
+    pop.style.top = top + 'px';
+    pop.style.left = left + 'px';
+    // Keep inside viewport
+    const vw = document.documentElement.clientWidth;
+    const pw = pop.getBoundingClientRect().width || 360;
+    if (left + pw + 8 > window.pageXOffset + vw){
+      left = window.pageXOffset + vw - pw - 8;
+      pop.style.left = left + 'px';
+    }
+    // Arrow align near input's left
+    const arrowLeft = Math.max(10, Math.min(24, (r.width/2) - 8));
+    arrow.style.left = arrowLeft + 'px';
+  }
+
+  // Open/close
+  function openPicker(){
+    // Initialize from input value
+    setHex(input.value || '#000000', true);
+    showTab('grid');
+    renderGrid();
+    renderRecents();
+    pop.hidden = false;
+    positionPopover();
+    positionSVCaret();
+  }
+  function closePicker(){ pop.hidden = true; }
+
+  // Done/Cancel
+  doneBtn.addEventListener('click', ()=>{
+    input.value = hexIn.value || currentHex();
+    input.dispatchEvent(new Event('input', {bubbles:true}));
+    input.dispatchEvent(new Event('change', {bubbles:true}));
+    // Persist to recents
+    const hx = input.value;
+    recents = [hx, ...recents.filter(c=>c.toLowerCase()!==hx.toLowerCase())].slice(0,8);
+    saveRecents();
+    closePicker();
+  });
+  cancelBtn.addEventListener('click', closePicker);
+  closeBtn.addEventListener('click', closePicker);
+  window.addEventListener('resize', ()=>{ if (!pop.hidden) positionPopover(); }, {passive:true});
+  window.addEventListener('scroll', ()=>{ if (!pop.hidden) positionPopover(); }, {passive:true});
+  document.addEventListener('click', (e)=>{ if (!pop.hidden && !pop.contains(e.target) && e.target !== input) closePicker(); });
+
+  // Intercept native picker
+  function intercept(e){ e.preventDefault(); e.stopPropagation(); openPicker(); }
+  input.addEventListener('pointerdown', intercept, {passive:false});
+  input.addEventListener('touchstart', intercept, {passive:false});
+  input.addEventListener('click', intercept, {passive:false});
+
+  // Initialize sliders/spectrum
+  bindSliders();
+  attachSpectrum();
+  setHue(hsv.h);
+  positionSVCaret();
+  syncFromHSV(true);
 })();
 </script>
-<!-- === END: Add-Setlist focus-on-empty-name === -->
+<!-- ========== END iOS-like Color Picker ========== -->
 \n</body>
 </html>
 
