@@ -1799,32 +1799,47 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
 </style>
 
 
-<style id="new-genre-gate-css">
-  /* Close button injected into the existing color selector */
-  .genre-picker-close-btn {
-    position: absolute;
-    top: 6px;
-    right: 8px;
-    width: 22px;
-    height: 22px;
-    line-height: 20px;
-    border-radius: 9999px;
-    border: 0;
-    background: rgba(17,24,39,0.08);
-    color: inherit;
-    font-weight: 700;
-    cursor: pointer;
-    z-index: 1000000;
+<style id="genre-color-modal-styles">
+  #genre-color-modal {
+    position: fixed; inset: 0; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.45);
+    z-index: 100000;
   }
-  .genre-picker-close-btn:hover {
-    background: rgba(17,24,39,0.16);
+  #genre-color-modal .sheet {
+    position: relative;
+    background: #ffffff;
+    color: #111827;
+    border-radius: 12px;
+    padding: 16px;
+    min-width: 280px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
   }
-  html.dark .genre-picker-close-btn {
-    background: rgba(255,255,255,0.12);
+  html.dark #genre-color-modal .sheet { background: #111827; color: #e5e7eb; }
+  #genre-color-modal .title {
+    margin: 0 0 12px 0;
+    font-weight: 600;
   }
-  html.dark .genre-picker-close-btn:hover {
-    background: rgba(255,255,255,0.2);
+  #genre-color-modal .close-x {
+    position: absolute; top: 8px; right: 10px;
+    width: 22px; height: 22px; line-height: 22px;
+    border-radius: 9999px; text-align: center;
+    border: 0; cursor: pointer;
+    background: rgba(17,24,39,0.08); color: inherit; font-weight: 700;
   }
+  #genre-color-modal .close-x:hover { background: rgba(17,24,39,0.16); }
+  html.dark #genre-color-modal .close-x { background: rgba(255,255,255,0.12); }
+  html.dark #genre-color-modal .close-x:hover { background: rgba(255,255,255,0.20); }
+  #genre-color-modal .row { display:flex; align-items:center; gap:12px; }
+  #genre-color-modal input[type="color"] {
+    width: 44px; height: 44px; border: none; background: transparent; cursor: pointer;
+  }
+  #genre-color-modal .actions { margin-top: 12px; display:flex; justify-content:flex-end; gap: 8px; }
+  #genre-color-modal .btn {
+    border: none; border-radius: 8px; padding: 8px 12px; cursor: pointer;
+  }
+  #genre-color-modal .btn-apply { background: #3b82f6; color: #fff; }
+  #genre-color-modal .btn-apply:hover { background: #2563eb; }
 </style>
 
 </head>
@@ -2392,32 +2407,47 @@ const s=$('.left-col');s.toggleClass('collapsed');
 </style>
 
 
-<style id="new-genre-gate-css">
-  /* Close button injected into the existing color selector */
-  .genre-picker-close-btn {
-    position: absolute;
-    top: 6px;
-    right: 8px;
-    width: 22px;
-    height: 22px;
-    line-height: 20px;
-    border-radius: 9999px;
-    border: 0;
-    background: rgba(17,24,39,0.08);
-    color: inherit;
-    font-weight: 700;
-    cursor: pointer;
-    z-index: 1000000;
+<style id="genre-color-modal-styles">
+  #genre-color-modal {
+    position: fixed; inset: 0; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.45);
+    z-index: 100000;
   }
-  .genre-picker-close-btn:hover {
-    background: rgba(17,24,39,0.16);
+  #genre-color-modal .sheet {
+    position: relative;
+    background: #ffffff;
+    color: #111827;
+    border-radius: 12px;
+    padding: 16px;
+    min-width: 280px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.25);
   }
-  html.dark .genre-picker-close-btn {
-    background: rgba(255,255,255,0.12);
+  html.dark #genre-color-modal .sheet { background: #111827; color: #e5e7eb; }
+  #genre-color-modal .title {
+    margin: 0 0 12px 0;
+    font-weight: 600;
   }
-  html.dark .genre-picker-close-btn:hover {
-    background: rgba(255,255,255,0.2);
+  #genre-color-modal .close-x {
+    position: absolute; top: 8px; right: 10px;
+    width: 22px; height: 22px; line-height: 22px;
+    border-radius: 9999px; text-align: center;
+    border: 0; cursor: pointer;
+    background: rgba(17,24,39,0.08); color: inherit; font-weight: 700;
   }
+  #genre-color-modal .close-x:hover { background: rgba(17,24,39,0.16); }
+  html.dark #genre-color-modal .close-x { background: rgba(255,255,255,0.12); }
+  html.dark #genre-color-modal .close-x:hover { background: rgba(255,255,255,0.20); }
+  #genre-color-modal .row { display:flex; align-items:center; gap:12px; }
+  #genre-color-modal input[type="color"] {
+    width: 44px; height: 44px; border: none; background: transparent; cursor: pointer;
+  }
+  #genre-color-modal .actions { margin-top: 12px; display:flex; justify-content:flex-end; gap: 8px; }
+  #genre-color-modal .btn {
+    border: none; border-radius: 8px; padding: 8px 12px; cursor: pointer;
+  }
+  #genre-color-modal .btn-apply { background: #3b82f6; color: #fff; }
+  #genre-color-modal .btn-apply:hover { background: #2563eb; }
 </style>
 
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
@@ -5175,146 +5205,6 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
       // no-op
     });
   }
-})();
-</script>
-
-
-<script id="new-genre-gate-logic">
-(function(){
-  // CONFIG: ids used in your app
-  var INPUT_ID = 'genre-name';               // "New genre" textbox
-  var COLOR_DISPLAY_ID = 'genre-color-display'; // Rainbow wheel
-  var COLOR_HIDDEN_ID = 'genre-color';       // hidden/actual color value input
-
-  var gateActive = true; // block typing until color selected OR dialog closed
-
-  function $(sel){ return document.querySelector(sel); }
-  function on(el, ev, fn, opts){ if(el) el.addEventListener(ev, fn, opts||false); }
-
-  function inputEl(){
-    // Prefer explicit id, but also fall back to placeholder "New genre"
-    var el = document.getElementById(INPUT_ID);
-    if (!el){
-      el = Array.from(document.querySelectorAll('input,textarea')).find(function(n){
-        return (n.placeholder||'').toLowerCase().includes('new genre');
-      });
-    }
-    return el;
-  }
-  function colorDisplay(){ return document.getElementById(COLOR_DISPLAY_ID); }
-  function colorHidden(){ return document.getElementById(COLOR_HIDDEN_ID); }
-
-  // Try to find the app's existing color picker surface after rainbow wheel click
-  function detectPickerContainer(){
-    // Heuristics: look for the most recently shown floating panel near the wheel
-    var candidates = Array.from(document.body.querySelectorAll('[role="dialog"], .popover, .popup, .menu, .dropdown, .picker, .color, .colorpicker'))
-      .filter(function(n){
-        var cs = getComputedStyle(n);
-        return (cs.display !== 'none' && cs.visibility !== 'hidden' && n.offsetParent !== null);
-      });
-    if (candidates.length) return candidates[candidates.length-1];
-
-    // Fallback: a container that has a visible input[type=color]
-    var inputs = Array.from(document.querySelectorAll('input[type="color"]')).filter(function(n){
-      var cs = getComputedStyle(n);
-      return (cs.display !== 'none' && cs.visibility !== 'hidden' && n.offsetParent !== null);
-    });
-    if (inputs.length){
-      var p = inputs[inputs.length-1].closest('*');
-      return p || inputs[inputs.length-1];
-    }
-    return null;
-  }
-
-  function injectCloseButton(container){
-    if (!container) return null;
-    if (container.querySelector('.genre-picker-close-btn')) return container.querySelector('.genre-picker-close-btn');
-    // Ensure the container can position absolute children
-    var cs = getComputedStyle(container);
-    if (cs.position === 'static'){ container.style.position = 'relative'; }
-    var btn = document.createElement('button');
-    btn.className = 'genre-picker-close-btn';
-    btn.type = 'button';
-    btn.textContent = '×';
-    container.appendChild(btn);
-    on(btn, 'click', function(){
-      // Allow typing after close
-      gateActive = false;
-      // Best effort to hide the existing picker (clicking outside / ESC / or direct hide if supported)
-      try { container.style.display = 'none'; } catch(e){}
-      var el = inputEl(); if (el) { el.focus(); el.select && el.select(); }
-    });
-    return btn;
-  }
-
-  function openExistingPicker(){
-    var wheel = colorDisplay();
-    if (wheel){
-      // Trigger your app's existing picker
-      wheel.click();
-      // Try to inject the 'X' close button
-      setTimeout(function(){
-        var container = detectPickerContainer();
-        injectCloseButton(container);
-      }, 50);
-    } else {
-      // As a fallback, try to click a color input if present
-      var colorInputs = document.querySelectorAll('input[type="color"]');
-      if (colorInputs.length){
-        colorInputs[colorInputs.length-1].focus();
-        colorInputs[colorInputs.length-1].click();
-        setTimeout(function(){
-          var container = detectPickerContainer();
-          injectCloseButton(container);
-        }, 50);
-      }
-    }
-  }
-
-  // When the app updates the hidden color input, treat that as a selection and allow typing
-  var hidden = colorHidden();
-  if (hidden){
-    on(hidden, 'change', function(){
-      gateActive = false;
-      var el = inputEl(); if (el) { el.focus(); el.select && el.select(); }
-    });
-    // Also observe attribute changes for apps that set .value without firing 'change'
-    var mo = new MutationObserver(function(){ gateActive = false; });
-    try { mo.observe(hidden, {attributes:true, attributeFilter:['value']}); } catch(e){}
-  }
-
-  function gateHandler(e){
-    if (!gateActive) return; // already allowed
-    e.preventDefault();
-    e.stopPropagation();
-    var el = inputEl();
-    if (el){ el.blur(); }
-    openExistingPicker();
-  }
-
-  // Wire: block the first attempt to click/focus the "New genre" textbox
-  function wire(){
-    var el = inputEl();
-    if (!el) return;
-    // Clean previous listeners
-    el.removeEventListener('focus', gateHandler, true);
-    el.removeEventListener('mousedown', gateHandler, true);
-    el.removeEventListener('touchstart', gateHandler);
-    el.addEventListener('focus', gateHandler, true);
-    el.addEventListener('mousedown', gateHandler, true);
-    el.addEventListener('touchstart', gateHandler, {passive:false});
-  }
-
-  // Initial wire and rewire on load (handles dynamic re-rendering of the sidebar)
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', wire);
-  } else {
-    wire();
-  }
-  window.addEventListener('load', wire);
-  // If your app re-renders the sidebar, rewire occasionally
-  setInterval(wire, 800);
-
 })();
 </script>
 
