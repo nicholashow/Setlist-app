@@ -1799,30 +1799,27 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
 </style>
 
 
-<style id="genre-native-picker-close-css">
-  #genre-native-close {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    width: 28px;
-    height: 28px;
-    line-height: 26px;
-    border-radius: 9999px;
+<style id="genre-existing-picker-x-css">
+  /* The X we will inject *inside* your existing color selector box */
+  .genre-existing-picker-x {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
     text-align: center;
-    font-weight: 700;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    background: rgba(17,24,39,0.9);
-    color: #fff;
+    border-radius: 9999px;
     border: 0;
     cursor: pointer;
-    z-index: 100000;
-    display: none; /* only visible when picker is open */
+    font-weight: 700;
+    background: rgba(17,24,39,0.12);
+    color: inherit;
+    z-index: 1000001; /* above the picker’s content */
   }
-  html.dark #genre-native-close {
-    background: rgba(255,255,255,0.85);
-    color: #111827;
-  }
-  #genre-native-close:hover { filter: brightness(1.05); }
+  .genre-existing-picker-x:hover { background: rgba(17,24,39,0.22); }
+  html.dark .genre-existing-picker-x { background: rgba(255,255,255,0.12); }
+  html.dark .genre-existing-picker-x:hover { background: rgba(255,255,255,0.22); }
 </style>
 
 </head>
@@ -2390,30 +2387,27 @@ const s=$('.left-col');s.toggleClass('collapsed');
 </style>
 
 
-<style id="genre-native-picker-close-css">
-  #genre-native-close {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    width: 28px;
-    height: 28px;
-    line-height: 26px;
-    border-radius: 9999px;
+<style id="genre-existing-picker-x-css">
+  /* The X we will inject *inside* your existing color selector box */
+  .genre-existing-picker-x {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    line-height: 22px;
     text-align: center;
-    font-weight: 700;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-    background: rgba(17,24,39,0.9);
-    color: #fff;
+    border-radius: 9999px;
     border: 0;
     cursor: pointer;
-    z-index: 100000;
-    display: none; /* only visible when picker is open */
+    font-weight: 700;
+    background: rgba(17,24,39,0.12);
+    color: inherit;
+    z-index: 1000001; /* above the picker’s content */
   }
-  html.dark #genre-native-close {
-    background: rgba(255,255,255,0.85);
-    color: #111827;
-  }
-  #genre-native-close:hover { filter: brightness(1.05); }
+  .genre-existing-picker-x:hover { background: rgba(17,24,39,0.22); }
+  html.dark .genre-existing-picker-x { background: rgba(255,255,255,0.12); }
+  html.dark .genre-existing-picker-x:hover { background: rgba(255,255,255,0.22); }
 </style>
 
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
@@ -5175,73 +5169,130 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 
 
-<script id="genre-native-picker-close-js">
+<script id="genre-existing-picker-x-js">
 (function(){
+  /* Goal: add a small “×” button *inside the real color selector that your app shows*
+   * when clicking the rainbow wheel next to “New genre”.
+   *
+   * We do NOT replace your picker or show a new one. We detect the existing picker
+   * in the DOM right after it opens, and then inject a close button into that same node.
+   */
+
   function $(s){ return document.querySelector(s); }
-  function on(el, ev, fn, opts){ if (el) el.addEventListener(ev, fn, opts||false); }
+  function qsa(s){ return Array.from(document.querySelectorAll(s)); }
 
-  var colorInput = $('#genre-color');           // native <input type="color">
-  var closeBtn   = $('#genre-native-close');    // floating ×
+  var colorWheel = $('#genre-color-display'); // the rainbow wheel element
+  var colorInput = $('#genre-color');         // the input your picker controls
+  if (!colorWheel && !colorInput) return;
 
-  if (!colorInput) return;
+  // Heuristic to find your existing color selector container in the DOM.
+  // We look for the most recently visible high-z element that likely acts as a popover / modal around color controls.
+  function isVisible(el){
+    if (!el) return false;
+    var cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') return false;
+    if (!el.getClientRects().length) return false;
+    return true;
+  }
 
-  function showClose(){ if (closeBtn) closeBtn.style.display = 'block'; }
-  function hideClose(){ if (closeBtn) closeBtn.style.display = 'none'; }
+  function looksLikePicker(el){
+    if (!el) return false;
+    var cs = getComputedStyle(el);
+    // Many pickers are positioned fixed/absolute and sit above content
+    var pos = cs.position;
+    var z = parseInt(cs.zIndex || '0', 10);
+    if ((pos === 'fixed' || pos === 'absolute') && z >= 100) return true;
 
-  function openHandler(){ showClose(); }
-  function pickedHandler(){ hideClose(); }      // fires when user picks a color
-  function blurHandler(){ hideClose(); }        // fires when native picker closes
+    // Classname hints
+    var cls = (el.className || '').toString().toLowerCase();
+    if (/(color|picker|popover|dialog|popup|menu|dropdown)/.test(cls)) return true;
 
-  // Wire up native color input signals
-  on(colorInput, 'focus', openHandler, true);
-  on(colorInput, 'click', openHandler, true);
-  on(colorInput, 'change', pickedHandler);
-  on(colorInput, 'blur', blurHandler);
+    // Content hints: swatches or color inputs
+    if (el.querySelector('input[type="color"]')) return true;
+    if (el.querySelector('[style*="background"]')) return true;
 
-  // Clicking × simulates closing the native picker
-  if (closeBtn){
-    on(closeBtn, 'click', function(){
-      // Best-effort close: blur the input and send ESC
-      try { colorInput.blur(); } catch(e){}
+    return false;
+  }
+
+  function findPickerContainer(){
+    // Search from the end of body (most recently added)
+    var nodes = qsa('body *').filter(isVisible);
+    for (var i = nodes.length - 1; i >= 0; i--){
+      var n = nodes[i];
+      if (looksLikePicker(n)) return n;
+    }
+    return null;
+  }
+
+  function ensureXInside(container){
+    if (!container) return null;
+    if (container.querySelector('.genre-existing-picker-x')) return container.querySelector('.genre-existing-picker-x');
+
+    // Make sure container can position absolute children
+    var cs = getComputedStyle(container);
+    if (cs.position === 'static') container.style.position = 'relative';
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'genre-existing-picker-x';
+    btn.textContent = '×';
+    container.appendChild(btn);
+
+    btn.addEventListener('click', function(){
+      // Best-effort close: try to hide container or propagate an Escape
+      try { container.style.display = 'none'; } catch(e){}
       try {
         var evt = new KeyboardEvent('keydown', {key:'Escape', keyCode:27, which:27, bubbles:true});
         document.dispatchEvent(evt);
       } catch(e){}
-      hideClose();
+      // Also blur the color input if present
+      try { (colorInput || document.activeElement).blur(); } catch(e){}
     });
+
+    return btn;
   }
+
+  // Wire: when the wheel or its input is interacted with, wait a moment, then inject the X into the opened picker
+  function onOpenAttempt(){
+    setTimeout(function(){
+      var container = findPickerContainer();
+      ensureXInside(container);
+    }, 50);
+    setTimeout(function(){
+      var container = findPickerContainer();
+      ensureXInside(container);
+    }, 200);
+    setTimeout(function(){
+      var container = findPickerContainer();
+      ensureXInside(container);
+    }, 500);
+  }
+
+  if (colorWheel){
+    colorWheel.style.cursor = 'pointer';
+    colorWheel.addEventListener('click', onOpenAttempt, true);
+    colorWheel.addEventListener('mousedown', onOpenAttempt, true);
+    colorWheel.addEventListener('touchstart', onOpenAttempt, {passive:true});
+  }
+  if (colorInput){
+    colorInput.addEventListener('focus', onOpenAttempt, true);
+    colorInput.addEventListener('click', onOpenAttempt, true);
+  }
+
+  // In case the picker is opened by other code paths, watch the DOM for newly added visible nodes
+  var mo = new MutationObserver(function(records){
+    for (var i=0;i<records.length;i++){
+      var rec = records[i];
+      if (rec.addedNodes && rec.addedNodes.length){
+        var container = findPickerContainer();
+        if (container) { ensureXInside(container); break; }
+      }
+    }
+  });
+  mo.observe(document.body, {childList:true, subtree:true});
 })();
 </script>
 
-
-<button id="genre-native-close" aria-label="Close color picker">×</button>
-
-<script>
-(function genreNativePickerCloseInit() {
-  try {
-    var colorInput = document.getElementById('genre-color');
-    var closeBtn = document.getElementById('genre-native-close');
-    if (!colorInput || !closeBtn) return;
-
-    function showClose() { closeBtn.style.display = 'block'; }
-    function hideClose() { closeBtn.style.display = 'none'; }
-
-    // Show the × when the native picker likely opens.
-    colorInput.addEventListener('click', showClose, { passive: true });
-    colorInput.addEventListener('focus', showClose, { passive: true });
-
-    // Hide once user picks a color or the input loses focus.
-    colorInput.addEventListener('change', hideClose);
-    colorInput.addEventListener('blur', hideClose);
-
-    // Allow the × to dismiss the picker via blur.
-    closeBtn.addEventListener('click', function () {
-      try { colorInput.blur(); } catch (e) {}
-      hideClose();
-    });
-  } catch (e) {}
-})();
-</script>
 </body>
 </html>
 
