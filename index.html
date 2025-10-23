@@ -1752,13 +1752,12 @@ body.setlist-drag-outside .ui-sortable-helper { display: none !important; }
 body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none !important; visibility: hidden !important; }
 
 
-
-/* === Inline rename overlay that preserves stacked text box and blocks accidental opens === */
+/* === Inline rename overlay that preserves stacked text and width (v3) === */
 .song-name.renaming { position: relative; }
 .song-name.renaming .edit-magic-square {
   position: absolute;
   box-sizing: border-box;
-  white-space: normal;
+  white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: break-word;
   outline: none !important;
@@ -1766,7 +1765,7 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   background: #ffffff;
   color: inherit;
   border-radius: 6px;
-  z-index: 9999;               /* ensure on top of icons */
+  z-index: 9999;
   user-select: text !important;
   -webkit-user-select: text !important;
   caret-color: auto;
@@ -1780,7 +1779,6 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
 /* While renaming, disable pointer events on the LI so clicks can't open the file */
 li.suspend-open * { pointer-events: none !important; }
 li.suspend-open .edit-magic-square { pointer-events: auto !important; }
-
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
 
@@ -2744,34 +2742,29 @@ const s=$('.left-col');s.toggleClass('collapsed');
 
     function beginInlineRename($textEl, songId){
     try {
-        // Container that holds the visible stacked name
         var $container = $textEl.closest('.song-name');
         if ($container.length === 0) $container = $textEl;
-        if ($container.find('.edit-magic-square').length) return; // already editing
+        if ($container.find('.edit-magic-square').length) return;
 
         var $nameSpan = $container.find('.song-name-text').first();
         if ($nameSpan.length === 0) $nameSpan = $container;
 
-        var current = ($nameSpan.text() || '').trim();
+        var current = ($nameSpan.text() || '').replace(/\u00A0/g,' ').trim();
         var spanEl = $nameSpan.get(0);
         var contEl = $container.get(0);
         if (!spanEl || !contEl) return;
 
-        // Suspend clicks/opens on this row while editing
         var $li = $container.closest('li');
         $li.addClass('suspend-open');
 
-        // Measure exact stacked box of the visible text
         var spanRect = spanEl.getBoundingClientRect();
         var contRect = contEl.getBoundingClientRect();
 
-        // Use computed styles to duplicate text metrics precisely
         var cs = window.getComputedStyle(spanEl);
         var padL = cs.paddingLeft, padR = cs.paddingRight, padT = cs.paddingTop, padB = cs.paddingBottom;
         var lineHeight = cs.lineHeight, font = cs.font, fontSize = cs.fontSize, fontWeight = cs.fontWeight, fontFamily = cs.fontFamily;
-        var letterSpacing = cs.letterSpacing, textTransform = cs.textTransform;
+        var letterSpacing = cs.letterSpacing, textTransform = cs.textTransform, textAlign = cs.textAlign, textIndent = cs.textIndent;
 
-        // Create overlay editor; keep original text hidden to maintain layout
         $container.addClass('renaming');
         var prevVis = $nameSpan.css('visibility');
         $nameSpan.css('visibility', 'hidden');
@@ -2779,16 +2772,17 @@ const s=$('.left-col');s.toggleClass('collapsed');
         var $editor = $('<div class="edit-magic-square" contenteditable="true" spellcheck="false"></div>');
         $editor.text(current);
 
-        // Calculate overlay size/position relative to container
         var relLeft = (spanRect.left - contRect.left);
         var relTop  = (spanRect.top  - contRect.top);
-        var W = Math.max(20, Math.floor(spanRect.width) - 1);  // never wider than stacked text
-        var H = Math.max(24, Math.ceil(spanRect.height));
+        var W = Math.max(8, Math.floor(spanRect.width));
+        var H = Math.max(20, Math.ceil(spanRect.height));
 
         $editor.css({
             left: relLeft + 'px',
             top:  relTop  + 'px',
             width: W + 'px',
+            maxWidth: W + 'px',
+            minWidth: '0px',
             minHeight: H + 'px',
             paddingLeft: padL,
             paddingRight: padR,
@@ -2801,21 +2795,22 @@ const s=$('.left-col');s.toggleClass('collapsed');
             fontFamily: fontFamily,
             letterSpacing: letterSpacing,
             textTransform: textTransform,
-            whiteSpace: 'normal',
+            textAlign: textAlign,
+            textIndent: textIndent,
+            whiteSpace: 'pre-wrap',
             overflowWrap: 'anywhere',
             wordBreak: 'break-word'
         });
 
         $container.append($editor);
 
-        // Focus reliably on mobile; do not prevent default clicks on editor
         setTimeout(function(){
             try {
                 $editor.focus();
-                // Place caret at end
-                var sel = window.getSelection(); var range = document.createRange();
+                var range = document.createRange();
                 range.selectNodeContents($editor.get(0));
                 range.collapse(false);
+                var sel = window.getSelection();
                 sel.removeAllRanges(); sel.addRange(range);
             } catch(_){}
         }, 0);
@@ -2826,13 +2821,11 @@ const s=$('.left-col');s.toggleClass('collapsed');
                     var newVal = ($editor.text() || '').trim();
                     if (!newVal) newVal = current;
                     if (newVal !== current) {
-                        // Update data
                         try {
                             var sng = masterSongs && masterSongs.find ? masterSongs.find(function(x){ return x.id === songId; }) : null;
                             if (sng) sng.name = newVal;
                         } catch(_){}
                         try { save && save(); } catch(_){}
-                        // Update all visible instances
                         try { $('li#' + songId + ' .song-name-text').text(newVal); } catch(_){}
                     }
                 }
@@ -2844,18 +2837,16 @@ const s=$('.left-col');s.toggleClass('collapsed');
             }
         }
 
-        // Commit on Enter, cancel on Escape, commit on blur
         $editor.on('keydown', function(ev){
             if (ev.key === 'Enter') { ev.preventDefault(); finish(true); }
             else if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
         });
         $editor.on('blur', function(){ finish(true); });
 
-        // Block event bubbling to prevent opening files while editing
         $editor.on('mousedown touchstart click touchend', function(ev){ ev.stopPropagation(); });
 
     } catch(e) {
-        console.error('inline rename failed', e);
+        console.error('inline rename v3 failed', e);
     }
 
 }
