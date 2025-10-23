@@ -1814,22 +1814,6 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
-
-<style id="edit-textarea-stacked-css">
-/* Make the stacked editor look and wrap like the name span */
-.song-name-text.edit-textarea-stacked {
-  display: block;             /* allow wrapping box */
-  width: 100%;                /* match span width including reserved right space */
-  box-sizing: border-box;
-  line-height: 1.25;
-  white-space: normal;        /* allow wrapping */
-  overflow-wrap: anywhere;
-  border: 2px solid #2563eb;  /* same blue used elsewhere for focus */
-  border-radius: 8px;
-  padding: 2px 6px;
-}
-</style>
-
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2394,22 +2378,6 @@ const s=$('.left-col');s.toggleClass('collapsed');
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
-
-<style id="edit-textarea-stacked-css">
-/* Make the stacked editor look and wrap like the name span */
-.song-name-text.edit-textarea-stacked {
-  display: block;             /* allow wrapping box */
-  width: 100%;                /* match span width including reserved right space */
-  box-sizing: border-box;
-  line-height: 1.25;
-  white-space: normal;        /* allow wrapping */
-  overflow-wrap: anywhere;
-  border: 2px solid #2563eb;  /* same blue used elsewhere for focus */
-  border-radius: 8px;
-  padding: 2px 6px;
-}
-</style>
-
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
@@ -2744,65 +2712,96 @@ const s=$('.left-col');s.toggleClass('collapsed');
     // Cancel on release
     $(document).on('touchend mouseup touchcancel', function(){ cancelTimer(); });
 
-    function beginInlineRename($textEl, songId){
-  // Avoid duplicate editors
-  if ($textEl.closest('.song-name').find('input.edit-input, textarea.edit-input').length) return;
+    
+function beginInlineRename($textEl, songId){
+    // Avoid duplicate editors (input or textarea) in this song-name
+    if ($textEl.closest('.song-name').find('.edit-input').length) return;
 
-  const node = $textEl[0];
-  const current = $textEl.text();
+    const node = $textEl[0];
+    const current = $textEl.text();
 
-  // Detect if the visible name is stacked (wrapped to multiple lines)
-  const cs = window.getComputedStyle(node);
-  const rect = node.getBoundingClientRect();
-  let lineH = parseFloat(cs.lineHeight);
-  if (!(lineH > 0)) { lineH = rect.height; }
-  const isStacked = rect.height > (lineH + 2);
+    // Measure the actual on-screen lines
+    const rects = node.getClientRects ? Array.from(node.getClientRects()) : [];
+    const fullRect = node.getBoundingClientRect();
+    const lineHeightStr = window.getComputedStyle(node).lineHeight;
+    let lineH = parseFloat(lineHeightStr);
+    if (!(lineH > 0)) lineH = fullRect.height; // fallback
 
-  const commonClasses = 'song-name-text edit-input';
-  let $editor;
+    // Stacked if there are multiple rects or total height > ~1 line
+    const isStacked = (rects.length > 1) || (fullRect.height > (lineH + 2));
 
-  if (isStacked){
-    // Use a textarea so the edit box stacks exactly like the displayed name
-    $editor = $('<textarea class="'+commonClasses+' edit-textarea-stacked" />').val(current);
-    // Keep the same wrapping box and avoid layout jumps
-    $editor.css({ resize: 'none', overflow: 'hidden' });
-  } else {
-    // Single line stays as a standard input
-    $editor = $('<input type="text" class="'+commonClasses+'" />').val(current);
-  }
+    // Height from first line's top to last line's bottom
+    let totalHeight = fullRect.height;
+    if (rects.length >= 1) {
+        const top = rects[0].top;
+        const bottom = rects[rects.length - 1].bottom;
+        totalHeight = Math.max(18, bottom - top);
+    }
 
-  // Replace only the text span (preserves layout around it)
-  $textEl.replaceWith($editor);
-  $editor.focus();
-  // Make typing legible in dark mode
-  $editor.addClass('bg-white text-black');
+    // Width should be the widest line width (not the entire padded span)
+    let widest = 0;
+    if (rects.length) {
+        for (const r of rects) widest = Math.max(widest, r.width);
+    } else {
+        widest = fullRect.width;
+    }
+    // Add a tiny cushion for the input border/padding
+    widest = Math.max(40, Math.ceil(widest + 6));
 
-  function commit(save){
+    const commonCls = 'edit-input';
+    let $editor;
+
+    if (isStacked) {
+        // Use a textarea so the editor stacks exactly like the visible name
+        $editor = $('<textarea class="' + commonCls + '" />').val(current);
+        // Wrap exactly like the label
+        $editor.css({
+            whiteSpace: 'normal',
+            overflowWrap: 'anywhere',
+            wordBreak: 'break-word',
+            lineHeight: lineH + 'px',
+            resize: 'none',
+            height: totalHeight + 'px',
+            width: widest + 'px',
+            boxSizing: 'border-box'
+        });
+    } else {
+        // Single line: keep standard input
+        $editor = $('<input type="text" class="' + commonCls + '" />').val(current);
+        $editor.css({ width: widest + 'px', boxSizing: 'border-box' });
+    }
+
+    // Replace only the text span (preserves layout around it)
+    $textEl.replaceWith($editor);
+    $editor.focus();
+    // Make typing legible in dark mode
+    $editor.addClass('bg-white text-black');
+
+    function commit(save){
 
             const song = masterSongs.find(s => s.id === songId);
             if (!song){ renderAll(); return; 
-  }
+    }
 
-  // Enter commits (even for textarea); Esc cancels
-  $editor.on('keydown', function(ev){
-    if (ev.key === 'Enter'){ ev.preventDefault(); commit(true); }
-    else if (ev.key === 'Escape'){ commit(false); }
-  });
-  $editor.on('blur', function(){ commit(true); });
+    // Enter commits; Esc cancels (textarea Enter still commits to match prior behavior)
+    $editor.on('keydown', function(ev){
+        if (ev.key === 'Enter') { ev.preventDefault(); commit(true); }
+        else if (ev.key === 'Escape') { commit(false); }
+    });
+    $editor.on('blur', function(){ commit(true); });
 
-  // Prevent accidental drags while editing
-  $editor.on('touchstart mousedown', function(ev){ ev.stopPropagation(); });
+    // Prevent accidental drags while editing
+    $editor.on('touchstart mousedown', function(ev){ ev.stopPropagation(); });
 
-  // Auto-size stacked textarea to its content
-  if ($editor.is('textarea')){
-    const el = $editor[0];
-    const autosize = () => { el.style.height = 'auto'; el.style.height = (el.scrollHeight) + 'px'; };
-    // Initialize height approximately to previous rect height
-    el.style.height = rect.height + 'px';
-    // Then autosize accurately
-    autosize();
-    $editor.on('input', autosize);
-  }
+    // If textarea, auto-grow as user types (keeps stacked behavior)
+    if ($editor.is('textarea')) {
+        const el = $editor[0];
+        const autosize = () => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; };
+        // Initialize roughly to measured height, then correct
+        el.style.height = totalHeight + 'px';
+        autosize();
+        $editor.on('input', autosize);
+    }
 }
 
 })();
