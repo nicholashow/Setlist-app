@@ -2682,7 +2682,152 @@ const s=$('.left-col');s.toggleClass('collapsed');
     const HOLD_MS = 1100;
     const THRESHOLD = 8;
 
-    function getPoint(e){
+    
+    // --- Inline rename "magic-square" editor ---
+    // Draw a contenteditable box exactly around the stacked text area (no flattening).
+    function beginInlineRenameMagicSquare($textEl, songId){
+        try {
+            // Host is the element with the stacked text. Prefer the .song-name[data-song-id] node.
+            var $host = $textEl.closest('.song-name[data-song-id]');
+            if (!$host.length) $host = $textEl;
+            var host = $host.get(0);
+            if (!host) return;
+
+            // Avoid duplicate editors in this host
+            if ($host.find('.edit-magic-square').length) return;
+
+            // Mark renaming state (positions host relatively; see CSS)
+            $host.addClass('renaming');
+
+            // Measure stacked text geometry using DOM Ranges (line boxes and widest word)
+            function getAllClientRectsFor(el){
+                var rng = document.createRange();
+                rng.selectNodeContents(el);
+                return Array.from(rng.getClientRects());
+            }
+            function* walkTextNodes(node){
+                if (!node) return;
+                if (node.nodeType === 3 && node.nodeValue && node.nodeValue.trim().length){
+                    yield node;
+                } else if (node.nodeType === 1){
+                    for (var i=0; i<node.childNodes.length; i++){
+                        yield* walkTextNodes(node.childNodes[i]);
+                    }
+                }
+            }
+            function measureWidestWord(el){
+                var widest = 0;
+                var range = document.createRange();
+                for (var tn of walkTextNodes(el)){
+                    var s = tn.nodeValue;
+                    var re = /[^\s]+/g, m;
+                    while ((m = re.exec(s))){
+                        range.setStart(tn, m.index);
+                        range.setEnd(tn, m.index + m[0].length);
+                        var rects = range.getClientRects();
+                        if (rects.length){
+                            var w = rects[0].width;
+                            if (w > widest) widest = w;
+                        }
+                    }
+                }
+                // Fallback to whole-line width if no words found
+                if (!widest){
+                    var all = getAllClientRectsFor(el);
+                    widest = all.reduce((mx, r) => Math.max(mx, r.width), 0);
+                }
+                return widest;
+            }
+
+            var allRects = getAllClientRectsFor(host);
+            if (!allRects.length){
+                $host.removeClass('renaming');
+                return;
+            }
+            var minLeft = Infinity, maxRight = -Infinity, top = Infinity, bottom = -Infinity;
+            for (var rc of allRects){
+                if (rc.width === 0 || rc.height === 0) continue;
+                if (rc.left < minLeft) minLeft = rc.left;
+                if (rc.right > maxRight) maxRight = rc.right;
+                if (rc.top < top) top = rc.top;
+                if (rc.bottom > bottom) bottom = rc.bottom;
+            }
+            if (!isFinite(minLeft) || !isFinite(top) || !isFinite(bottom)){
+                $host.removeClass('renaming');
+                return;
+            }
+
+            // Compute width as the width of the widest *word* within the stacked text
+            var widestWord = Math.ceil(measureWidestWord(host));
+
+            // Position relative to the host element
+            var hostRect = host.getBoundingClientRect();
+            var left = Math.max(0, Math.round(minLeft - hostRect.left));
+            var topOffset = Math.max(0, Math.round(top - hostRect.top));
+            var height = Math.max(1, Math.round(bottom - top));
+            var width = Math.max(1, widestWord);
+
+            // Build the editor overlay
+            var current = ($host.text() || '').trim();
+            var $ed = $('<div class="edit-magic-square" contenteditable="true" spellcheck="false" />');
+            $ed.text(current);
+
+            // Style: exact-fit box around the stacked text. No padding; border uses border-box in CSS.
+            $ed.css({
+                position: 'absolute',
+                left: left + 'px',
+                top: topOffset + 'px',
+                width: width + 'px',
+                height: height + 'px',
+                font: 'inherit',
+                'line-height': 'inherit',
+                'letter-spacing': 'inherit',
+                'white-space': 'normal',
+                'overflow': 'hidden',
+                'box-sizing': 'border-box'
+            });
+
+            $host.append($ed);
+
+            // Focus and place caret at end
+            function placeCaretEnd(node){
+                try {
+                    var sel = window.getSelection();
+                    var rng = document.createRange();
+                    rng.selectNodeContents(node);
+                    rng.collapse(false);
+                    sel.removeAllRanges();
+                    sel.addRange(rng);
+                } catch(e){}
+            }
+            setTimeout(function(){ $ed.focus(); placeCaretEnd($ed.get(0)); }, 0);
+
+            function finish(commit){
+                var newVal = ($ed.text() || '').trim();
+                $ed.remove();
+                $host.removeClass('renaming');
+                if (!commit) return;
+                if (!newVal) return;
+
+                // Update model and re-render
+                try {
+                    var song = (window.masterSongs || []).find(function(s){ return s.id === songId; });
+                    if (song){ song.name = newVal; }
+                    if (typeof window.renderAll === 'function'){ window.renderAll(); }
+                    if (typeof window.save === 'function'){ window.save(); }
+                } catch(e){ /* no-op */ }
+            }
+
+            $ed.on('keydown', function(ev){
+                if (ev.key === 'Enter'){ ev.preventDefault(); finish(true); }
+                else if (ev.key === 'Escape'){ ev.preventDefault(); finish(false); }
+            });
+            $ed.on('blur', function(){ finish(true); });
+        } catch(err){
+            try { console.error('inline rename failed:', err); } catch(e){}
+        }
+    }
+function getPoint(e){
         if (e.touches && e.touches.length) return {x: e.touches[0].clientX, y: e.touches[0].clientY};
         if (e.changedTouches && e.changedTouches.length) return {x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY};
         return {x: e.clientX || 0, y: e.clientY || 0};
@@ -2697,7 +2842,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
         holdTimer = setTimeout(()=>{
             const songId = $target.data('song-id');
             if (!songId) return;
-            beginInlineRename($target, songId);
+            beginInlineRenameMagicSquare($target, songId);
         }, HOLD_MS);
     });
 
@@ -2713,97 +2858,38 @@ const s=$('.left-col');s.toggleClass('collapsed');
     $(document).on('touchend mouseup touchcancel', function(){ cancelTimer(); });
 
     function beginInlineRename($textEl, songId){
-  try {
-    var $container = $textEl.closest('.song-name');
-    if ($container.length === 0) $container = $textEl;
-    var $name = $container.find('.song-name-text').first();
-    if ($name.length === 0) $name = $container;
+        // Avoid duplicate editors
+        if ($textEl.closest('.song-name').find('input.edit-input').length) return;
 
-    if ($name.data('ghostEditing') === true) return;
-    $name.data('ghostEditing', true);
+        const current = $textEl.text();
+        const $input = $('<input type="text" class="edit-input" />').val(current);
+        // Replace only the text span (preserves layout around it)
+        $textEl.replaceWith($input);
+        $input.focus();
+        // Make typing legible in dark mode
+        $input.addClass('bg-white text-black');
 
-    var original = ($name.text() || "");
-
-    // Stop row interactions while editing (no visual change)
-    function stop(e){ e.stopPropagation(); }
-    $name.on('mousedown.ghostEdit touchstart.ghostEdit click.ghostEdit touchend.ghostEdit', stop);
-
-    // Create an invisible "ghost" textarea to summon the keyboard and receive input,
-    // while the visible text remains unchanged in style/position/size.
-    var $ghost = $('<textarea autocomplete=\"off\" autocorrect=\"off\" autocapitalize=\"off\" spellcheck=\"false\"></textarea>');
-    $ghost.val(original);
-    $ghost.css({
-      position: 'fixed',
-      left: '0px',
-      top: '0px',
-      width: '1px',
-      height: '1px',
-      opacity: 0,
-      zIndex: 2147483647,
-      pointerEvents: 'none',   // don't intercept taps
-      background: 'transparent',
-      border: 'none',
-      padding: 0,
-      margin: 0
-    });
-    $('body').append($ghost);
-
-    // Focus ghost so iOS brings up the keyboard
-    setTimeout(function(){
-      try {
-        $ghost.focus();
-        var len = $ghost.val().length;
-        $ghost.get(0).setSelectionRange(len, len);
-      } catch(_) {}
-    }, 0);
-
-    function sync(){
-      try {
-        var v = $ghost.val();
-        if (typeof v === 'string') v = v.replace(/\r\n/g, '\\n');
-        $name.text(v);
-      } catch(_) {}
-    }
-
-    $ghost.on('input', sync);
-
-    function finish(commit){
-      try {
-        if (commit) {
-          var newVal = ($ghost.val() || "").trim();
-          var oldVal = (original || "").trim();
-          if (!newVal) newVal = oldVal;
-          if (newVal !== oldVal) {
-            try {
-              var sng = (typeof masterSongs !== 'undefined' && masterSongs.find)
-                        ? masterSongs.find(function(x){ return x.id === songId; })
-                        : null;
-              if (sng) sng.name = newVal;
-            } catch(_) {}
-            try { save && save(); } catch(_) {}
-            try { $('li#' + songId + ' .song-name-text').text(newVal); } catch(_) {}
-          }
-        } else {
-          $name.text(original);
+        function commit(save){
+            const song = masterSongs.find(s => s.id === songId);
+            if (!song){ renderAll(); return; }
+            if (save){
+                const newName = String($input.val() || '').trim();
+                if (newName && newName !== song.name){
+                    song.name = newName;
+                    save(); // persist
+                }
+            }
+            renderAll(); // re-render everywhere that references this song
         }
-      } finally {
-        $ghost.off().remove();
-        $name.off('.ghostEdit').removeData('ghostEditing');
-      }
+
+        $input.on('keydown', function(ev){
+            if (ev.key === 'Enter') commit(true);
+            else if (ev.key === 'Escape') commit(false);
+        });
+        $input.on('blur', function(){ commit(true); });
+        // Prevent accidental drags while editing
+        $input.on('touchstart mousedown', function(ev){ ev.stopPropagation(); });
     }
-
-    $ghost.on('keydown', function(ev){
-      if (ev.key === 'Enter') { ev.preventDefault(); finish(true); }
-      else if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
-      ev.stopPropagation();
-    });
-    $ghost.on('blur', function(){ finish(true); });
-
-  } catch(e) {
-    console.error('inline rename (ghost) failed', e);
-  }
-
-}
 })();
 
 </script>
