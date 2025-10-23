@@ -1751,34 +1751,6 @@ html.dark .notes-inline .notes-textarea {
 body.setlist-drag-outside .ui-sortable-helper { display: none !important; }
 body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none !important; visibility: hidden !important; }
 
-
-/* === Inline rename overlay that preserves stacked text and width (v3) === */
-.song-name.renaming { position: relative; }
-.song-name.renaming .edit-magic-square {
-  position: absolute;
-  box-sizing: border-box;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  outline: none !important;
-  border: 2px solid #2563eb;
-  background: #ffffff;
-  color: inherit;
-  border-radius: 6px;
-  z-index: 9999;
-  user-select: text !important;
-  -webkit-user-select: text !important;
-  caret-color: auto;
-  touch-action: manipulation;
-}
-.dark .song-name.renaming .edit-magic-square {
-  background: #111827;
-  color: #e5e7eb;
-  border-color: #2563eb;
-}
-/* While renaming, disable pointer events on the LI so clicks can't open the file */
-li.suspend-open * { pointer-events: none !important; }
-li.suspend-open .edit-magic-square { pointer-events: auto !important; }
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
 
@@ -2742,111 +2714,98 @@ const s=$('.left-col');s.toggleClass('collapsed');
 
     function beginInlineRename($textEl, songId){
     try {
+        // Work directly on the visible text node so stacking/wrapping is preserved
         var $container = $textEl.closest('.song-name');
         if ($container.length === 0) $container = $textEl;
-        if ($container.find('.edit-magic-square').length) return;
-
         var $nameSpan = $container.find('.song-name-text').first();
         if ($nameSpan.length === 0) $nameSpan = $container;
 
-        var current = ($nameSpan.text() || '').replace(/\u00A0/g,' ').trim();
-        var spanEl = $nameSpan.get(0);
-        var contEl = $container.get(0);
-        if (!spanEl || !contEl) return;
+        // Avoid re-entering edit mode
+        if ($nameSpan.attr('contenteditable') === 'true' || $nameSpan.attr('contenteditable') === 'plaintext-only') return;
 
-        var $li = $container.closest('li');
-        $li.addClass('suspend-open');
+        var li = $container.closest('li');
+        li.addClass('suspend-open'); // disable open while editing
 
-        var spanRect = spanEl.getBoundingClientRect();
-        var contRect = contEl.getBoundingClientRect();
+        // Measure current stacked width/rect BEFORE any style changes
+        var el = $nameSpan.get(0);
+        var rect = el.getBoundingClientRect();
+        var maxW = Math.floor(rect.width); // clamp to current stacked width
+        var cs = window.getComputedStyle(el);
+        var prevInlineStyle = $nameSpan.attr('style') || '';
 
-        var cs = window.getComputedStyle(spanEl);
-        var padL = cs.paddingLeft, padR = cs.paddingRight, padT = cs.paddingTop, padB = cs.paddingBottom;
-        var lineHeight = cs.lineHeight, font = cs.font, fontSize = cs.fontSize, fontWeight = cs.fontWeight, fontFamily = cs.fontFamily;
-        var letterSpacing = cs.letterSpacing, textTransform = cs.textTransform, textAlign = cs.textAlign, textIndent = cs.textIndent;
+        // Snapshot original value
+        var original = ($nameSpan.text() || '').replace(/\\u00A0/g,' ').trim();
 
-        $container.addClass('renaming');
-        var prevVis = $nameSpan.css('visibility');
-        $nameSpan.css('visibility', 'hidden');
-
-        var $editor = $('<div class="edit-magic-square" contenteditable="true" spellcheck="false"></div>');
-        $editor.text(current);
-
-        var relLeft = (spanRect.left - contRect.left);
-        var relTop  = (spanRect.top  - contRect.top);
-        var W = Math.max(8, Math.floor(spanRect.width));
-        var H = Math.max(20, Math.ceil(spanRect.height));
-
-        $editor.css({
-            left: relLeft + 'px',
-            top:  relTop  + 'px',
-            width: W + 'px',
-            maxWidth: W + 'px',
-            minWidth: '0px',
-            minHeight: H + 'px',
-            paddingLeft: padL,
-            paddingRight: padR,
-            paddingTop: padT,
-            paddingBottom: padB,
-            lineHeight: lineHeight,
-            font: font,
-            fontSize: fontSize,
-            fontWeight: fontWeight,
-            fontFamily: fontFamily,
-            letterSpacing: letterSpacing,
-            textTransform: textTransform,
-            textAlign: textAlign,
-            textIndent: textIndent,
-            whiteSpace: 'pre-wrap',
-            overflowWrap: 'anywhere',
-            wordBreak: 'break-word'
+        // Apply minimal inline styles to make it visibly editable without changing layout
+        // Keep exact white-space behavior to preserve wrapping; clamp width so it cannot expand
+        $nameSpan.css({
+          maxWidth: maxW + 'px',
+          outline: '2px solid #2563eb',
+          outlineOffset: '2px',
+          userSelect: 'text',
+          WebkitUserSelect: 'text',
+          caretColor: 'auto'
         });
 
-        $container.append($editor);
-
-        setTimeout(function(){
-            try {
-                $editor.focus();
-                var range = document.createRange();
-                range.selectNodeContents($editor.get(0));
-                range.collapse(false);
-                var sel = window.getSelection();
-                sel.removeAllRanges(); sel.addRange(range);
-            } catch(_){}
-        }, 0);
-
-        function finish(commit){
-            try {
-                if (commit) {
-                    var newVal = ($editor.text() || '').trim();
-                    if (!newVal) newVal = current;
-                    if (newVal !== current) {
-                        try {
-                            var sng = masterSongs && masterSongs.find ? masterSongs.find(function(x){ return x.id === songId; }) : null;
-                            if (sng) sng.name = newVal;
-                        } catch(_){}
-                        try { save && save(); } catch(_){}
-                        try { $('li#' + songId + ' .song-name-text').text(newVal); } catch(_){}
-                    }
-                }
-            } finally {
-                $editor.remove();
-                try { $nameSpan.css('visibility', prevVis || ''); } catch(_){}
-                $container.removeClass('renaming');
-                $li.removeClass('suspend-open');
-            }
+        // Make editable (prefer plaintext-only, gracefully falls back)
+        $nameSpan.attr('contenteditable', 'plaintext-only');
+        if ($nameSpan.attr('contenteditable') !== 'plaintext-only') {
+          $nameSpan.attr('contenteditable', 'true');
         }
 
-        $editor.on('keydown', function(ev){
-            if (ev.key === 'Enter') { ev.preventDefault(); finish(true); }
-            else if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
-        });
-        $editor.on('blur', function(){ finish(true); });
+        // Focus and move caret to end
+        setTimeout(function() {
+          try {
+            var node = $nameSpan.get(0);
+            node.focus();
+            var range = document.createRange();
+            range.selectNodeContents(node);
+            range.collapse(false);
+            var sel = window.getSelection();
+            sel.removeAllRanges(); sel.addRange(range);
+          } catch(_){}
+        }, 0);
 
-        $editor.on('mousedown touchstart click touchend', function(ev){ ev.stopPropagation(); });
+        function cleanup() {
+          // Remove edit affordances and restore style
+          try { $nameSpan.removeAttr('contenteditable'); } catch(_){}
+          try { $nameSpan.attr('style', prevInlineStyle); } catch(_){}
+          li.removeClass('suspend-open');
+          $nameSpan.off('.inlineRename'); // remove our namespaced handlers
+        }
+
+        function commitChanges() {
+          var newVal = ($nameSpan.text() || '').trim();
+          if (!newVal) newVal = original;
+          if (newVal !== original) {
+            try {
+              var sng = masterSongs && masterSongs.find ? masterSongs.find(function(x){ return x.id === songId; }) : null;
+              if (sng) sng.name = newVal;
+            } catch(_){}
+            try { save && save(); } catch(_){}
+            try { $('li#' + songId + ' .song-name-text').text(newVal); } catch(_){}
+          }
+          cleanup();
+        }
+
+        function cancelChanges() {
+          $nameSpan.text(original);
+          cleanup();
+        }
+
+        // Key handling (namespaced to avoid interfering with other code)
+        $nameSpan.on('keydown.inlineRename', function(ev){
+          if (ev.key === 'Enter') { ev.preventDefault(); commitChanges(); }
+          else if (ev.key === 'Escape') { ev.preventDefault(); cancelChanges(); }
+          // Do not let keystrokes bubble to row handlers
+          ev.stopPropagation();
+        });
+        $nameSpan.on('blur.inlineRename', function(){ commitChanges(); });
+        // Stop click/touch from bubbling and opening file while editing
+        $nameSpan.on('mousedown.inlineRename touchstart.inlineRename click.inlineRename touchend.inlineRename', function(ev){ ev.stopPropagation(); });
 
     } catch(e) {
-        console.error('inline rename v3 failed', e);
+        console.error('inline rename v4 failed', e);
     }
 
 }
