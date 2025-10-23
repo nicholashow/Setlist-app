@@ -1814,6 +1814,22 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
+
+<style id="edit-textarea-stacked-css">
+/* Make the stacked editor look and wrap like the name span */
+.song-name-text.edit-textarea-stacked {
+  display: block;             /* allow wrapping box */
+  width: 100%;                /* match span width including reserved right space */
+  box-sizing: border-box;
+  line-height: 1.25;
+  white-space: normal;        /* allow wrapping */
+  overflow-wrap: anywhere;
+  border: 2px solid #2563eb;  /* same blue used elsewhere for focus */
+  border-radius: 8px;
+  padding: 2px 6px;
+}
+</style>
+
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2378,6 +2394,22 @@ const s=$('.left-col');s.toggleClass('collapsed');
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
+
+<style id="edit-textarea-stacked-css">
+/* Make the stacked editor look and wrap like the name span */
+.song-name-text.edit-textarea-stacked {
+  display: block;             /* allow wrapping box */
+  width: 100%;                /* match span width including reserved right space */
+  box-sizing: border-box;
+  line-height: 1.25;
+  white-space: normal;        /* allow wrapping */
+  overflow-wrap: anywhere;
+  border: 2px solid #2563eb;  /* same blue used elsewhere for focus */
+  border-radius: 8px;
+  padding: 2px 6px;
+}
+</style>
+
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
@@ -2713,38 +2745,66 @@ const s=$('.left-col');s.toggleClass('collapsed');
     $(document).on('touchend mouseup touchcancel', function(){ cancelTimer(); });
 
     function beginInlineRename($textEl, songId){
-        // Avoid duplicate editors
-        if ($textEl.closest('.song-name').find('input.edit-input').length) return;
+  // Avoid duplicate editors
+  if ($textEl.closest('.song-name').find('input.edit-input, textarea.edit-input').length) return;
 
-        const current = $textEl.text();
-        const $input = $('<input type="text" class="edit-input" />').val(current);
-        // Replace only the text span (preserves layout around it)
-        $textEl.replaceWith($input);
-        $input.focus();
-        // Make typing legible in dark mode
-        $input.addClass('bg-white text-black');
+  const node = $textEl[0];
+  const current = $textEl.text();
 
-        function commit(save){
+  // Detect if the visible name is stacked (wrapped to multiple lines)
+  const cs = window.getComputedStyle(node);
+  const rect = node.getBoundingClientRect();
+  let lineH = parseFloat(cs.lineHeight);
+  if (!(lineH > 0)) { lineH = rect.height; }
+  const isStacked = rect.height > (lineH + 2);
+
+  const commonClasses = 'song-name-text edit-input';
+  let $editor;
+
+  if (isStacked){
+    // Use a textarea so the edit box stacks exactly like the displayed name
+    $editor = $('<textarea class="'+commonClasses+' edit-textarea-stacked" />').val(current);
+    // Keep the same wrapping box and avoid layout jumps
+    $editor.css({ resize: 'none', overflow: 'hidden' });
+  } else {
+    // Single line stays as a standard input
+    $editor = $('<input type="text" class="'+commonClasses+'" />').val(current);
+  }
+
+  // Replace only the text span (preserves layout around it)
+  $textEl.replaceWith($editor);
+  $editor.focus();
+  // Make typing legible in dark mode
+  $editor.addClass('bg-white text-black');
+
+  function commit(save){
+
             const song = masterSongs.find(s => s.id === songId);
-            if (!song){ renderAll(); return; }
-            if (save){
-                const newName = String($input.val() || '').trim();
-                if (newName && newName !== song.name){
-                    song.name = newName;
-                    save(); // persist
-                }
-            }
-            renderAll(); // re-render everywhere that references this song
-        }
+            if (!song){ renderAll(); return; 
+  }
 
-        $input.on('keydown', function(ev){
-            if (ev.key === 'Enter') commit(true);
-            else if (ev.key === 'Escape') commit(false);
-        });
-        $input.on('blur', function(){ commit(true); });
-        // Prevent accidental drags while editing
-        $input.on('touchstart mousedown', function(ev){ ev.stopPropagation(); });
-    }
+  // Enter commits (even for textarea); Esc cancels
+  $editor.on('keydown', function(ev){
+    if (ev.key === 'Enter'){ ev.preventDefault(); commit(true); }
+    else if (ev.key === 'Escape'){ commit(false); }
+  });
+  $editor.on('blur', function(){ commit(true); });
+
+  // Prevent accidental drags while editing
+  $editor.on('touchstart mousedown', function(ev){ ev.stopPropagation(); });
+
+  // Auto-size stacked textarea to its content
+  if ($editor.is('textarea')){
+    const el = $editor[0];
+    const autosize = () => { el.style.height = 'auto'; el.style.height = (el.scrollHeight) + 'px'; };
+    // Initialize height approximately to previous rect height
+    el.style.height = rect.height + 'px';
+    // Then autosize accurately
+    autosize();
+    $editor.on('input', autosize);
+  }
+}
+
 })();
 
 </script>
@@ -5306,133 +5366,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 <!-- === END: Sidebar text alignment restore === -->
-\n
-<script id="ptc_addon_final">
-/* ADDITIVE ONLY: second way to close a file.
-   When an open file's own scroll container is already at the very top,
-   a gentle pull down (~60px) will close it via the existing close control.
-   - No style/class changes
-   - No preventDefault (passive listeners)
-   - No DOM restructuring
-   - Buttons/toolbar positions remain unchanged while dragging
-*/
-(function(){
-  var THRESHOLD = 60;
-
-  function qs(s){ return document.querySelector(s); }
-  function qsa(s){ return Array.from(document.querySelectorAll(s)); }
-
-  function isVisible(el){
-    if (!el) return false;
-    var cs = getComputedStyle(el);
-    if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) return false;
-    var r = el.getBoundingClientRect();
-    return (r.width > 0 && r.height > 0);
-  }
-
-  function isScrollable(el){
-    if (!el || el.nodeType !== 1) return false;
-    var cs = getComputedStyle(el);
-    if (!/(auto|scroll|overlay)/.test(cs.overflowY)) return false;
-    return el.scrollHeight > el.clientHeight + 1;
-  }
-
-  function candidateScrollers(){
-    var list = [];
-    // Known containers in this app
-    var pdf = qs('#pdf-overlay');
-    if (pdf && isVisible(pdf)){
-      // Prefer an explicit scroll area inside the overlay
-      var sc = pdf.querySelector('.pdfjs-scroll');
-      if (sc && isScrollable(sc)) list.push(sc);
-      if (isScrollable(pdf)) list.push(pdf);
-    }
-    qsa('.doc-iframe-container.current, .doc-iframe-container, #doc-iframe-wrapper, .file-viewer, .viewer-content')
-      .forEach(function(n){ if (isVisible(n) && isScrollable(n)) list.push(n); });
-    // De-dupe
-    var seen = new Set(), out = [];
-    list.forEach(function(n){ if (!seen.has(n)) { seen.add(n); out.push(n); } });
-    return out;
-  }
-
-  function findCloseButton(from){
-    // Prefer close control within the same viewer tree
-    var container = from && from.closest ? from.closest('[role="dialog"], #pdf-overlay, .doc-iframe-container, .file-viewer, .viewer, .overlay') : null;
-    var within = container && container.querySelector ? container.querySelector('[data-action="close"], #viewer-close, .viewer-close, .close, button[aria-label="Close"], [aria-label="Close"], [aria-label="close"]') : null;
-    if (within) return within;
-    // Fallback: any global close control
-    return qs('[data-action="close"], #viewer-close, .viewer-close, .close, button[aria-label="Close"], [aria-label="Close"], [aria-label="close"]');
-  }
-
-  function triggerClose(from){
-    var btn = findCloseButton(from);
-    if (btn && typeof btn.click === 'function'){ btn.click(); return; }
-    // Final fallback: send Escape (many viewers bind to this)
-    try {
-      var evt = new KeyboardEvent('keydown', {key:'Escape', keyCode:27, which:27, bubbles:true});
-      document.dispatchEvent(evt);
-    } catch(e){}
-  }
-
-  function attach(scroller){
-    if (!scroller || scroller.__ptcWired) return;
-    var tracking = false;
-    var startY = 0, lastY = 0, startTop = 0;
-
-    scroller.addEventListener('touchstart', function(e){
-      if (!e.touches || !e.touches.length) return;
-      if ((scroller.scrollTop || 0) > 1) { tracking = false; return; } // only when already at top
-      var t = e.touches[0];
-      startY = lastY = t.clientY;
-      startTop = scroller.scrollTop || 0;
-      tracking = true;
-    }, {passive:true});
-
-    scroller.addEventListener('touchmove', function(e){
-      if (!tracking || !e.touches || !e.touches.length) return;
-      var t = e.touches[0];
-      lastY = t.clientY;
-      if (lastY < startY) { tracking = false; } // upward cancels
-    }, {passive:true});
-
-    function end(){
-      if (!tracking) return;
-      var dy = lastY - startY;
-      tracking = false;
-      // Only close if pulled down far enough and the scroller remained at the very top
-      if (dy >= THRESHOLD && startTop <= 1 && (scroller.scrollTop || 0) <= 1){
-        triggerClose(scroller);
-      }
-    }
-    scroller.addEventListener('touchend', end, {passive:true});
-    scroller.addEventListener('touchcancel', end, {passive:true});
-
-    scroller.__ptcWired = true;
-  }
-
-  function wireAll(){
-    candidateScrollers().forEach(attach);
-  }
-
-  // Initial and lazy wiring; passive so buttons/positions never shift
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', wireAll);
-  } else {
-    wireAll();
-  }
-  window.addEventListener('load', wireAll, {once:true});
-
-  // Rewire when overlays/viewers appear
-  var mo = new MutationObserver(function(){
-    wireAll();
-  });
-  try {
-    mo.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style']});
-  } catch(e){}
-})();
-</script>
-
-</body>
+\n</body>
 </html>
 
 
