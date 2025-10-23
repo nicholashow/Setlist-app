@@ -5307,76 +5307,109 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 <!-- === END: Sidebar text alignment restore === -->
 \n
-<script id="pull-to-close-viewer">
+<script id="pull_to_close_additive">
+/* Additive-only: does not change existing viewer logic, styles, or classes.
+   It only adds an extra gesture: pull down ~55px at scroll-top to close. */
 (function(){
-  var startY = 0, lastY = 0, pulling = false;
-  var THRESHOLD = 55; // px downward pull needed to close
+  var THRESHOLD = 55; // px
+  var tracking = false;
+  var startY = 0, lastY = 0, startedAtTop = false;
+  var startScroller = null;
 
-  function $(s){ return document.querySelector(s); }
-
-  function isViewerActive(){
-    return document.documentElement.classList.contains('doc-viewer-active') ||
-           document.body.classList.contains('doc-viewer-active') ||
-           document.documentElement.classList.contains('pdf-overlay-active') ||
-           document.body.classList.contains('pdf-overlay-active');
+  function isScrollable(el){
+    if (!el || el.nodeType !== 1) return false;
+    var cs = getComputedStyle(el);
+    var oy = cs.overflowY;
+    if (!/(auto|scroll|overlay)/.test(oy)) return false;
+    return el.scrollHeight > el.clientHeight + 1;
   }
 
-  function currentScrollContainer(){
-    var pdfOverlay = $('#pdf-overlay');
-    if (pdfOverlay && getComputedStyle(pdfOverlay).display !== 'none'){
-      var sc = pdfOverlay.querySelector('.pdfjs-scroll');
-      if (sc) return sc;
+  function nearestScrollAncestor(el){
+    var cur = el;
+    while (cur && cur !== document.body && cur !== document.documentElement){
+      if (isScrollable(cur)) return cur;
+      cur = cur.parentElement;
     }
-    var current = document.querySelector('.doc-iframe-container.current');
-    if (current) return current;
-    var wrap = $('#doc-iframe-wrapper');
-    if (wrap) return wrap;
+    // Fallback: document scrolling element
+    return document.scrollingElement || document.documentElement;
+  }
+
+  function isViewerElement(el){
+    if (!el) return false;
+    var idc = ((el.id||"") + " " + (el.className||"")).toLowerCase();
+    // Heuristics for your app's file viewers (PDF overlay, doc iframe container, etc.)
+    if (/(pdf|overlay|doc|viewer|iframe|content|page)/.test(idc)) return true;
+    return false;
+  }
+
+  function nearestViewerContainer(from){
+    var cur = from;
+    while (cur && cur !== document.body && cur !== document.documentElement){
+      if (isViewerElement(cur)) return cur;
+      cur = cur.parentElement;
+    }
     return null;
   }
 
-  function closeViewer(){
-    // Prefer an existing close control if present
-    var byId = document.getElementById('viewer-close');
-    if (byId){ byId.click(); return; }
-    // Otherwise remove classes & hide overlay
-    document.documentElement.classList.remove('pdf-overlay-active');
-    document.body.classList.remove('pdf-overlay-active');
-    document.documentElement.classList.remove('doc-viewer-active');
-    document.body.classList.remove('doc-viewer-active');
-    var overlay = document.getElementById('pdf-overlay');
-    if (overlay) overlay.style.display = 'none';
-    var app = document.getElementById('app');
-    if (app) app.style.display = '';
+  function tryClose(container){
+    // 1) Prefer an explicit close button inside this viewer
+    var btn = container && container.querySelector
+      && container.querySelector('[data-action="close"], #viewer-close, .viewer-close, .close, [aria-label="Close"], [aria-label="close"]');
+    if (btn && typeof btn.click === "function"){ btn.click(); return; }
+
+    // 2) Else, look a bit wider near the container
+    var alt = document.querySelector('[data-action="close"], #viewer-close, .viewer-close, .close, [aria-label="Close"], [aria-label="close"]');
+    if (alt && typeof alt.click === "function"){ alt.click(); return; }
+
+    // 3) Fallback: dispatch Escape (many viewers listen for it)
+    try {
+      var evt = new KeyboardEvent('keydown', {key:'Escape', keyCode:27, which:27, bubbles:true});
+      document.dispatchEvent(evt);
+    } catch(e){ /* noop */ }
   }
 
   function onTouchStart(e){
-    if (!isViewerActive()) return;
-    var scroller = currentScrollContainer();
-    if (!scroller) return;
-    if (scroller.scrollTop > 1) { pulling = false; return; } // only at very top
+    // additive, passive: never preventDefault; never change classes
     var t = (e.touches && e.touches[0]) || null;
     if (!t) return;
+    // Only start if touch begins inside a viewer-ish container
+    var target = e.target;
+    var viewer = nearestViewerContainer(target);
+    if (!viewer) return; // touches outside viewers are ignored
+
+    var sc = nearestScrollAncestor(target);
+    // Only arm if at very top (<=1px tolerance)
+    var top = sc ? sc.scrollTop : 0;
+    startedAtTop = (top <= 1);
+    if (!startedAtTop){ tracking = false; return; }
+
+    startScroller = sc;
+    tracking = true;
     startY = lastY = t.clientY;
-    pulling = true;
   }
 
   function onTouchMove(e){
-    if (!pulling) return;
+    if (!tracking) return;
     var t = (e.touches && e.touches[0]) || null;
     if (!t) return;
-    var dy = t.clientY - startY;
-    if (dy < 0){ pulling = false; return; } // finger moved up; cancel
     lastY = t.clientY;
+    // If user moves upward, cancel (not a pull-down)
+    if (lastY - startY < 0){ tracking = false; }
   }
 
   function onTouchEnd(){
-    if (!pulling) return;
+    if (!tracking) return;
     var dy = lastY - startY;
-    pulling = false;
-    if (dy >= THRESHOLD) closeViewer();
+    tracking = false;
+    if (!startedAtTop) return;
+    if (dy >= THRESHOLD){
+      var viewer = nearestViewerContainer(startScroller || document.activeElement || document.body);
+      tryClose(viewer || document.body);
+    }
   }
 
   function wire(){
+    // passive listeners to avoid interfering with your existing gestures
     document.addEventListener('touchstart', onTouchStart, {passive:true});
     document.addEventListener('touchmove', onTouchMove, {passive:true});
     document.addEventListener('touchend', onTouchEnd, {passive:true});
