@@ -5307,120 +5307,104 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 <!-- === END: Sidebar text alignment restore === -->
 \n
-<script id="additive_pull_to_close_only">
-/* ADDITIVE gesture: pull-down at scrollTop=0 to close the open file.
-   - No style changes
-   - No class toggles
-   - No preventDefault (passive gesture)
-   - Does not modify existing functions
+<script id="pull_to_close_minimal">
+/* Minimal, additive-only: Adds a second way to close an open file.
+   Behavior: When the file viewer is open and scrolled at the very top,
+   a gentle pull down (~60px) will close it.
+   - No style/class changes
+   - No preventDefault
+   - No DOM restructuring
+   - Does not interfere with existing gestures or scroll
 */
 (function(){
-  var THRESHOLD = 55; // px pull distance to trigger close
-  var tracking = false, startY = 0, lastY = 0, scroller = null;
+  var THRESHOLD = 60;
+  var active = false;
+  var startY = 0, endY = 0, startScrollTop = 0;
+  var scroller = null;
 
   function qs(s){ return document.querySelector(s); }
   function qsa(s){ return Array.from(document.querySelectorAll(s)); }
 
   function viewerOpen(){
-    return document.body.classList.contains('doc-viewer-active') ||
-           document.documentElement.classList.contains('pdf-overlay-active') ||
-           document.body.classList.contains('pdf-overlay-active');
+    // Heuristics for your app's viewer states/containers
+    if (qs('#pdf-overlay') && getComputedStyle(qs('#pdf-overlay')).display !== 'none') return true;
+    if (qs('.doc-iframe-container.current')) return true;
+    if (qs('#doc-iframe-wrapper') && getComputedStyle(qs('#doc-iframe-wrapper')).display !== 'none') return true;
+    return false;
   }
 
-  function currentScrollers(){
-    var list = [];
-    var pdf = qs('#pdf-overlay');
-    if (pdf && getComputedStyle(pdf).display !== 'none'){
-      var s = pdf.querySelector('.pdfjs-scroll');
-      if (s) list.push(s);
-    }
-    // active multi-page doc containers
-    qsa('.doc-iframe-container.current').forEach(function(n){ list.push(n); });
-    // wrapper (if it is the scroller)
+  function findScrollContainer(target){
+    // Prefer known containers if visible
+    var pdf = qs('#pdf-overlay .pdfjs-scroll');
+    if (pdf && getComputedStyle(qs('#pdf-overlay')).display !== 'none') return pdf;
+    var current = qs('.doc-iframe-container.current');
+    if (current) return current;
     var wrap = qs('#doc-iframe-wrapper');
-    if (wrap) list.push(wrap);
-    return list.filter(Boolean);
+    if (wrap) return wrap;
+    // fallback: nearest scrollable ancestor
+    var el = target;
+    while (el && el !== document.body && el !== document.documentElement){
+      var cs = getComputedStyle(el);
+      if (/(auto|scroll|overlay)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 1) return el;
+      el = el.parentElement;
+    }
+    return document.scrollingElement || document.documentElement;
   }
 
-  function findCloseButton(container){
-    // Prefer a close button within the viewer
-    var within = container && container.querySelector ? container.querySelector('[data-action="close"], #viewer-close, .viewer-close, button[aria-label="Close"], [aria-label="close"]') : null;
-    if (within) return within;
-    // Fallback: any global close control
-    return qs('[data-action="close"], #viewer-close, .viewer-close, button[aria-label="Close"], [aria-label="close"]');
-  }
-
-  function triggerClose(container){
-    var btn = findCloseButton(container);
+  function closeViaExistingControl(container){
+    // Click an existing close button if available; otherwise send Escape
+    var btn = (container && container.querySelector && container.querySelector('[data-action="close"], #viewer-close, .viewer-close, [aria-label="Close"], [aria-label="close"]'))
+           || qs('[data-action="close"], #viewer-close, .viewer-close, [aria-label="Close"], [aria-label="close"]');
     if (btn && typeof btn.click === 'function'){ btn.click(); return; }
-    // As a final fallback, dispatch Escape (many viewers listen for it)
     try {
       var evt = new KeyboardEvent('keydown', {key:'Escape', keyCode:27, which:27, bubbles:true});
       document.dispatchEvent(evt);
     } catch(e){}
   }
 
-  // Touch handlers (bound on scroller elements only)
-  function onTS(e){
+  function onStart(e){
     if (!viewerOpen()) return;
     if (!e.touches || !e.touches.length) return;
-    // Ensure we're on a known scroller
-    var targetScroller = e.currentTarget;
-    if (!targetScroller) return;
-    if (targetScroller.scrollTop > 1) { tracking = false; return; } // only at very top
-    scroller = targetScroller;
     var t = e.touches[0];
-    startY = lastY = t.clientY;
-    tracking = true;
+    var target = e.target;
+    scroller = findScrollContainer(target);
+    if (!scroller) return;
+    // Only arm when already at top (<=1px tolerance)
+    if ((scroller.scrollTop || 0) > 1) { active = false; return; }
+    active = true;
+    startY = endY = t.clientY;
+    startScrollTop = scroller.scrollTop || 0;
   }
-  function onTM(e){
-    if (!tracking) return;
+
+  function onMove(e){
+    if (!active) return;
     if (!e.touches || !e.touches.length) return;
     var t = e.touches[0];
-    lastY = t.clientY;
-    if (lastY - startY < 0) { tracking = false; } // upward -> cancel
+    endY = t.clientY;
+    // If the user swipes upward, cancel (we are not closing on upward motion)
+    if (endY < startY) active = false;
   }
-  function onTE(){
-    if (!tracking) return;
-    var dy = lastY - startY;
-    tracking = false;
-    if (dy >= THRESHOLD) {
-      triggerClose(scroller || document.body);
+
+  function onEnd(){
+    if (!active) return;
+    active = false;
+    var dy = endY - startY;
+    // Only close if:
+    //  - pulled down beyond threshold
+    //  - scroller remained at (or effectively at) top throughout
+    if (dy >= THRESHOLD){
+      var atTopNow = (scroller ? (scroller.scrollTop || 0) <= 1 : true);
+      if (startScrollTop <= 1 && atTopNow){
+        closeViaExistingControl(scroller || document.body);
+      }
     }
   }
 
-  // Wire/unwire cleanly to avoid duplicates
-  function wireTo(sc){
-    if (!sc || sc.__pullCloseWired) return;
-    sc.addEventListener('touchstart', onTS, {passive:true});
-    sc.addEventListener('touchmove', onTM, {passive:true});
-    sc.addEventListener('touchend', onTE, {passive:true});
-    sc.addEventListener('touchcancel', onTE, {passive:true});
-    sc.__pullCloseWired = true;
-  }
-
-  function refreshWiring(){
-    currentScrollers().forEach(wireTo);
-  }
-
-  // Observe class/display changes to (re)wire when a viewer opens
-  var mo = new MutationObserver(function(){
-    if (viewerOpen()) refreshWiring();
-  });
-  try {
-    mo.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
-    mo.observe(document.body, {attributes:true, attributeFilter:['class', 'style']});
-    var pdf = qs('#pdf-overlay');
-    if (pdf) mo.observe(pdf, {attributes:true, attributeFilter:['style','class']});
-  } catch(e){}
-
-  // Initial pass
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', refreshWiring);
-  } else {
-    refreshWiring();
-  }
-  window.addEventListener('load', refreshWiring, {once:true});
+  // Passive listeners on the document to avoid interfering with scroll/gestures
+  document.addEventListener('touchstart', onStart, {passive:true});
+  document.addEventListener('touchmove', onMove, {passive:true});
+  document.addEventListener('touchend', onEnd, {passive:true});
+  document.addEventListener('touchcancel', onEnd, {passive:true});
 })();
 </script>
 
