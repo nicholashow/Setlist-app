@@ -5306,7 +5306,93 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 <!-- === END: Sidebar text alignment restore === -->
-\n</body>
+\n
+<script id="pull-to-close-viewer">
+(function(){
+  var startY = 0, lastY = 0, pulling = false;
+  var THRESHOLD = 55; // px downward pull needed to close
+
+  function $(s){ return document.querySelector(s); }
+
+  function isViewerActive(){
+    return document.documentElement.classList.contains('doc-viewer-active') ||
+           document.body.classList.contains('doc-viewer-active') ||
+           document.documentElement.classList.contains('pdf-overlay-active') ||
+           document.body.classList.contains('pdf-overlay-active');
+  }
+
+  function currentScrollContainer(){
+    var pdfOverlay = $('#pdf-overlay');
+    if (pdfOverlay && getComputedStyle(pdfOverlay).display !== 'none'){
+      var sc = pdfOverlay.querySelector('.pdfjs-scroll');
+      if (sc) return sc;
+    }
+    var current = document.querySelector('.doc-iframe-container.current');
+    if (current) return current;
+    var wrap = $('#doc-iframe-wrapper');
+    if (wrap) return wrap;
+    return null;
+  }
+
+  function closeViewer(){
+    // Prefer an existing close control if present
+    var byId = document.getElementById('viewer-close');
+    if (byId){ byId.click(); return; }
+    // Otherwise remove classes & hide overlay
+    document.documentElement.classList.remove('pdf-overlay-active');
+    document.body.classList.remove('pdf-overlay-active');
+    document.documentElement.classList.remove('doc-viewer-active');
+    document.body.classList.remove('doc-viewer-active');
+    var overlay = document.getElementById('pdf-overlay');
+    if (overlay) overlay.style.display = 'none';
+    var app = document.getElementById('app');
+    if (app) app.style.display = '';
+  }
+
+  function onTouchStart(e){
+    if (!isViewerActive()) return;
+    var scroller = currentScrollContainer();
+    if (!scroller) return;
+    if (scroller.scrollTop > 1) { pulling = false; return; } // only at very top
+    var t = (e.touches && e.touches[0]) || null;
+    if (!t) return;
+    startY = lastY = t.clientY;
+    pulling = true;
+  }
+
+  function onTouchMove(e){
+    if (!pulling) return;
+    var t = (e.touches && e.touches[0]) || null;
+    if (!t) return;
+    var dy = t.clientY - startY;
+    if (dy < 0){ pulling = false; return; } // finger moved up; cancel
+    lastY = t.clientY;
+  }
+
+  function onTouchEnd(){
+    if (!pulling) return;
+    var dy = lastY - startY;
+    pulling = false;
+    if (dy >= THRESHOLD) closeViewer();
+  }
+
+  function wire(){
+    document.addEventListener('touchstart', onTouchStart, {passive:true});
+    document.addEventListener('touchmove', onTouchMove, {passive:true});
+    document.addEventListener('touchend', onTouchEnd, {passive:true});
+    document.addEventListener('touchcancel', onTouchEnd, {passive:true});
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', wire);
+  } else {
+    wire();
+  }
+  window.addEventListener('load', wire, {once:true});
+})();
+</script>
+
+</body>
 </html>
 
 
