@@ -2793,7 +2793,6 @@ const s=$('.left-col');s.toggleClass('collapsed');
             // Build the editor overlay
             var current = ($host.text() || '').trim();
             var $ed = $('<div class="edit-magic-square" contenteditable="true" spellcheck="false" />');
-$ed.attr({tabindex:"0", role:"textbox", "aria-label":"Edit file name", inputmode:"text"});
 $ed.attr({ role: "textbox", "aria-label": "Edit file name", inputmode: "text", tabindex: "0" });
 $ed.text(current);
 // Ensure taps focus it on iOS/Android and don't bubble to parent handlers
@@ -2817,26 +2816,6 @@ $ed.on("pointerdown mousedown touchstart click", function(ev){ ev.stopPropagatio
 
             $host.append($ed);
 
-            // === Force software keyboard to appear (iOS-safe focus handoff) ===
-            (function(){
-                var isIOS = document.documentElement.classList.contains('ios') || /iPad|iPhone|iPod/.test(navigator.userAgent||'');
-                // Tiny visible-in-viewport input to trigger VK reliably
-                var $kb = $('<input type="text" class="kb-summon" autocomplete="off" autocapitalize="none" />')
-                    .css({position:'fixed', left:'0', top:'0', width:'1px', height:'1px', opacity:0, zIndex: 999999});
-                $host.append($kb);
-                try { if (isIOS) { $kb.focus(); } } catch(e){}
-                try { $ed.focus(); } catch(e){}
-                try {
-                    var sel = window.getSelection(), rng = document.createRange();
-                    rng.selectNodeContents($ed.get(0)); rng.collapse(false);
-                    sel.removeAllRanges(); sel.addRange(rng);
-                } catch(e){}
-                // Extra nudge for iOS timing
-                setTimeout(function(){ try{ if (isIOS) $kb.focus(); $ed.focus(); }catch(e){} }, 0);
-                setTimeout(function(){ try{ $kb.remove(); }catch(e){} }, 300);
-            })();
-    
-
             // Focus and place caret at end
             function placeCaretEnd(node){
                 try {
@@ -2853,7 +2832,7 @@ setTimeout(function(){ try{ $ed.focus(); placeCaretEnd($ed.get(0)); }catch(e){} 
 
             function finish(commit){
                 
-                try{ $host.find(".kb-summon").remove(); }catch(e){} // Remove suppression listeners
+                // Remove suppression listeners
                 try {
                     ['click','pointerup','mouseup','touchend','contextmenu'].forEach(function(type){
                         document.removeEventListener(type, _cancelOpen, true);
@@ -5507,7 +5486,150 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 <!-- === END: Sidebar text alignment restore === -->
-\n</body>
+\n
+
+<!-- === BEGIN: Auto-focus rename edit box (iPad keyboard pop-up) === -->
+<script>
+(function(){
+  // Track most recent user gesture time (touch/mouse) to keep focus in the gesture chain.
+  var lastGesture = 0;
+  function markGesture(){ lastGesture = Date.now(); }
+  document.addEventListener('touchstart', markGesture, true);
+  document.addEventListener('mousedown', markGesture, true);
+  document.addEventListener('pointerdown', markGesture, true);
+
+  function isiOS(){
+    try{
+      return /AppleWebKit/.test(navigator.userAgent||'') && (navigator.maxTouchPoints||0) > 1;
+    }catch(e){ return false; }
+  }
+
+  // Warm up iOS keyboard by briefly focusing an invisible input, then the real editor.
+  function warmFocus(target){
+    try{
+      if (!target) return;
+
+      // If the edit widget is hidden or display:none, bail
+      var cs = window.getComputedStyle(target);
+      if (cs && (cs.visibility === 'hidden' || cs.display === 'none')) return;
+
+      var doPlaceCaretAtEnd = function(el){
+        try{
+          if (el.isContentEditable) {
+            var range = document.createRange();
+            range.selectNodeContents(el);
+            range.collapse(false);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+          } else if (typeof el.setSelectionRange === 'function') {
+            var v = (el.value || '');
+            el.setSelectionRange(v.length, v.length);
+          }
+        }catch(_){}
+      };
+
+      var directFocus = function(){
+        try{
+          target.focus({preventScroll:true});
+        }catch(_){
+          try{ target.focus(); }catch(__){}
+        }
+        // Place caret at end for both input/textarea and contenteditable nodes
+        doPlaceCaretAtEnd(target);
+        // Ensure it's scrolled into view if needed
+        try{ target.scrollIntoView({block:'center', behavior:'smooth'}); }catch(_){}
+      };
+
+      // If not iOS, normal focus is enough
+      if (!isiOS()){
+        directFocus();
+        return;
+      }
+
+      // iOS: prefer focusing within a short window after a user gesture
+      var age = Date.now() - lastGesture;
+      var withinGesture = age >= 0 && age <= 2500; // long-press window
+
+      if (withinGesture){
+        // Try direct first; if it fails, fall back to the trap
+        directFocus();
+        // Small no-op to yield; if keyboard didn't appear, use trap
+        setTimeout(function(){
+          // If no active element or it's not our target, use the trap
+          if (document.activeElement !== target){
+            // Hidden trap input to summon the keyboard
+            var trap = document.createElement('input');
+            trap.type = 'text';
+            trap.autocapitalize = 'off';
+            trap.autocomplete = 'off';
+            trap.spellcheck = false;
+            trap.style.position = 'fixed';
+            trap.style.opacity = '0';
+            trap.style.height = '1px';
+            trap.style.width = '1px';
+            trap.style.top = '0';
+            trap.style.left = '0';
+            trap.style.zIndex = '-1';
+            document.body.appendChild(trap);
+            trap.focus();
+
+            // Immediately jump focus to the real editor
+            setTimeout(function(){
+              directFocus();
+              // Clean up
+              try{ trap.remove(); }catch(_){}
+            }, 0);
+          }
+        }, 0);
+      } else {
+        // Not in a user gesture window — still try, but iOS might ignore it
+        directFocus();
+      }
+    }catch(_){}
+  }
+
+  // Observe the DOM for the appearance of the rename editor and auto-focus it.
+  // We target common classes used in this app for the inline rename editor.
+  var SELECTOR = '.song-name.renaming .edit-magic-square, .song-name.renaming .edit-input, .edit-magic-square';
+
+  var observer = new MutationObserver(function(mutations){
+    for (var i=0; i<mutations.length; i++){
+      var m = mutations[i];
+      if (!m.addedNodes) continue;
+      for (var j=0; j<m.addedNodes.length; j++){
+        var node = m.addedNodes[j];
+        if (!(node instanceof Element)) continue;
+
+        var target = null;
+        if (node.matches && node.matches(SELECTOR)) {
+          target = node;
+        } else if (node.querySelector) {
+          target = node.querySelector(SELECTOR);
+        }
+
+        if (target){
+          // Give layout a tick, then focus
+          requestAnimationFrame(function(t){ return function(){ warmFocus(t); }; }(target));
+        }
+      }
+    }
+  });
+
+  try{
+    observer.observe(document.documentElement || document.body, {childList:true, subtree:true});
+  }catch(_){}
+
+  // Safety: if user taps inside the edit widget, ensure it stays focused
+  document.addEventListener('click', function(e){
+    var el = e.target && (e.target.closest ? e.target.closest(SELECTOR) : null);
+    if (el){ warmFocus(el); }
+  }, true);
+})();
+</script>
+<!-- === END: Auto-focus rename edit box (iPad keyboard pop-up) === -->
+
+</body>
 </html>
 
 
