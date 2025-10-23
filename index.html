@@ -5307,106 +5307,128 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 <!-- === END: Sidebar text alignment restore === -->
 \n
-<script id="pull_to_close_addon">
-/* ADDITIVE ONLY: adds a second way to close an open file.
-   When the file viewer is open and scrolled to the very top,
-   pulling down ~60px will close it via your existing close control.
+<script id="ptc_addon_final">
+/* ADDITIVE ONLY: second way to close a file.
+   When an open file's own scroll container is already at the very top,
+   a gentle pull down (~60px) will close it via the existing close control.
    - No style/class changes
    - No preventDefault (passive listeners)
    - No DOM restructuring
-   - Does not modify existing functions
+   - Buttons/toolbar positions remain unchanged while dragging
 */
 (function(){
   var THRESHOLD = 60;
-  var startY = 0, lastY = 0, tracking = false;
 
   function qs(s){ return document.querySelector(s); }
   function qsa(s){ return Array.from(document.querySelectorAll(s)); }
 
-  function viewerOpen(){
-    var pdf = qs('#pdf-overlay');
-    if (pdf && getComputedStyle(pdf).display !== 'none') return true;
-    if (qsa('.doc-iframe-container.current').length) return true;
-    if (qs('#doc-iframe-wrapper') && getComputedStyle(qs('#doc-iframe-wrapper')).display !== 'none') return true;
-    return false;
+  function isVisible(el){
+    if (!el) return false;
+    var cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) return false;
+    var r = el.getBoundingClientRect();
+    return (r.width > 0 && r.height > 0);
   }
 
-  function currentScrollers(){
-    var arr = [];
+  function isScrollable(el){
+    if (!el || el.nodeType !== 1) return false;
+    var cs = getComputedStyle(el);
+    if (!/(auto|scroll|overlay)/.test(cs.overflowY)) return false;
+    return el.scrollHeight > el.clientHeight + 1;
+  }
+
+  function candidateScrollers(){
+    var list = [];
+    // Known containers in this app
     var pdf = qs('#pdf-overlay');
-    if (pdf && getComputedStyle(pdf).display !== 'none'){
-      var s = pdf.querySelector('.pdfjs-scroll');
-      if (s) arr.push(s);
+    if (pdf && isVisible(pdf)){
+      // Prefer an explicit scroll area inside the overlay
+      var sc = pdf.querySelector('.pdfjs-scroll');
+      if (sc && isScrollable(sc)) list.push(sc);
+      if (isScrollable(pdf)) list.push(pdf);
     }
-    qsa('.doc-iframe-container.current').forEach(function(n){ arr.push(n); });
-    var wrap = qs('#doc-iframe-wrapper');
-    if (wrap) arr.push(wrap);
-    return arr.filter(Boolean);
+    qsa('.doc-iframe-container.current, .doc-iframe-container, #doc-iframe-wrapper, .file-viewer, .viewer-content')
+      .forEach(function(n){ if (isVisible(n) && isScrollable(n)) list.push(n); });
+    // De-dupe
+    var seen = new Set(), out = [];
+    list.forEach(function(n){ if (!seen.has(n)) { seen.add(n); out.push(n); } });
+    return out;
   }
 
-  function closeViaExisting(container){
-    var btn = (container && container.querySelector && container.querySelector('#viewer-close, .viewer-btn-close, [data-action="close"], [aria-label="Close"], button[aria-label="close"]'))
-          || qs('#viewer-close, .viewer-btn-close, [data-action="close"], [aria-label="Close"], button[aria-label="close"]');
+  function findCloseButton(from){
+    // Prefer close control within the same viewer tree
+    var container = from && from.closest ? from.closest('[role="dialog"], #pdf-overlay, .doc-iframe-container, .file-viewer, .viewer, .overlay') : null;
+    var within = container && container.querySelector ? container.querySelector('[data-action="close"], #viewer-close, .viewer-close, .close, button[aria-label="Close"], [aria-label="Close"], [aria-label="close"]') : null;
+    if (within) return within;
+    // Fallback: any global close control
+    return qs('[data-action="close"], #viewer-close, .viewer-close, .close, button[aria-label="Close"], [aria-label="Close"], [aria-label="close"]');
+  }
+
+  function triggerClose(from){
+    var btn = findCloseButton(from);
     if (btn && typeof btn.click === 'function'){ btn.click(); return; }
+    // Final fallback: send Escape (many viewers bind to this)
     try {
       var evt = new KeyboardEvent('keydown', {key:'Escape', keyCode:27, which:27, bubbles:true});
       document.dispatchEvent(evt);
     } catch(e){}
   }
 
-  function attach(sc){
-    if (!sc || sc.__pullToCloseWired) return;
+  function attach(scroller){
+    if (!scroller || scroller.__ptcWired) return;
+    var tracking = false;
+    var startY = 0, lastY = 0, startTop = 0;
 
-    sc.addEventListener('touchstart', function(e){
-      if (!viewerOpen()) return;
-      if ((sc.scrollTop || 0) > 1) { tracking = false; return; }
+    scroller.addEventListener('touchstart', function(e){
       if (!e.touches || !e.touches.length) return;
+      if ((scroller.scrollTop || 0) > 1) { tracking = false; return; } // only when already at top
       var t = e.touches[0];
       startY = lastY = t.clientY;
+      startTop = scroller.scrollTop || 0;
       tracking = true;
     }, {passive:true});
 
-    sc.addEventListener('touchmove', function(e){
-      if (!tracking) return;
-      if (!e.touches || !e.touches.length) return;
+    scroller.addEventListener('touchmove', function(e){
+      if (!tracking || !e.touches || !e.touches.length) return;
       var t = e.touches[0];
       lastY = t.clientY;
-      if (lastY < startY) tracking = false; // upward cancels
+      if (lastY < startY) { tracking = false; } // upward cancels
     }, {passive:true});
 
-    sc.addEventListener('touchend', function(){
+    function end(){
       if (!tracking) return;
       var dy = lastY - startY;
       tracking = false;
-      if (dy >= THRESHOLD) closeViaExisting(sc);
-    }, {passive:true});
+      // Only close if pulled down far enough and the scroller remained at the very top
+      if (dy >= THRESHOLD && startTop <= 1 && (scroller.scrollTop || 0) <= 1){
+        triggerClose(scroller);
+      }
+    }
+    scroller.addEventListener('touchend', end, {passive:true});
+    scroller.addEventListener('touchcancel', end, {passive:true});
 
-    sc.addEventListener('touchcancel', function(){ tracking = false; }, {passive:true});
-
-    sc.__pullToCloseWired = true;
+    scroller.__ptcWired = true;
   }
 
-  function wire(){
-    currentScrollers().forEach(attach);
+  function wireAll(){
+    candidateScrollers().forEach(attach);
   }
 
+  // Initial and lazy wiring; passive so buttons/positions never shift
   if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', wire);
+    document.addEventListener('DOMContentLoaded', wireAll);
   } else {
-    wire();
+    wireAll();
   }
-  window.addEventListener('load', wire, {once:true});
+  window.addEventListener('load', wireAll, {once:true});
 
-  // Re-wire when viewer opens/closes
+  // Rewire when overlays/viewers appear
   var mo = new MutationObserver(function(){
-    if (viewerOpen()) wire();
+    wireAll();
   });
-  try{
-    mo.observe(document.body, {attributes:true, attributeFilter:['class','style']});
-    mo.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
-    var pdf = qs('#pdf-overlay');
-    if (pdf) mo.observe(pdf, {attributes:true, attributeFilter:['style','class']});
-  }catch(e){}
+  try {
+    mo.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class','style']});
+  } catch(e){}
 })();
 </script>
 
