@@ -2714,59 +2714,64 @@ const s=$('.left-col');s.toggleClass('collapsed');
 
     function beginInlineRename($textEl, songId){
   try {
-    // Edit the exact element that's already rendering the stacked text.
     var $container = $textEl.closest('.song-name');
     if ($container.length === 0) $container = $textEl;
     var $name = $container.find('.song-name-text').first();
     if ($name.length === 0) $name = $container;
 
-    // If already editing, do nothing.
-    if ($name.is('[contenteditable=true], [contenteditable=\"plaintext-only\"]')) return;
+    if ($name.data('ghostEditing') === true) return;
+    $name.data('ghostEditing', true);
 
-    var originalText = ($name.text() || "");
+    var original = ($name.text() || "");
 
-    // Prevent the row's open/drag/click handlers from firing while editing.
-    function stopper(ev){ ev.stopPropagation(); }
-    $name.on('mousedown.inlineEdit touchstart.inlineEdit click.inlineEdit touchend.inlineEdit', stopper);
+    // Stop row interactions while editing (no visual change)
+    function stop(e){ e.stopPropagation(); }
+    $name.on('mousedown.ghostEdit touchstart.ghostEdit click.ghostEdit touchend.ghostEdit', stop);
 
-    // Make the element editable IN PLACE — no style/class changes.
-    // Prefer plaintext-only when supported, fall back to true.
-    $name.attr('contenteditable', 'plaintext-only');
-    if ($name.attr('contenteditable') !== 'plaintext-only') {
-      $name.attr('contenteditable', 'true');
-    }
-    // ARIA hint (does not affect visuals)
-    var prevRole = $name.attr('role');
-    $name.attr('role', 'textbox');
+    // Create an invisible "ghost" textarea to summon the keyboard and receive input,
+    // while the visible text remains unchanged in style/position/size.
+    var $ghost = $('<textarea autocomplete=\"off\" autocorrect=\"off\" autocapitalize=\"off\" spellcheck=\"false\"></textarea>');
+    $ghost.val(original);
+    $ghost.css({
+      position: 'fixed',
+      left: '0px',
+      top: '0px',
+      width: '1px',
+      height: '1px',
+      opacity: 0,
+      zIndex: 2147483647,
+      pointerEvents: 'none',   // don't intercept taps
+      background: 'transparent',
+      border: 'none',
+      padding: 0,
+      margin: 0
+    });
+    $('body').append($ghost);
 
-    // Focus and move caret to end without altering layout.
+    // Focus ghost so iOS brings up the keyboard
     setTimeout(function(){
       try {
-        var el = $name.get(0);
-        el.focus();
-        var range = document.createRange();
-        range.selectNodeContents(el);
-        range.collapse(false);
-        var sel = window.getSelection();
-        sel.removeAllRanges(); sel.addRange(range);
+        $ghost.focus();
+        var len = $ghost.val().length;
+        $ghost.get(0).setSelectionRange(len, len);
       } catch(_) {}
     }, 0);
 
-    // Paste as plain text to avoid injected markup changing layout.
-    $name.on('paste.inlineEdit', function(ev){
+    function sync(){
       try {
-        ev.preventDefault();
-        var data = (ev.originalEvent || ev).clipboardData.getData('text/plain');
-        document.execCommand('insertText', false, data);
+        var v = $ghost.val();
+        if (typeof v === 'string') v = v.replace(/\r\n/g, '\\n');
+        $name.text(v);
       } catch(_) {}
-    });
+    }
 
-    // Commit/cancel handlers. Enter commits; Esc cancels; blur commits.
+    $ghost.on('input', sync);
+
     function finish(commit){
       try {
         if (commit) {
-          var newVal = ($name.text() || "").trim();
-          var oldVal = (originalText || "").trim();
+          var newVal = ($ghost.val() || "").trim();
+          var oldVal = (original || "").trim();
           if (!newVal) newVal = oldVal;
           if (newVal !== oldVal) {
             try {
@@ -2779,25 +2784,23 @@ const s=$('.left-col');s.toggleClass('collapsed');
             try { $('li#' + songId + ' .song-name-text').text(newVal); } catch(_) {}
           }
         } else {
-          $name.text(originalText);
+          $name.text(original);
         }
       } finally {
-        // Clean up without touching any visual styles.
-        $name.off('.inlineEdit');
-        $name.removeAttr('contenteditable');
-        if (prevRole == null) { $name.removeAttr('role'); } else { $name.attr('role', prevRole); }
+        $ghost.off().remove();
+        $name.off('.ghostEdit').removeData('ghostEditing');
       }
     }
 
-    $name.on('keydown.inlineEdit', function(ev){
+    $ghost.on('keydown', function(ev){
       if (ev.key === 'Enter') { ev.preventDefault(); finish(true); }
       else if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
       ev.stopPropagation();
     });
-    $name.on('blur.inlineEdit', function(){ finish(true); });
+    $ghost.on('blur', function(){ finish(true); });
 
   } catch(e) {
-    console.error('inline rename (in-place, no-flatten) failed', e);
+    console.error('inline rename (ghost) failed', e);
   }
 
 }
