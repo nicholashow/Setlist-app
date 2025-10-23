@@ -5307,54 +5307,46 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 </script>
 <!-- === END: Sidebar text alignment restore === -->
 \n
-<script id="pull_to_close_minimal">
-/* Minimal, additive-only: Adds a second way to close an open file.
-   Behavior: When the file viewer is open and scrolled at the very top,
-   a gentle pull down (~60px) will close it.
+<script id="pull_to_close_addon">
+/* ADDITIVE ONLY: adds a second way to close an open file.
+   When the file viewer is open and scrolled to the very top,
+   pulling down ~60px will close it via your existing close control.
    - No style/class changes
-   - No preventDefault
+   - No preventDefault (passive listeners)
    - No DOM restructuring
-   - Does not interfere with existing gestures or scroll
+   - Does not modify existing functions
 */
 (function(){
   var THRESHOLD = 60;
-  var active = false;
-  var startY = 0, endY = 0, startScrollTop = 0;
-  var scroller = null;
+  var startY = 0, lastY = 0, tracking = false;
 
   function qs(s){ return document.querySelector(s); }
   function qsa(s){ return Array.from(document.querySelectorAll(s)); }
 
   function viewerOpen(){
-    // Heuristics for your app's viewer states/containers
-    if (qs('#pdf-overlay') && getComputedStyle(qs('#pdf-overlay')).display !== 'none') return true;
-    if (qs('.doc-iframe-container.current')) return true;
+    var pdf = qs('#pdf-overlay');
+    if (pdf && getComputedStyle(pdf).display !== 'none') return true;
+    if (qsa('.doc-iframe-container.current').length) return true;
     if (qs('#doc-iframe-wrapper') && getComputedStyle(qs('#doc-iframe-wrapper')).display !== 'none') return true;
     return false;
   }
 
-  function findScrollContainer(target){
-    // Prefer known containers if visible
-    var pdf = qs('#pdf-overlay .pdfjs-scroll');
-    if (pdf && getComputedStyle(qs('#pdf-overlay')).display !== 'none') return pdf;
-    var current = qs('.doc-iframe-container.current');
-    if (current) return current;
-    var wrap = qs('#doc-iframe-wrapper');
-    if (wrap) return wrap;
-    // fallback: nearest scrollable ancestor
-    var el = target;
-    while (el && el !== document.body && el !== document.documentElement){
-      var cs = getComputedStyle(el);
-      if (/(auto|scroll|overlay)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 1) return el;
-      el = el.parentElement;
+  function currentScrollers(){
+    var arr = [];
+    var pdf = qs('#pdf-overlay');
+    if (pdf && getComputedStyle(pdf).display !== 'none'){
+      var s = pdf.querySelector('.pdfjs-scroll');
+      if (s) arr.push(s);
     }
-    return document.scrollingElement || document.documentElement;
+    qsa('.doc-iframe-container.current').forEach(function(n){ arr.push(n); });
+    var wrap = qs('#doc-iframe-wrapper');
+    if (wrap) arr.push(wrap);
+    return arr.filter(Boolean);
   }
 
-  function closeViaExistingControl(container){
-    // Click an existing close button if available; otherwise send Escape
-    var btn = (container && container.querySelector && container.querySelector('[data-action="close"], #viewer-close, .viewer-close, [aria-label="Close"], [aria-label="close"]'))
-           || qs('[data-action="close"], #viewer-close, .viewer-close, [aria-label="Close"], [aria-label="close"]');
+  function closeViaExisting(container){
+    var btn = (container && container.querySelector && container.querySelector('#viewer-close, .viewer-btn-close, [data-action="close"], [aria-label="Close"], button[aria-label="close"]'))
+          || qs('#viewer-close, .viewer-btn-close, [data-action="close"], [aria-label="Close"], button[aria-label="close"]');
     if (btn && typeof btn.click === 'function'){ btn.click(); return; }
     try {
       var evt = new KeyboardEvent('keydown', {key:'Escape', keyCode:27, which:27, bubbles:true});
@@ -5362,49 +5354,59 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     } catch(e){}
   }
 
-  function onStart(e){
-    if (!viewerOpen()) return;
-    if (!e.touches || !e.touches.length) return;
-    var t = e.touches[0];
-    var target = e.target;
-    scroller = findScrollContainer(target);
-    if (!scroller) return;
-    // Only arm when already at top (<=1px tolerance)
-    if ((scroller.scrollTop || 0) > 1) { active = false; return; }
-    active = true;
-    startY = endY = t.clientY;
-    startScrollTop = scroller.scrollTop || 0;
+  function attach(sc){
+    if (!sc || sc.__pullToCloseWired) return;
+
+    sc.addEventListener('touchstart', function(e){
+      if (!viewerOpen()) return;
+      if ((sc.scrollTop || 0) > 1) { tracking = false; return; }
+      if (!e.touches || !e.touches.length) return;
+      var t = e.touches[0];
+      startY = lastY = t.clientY;
+      tracking = true;
+    }, {passive:true});
+
+    sc.addEventListener('touchmove', function(e){
+      if (!tracking) return;
+      if (!e.touches || !e.touches.length) return;
+      var t = e.touches[0];
+      lastY = t.clientY;
+      if (lastY < startY) tracking = false; // upward cancels
+    }, {passive:true});
+
+    sc.addEventListener('touchend', function(){
+      if (!tracking) return;
+      var dy = lastY - startY;
+      tracking = false;
+      if (dy >= THRESHOLD) closeViaExisting(sc);
+    }, {passive:true});
+
+    sc.addEventListener('touchcancel', function(){ tracking = false; }, {passive:true});
+
+    sc.__pullToCloseWired = true;
   }
 
-  function onMove(e){
-    if (!active) return;
-    if (!e.touches || !e.touches.length) return;
-    var t = e.touches[0];
-    endY = t.clientY;
-    // If the user swipes upward, cancel (we are not closing on upward motion)
-    if (endY < startY) active = false;
+  function wire(){
+    currentScrollers().forEach(attach);
   }
 
-  function onEnd(){
-    if (!active) return;
-    active = false;
-    var dy = endY - startY;
-    // Only close if:
-    //  - pulled down beyond threshold
-    //  - scroller remained at (or effectively at) top throughout
-    if (dy >= THRESHOLD){
-      var atTopNow = (scroller ? (scroller.scrollTop || 0) <= 1 : true);
-      if (startScrollTop <= 1 && atTopNow){
-        closeViaExistingControl(scroller || document.body);
-      }
-    }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', wire);
+  } else {
+    wire();
   }
+  window.addEventListener('load', wire, {once:true});
 
-  // Passive listeners on the document to avoid interfering with scroll/gestures
-  document.addEventListener('touchstart', onStart, {passive:true});
-  document.addEventListener('touchmove', onMove, {passive:true});
-  document.addEventListener('touchend', onEnd, {passive:true});
-  document.addEventListener('touchcancel', onEnd, {passive:true});
+  // Re-wire when viewer opens/closes
+  var mo = new MutationObserver(function(){
+    if (viewerOpen()) wire();
+  });
+  try{
+    mo.observe(document.body, {attributes:true, attributeFilter:['class','style']});
+    mo.observe(document.documentElement, {attributes:true, attributeFilter:['class']});
+    var pdf = qs('#pdf-overlay');
+    if (pdf) mo.observe(pdf, {attributes:true, attributeFilter:['style','class']});
+  }catch(e){}
 })();
 </script>
 
