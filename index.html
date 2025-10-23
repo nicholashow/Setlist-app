@@ -1281,6 +1281,29 @@
 /* inline-rename */
 .song-name.renaming { contain: layout paint; } /* isolate to avoid shifts */
 .edit-input { font-size: 0.95rem; font-weight: 600; }
+
+/* === Inline-rename overlay that preserves stacked layout size (no unstack) === */
+.song-name.renaming { position: relative; }
+.song-name.renaming .edit-magic-square {
+  position: absolute; /* overlay in place of the text */
+  box-sizing: border-box;
+  white-space: normal;       /* allow wrapping like the display text */
+  overflow-wrap: anywhere;   /* break long words if needed */
+  word-break: break-word;
+  outline: none !important;
+  border: 2px solid #2563eb;
+  background: #ffffff;
+  color: #2563eb;
+  border-radius: 6px;
+  z-index: 2;
+}
+.dark .song-name.renaming .edit-magic-square {
+  background: #111827;
+  color: #e5e7eb;
+  border-color: #2563eb;
+}
+
+
 @media (prefers-color-scheme: dark) {
   .edit-input { background: #111827; color: #e5e7eb; border-color: #2563eb; }
 }
@@ -2712,96 +2735,126 @@ const s=$('.left-col');s.toggleClass('collapsed');
     // Cancel on release
     $(document).on('touchend mouseup touchcancel', function(){ cancelTimer(); });
 
-    
-function beginInlineRename($textEl, songId){
-    // Avoid duplicate editors (input or textarea) in this song-name
-    if ($textEl.closest('.song-name').find('.edit-input').length) return;
+    function beginInlineRename($textEl, songId){
+    try {
+        // $textEl is the clickable .song-name container in our lists
+        var $container = $textEl.closest('.song-name');
+        if ($container.length === 0) $container = $textEl;
+        // Prevent duplicate editor
+        if ($container.find('.edit-magic-square').length) return;
 
-    const node = $textEl[0];
-    const current = $textEl.text();
+        // Find the inner span that actually holds the name text
+        var $nameSpan = $container.find('.song-name-text').first();
+        if ($nameSpan.length === 0) $nameSpan = $container; // fallback
 
-    // Measure the actual on-screen lines
-    const rects = node.getClientRects ? Array.from(node.getClientRects()) : [];
-    const fullRect = node.getBoundingClientRect();
-    const lineHeightStr = window.getComputedStyle(node).lineHeight;
-    let lineH = parseFloat(lineHeightStr);
-    if (!(lineH > 0)) lineH = fullRect.height; // fallback
+        var current = ($nameSpan.text() || '').trim();
+        var spanEl = $nameSpan.get(0);
+        var contEl = $container.get(0);
+        if (!spanEl || !contEl) return;
 
-    // Stacked if there are multiple rects or total height > ~1 line
-    const isStacked = (rects.length > 1) || (fullRect.height > (lineH + 2));
+        // Measure the visible stacked text box
+        var spanRect = spanEl.getBoundingClientRect();
+        var contRect = contEl.getBoundingClientRect();
 
-    // Height from first line's top to last line's bottom
-    let totalHeight = fullRect.height;
-    if (rects.length >= 1) {
-        const top = rects[0].top;
-        const bottom = rects[rects.length - 1].bottom;
-        totalHeight = Math.max(18, bottom - top);
-    }
+        // Snapshot computed typography & padding so the editor looks identical
+        var cs = window.getComputedStyle(spanEl);
+        var padL = cs.paddingLeft, padR = cs.paddingRight, padT = cs.paddingTop, padB = cs.paddingBottom;
+        var lineHeight = cs.lineHeight, font = cs.font, fontSize = cs.fontSize, fontWeight = cs.fontWeight, fontFamily = cs.fontFamily;
+        var letterSpacing = cs.letterSpacing;
 
-    // Width should be the widest line width (not the entire padded span)
-    let widest = 0;
-    if (rects.length) {
-        for (const r of rects) widest = Math.max(widest, r.width);
-    } else {
-        widest = fullRect.width;
-    }
-    // Add a tiny cushion for the input border/padding
-    widest = Math.max(40, Math.ceil(widest + 6));
+        // Lock a container class so we can absolute-position the overlay
+        $container.addClass('renaming');
 
-    const commonCls = 'edit-input';
-    let $editor;
+        // Hide the original text but preserve layout underlay
+        var prevVis = $nameSpan.css('visibility');
+        $nameSpan.css('visibility', 'hidden');
 
-    if (isStacked) {
-        // Use a textarea so the editor stacks exactly like the visible name
-        $editor = $('<textarea class="' + commonCls + '" />').val(current);
-        // Wrap exactly like the label
+        // Create a contenteditable overlay that exactly covers the stacked text box
+        var $editor = $('<div class="edit-magic-square" contenteditable="true" spellcheck="false"></div>');
+        $editor.text(current);
+
+        // Absolute coordinates within the container
+        var relLeft = (spanRect.left - contRect.left);
+        var relTop  = (spanRect.top  - contRect.top);
+        var W = Math.max(20, spanRect.width);
+        var H = Math.max(24, spanRect.height);
+
         $editor.css({
-            whiteSpace: 'normal',
-            overflowWrap: 'anywhere',
-            wordBreak: 'break-word',
-            lineHeight: lineH + 'px',
-            resize: 'none',
-            height: totalHeight + 'px',
-            width: widest + 'px',
-            boxSizing: 'border-box'
+          left: relLeft + 'px',
+          top:  relTop  + 'px',
+          width: W + 'px',
+          minHeight: H + 'px',
+          paddingLeft: padL,
+          paddingRight: padR,
+          paddingTop: padT,
+          paddingBottom: padB,
+          lineHeight: lineHeight,
+          font: font,
+          fontSize: fontSize,
+          fontWeight: fontWeight,
+          fontFamily: fontFamily,
+          letterSpacing: letterSpacing,
+          // Keep wrapping identical to the display text
+          whiteSpace: 'normal',
+          overflowWrap: 'anywhere',
+          wordBreak: 'break-word'
         });
-    } else {
-        // Single line: keep standard input
-        $editor = $('<input type="text" class="' + commonCls + '" />').val(current);
-        $editor.css({ width: widest + 'px', boxSizing: 'border-box' });
+
+        // Insert into container
+        $container.append($editor);
+
+        // Place caret at end
+        setTimeout(function(){
+          try {
+            $editor.focus();
+            var sel = window.getSelection(); var range = document.createRange();
+            range.selectNodeContents($editor.get(0));
+            range.collapse(false);
+            sel.removeAllRanges(); sel.addRange(range);
+          } catch(_){}
+        }, 0);
+
+        function finish(commit){
+          try {
+            if (commit) {
+              var newVal = ($editor.text() || '').trim();
+              if (!newVal) newVal = current; // don't allow empty
+              if (newVal !== current) {
+                // Update in-memory data
+                try {
+                  var s = masterSongs && masterSongs.find ? masterSongs.find(function(x){ return x.id === songId; }) : null;
+                  if (s) { s.name = newVal; }
+                } catch(_){}
+                try { save && save(); } catch(_){}
+
+                // Update all visible instances of this song's name without re-rendering the world
+                try {
+                  $('li#' + songId + ' .song-name-text').each(function(){ $(this).text(newVal); });
+                } catch(_){}
+              }
+            }
+          } finally {
+            // Remove editor and restore original span
+            $editor.remove();
+            try { $nameSpan.css('visibility', prevVis || ''); } catch(_){}
+            $container.removeClass('renaming');
+          }
+        }
+
+        // Commit on Enter, cancel on Escape, commit on blur
+        $editor.on('keydown', function(ev){
+          if (ev.key === 'Enter') { ev.preventDefault(); finish(true); }
+          else if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
+        });
+        $editor.on('blur', function(){ finish(true); });
+
+        // Prevent accidental drags while editing
+        $editor.on('touchstart mousedown', function(ev){ ev.stopPropagation(); });
+
+    } catch(e){
+        console.error('inline rename failed', e);
     }
 
-    // Replace only the text span (preserves layout around it)
-    $textEl.replaceWith($editor);
-    $editor.focus();
-    // Make typing legible in dark mode
-    $editor.addClass('bg-white text-black');
-
-    function commit(save){
-
-            const song = masterSongs.find(s => s.id === songId);
-            if (!song){ renderAll(); return; 
-    }
-
-    // Enter commits; Esc cancels (textarea Enter still commits to match prior behavior)
-    $editor.on('keydown', function(ev){
-        if (ev.key === 'Enter') { ev.preventDefault(); commit(true); }
-        else if (ev.key === 'Escape') { commit(false); }
-    });
-    $editor.on('blur', function(){ commit(true); });
-
-    // Prevent accidental drags while editing
-    $editor.on('touchstart mousedown', function(ev){ ev.stopPropagation(); });
-
-    // If textarea, auto-grow as user types (keeps stacked behavior)
-    if ($editor.is('textarea')) {
-        const el = $editor[0];
-        const autosize = () => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; };
-        // Initialize roughly to measured height, then correct
-        el.style.height = totalHeight + 'px';
-        autosize();
-        $editor.on('input', autosize);
-    }
 }
 
 })();
