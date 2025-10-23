@@ -1751,6 +1751,17 @@ html.dark .notes-inline .notes-textarea {
 body.setlist-drag-outside .ui-sortable-helper { display: none !important; }
 body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none !important; visibility: hidden !important; }
 
+
+/* magic-square usability fixes */
+.song-name.renaming{ position: relative !important; }
+.song-name.renaming .edit-magic-square{
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+  -webkit-user-select: text !important;
+  user-select: text !important;
+  -webkit-touch-callout: default !important;
+  touch-action: manipulation !important;
+}
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
 
@@ -2770,7 +2781,11 @@ const s=$('.left-col');s.toggleClass('collapsed');
             // Build the editor overlay
             var current = ($host.text() || '').trim();
             var $ed = $('<div class="edit-magic-square" contenteditable="true" spellcheck="false" />');
-            $ed.text(current);
+$ed.attr({ role: "textbox", "aria-label": "Edit file name", inputmode: "text", tabindex: "0" });
+$ed.text(current);
+// Ensure taps focus it on iOS/Android and don't bubble to parent handlers
+$ed.on("pointerdown mousedown touchstart click", function(ev){ ev.stopPropagation(); try{ this.focus(); }catch(e){} });
+
 
             // Style: exact-fit box around the stacked text. No padding; border uses border-box in CSS.
             $ed.css({
@@ -2801,6 +2816,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
                 } catch(e){}
             }
             setTimeout(function(){ $ed.focus(); placeCaretEnd($ed.get(0)); }, 0);
+setTimeout(function(){ try{ $ed.focus(); placeCaretEnd($ed.get(0)); }catch(e){} }, 120);
 
             function finish(commit){
                 var newVal = ($ed.text() || '').trim();
