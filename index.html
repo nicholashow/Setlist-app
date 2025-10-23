@@ -2782,13 +2782,13 @@ const s=$('.left-col');s.toggleClass('collapsed');
 
             // Compute width as the width of the widest *word* within the stacked text
             var widestWord = Math.ceil(measureWidestWord(host));
-
-            // Position relative to the host element
-            var hostRect = host.getBoundingClientRect();
-            var left = Math.max(0, Math.round(minLeft - hostRect.left));
-            var topOffset = Math.max(0, Math.round(top - hostRect.top));
-            var height = Math.max(1, Math.round(bottom - top));
-            var width = Math.max(1, widestWord);
+// Use full stacked text span to ensure every line remains visible
+var fullWidth = Math.max(1, Math.round(maxRight - minLeft));
+var hostRect = host.getBoundingClientRect();
+var left = Math.max(0, Math.round(minLeft - hostRect.left));
+var topOffset = Math.max(0, Math.round(top - hostRect.top));
+var height = Math.max(1, Math.round(bottom - top));
+var width = fullWidth;
 
             // Build the editor overlay
             var current = ($host.text() || '').trim();
@@ -2801,20 +2801,46 @@ $ed.on("pointerdown mousedown touchstart click", function(ev){ ev.stopPropagatio
 
             // Style: exact-fit box around the stacked text. No padding; border uses border-box in CSS.
             $ed.css({
-                position: 'absolute',
-                left: left + 'px',
-                top: topOffset + 'px',
-                width: width + 'px',
-                height: height + 'px',
-                font: 'inherit',
-                'line-height': 'inherit',
-                'letter-spacing': 'inherit',
-                'white-space': 'normal',
-                'overflow': 'hidden',
-                'box-sizing': 'border-box'
-            });
+    position: 'absolute',
+    left: left + 'px',
+    top: topOffset + 'px',
+    width: width + 'px',
+    height: height + 'px',
+    font: 'inherit',
+    'line-height': 'inherit',
+    'letter-spacing': 'inherit',
+    'white-space': 'normal',
+    'overflow': 'visible',
+    'box-sizing': 'border-box'
+});
+// Copy computed text-layout properties so wrapping matches exactly
+try {
+  var cs = window.getComputedStyle(host);
+  $ed.css({
+    'white-space': cs.whiteSpace,
+    'word-break': cs.wordBreak,
+    'overflow-wrap': cs.overflowWrap || cs.wordWrap,
+    'text-transform': cs.textTransform,
+    'font-family': cs.fontFamily,
+    'font-size': cs.fontSize,
+    'font-weight': cs.fontWeight,
+    'line-height': cs.lineHeight,
+    'letter-spacing': cs.letterSpacing
+  });
+} catch(e){}
+
 
             $host.append($ed);
+            // Summon keyboard immediately on iOS by focusing a hidden input, then hand off to editor
+            var $kb = $('<input type="text" class="kb-summon" autocomplete="off" autocapitalize="none" />')
+                .css({position:'absolute',opacity:0,left:'-9999px',top:'-9999px',height:'1px',width:'1px'});
+            $host.append($kb);
+            try { $kb.focus(); } catch(e){}
+            try { $ed.focus(); } catch(e){}
+            placeCaretEnd($ed.get(0));
+            setTimeout(function(){ try{ $ed.focus(); placeCaretEnd($ed.get(0)); }catch(e){} }, 0);
+            setTimeout(function(){ try{ $kb.remove(); }catch(e){} }, 200);
+
 
             // Focus and place caret at end
             function placeCaretEnd(node){
@@ -2831,8 +2857,8 @@ $ed.on("pointerdown mousedown touchstart click", function(ev){ ev.stopPropagatio
 setTimeout(function(){ try{ $ed.focus(); placeCaretEnd($ed.get(0)); }catch(e){} }, 120);
 
             function finish(commit){
-                
-                // Remove suppression listeners
+                try{ $host.find('.kb-summon').remove(); }catch(e){}
+// Remove suppression listeners
                 try {
                     ['click','pointerup','mouseup','touchend','contextmenu'].forEach(function(type){
                         document.removeEventListener(type, _cancelOpen, true);
