@@ -2709,6 +2709,18 @@ const s=$('.left-col');s.toggleClass('collapsed');
 
             // Mark renaming state (positions host relatively; see CSS)
             $host.addClass('renaming');
+            // Suppress any click/tap that would open the file while renaming
+            var _cancelOpen = function(ev){
+                // Let the editor itself work normally
+                if (ev.target && ev.target.closest && ev.target.closest('.edit-magic-square')) return;
+                try { ev.preventDefault(); } catch(e){}
+                try { ev.stopPropagation(); } catch(e){}
+                try { if (ev.stopImmediatePropagation) ev.stopImmediatePropagation(); } catch(e){}
+            };
+            ['click','pointerup','mouseup','touchend','contextmenu'].forEach(function(type){
+                document.addEventListener(type, _cancelOpen, true);
+            });
+
 
             // Measure stacked text geometry using DOM Ranges (line boxes and widest word)
             function getAllClientRectsFor(el){
@@ -2819,7 +2831,14 @@ $ed.on("pointerdown mousedown touchstart click", function(ev){ ev.stopPropagatio
 setTimeout(function(){ try{ $ed.focus(); placeCaretEnd($ed.get(0)); }catch(e){} }, 120);
 
             function finish(commit){
-                var newVal = ($ed.text() || '').trim();
+                
+                // Remove suppression listeners
+                try {
+                    ['click','pointerup','mouseup','touchend','contextmenu'].forEach(function(type){
+                        document.removeEventListener(type, _cancelOpen, true);
+                    });
+                } catch(e){}
+var newVal = ($ed.text() || '').trim();
                 $ed.remove();
                 $host.removeClass('renaming');
                 if (!commit) return;
