@@ -5486,7 +5486,53 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 </script>
 <!-- === END: Sidebar text alignment restore === -->
-\n</body>
+\n
+<style id="review-board-patch-2025-10-28">
+/* === Patch 1: Simple View + Sidebar OPEN → flatten file names (single line like when sidebar is CLOSED) === */
+body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text,
+body.simple-view-on .left-col:not(.collapsed) ~ main .song-name {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* === Patch 2: Home (MASTER) controls – shrink Sort box width without moving its left edge === */
+#master-view #sort-dropdown {
+  width: 180px !important;          /* narrower to free space on the right */
+  max-width: 180px !important;
+}
+
+/* keep the chevron inside the select aligned on the new width */
+#master-view #sort-dropdown ~ .pointer-events-none { right: 0; }
+
+/* If a fixed-width filters group exists, let it shrink so buttons can move left */
+#master-view-controls #filters-group {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+}
+
+/* === Patch 3: Move Add files & Delete all left (only on Home and only when sidebar is OPEN) === */
+/* Prefer targeting a buttons wrapper if present */
+.left-col:not(.collapsed) ~ main #master-view-controls .master-view-buttons,
+.left-col:not(.collapsed) ~ main #master-view-controls #master-view-buttons {
+  margin-left: 0 !important;
+  padding-right: 260px !important;  /* matches song rows' reserved right-side controls width */
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Fallback: if there's no wrapper, shift the buttons themselves */
+.left-col:not(.collapsed) ~ main #upload-master-btn,
+.left-col:not(.collapsed) ~ main #delete-all-btn {
+  margin-right: 260px !important;   /* align with runtime/controls block in rows */
+}
+
+/* Ensure the overall controls block doesn’t have extra right padding fighting alignment */
+#master-view-controls { padding-right: 8px !important; }
+</style>
+
+</body>
 </html>
 
 
