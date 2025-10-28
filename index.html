@@ -5532,6 +5532,70 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name {
 #master-view-controls { padding-right: 8px !important; }
 </style>
 
+
+<style id="review-board-patch-2025-10-28-REV2">
+/* === Fix 1: Simple View + Sidebar OPEN → show full filename (flattened, not crushed) === */
+body.simple-view-on .left-col:not(.collapsed) ~ main #master-list > li .song-name,
+body.simple-view-on .left-col:not(.collapsed) ~ main #setlist-list > li .song-name,
+body.simple-view-on .left-col:not(.collapsed) ~ main #favorites-list > li .song-name,
+body.simple-view-on .left-col:not(.collapsed) ~ main #genre-song-list > li .song-name,
+body.simple-view-on .left-col:not(.collapsed) ~ main #plays-list > li .song-name {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  flex: 1 1 auto !important;   /* let name area actually grow */
+  min-width: 160px !important; /* avoid collapsing to a single character */
+}
+/* allow inner spans to shrink correctly for ellipsis */
+body.simple-view-on .left-col:not(.collapsed) ~ main #master-list > li .song-name *,
+body.simple-view-on .left-col:not(.collapsed) ~ main #setlist-list > li .song-name *,
+body.simple-view-on .left-col:not(.collapsed) ~ main #favorites-list > li .song-name *,
+body.simple-view-on .left-col:not(.collapsed) ~ main #genre-song-list > li .song-name *,
+body.simple-view-on .left-col:not(.collapsed) ~ main #plays-list > li .song-name * {
+  min-width: 0 !important;
+}
+
+/* Explicitly cap the right-side details so the name gets all remaining space */
+body.simple-view-on .left-col:not(.collapsed) ~ main .song-details-container {
+  width: 220px !important;       /* matches two columns (runtime + delete) */
+  flex: 0 0 220px !important;
+}
+
+/* === Fix 2: Keep Add files + Delete All to the RIGHT of the Sort box (not below) when sidebar is open === */
+.left-col:not(.collapsed) ~ main #controls-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-wrap: nowrap !important;  /* prevent wrapping to a new line */
+}
+.left-col:not(.collapsed) ~ main #controls-row #filters-group {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+}
+/* keep Sort box a bit narrower to free right-side space, left edge unchanged */
+#master-view #sort-dropdown {
+  width: 180px !important;
+  max-width: 180px !important;
+}
+
+/* Right-side buttons: align with runtime (left) and delete (right) columns */
+.left-col:not(.collapsed) ~ main #master-view-buttons {
+  margin-left: auto !important;
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-template-columns: 110px 110px !important; /* two equal columns like song-details grid */
+  width: 220px !important;
+  justify-content: end !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+/* Ensure the two buttons fill their columns */
+.left-col:not(.collapsed) ~ main #upload-master-btn,
+.left-col:not(.collapsed) ~ main #delete-all-btn {
+  width: 100% !important;
+}
+</style>
+
 </body>
 </html>
 
