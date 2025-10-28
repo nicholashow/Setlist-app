@@ -5658,6 +5658,48 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
 }
 </style>
 
+
+<style id="review-board-patch-2025-10-28-REV4">
+/* === Restore original Sort position; place buttons to the RIGHT only when sidebar is OPEN === */
+.left-col:not(.collapsed) ~ main #controls-row {
+  position: relative !important;      /* anchor absolute buttons */
+  padding-right: 236px !important;    /* reserve space for the two buttons (96+96+gap) */
+}
+
+/* Do NOT change Sort size/position when sidebar is OPEN */
+.left-col:not(.collapsed) ~ main #sort-dropdown {
+  width: auto !important;
+  max-width: none !important;
+}
+
+/* Keep filters group natural; don't force flex rules that shift Sort */
+.left-col:not(.collapsed) ~ main #filters-group {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+}
+
+/* Pin the buttons to the far right, vertically centered with Sort row */
+.left-col:not(.collapsed) ~ main #master-view-buttons {
+  position: absolute !important;
+  right: 0 !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 208px !important;            /* 96 + 96 + small inner gap */
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+  z-index: 3 !important;              /* stay above dropdown */
+}
+
+/* Fill columns; keep touch targets robust */
+.left-col:not(.collapsed) ~ main #master-view-buttons .btn-master,
+.left-col:not(.collapsed) ~ main #upload-master-btn,
+.left-col:not(.collapsed) ~ main #delete-all-btn {
+  width: 100% !important;
+}
+</style>
+
 </body>
 </html>
 
