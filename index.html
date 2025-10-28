@@ -5596,6 +5596,68 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-details-container {
 }
 </style>
 
+
+<style id="review-board-patch-2025-10-28-REV3">
+/* === A) SIMPLE VIEW + SIDEBAR OPEN: flatten & fully show filenames (no 1-letter ellipsis) === */
+body.simple-view-on .left-col:not(.collapsed) ~ main li .song-name {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;     /* allow text to shrink for ellipsis */
+  max-width: 100% !important;
+}
+body.simple-view-on .left-col:not(.collapsed) ~ main li .song-name-text {
+  display: block !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  margin-right: 12px !important;   /* don't reserve the inputs block in simple view */
+  padding-right: 0 !important;
+}
+
+/* Ensure any earlier "wrap + huge margin-right" rule loses to this */
+body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  margin-right: 12px !important;
+}
+
+/* === B) HOME CONTROLS: keep buttons to the RIGHT of Sort when sidebar is OPEN, not behind/below === */
+.left-col:not(.collapsed) ~ main #controls-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-wrap: nowrap !important;       /* prevent wrapping under the sort box */
+}
+.left-col:not(.collapsed) ~ main #filters-group {
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+}
+/* Keep Sort's left edge fixed; just narrower to free right-side space */
+#master-view #sort-dropdown {
+  width: 170px !important;
+  max-width: 170px !important;
+}
+
+/* Buttons block sits to the RIGHT; align to two rightmost song columns */
+.left-col:not(.collapsed) ~ main #master-view-buttons {
+  margin-left: auto !important;
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-template-columns: 1fr 1fr !important;
+  width: calc(96px * 2 + 8px) !important;  /* 96px runtime + 96px delete + small gap */
+  justify-content: end !important;
+  align-items: center !important;
+  gap: 8px !important;
+  position: relative !important;
+  z-index: 1; /* keep above selects if any overlap */
+}
+.left-col:not(.collapsed) ~ main #master-view-buttons .btn-master,
+.left-col:not(.collapsed) ~ main #upload-master-btn,
+.left-col:not(.collapsed) ~ main #delete-all-btn {
+  width: 100% !important;
+}
+</style>
+
 </body>
 </html>
 
