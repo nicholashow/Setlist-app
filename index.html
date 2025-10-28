@@ -5700,6 +5700,59 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
 }
 </style>
 
+
+<style id="review-board-patch-2025-10-28-REV5">
+/* === HOMEPAGE LAYOUT WHEN SIDEBAR IS OPEN ===
+   Arrange controls in one row beneath Search/Simple/Dark and above the file boxes.
+   Left:  Add files, Delete All
+   Right: Sort By (fills width up to just before the input columns of song rows)
+*/
+.left-col:not(.collapsed) ~ main #controls-row {
+  display: grid !important;
+  grid-template-columns: auto 1fr !important;  /* buttons auto, sort expands */
+  align-items: center !important;
+  column-gap: 12px !important;
+  flex-wrap: nowrap !important;                /* safety: no wrapping */
+  padding-right: var(--inputs-width, 260px) !important; /* reserve space on right matching row inputs */
+  position: relative !important;
+}
+
+/* Left cluster: buttons */
+.left-col:not(.collapsed) ~ main #master-view-buttons {
+  grid-column: 1 !important;
+  position: static !important;                 /* cancel any previous absolute pinning */
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: auto !important;
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: max-content !important;
+  gap: 8px !important;
+  z-index: 1 !important;
+}
+
+/* Right cluster: Sort by fills remaining width */
+.left-col:not(.collapsed) ~ main #filters-group {
+  grid-column: 2 !important;
+  min-width: 0 !important;                     /* allow it to shrink if needed */
+}
+.left-col:not(.collapsed) ~ main #filters-group #sort-dropdown {
+  width: 100% !important;                      /* stretch across available space */
+  max-width: none !important;
+}
+
+/* Ensure all three controls sit on this row and are visible */
+.left-col:not(.collapsed) ~ main #controls-row > * {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Do not alter layout when the sidebar is CLOSED */
+.left-col.collapsed ~ main #controls-row,
+.left-col.collapsed ~ main #master-view-buttons,
+.left-col.collapsed ~ main #filters-group #sort-dropdown { all: revert; }
+</style>
+
 </body>
 </html>
 
