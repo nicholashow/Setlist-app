@@ -6087,4 +6087,133 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
   });
 })();
 </script>
+<style id="review-board-patch-2025-10-29-HOMECONTROLS-V7">
+/* Base grid; exact pixel widths are set at runtime after measuring the first visible row.
+   Scoped to sidebar OPEN to avoid changing the CLOSED look. */
+.left-col:not(.collapsed) ~ main #controls-row{
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) 120px 160px !important; /* placeholders; JS will override */
+  column-gap: 0.5rem !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.left-col:not(.collapsed) ~ main #master-view-buttons{ display: contents !important; }
+.left-col:not(.collapsed) ~ main #filters-group{ grid-column: 1 !important; min-width: 0 !important; }
+.left-col:not(.collapsed) ~ main #sort-dropdown{ width: 100% !important; max-width: 100% !important; }
+.left-col:not(.collapsed) ~ main #upload-master-btn{ grid-column: 2 !important; width: 100% !important; white-space: nowrap !important; }
+.left-col:not(.collapsed) ~ main #delete-all-btn{ grid-column: 3 !important; width: 100% !important; white-space: nowrap !important; }
+
+/* Safety: ensure we never impact the CLOSED state */
+.left-col.collapsed ~ main #controls-row,
+.left-col.collapsed ~ main #master-view-buttons,
+.left-col.collapsed ~ main #upload-master-btn,
+.left-col.collapsed ~ main #delete-all-btn,
+.left-col.collapsed ~ main #filters-group{ all: unset; } /* let original closed-state CSS win */
+</style>
+
+<script id="review-board-script-2025-10-29-HOMECONTROLS-V7">
+(function(){
+  function isSidebarOpen(){
+    var lc = document.querySelector('.left-col');
+    return lc && !lc.classList.contains('collapsed');
+  }
+  function isHomeVisible(){
+    var home = document.querySelector('#master-view');
+    return home && !home.classList.contains('hidden');
+  }
+  function getPx(n){ return Math.max(40, Math.round(n||0)) + 'px'; }
+
+  function measureArtistWidthFrom(li){
+    var cont = li.querySelector('.song-details-container');
+    if (!cont) return 120;
+    var cs = window.getComputedStyle(cont);
+    var gap = parseFloat(cs.columnGap || cs.gap || 0) || 0;
+    var total = cont.getBoundingClientRect().width;
+    // Two equal columns inside; artist ≈ (total - gap)/2
+    var artist = (total - gap) / 2;
+    return Math.max(80, Math.min(220, artist));
+  }
+
+  function measureNotesWidthFrom(li){
+    // Prefer inline notes input width
+    var notes = li.querySelector('.notes-inline');
+    if (notes){
+      var w = notes.getBoundingClientRect().width;
+      return Math.max(100, Math.min(360, w));
+    }
+    // Fallback: if notes hidden, approximate using remaining space to the left of details container
+    var cont = li.querySelector('.song-details-container');
+    var name = li.querySelector('.song-name'); // wrapper for left column
+    if (name && cont){
+      var leftW = name.getBoundingClientRect().width;
+      // Subtract some padding to avoid overflow
+      return Math.max(120, Math.min(360, leftW - 12));
+    }
+    return 180;
+  }
+
+  function firstVisibleRow(){
+    var list = document.querySelector('#master-list');
+    if (!list) return null;
+    var items = list.querySelectorAll('li');
+    for (var i=0;i<items.length;i++){
+      var el = items[i];
+      var r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) return el;
+    }
+    return null;
+  }
+
+  function align(){
+    try{
+      if (!isSidebarOpen() || !isHomeVisible()) return;
+      var li = firstVisibleRow();
+      if (!li) return;
+      var artistW = measureArtistWidthFrom(li);
+      var notesW  = measureNotesWidthFrom(li);
+
+      // Apply exact columns: [Sort flex] [Add files = artistW] [Delete All = notesW]
+      var row = document.querySelector('#controls-row');
+      if (!row) return;
+      row.style.gridTemplateColumns = 'minmax(0,1fr) ' + getPx(artistW) + ' ' + getPx(notesW);
+
+      // Ensure correct grid positions
+      var mvb = document.querySelector('#master-view-buttons');
+      if (mvb) mvb.style.display = 'contents';
+
+      var add = document.querySelector('#upload-master-btn');
+      var del = document.querySelector('#delete-all-btn');
+      var filt = document.querySelector('#filters-group');
+      if (add) { add.style.gridColumn = '2'; add.style.width = '100%'; }
+      if (del) { del.style.gridColumn = '3'; del.style.width = '100%'; }
+      if (filt){ filt.style.gridColumn = '1'; }
+
+    }catch(e){ /* swallow */ }
+  }
+
+  function ready(fn){ document.readyState!=='loading' ? fn() : document.addEventListener('DOMContentLoaded', fn); }
+
+  ready(function(){
+    align();
+    // Re-align on resize and when content/sidebar toggles change
+    window.addEventListener('resize', align, {passive:true});
+
+    var side = document.querySelector('.left-col');
+    if (side){
+      new MutationObserver(align).observe(side, {attributes:true, attributeFilter:['class']});
+    }
+    var list = document.querySelector('#master-list');
+    if (list){
+      new MutationObserver(align).observe(list, {childList:true, subtree:true});
+    }
+    var simple = document.querySelector('#simple-view-toggle');
+    if (simple){
+      simple.addEventListener('change', align);
+    }
+  });
+})();
+</script>
 </html>
