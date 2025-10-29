@@ -5906,6 +5906,165 @@ html, body { touch-action: pan-y !important; overscroll-behavior-x: none !import
   }
 })();
 </script>
+
+<style id="ipad-normalize-2025-10-29">
+/* Normalize across desktop vs iPad Safari */
+html, body { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+* { box-sizing: border-box; }
+html, body, #app, main { overflow-x: hidden !important; max-width: 100vw !important; }
+#app { position: relative; }
+/* Prevent accidental horizontal rubber-banding causing visual shift */
+body { overscroll-behavior-x: none; touch-action: pan-y; }
+
+/* Make button/select/input line-heights consistent across engines */
+button, select, input { font: inherit; line-height: 1.2; }
+
+/* Keep native iOS select arrow on the right while hiding value text (overlay says "Sort By") */
+#sort-proxy-wrap select#sort-dropdown {
+  -webkit-appearance: menulist !important;
+  appearance: menulist !important;
+  background: transparent !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+/* Ensure Sort By wrapper can be sized exactly without affecting layout */
+#sort-proxy-wrap { display: inline-block; vertical-align: middle; }
+
+/* Sidebar external scrollbar: match Top/Least (12px rail, 8px thumb) */
+#sidebar-external-scroll { width: 12px; }
+#sidebar-thumb { width: 8px; left: 2px; border-radius: 8px; }
+
+/* Center the chevron in the sidebar toggle consistently */
+#sidebar-toggle svg { display: inline-block; vertical-align: middle; }
+</style>
+
+<script id="ipad-normalize-2025-10-29-js">
+(function(){
+  if (window.__ipad_normalize__) return;
+  window.__ipad_normalize__ = true;
+
+  function rect(el){ var r = el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
+  var raf = window.requestAnimationFrame || function(cb){return setTimeout(cb,16)};
+
+  // Recalculate layout after fonts load (iPad Safari often shifts metrics)
+  function afterFontsReady(cb){ 
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(function(){ raf(cb); });
+    } else {
+      window.addEventListener('load', function(){ raf(cb); }, {once:true});
+    }
+  }
+
+  // Make Sort By same width as Add files and align heights to Search on iPad
+  function sizeSortBy(){
+    var sel = document.getElementById('sort-dropdown');
+    var wrap = document.getElementById('sort-proxy-wrap');
+    var add  = document.getElementById('upload-master-btn');
+    var search = document.getElementById('search');
+    if (!sel || !wrap || !add) return;
+    var w = rect(add).width;
+    wrap.style.width = Math.round(w) + 'px';
+    if (search) {
+      wrap.style.height = Math.round(rect(search).height) + 'px';
+    } else {
+      wrap.style.height = Math.round(rect(add).height) + 'px';
+    }
+    sel.style.width = '100%'; sel.style.height = '100%';
+  }
+
+  // Buttons width = width of input container (more stable than raw input width on iPad)
+  function sizeActionButtons(){
+    var add = document.getElementById('upload-master-btn');
+    var del = document.getElementById('delete-all-btn');
+    var list = document.getElementById('master-list');
+    var aside = document.querySelector('aside.left-col');
+    if (!add || !del || !list || !aside) return;
+    if (aside.classList.contains('collapsed')) return;
+
+    // Prefer the parent container of the Artist input for stable width
+    var refInput = list.querySelector('input[placeholder="Artist"], input[placeholder="Notes"]');
+    var refBox = refInput ? (refInput.parentElement || refInput) : null;
+    if (!refBox) return;
+    var w = Math.round(rect(refBox).width);
+    add.style.width = w + 'px';
+    del.style.width = w + 'px';
+  }
+
+  // Ensure chevron flips with actual sidebar state
+  function syncToggleArrow(){
+    var aside = document.querySelector('aside.left-col');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!aside || !btn) return;
+    btn.classList.remove('arrow-in','arrow-out');
+    if (aside.classList.contains('collapsed')) btn.classList.add('arrow-out'); else btn.classList.add('arrow-in');
+  }
+
+  function observeSidebar(){
+    var aside = document.querySelector('aside.left-col');
+    if (!aside) return;
+    var mo = new MutationObserver(function(){ syncToggleArrow(); });
+    mo.observe(aside, {attributes:true, attributeFilter:['class']});
+    syncToggleArrow();
+  }
+
+  // Keep the sidebar scroller showing only while actively scrolling; hide immediately after
+  function bindSidebarScroller(){
+    var aside = document.querySelector('aside.left-col');
+    var scroller = aside && aside.querySelector('.left-col-main-content');
+    var rail = document.getElementById('sidebar-external-scroll');
+    if (!aside || !scroller || !rail) return;
+
+    function layout(){
+      var a = rect(aside), s = rect(scroller);
+      rail.style.top = (s.top - a.top) + 'px';
+      rail.style.height = s.height + 'px';
+      rail.style.display = (scroller.scrollHeight > scroller.clientHeight + 1) ? 'block' : 'none';
+      // thumb size/pos
+      var thumb = document.getElementById('sidebar-thumb');
+      if (thumb) {
+        var ratio = s.height / scroller.scrollHeight;
+        var th = Math.max(20, Math.floor(s.height * ratio));
+        var ty = Math.floor(scroller.scrollTop * (s.height - th) / (scroller.scrollHeight - s.height));
+        thumb.style.height = th + 'px';
+        thumb.style.top = ty + 'px';
+      }
+    }
+    function onScroll(){
+      layout();
+      rail.classList.add('active');
+      clearTimeout(scroller._hideT);
+      scroller._hideT = setTimeout(function(){ rail.classList.remove('active'); }, 60);
+    }
+    scroller.addEventListener('scroll', onScroll, {passive:true});
+    window.addEventListener('resize', layout);
+    layout();
+  }
+
+  function recalcAll(){
+    sizeSortBy();
+    sizeActionButtons();
+  }
+
+  function init(){
+    recalcAll();
+    observeSidebar();
+    bindSidebarScroller();
+    afterFontsReady(recalcAll);
+    // Also recalc after a tick to catch GitHub Pages paint
+    raf(recalcAll);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  window.addEventListener('resize', recalcAll);
+  // Re-apply when master list changes
+  var list = document.getElementById('master-list');
+  if (list) {
+    var obs = new MutationObserver(function(){ sizeActionButtons(); });
+    obs.observe(list, {childList:true});
+  }
+})();
+</script>
 </body>
 <style id="review-board-patch-2025-10-29-HOMECONTROLS-V9">
 /* Scope: HOME only, Sidebar OPEN, Simple View OFF */
