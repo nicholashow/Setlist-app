@@ -2389,6 +2389,51 @@ const s=$('.left-col');s.toggleClass('collapsed');
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
+<style id="review-board-patch-2025-10-29-HOMECONTROLS">
+/* === HOME CONTROLS: Make sidebar OPEN look exactly like sidebar CLOSED === */
+/* Reset the row to the same flexible layout used by default */
+.left-col:not(.collapsed) ~ main #controls-row{
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  flex-wrap: wrap !important;        /* allow wrap like the closed state */
+  padding-right: 0 !important;       /* undo any reserved space */
+}
+
+/* Filters group behaves like default (grow to take space) */
+.left-col:not(.collapsed) ~ main #filters-group{
+  flex: 1 1 auto !important;
+  min-width: 180px !important;       /* avoid collapse */
+}
+
+/* Sort dropdown width/position back to auto, same as closed */
+.left-col:not(.collapsed) ~ main #sort-dropdown{
+  width: auto !important;
+  max-width: none !important;
+}
+
+/* Buttons block returns to normal flow on the right (no absolute/grid overrides) */
+.left-col:not(.collapsed) ~ main #master-view-buttons{
+  position: static !important;
+  right: auto !important;
+  top: auto !important;
+  transform: none !important;
+  margin-left: auto !important;      /* push to the right */
+  display: flex !important;
+  gap: 8px !important;
+  width: auto !important;
+  grid-auto-flow: initial !important;
+  grid-template-columns: none !important;
+}
+
+/* Match closed-state button sizing */
+.left-col:not(.collapsed) ~ main #master-view-buttons .btn-master,
+.left-col:not(.collapsed) ~ main #upload-master-btn,
+.left-col:not(.collapsed) ~ main #delete-all-btn{
+  width: 90px !important;            /* same as default .btn-master width */
+}
+</style>
+
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
