@@ -7062,6 +7062,217 @@ html, body, #app { overflow-x: hidden !important; }
   window.addEventListener('resize', positionHandle);
 })();
 </script>
+
+<style id="patch-2025-10-29-handle-black-native-sort-ui">
+/* Hard-disable horizontal scrolling */
+html, body, #app, main { overflow-x: hidden !important; }
+html, body { width: 100%; overscroll-behavior-x: none; touch-action: pan-y; }
+#app { position: relative !important; max-width: 100vw; }
+main { max-width: 100vw; }
+
+/* ===== Sort By: keep original size, native arrow, always show "Sort By" ===== */
+#sort-proxy-wrap {
+  position: relative;
+  display: inline-block;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+/* Ensure we didn't add borders/shadows that change size */
+#sort-proxy-wrap:focus-within { border: 0 !important; box-shadow: none !important; }
+
+/* Restore native select appearance & dimensions */
+#sort-proxy-wrap select#sort-dropdown {
+  appearance: auto !important;
+  -webkit-appearance: menulist !important;
+  opacity: 1 !important;
+  color: transparent !important;            /* hide changing text */
+  text-shadow: none !important;
+  background: transparent !important;      /* keep original bg from classes */
+}
+
+/* Overlay label that always says "Sort By" without changing box size */
+#sort-proxy-label {
+  position: absolute;
+  top: 50%;
+  left: 0.5rem;               /* aligns with p-2 padding of the select */
+  transform: translateY(-50%);
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+  color: #111827;             /* gray-900 for light */
+}
+.dark #sort-proxy-label { color: #E5E7EB; }  /* gray-200 for dark */
+
+/* Keep native arrow on right; remove our custom caret if any */
+#sort-proxy-wrap::after { content: none !important; }
+
+/* Blue focus ring around the select without changing size */
+#sort-dropdown:focus {
+  outline: 2px solid #3B82F6;              /* blue-500 */
+  outline-offset: 0;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.35);
+  border-radius: 0.5rem; /* approx rounded-lg */
+}
+
+/* ===== Sidebar scroller strictly on scroll/drag (auto-hide) ===== */
+#sidebar-external-scroll {
+  opacity: 0;
+  transition: opacity 0.18s ease-in-out;
+  pointer-events: none;
+}
+#sidebar-external-scroll.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ===== Outside handle: exact sidebar black, seamless, with chevron ===== */
+#sidebar-toggle {
+  position: absolute !important;
+  width: 18px !important;
+  min-width: 18px !important;
+  border-radius: 9999px !important;
+  background: var(--sidebar-bg, #1F2937) !important; /* default to gray-800; JS syncs exact */
+  color: #FFFFFF !important;
+  border: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  z-index: 80 !important;
+}
+#sidebar-toggle svg {
+  display: block !important;
+  position: static !important;
+  width: 18px !important;
+  height: 18px !important;
+  opacity: 1 !important;
+  transition: transform 0.18s ease-in-out;
+}
+#sidebar-toggle.collapsed svg { transform: rotate(0deg); }        /* ← when closed */
+#sidebar-toggle:not(.collapsed) svg { transform: rotate(180deg); }/* → when open */
+</style>
+
+<script id="patch-2025-10-29-handle-black-native-sort-ui-js">
+(function(){
+  if (window.__native_sort_handle_black_patch__) return;
+  window.__native_sort_handle_black_patch__ = true;
+
+  // ===== Ensure the handle has the original chevron SVG =====
+  function ensureChevron(){
+    var btn = document.getElementById('sidebar-toggle');
+    if (!btn) return;
+    var svg = btn.querySelector('svg');
+    if (!svg) {
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>';
+    }
+  }
+
+  // ===== Sort By proxy wrapper (no dimension change) =====
+  function installSortProxy(){
+    var sel = document.getElementById('sort-dropdown');
+    if (!sel) return;
+    if (!document.getElementById('sort-proxy-wrap')) {
+      var wrap = document.createElement('span');
+      wrap.id = 'sort-proxy-wrap';
+      sel.parentNode.insertBefore(wrap, sel);
+      wrap.appendChild(sel);
+      var label = document.createElement('span');
+      label.id = 'sort-proxy-label';
+      label.textContent = 'Sort By';
+      wrap.appendChild(label);
+    }
+    // Keep default A-Z
+    if (!sel.value || sel.value === 'recent') sel.value = 'name';
+  }
+
+  // ===== Sidebar scroller: show while scrolling/dragging; hide 2s after idle =====
+  var aside = document.querySelector('aside.left-col');
+  var scroller = aside && aside.querySelector('.left-col-main-content');
+  var rail = document.getElementById('sidebar-external-scroll');
+  var thumb = document.getElementById('sidebar-thumb');
+  var hideTimer = null;
+  function ensureRailVisibilityBasedOnOverflow(){
+    if (!rail || !scroller) return;
+    var content = scroller.scrollHeight;
+    var visible = scroller.clientHeight;
+    if (content <= visible + 1) rail.style.display = 'none'; else rail.style.display = 'block';
+  }
+  function showRailNow(){ if (rail) rail.classList.add('active'); }
+  function scheduleHideRail(){ if (!rail) return; clearTimeout(hideTimer); hideTimer = setTimeout(function(){ rail.classList.remove('active'); }, 2000); }
+  function bindScrollAutoHide(){
+    if (!scroller || !rail) return;
+    scroller.addEventListener('scroll', function(){
+      ensureRailVisibilityBasedOnOverflow();
+      showRailNow();
+      scheduleHideRail();
+    }, {passive:true});
+    if (thumb) {
+      ['mousedown','touchstart'].forEach(function(evt){
+        thumb.addEventListener(evt, function(){ showRailNow(); clearTimeout(hideTimer); }, {passive:false});
+      });
+      ['mouseup','touchend','touchcancel','mouseleave'].forEach(function(evt){
+        window.addEventListener(evt, function(){ scheduleHideRail(); });
+      });
+    }
+    ensureRailVisibilityBasedOnOverflow();
+  }
+
+  // ===== Place handle outside, align with ALL SONGS, match exact sidebar bg =====
+  function rect(el){ var r=el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
+  function placeHandleOutside(){
+    var app = document.getElementById('app');
+    var aside = document.querySelector('aside.left-col');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!app || !aside || !btn) return;
+    if (btn.parentElement !== app) {
+      if (aside.nextSibling) app.insertBefore(btn, aside.nextSibling);
+      else app.appendChild(btn);
+    }
+  }
+  function syncHandleBgToSidebar(){
+    var aside = document.querySelector('aside.left-col');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!aside || !btn) return;
+    var bg = getComputedStyle(aside).backgroundColor;
+    btn.style.setProperty('--sidebar-bg', bg);
+    btn.style.background = bg;
+  }
+  function positionHandle(){
+    var app = document.getElementById('app');
+    var aside = document.querySelector('aside.left-col');
+    var header = aside && aside.querySelector('#home-btn');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!app || !aside || !btn || !header) return;
+    var appR = rect(app), asideR = rect(aside), headerR = rect(header);
+    btn.style.left   = Math.round(asideR.right - appR.left - 1) + 'px'; /* overlap 1px to appear seamless */
+    btn.style.top    = Math.round(headerR.top - appR.top) + 'px';
+    btn.style.height = Math.round(headerR.height) + 'px';
+    // orientation reflects collapsed state
+    if (aside.classList.contains('collapsed')) btn.classList.add('collapsed'); else btn.classList.remove('collapsed');
+  }
+  function observeSidebar(){
+    var aside = document.querySelector('aside.left-col');
+    if (!aside) return;
+    var obs = new MutationObserver(function(){ positionHandle(); syncHandleBgToSidebar(); });
+    obs.observe(aside, {attributes:true, attributeFilter:['class','style']});
+  }
+
+  function init(){
+    ensureChevron();
+    installSortProxy();
+    bindScrollAutoHide();
+    placeHandleOutside();
+    syncHandleBgToSidebar();
+    positionHandle();
+    observeSidebar();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  window.addEventListener('resize', function(){ positionHandle(); syncHandleBgToSidebar(); });
+})();
+</script>
 </body>
 <style id="review-board-patch-2025-10-29-HOMECONTROLS-V9">
 /* Scope: HOME only, Sidebar OPEN, Simple View OFF */
