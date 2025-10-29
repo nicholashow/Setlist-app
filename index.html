@@ -5965,64 +5965,95 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
   });
 })();
 </script>
-</html>\n
-<script id="home-2nd-row-rework-2025-10-29-v7">
+
+<script id="home-2nd-row-rework-2025-10-29-v8">
 (function(){
   function q(s){ return document.querySelector(s); }
-  function isHome(){ var v = q('#master-view'); return v && !v.classList.contains('hidden'); }
+  function isHome(){ var v=q('#master-view'); return v && !v.classList.contains('hidden'); }
   function sidebarOpen(){ var l=q('.left-col'); return l && !l.classList.contains('collapsed'); }
+  function px(n){ return Math.max(0, Math.round(n)) + 'px'; }
   function setImp(el, prop, val){ if(!el) return; try{ el.style.setProperty(prop, val, 'important'); }catch(e){ el.style[prop]=val; } }
-  function applyOnce(){
+  function firstRow(){ var list=q('#master-list'); return list ? list.querySelector('li') : null; }
+  function artistInput(li){
+    return li && (li.querySelector('[data-field="artist"], input.artist, .artist input, input[name="artist"]') || null);
+  }
+  function notesInput(li){
+    return li && (li.querySelector('[data-field="notes"], textarea.notes, .notes-inline textarea, textarea[name="notes"]') || null);
+  }
+  function computeGTC(row){
+    // Prefer what the app already computed
+    var gtc = row && (row.style.gridTemplateColumns || getComputedStyle(row).gridTemplateColumns);
+    if (gtc && /\d+px\s+\d+px/.test(gtc)) return gtc;
+    // Fallback: measure artist/notes from first row
+    var li = firstRow();
+    var a = li ? artistInput(li) : null;
+    var n = li ? notesInput(li)  : null;
+    if (!a || !n) return '1fr 320px 480px'; // conservative fallback
+    var aw = a.getBoundingClientRect().width;
+    var nw = n.getBoundingClientRect().width;
+    return 'minmax(0,1fr) ' + px(aw) + ' ' + px(nw);
+  }
+  function apply(){
     if(!(isHome() && sidebarOpen())) return;
-    var row = q('#controls-row');
-    var fg  = q('#filters-group');
-    var sort= q('#sort-dropdown');
-    var btns= q('#master-view-buttons');
-    if(!row || !fg || !sort) return;
-    // Hide buttons
-    if(btns){ setImp(btns, 'display', 'none'); }
-    // Make single-column row and let Sort fill it
+    var row  = q('#controls-row');
+    var fg   = q('#filters-group');
+    var sort = q('#sort-dropdown');
+    var btns = q('#master-view-buttons');
+    var srch = q('#search');
+    if (!row || !fg || !sort) return;
+    // Hide Add/Delete
+    if (btns) setImp(btns, 'display', 'none');
+    // Use the same 3-column grid as song rows so col1 ends where Artist starts
+    var gtc = computeGTC(row);
     setImp(row, 'display', 'grid');
-    setImp(row, 'gridTemplateColumns', '1fr');
+    setImp(row, 'gridTemplateColumns', gtc);
     setImp(row, 'alignItems', 'stretch');
-    setImp(row, 'columnGap', '0px');
-    setImp(fg,  'gridColumn', '1');
-    setImp(fg,  'width', '100%');
-    setImp(sort,'width', '100%');
-    setImp(sort,'maxWidth', 'none');
-    setImp(sort,'flex', '1 1 auto');
+    setImp(row, 'columnGap', '12px');
+    // Place filters (Sort) in column 1 and let it fill
+    setImp(fg,   'gridColumn', '1 / 2');
+    setImp(fg,   'width', '100%');
+    setImp(sort, 'width', '100%');
+    setImp(sort, 'maxWidth', 'none');
+    // Match Search bar height & radius
+    if (srch){
+      var cs = getComputedStyle(srch);
+      var h  = cs.height;
+      var br = cs.borderRadius;
+      setImp(sort, 'height', h);
+      setImp(sort, 'borderRadius', br);
+      setImp(sort, 'paddingTop', '0px');
+      setImp(sort, 'paddingBottom', '0px');
+      setImp(sort, 'display', 'flex');
+      setImp(sort, 'alignItems', 'center');
+      setImp(sort, 'justifyContent', 'space-between');
+    }
   }
-  function applyStrong(){
-    // Run twice around the frame boundary to beat any late inline writes
-    applyOnce();
-    requestAnimationFrame(applyOnce);
-    setTimeout(applyOnce, 50);
+  function strongApply(){
+    apply();
+    requestAnimationFrame(apply);
+    setTimeout(apply, 50);
+    setTimeout(apply, 150);
+    setTimeout(apply, 350);
   }
-  // Observe the controls row for *any* style changes (align() updates)
-  function watch(){
-    var row = q('#controls-row');
-    if(!row) return;
-    var obs = new MutationObserver(function(muts){
-      for(var m of muts){
-        if(m.type==='attributes' && m.attributeName==='style'){
-          applyStrong();
-        }
-      }
-    });
-    obs.observe(row, {attributes:true, attributeFilter:['style']});
-  }
-  // Global observers (sidebar open/close, home visibility flips, etc.)
-  var docObs = new MutationObserver(applyStrong);
-  docObs.observe(document.documentElement, {subtree:true, childList:true, attributes:true});
-
+  // Run now and watch for style changes on the row (align() updates), plus global mutations
   if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ applyStrong(); watch(); });
+    document.addEventListener('DOMContentLoaded', strongApply);
   } else {
-    applyStrong(); watch();
+    strongApply();
   }
-  // Also on resize
-  window.addEventListener('resize', applyStrong, {passive:true});
-  // A few initial retries in case UI hydrates late
-  [100,300,800].forEach(function(ms){ setTimeout(applyStrong, ms); });
+  var row = q('#controls-row');
+  if (row){
+    new MutationObserver(function(muts){
+      for (var m of muts){
+        if (m.type==='attributes' && m.attributeName==='style'){ strongApply(); }
+      }
+    }).observe(row, {attributes:true, attributeFilter:['style']});
+  }
+  new MutationObserver(strongApply).observe(document.documentElement, {subtree:true, childList:true, attributes:true});
+  window.addEventListener('resize', strongApply, {passive:true});
+  // a couple late retries
+  [700,1200].forEach(function(ms){ setTimeout(strongApply, ms); });
 })();
 </script>
+
+</html>
