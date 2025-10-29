@@ -5940,37 +5940,47 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
     var notesW  = widthOf(notesEl);
 
     
-    // === PATCH 2025-10-29: Home 2nd row — Sort full-width, hide Add/Delete when sidebar is open ===
+    // === PATCH 2025-10-29 (V10): Home 2nd row — Sort matches left file column; hide Add/Delete ===
     (function(){
-      var row  = document.querySelector('#controls-row');
-      var fg   = document.querySelector('#filters-group');
-      var sort = document.querySelector('#sort-dropdown');
-      var btns = document.querySelector('#master-view-buttons');
-      if (btns) btns.style.setProperty('display','none','important');
-      if (row) {
-        row.style.setProperty('display','grid','important');
-        row.style.setProperty('grid-template-columns','1fr','important');
-        row.style.setProperty('align-items','stretch','important');
-        row.style.setProperty('column-gap','0px','important');
-      }
-      if (fg)   fg.style.setProperty('grid-column','1 / 2','important');
-      if (sort){
-        sort.style.setProperty('width','100%','important');
-        sort.style.setProperty('max-width','none','important');
-        var search = document.querySelector('#search');
-        if (search){
-          var cs = getComputedStyle(search);
-          sort.style.setProperty('height', cs.height, 'important');
-          sort.style.setProperty('border-radius', cs.borderRadius, 'important');
-          sort.style.setProperty('padding-top','0px','important');
-          sort.style.setProperty('padding-bottom','0px','important');
-          sort.style.setProperty('display','flex','important');
-          sort.style.setProperty('align-items','center','important');
-          sort.style.setProperty('justify-content','space-between','important');
+      function setImp(el, prop, val){ if(!el) return; try{ el.style.setProperty(prop,val,'important'); }catch(e){ el.style[prop]=val; } }
+      function applySecondRow(){
+        var row  = document.querySelector('#controls-row');
+        var fg   = document.querySelector('#filters-group');
+        var sort = document.querySelector('#sort-dropdown');
+        var btns = document.querySelector('#master-view-buttons');
+        // Use the same 3-column grid as computed above so col 1 ends where Artist starts
+        if (row){
+          setImp(row,'display','grid');
+          setImp(row,'grid-template-columns','minmax(0,1fr) ' + px(artistW) + ' ' + px(notesW));
+          setImp(row,'align-items','stretch');
+          setImp(row,'column-gap','12px');
+        }
+        // Hide Add/Delete on Home + sidebar open
+        if (btns){ setImp(btns,'display','none'); }
+        // Place filters (Sort) in column 1 and let it fill 100%
+        if (fg){ setImp(fg,'grid-column','1 / 2'); setImp(fg,'width','100%'); }
+        if (sort){
+          setImp(sort,'width','100%'); setImp(sort,'max-width','none');
+          var search = document.getElementById('search');
+          if (search){
+            var cs = getComputedStyle(search);
+            setImp(sort,'height', cs.height);
+            setImp(sort,'border-radius', cs.borderRadius);
+            setImp(sort,'padding-top','0px');
+            setImp(sort,'padding-bottom','0px');
+            setImp(sort,'display','flex');
+            setImp(sort,'align-items','center');
+            setImp(sort,'justify-content','space-between');
+          }
         }
       }
+      // Run after the rest of align() has finished writing styles
+      if (typeof requestAnimationFrame === 'function'){
+        requestAnimationFrame(applySecondRow);
+      } else {
+        setTimeout(applySecondRow, 0);
+      }
     })();
-    return;
 // Apply EXACT widths from measured inputs
     row.style.gridTemplateColumns = 'minmax(0,1fr) ' + px(artistW) + ' ' + px(notesW);
 
