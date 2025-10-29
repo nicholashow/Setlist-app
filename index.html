@@ -1,14 +1,12 @@
 <!DOCTYPE html>
+<html lang="en" class="dark">
 
-<html class="dark" lang="en">
 <head>
-<style id="no-flash-topbar">
-.left-col ~ main #controls-row,
-.left-col ~ main #master-view-buttons,
-.left-col ~ main #filters-group,
-.left-col ~ main #sort-dropdown { transition: none !important; }
-</style>
-<script data-ios-detect-early="">
+
+<style id="no-flash-20251029">html.preload body{visibility:hidden}</style>
+<script id="preload-flag-20251029">(function(){try{document.documentElement.classList.add('preload');}catch(_){}})();</script>
+
+    <script data-ios-detect-early>
     (function(){
       try{
         var isiOS = /AppleWebKit/.test(navigator.userAgent||'') && (navigator.maxTouchPoints||0) > 1;
@@ -16,11 +14,12 @@
       }catch(e){}
     })();
     </script>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no" name="viewport"/>
-<title>Setlist Manager - Enhanced</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
+
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+    <title>Setlist Manager - Enhanced</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
         tailwind.config = {
             darkMode: 'class',
         }
@@ -205,7 +204,7 @@
         })();
 
     </script>
-<script>
+    <script>
         (function() {
             var ua = navigator.userAgent || navigator.vendor || window.opera;
             var isiOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -214,10 +213,11 @@
             }
         })();
     </script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
-<style>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+    <style>
         html,
         body {
             height: 100%;
@@ -1768,6 +1768,7 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
 }
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
+
 <style>
   /* Larger single name-only chip; positioned via page coords */
   #drag-proxy-nameonly-large {
@@ -1781,6 +1782,8 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
     border-radius: 8px;
   }
 </style>
+
+
 <style>
   /* Larger look applied to whichever proxy survives */
   .nameonly-large-look {
@@ -1789,6 +1792,8 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
     border-radius: 8px !important;
   }
 </style>
+
+
 <style>
   /* Force fixed positioning so the chip follows the finger exactly */
   #drag-proxy-nameonly {
@@ -1805,6 +1810,8 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   /* Remove any legacy large proxy */
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
+
+
 <style>
   /* Enforce single, bigger label */
   #drag-proxy-nameonly {
@@ -1821,294 +1828,427 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   /* Hide any legacy big proxy if injected elsewhere */
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
+
+<style>
+/* =============================
+   FORCE: Sidebar OPEN uses CLOSED look for top controls
+   Targets: #controls-row, #filters-group, #master-view-buttons, #sort-dropdown
+   ============================= */
+.left-col:not(.collapsed) ~ main #controls-row {
+  display: flex !important;
+  gap: 0.75rem !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+}
+
+.left-col:not(.collapsed) ~ main #filters-group {
+  display: flex !important;
+  flex-grow: 1 !important;
+  gap: 0.5rem !important;
+  padding: 0.25rem !important;
+  background-color: #ffffff !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+  min-width: 200px !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+}
+.dark .left-col:not(.collapsed) ~ main #filters-group {
+  background-color: transparent !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  box-shadow: none !important;
+}
+
+.left-col:not(.collapsed) ~ main #master-view-buttons {
+  display: flex !important;
+  gap: 0.5rem !important;
+  align-items: center !important;
+}
+
+.left-col:not(.collapsed) ~ main #master-view-buttons .btn-master {
+  width: 90px !important; /* Mirror closed-state size */
+  height: 34px !important;
+  line-height: 1 !important;
+}
+
+/* Ensure Sort dropdown matches closed layout (not stretched) */
+.left-col:not(.collapsed) ~ main #sort-dropdown {
+  width: auto !important;
+  height: 34px !important;
+  padding: 0.25rem 0.5rem !important;
+  border: none !important;
+  background: none !important;
+  appearance: auto !important;
+}
+</style>
+
+<style id="nick-2025-10-29-topbar-fix">
+/* Unify control heights in master view */
+#master-view #controls-row select#sort-dropdown,
+#master-view #controls-row button.btn-master,
+#master-view #controls-row input#search {
+  height: 40px !important;
+  min-height: 40px !important;
+  line-height: 40px !important;
+}
+
+/* When sidebar is OPEN, keep the buttons visible, to the right, and same width as the two song detail columns (220px total) */
+.left-col:not(.collapsed) ~ main #master-view-buttons {
+  display: grid !important;
+  grid-auto-flow: column !important;
+  grid-template-columns: 1fr 1fr !important;
+  width: 220px !important;
+  gap: 8px !important;
+  margin-left: auto !important;
+  align-items: center !important;
+}
+
+.left-col:not(.collapsed) ~ main #upload-master-btn,
+.left-col:not(.collapsed) ~ main #delete-all-btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  height: 40px !important;
+}
+
+/* Keep Sort box from shrinking too small; align its height */
+.left-col:not(.collapsed) ~ main #sort-dropdown {
+  min-width: 160px;
+}
+
+/* Avoid any wrapping of the row when sidebar is open */
+.left-col:not(.collapsed) ~ main #controls-row {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 12px !important;
+}
+</style>
+
+
+<style id="sort-chevron-visibility-20251029">
+#controls-row .pointer-events-none svg { opacity: 1 !important; }
+</style>
+
 </head>
+
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
-<div id="app">
-<aside class="left-col w-64 bg-gray-800 text-white flex-shrink-0 dark:bg-black">
-<div class="left-col-main-content">
-<div class="app-header app-header-selected" id="home-btn">
-<h1 class="text-2xl font-bold mb-2 underline">ALL SONGS</h1>
-<p class="text-sm whitespace-nowrap">Organize music performances</p>
-</div>
-<div class="mb-2 p-2 rounded-lg bg-gray-700" id="nav-setlists">
-<div class="flex items-center justify-between">
-<span class="font-medium uppercase">Setlists</span>
-<button class="text-sm px-2 py-1 rounded-md bg-gray-600" id="toggle-setlists">▾</button>
-</div>
-<div class="mt-2" id="setlists-container"></div>
-<div class="mt-2">
-<input class="w-full p-1 text-sm rounded-md bg-gray-700" id="new-setlist-name" placeholder="New setlist name"/>
-<button class="w-full mt-1 p-1 text-sm rounded-md btn-add" id="add-setlist-btn">Add Setlist</button>
-</div>
-</div>
-<div class="sidebar-item" id="nav-favorites">Favorites</div>
-<div class="sidebar-item" id="nav-energy">Energy Levels</div>
+    <div id="app">
+        <aside class="left-col w-64 bg-gray-800 text-white flex-shrink-0 dark:bg-black">
+            <div class="left-col-main-content">
+                <div class="app-header app-header-selected" id="home-btn">
+                    <h1 class="text-2xl font-bold mb-2 underline">ALL SONGS</h1>
+                    <p class="text-sm whitespace-nowrap">Organize music performances</p>
+                </div>
+
+                <div class="mb-2 p-2 rounded-lg bg-gray-700" id="nav-setlists">
+                    <div class="flex items-center justify-between">
+                        <span class="font-medium uppercase">Setlists</span>
+                        <button class="text-sm px-2 py-1 rounded-md bg-gray-600" id="toggle-setlists">▾</button>
+                    </div>
+                    <div class="mt-2" id="setlists-container"></div>
+                    <div class="mt-2">
+                        <input class="w-full p-1 text-sm rounded-md bg-gray-700" id="new-setlist-name" placeholder="New setlist name" />
+                        <button class="w-full mt-1 p-1 text-sm rounded-md btn-add" id="add-setlist-btn">Add Setlist</button>
+                    </div>
+                </div>
+                <div class="sidebar-item" id="nav-favorites">Favorites</div>
+                <div class="sidebar-item" id="nav-energy">Energy Levels</div>
 <div class="sidebar-item" id="nav-recordings">Recordings</div>
+                
 <div class="sidebar-item" id="nav-plays">Plays</div>
-<div class="mt-4">
-<h3 class="text-sm font-semibold uppercase">Genres</h3>
-<div class="item-creation">
-<div class="color-picker-wrapper">
-<div id="genre-color-display"></div>
-<input id="genre-color" title="Select color" type="color"/>
-</div>
-<input class="item-name-input" id="genre-name" placeholder="New genre"/>
-<button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-genre">Add</button>
-</div>
-<div class="mt-2 space-y-1" id="genre-list"></div>
-</div>
-<div class="mt-4">
-<h3 class="text-sm font-semibold uppercase">Venues</h3>
-<div class="item-creation">
-<input class="item-name-input" id="venue-name" placeholder="New venue"/>
-<button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-venue">Add</button>
-</div>
-<div class="mt-2 space-y-1" id="venue-list"></div>
-</div>
-</div>
-<div class="stats-container">
-<h3 class="stats-title">Top Played</h3>
-<ul class="text-xs mt-1" id="top-played"></ul>
-<h3 class="stats-title mt-3">Least Played</h3>
-<ul class="text-xs mt-1" id="least-played"></ul>
-</div>
+                
+
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold uppercase">Genres</h3>
+                     <div class="item-creation">
+                        <div class="color-picker-wrapper">
+                            <div id="genre-color-display"></div>
+                            <input type="color" id="genre-color" title="Select color">
+                        </div>
+                        <input class="item-name-input" id="genre-name" placeholder="New genre" />
+                        <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-genre">Add</button>
+                    </div>
+                    <div class="mt-2 space-y-1" id="genre-list"></div>
+                </div>
+
+                <div class="mt-4">
+                    <h3 class="text-sm font-semibold uppercase">Venues</h3>
+                    <div class="item-creation">
+                        <input class="item-name-input" id="venue-name" placeholder="New venue" />
+                        <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-venue">Add</button>
+                    </div>
+                    <div class="mt-2 space-y-1" id="venue-list"></div>
+                </div>
+            </div>
+            
+            <div class="stats-container">
+                <h3 class="stats-title">Top Played</h3>
+                <ul class="text-xs mt-1" id="top-played"></ul>
+                <h3 class="stats-title mt-3">Least Played</h3>
+                <ul class="text-xs mt-1" id="least-played"></ul>
+            </div>
+        
 <div id="stats-external-scroll"><div class="track"></div><div id="stats-thumb"></div></div>
 </aside>
-<button id="sidebar-toggle">
-<svg class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M15 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-</button>
-<main class="flex-1 p-4 overflow-auto">
-<!-- === Genre Detail Page (in main app area) === -->
-<section class="p-4 w-full" id="genre-page"><div class="colorbar rounded-xl text-white text-xl" id="genre-colorbar"></div><div class="mt-4"><div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800"><ul id="genre-page-list"></ul></div></div></section>
-<section id="master-view">
-<div id="master-view-controls">
-<div id="search-container">
-<input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..."/>
-<datalist id="search-results"></datalist>
-<div class="absolute right-[120px] top-1/2 -translate-y-1/2" id="simple-view-container">
-<label class="flex items-center cursor-pointer" for="simple-view-toggle">
-<span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
-<div class="relative">
-<input class="sr-only" id="simple-view-toggle" type="checkbox"/>
-<div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
-<div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
-</div>
-</label>
-</div>
-<div id="dark-mode-container">
-<label class="flex items-center cursor-pointer ml-4" for="dark-mode-toggle">
-<span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark</span>
-<div class="relative">
-<input class="dark-mode-toggle sr-only" id="dark-mode-toggle" type="checkbox"/>
-<div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
-<div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
-</div>
-</label>
-</div>
-</div>
-<div id="controls-row" style="display:flex !important; align-items:center !important; gap:0.75rem !important; flex-wrap:wrap !important; transition:none !important;">
-<div id="filters-group">
-<select class="p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select" id="sort-dropdown" style="width:auto !important; height:34px !important; padding:0.25rem 0.5rem !important; border:none !important; background:none !important; appearance:auto !important; transition:none !important;">
-<option selected="" value="name">A-Z</option>
-<option value="artist">Artist</option>
-<option value="energy">Energy</option>
-<option value="lastPlayed">Last played</option>
-<option value="recent">Recently added</option>
-</select>
-<div id="sort-genre-flyout">
-<div class="title">Genres</div>
-<div class="slot" id="sort-genre-slot"></div>
-</div>
-<div class="relative hidden" id="genre-filter-container">
-<button class="p-2 rounded-lg bg-transparent text-sm text-left dark:bg-transparent dark:text-gray-200" id="genre-filter-button">Select Genres</button>
-<div class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700" id="genre-filter-dropdown"></div>
-</div>
-</div>
-<div class="flex gap-2" id="master-view-buttons" style="display:flex !important; align-items:center !important; gap:0.5rem !important; width:auto !important; justify-content:flex-start !important; transition:none !important;">
-<input accept=".pdf" class="hidden" id="master-upload" multiple="" type="file"/>
-<button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow btn-master" id="upload-master-btn" style="width:90px !important; height:34px !important; line-height:1 !important; transition:none !important;">Add files</button>
-<button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow btn-master" id="delete-all-btn" style="width:90px !important; height:34px !important; line-height:1 !important; transition:none !important;">Delete All</button>
-</div>
-</div>
-</div>
-<div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-<ul id="master-list"></ul>
-</div>
-<div class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-8 pointer-events-none" id="master-drop-overlay">
-<div class="text-center bg-white dark:bg-gray-800 p-12 rounded-2xl border-4 border-dashed border-blue-500">
-<h2 class="text-2xl font-bold">Drop Files Here</h2>
-<p>Add PDF song sheets to ALL SONGS</p>
-</div>
-</div>
-</section>
-<section class="hidden" id="setlist-view">
-<div class="flex items-center gap-2 mb-2">
-<button class="hidden p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition dark:bg-gray-700 dark:hover:bg-gray-600" id="back-to-venue-btn">← Back</button>
-<h2 class="text-xl font-bold" id="setlist-title">Setlist</h2>
-<p class="text-sm text-gray-500 dark:text-white ml-2" id="setlist-total-duration"></p>
-<p class="text-sm text-gray-500 dark:text-white ml-2" id="setlist-song-count"></p>
-</div>
-<div class="flex items-end justify-between flex-wrap gap-4 mb-2">
-<div class="flex items-center gap-2 whitespace-nowrap">
-<button class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow" id="record-show">Record Show</button>
-<button class="p-2 bg-red-600 text-white rounded-lg hidden shadow" id="stop-record">Stop Recording</button>
-<button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow" id="print-setlist">Print Setlist</button>
-<div class="relative inline-flex items-center whitespace-nowrap">
-<button class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow" id="share-setlist-btn">Share Setlist</button>
-<div class="inline-flex items-center ml-2" id="simple-view-container-setlist">
-<label class="flex items-center cursor-pointer" for="simple-view-toggle-setlist">
-<span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
-<div class="relative">
-<input class="sr-only" id="simple-view-toggle-setlist" type="checkbox"/>
-<div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
-<div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
-</div>
-</label>
-</div>
-<div class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700" id="share-options">
-<a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" href="#" id="share-native">Share with Device (inc. PDFs)</a>
-<a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" href="#" id="share-email">Share via Email (text only)</a>
-<a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" href="#" id="share-gmail">Share via Gmail (text only)</a>
-<a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" href="#" id="share-copy">Copy to Clipboard (text only)</a>
-</div>
-<span class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity" id="copy-feedback">Copied!</span>
-</div>
-</div>
-</div>
-<div class="mb-2" id="setlist-details-container">
-<div id="setlist-details-toggle">
-<span>Setlist Details</span>
-<span class="toggle-arrow">▾</span>
-</div>
-<div id="setlist-details-content">
-<div id="setlist-date-container">
-<label class="font-medium text-xs" for="setlist-date">Date</label>
-<input class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600" id="setlist-date" type="date"/>
-<span id="date-placeholder">mm/dd/yyyy</span>
-</div>
-<div>
-<label class="font-medium text-xs" for="setlist-venue">Venue</label>
-<input class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" id="setlist-venue" placeholder="Enter venue" type="text"/>
-</div>
-<div>
-<label class="font-medium text-xs" for="setlist-sort-filter-dropdown">Order</label>
-<div class="relative">
-<select class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" id="setlist-sort-filter-dropdown">
-<option value="custom">Custom Order</option>
-<option value="name">Sort by Name</option>
-<option value="artist">Sort by Artist</option>
-<option value="genre">Sort by Genre</option>
-<option value="energy">Sort by Energy</option>
-</select>
-<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
-<svg class="fill-current h-4 w-4" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path></svg>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="mb-2" id="setlist-recordings"></div>
-<div class="setlist-view-container">
-<div class="setlist-panel">
-<div class="panel-header">Setlist Songs</div>
-<ul id="setlist-list"></ul>
-</div>
-<div class="setlist-panel">
-<div class="panel-header">Add Songs to Setlist</div>
-<input class="w-full p-2 border-b dark:bg-gray-800 dark:border-gray-600 flex-shrink-0" id="setlist-search-add" placeholder="Search all songs..."/>
-<ul id="setlist-add-songs-list"></ul>
-</div>
-</div>
-</section>
-<section class="hidden" id="favorites-view">
-<div class="flex items-center justify-between mb-2">
-<h2 class="text-xl font-bold">Favorite Songs</h2>
-<div class="relative">
-<select class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600" id="favorites-sort-dropdown">
-<option value="name">Sort by Name</option>
-<option value="artist">Sort by Artist</option>
-<option value="lastPlayed">Sort by Last Played</option>
-<option value="energy">Sort by Energy</option>
-</select>
-<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-<svg class="fill-current h-4 w-4" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-<path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path></svg>
-</div>
-</div>
-</div>
-<div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-<ul id="favorites-list"></ul>
-</div>
-</section>
-<section class="hidden" id="genre-view">
-<div class="flex items-center justify-between mb-2">
-<h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
-<div class="relative">
-<select class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 hidden" id="genre-sort-dropdown">
-<option value="name">Sort by Name</option>
-<option value="artist">Sort by Artist</option>
-<option value="lastPlayed">Sort by Last Played</option>
-<option value="energy">Sort by Energy</option>
-</select>
-<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-<svg class="fill-current h-4 w-4" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-<path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"></path></svg>
-</div>
-</div>
-</div>
-<div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-<ul id="genre-song-list"></ul>
-</div>
-</section>
-<section class="hidden" id="plays-view">
-<div class="flex items-center justify-between mb-2">
-<h2 class="text-xl font-bold">Plays</h2>
-<button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow" id="reset-plays">Reset All Plays</button>
-</div>
-<div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-<ul id="plays-list"></ul>
-</div>
-</section>
-<section class="hidden" id="recordings-view">
-<div class="flex items-center justify-between mb-2">
-<h2 class="text-xl font-bold">Recordings</h2>
-</div>
-<div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-<ul id="recordings-list"></ul>
-</div>
-</section>
-<section class="hidden" id="energy-view">
-<h2 class="text-xl font-bold mb-2">Energy Levels</h2>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="energy-level-container"></div>
-</section>
-<section class="hidden" id="venue-setlists-view">
-<h2 class="text-xl font-bold mb-2" id="venue-setlists-title"></h2>
-<div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
-<ul id="venue-setlists-list"></ul>
-</div>
-</section>
-</main>
-</div>
-<section class="hidden" id="doc-view">
-<div id="doc-iframe-wrapper"></div>
-</section>
-<!-- VIEWER CONTROLS -->
-<div class="fixed top-0 left-0 right-0 h-20 z-[2147483647] p-4 flex justify-center items-center pointer-events-none transition-opacity duration-300 opacity-0" id="viewer-controls">
-<div class="flex justify-center items-center gap-4">
-<button class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32" id="viewer-prev-btn">
-<span>Previous</span>
-</button>
-<button class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32" id="viewer-next-btn">
-<span>Next</span>
-</button>
-<button class="viewer-btn viewer-btn-close pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 w-32" id="viewer-close-btn">
-<span>Close</span>
-</button>
-</div>
-</div>
-<script>
+
+        <button id="sidebar-toggle">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </button>
+
+        <main class="flex-1 p-4 overflow-auto">
+    <!-- === Genre Detail Page (in main app area) === -->
+    <section id="genre-page" class="p-4 w-full"><div id="genre-colorbar" class="colorbar rounded-xl text-white text-xl"></div><div class="mt-4"><div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800"><ul id="genre-page-list"></ul></div></div></section>
+
+            <section id="master-view">
+                 <div id="master-view-controls">
+                    <div id="search-container">
+                        <input class="w-full p-2 rounded-lg border-transparent shadow-sm dark:bg-gray-700 dark:border-gray-600" id="search" placeholder="Search all songs..." />
+                        <datalist id="search-results"></datalist>
+                        
+                        <div id="simple-view-container" class="absolute right-[120px] top-1/2 -translate-y-1/2">
+                            <label for="simple-view-toggle" class="flex items-center cursor-pointer">
+                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="simple-view-toggle" class="sr-only">
+                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div id="dark-mode-container">
+                             <label for="dark-mode-toggle" class="flex items-center cursor-pointer ml-4">
+                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Dark</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="dark-mode-toggle" class="dark-mode-toggle sr-only">
+                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="controls-row">
+                        <div id="filters-group">
+                            <select id="sort-dropdown" class="p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select">
+        <option value="name" selected>A-Z</option>
+        <option value="artist">Artist</option>
+        <option value="energy">Energy</option>
+        <option value="lastPlayed">Last played</option>
+        <option value="recent">Recently added</option>
+    </select>
+                        <div id="sort-genre-flyout">
+                            <div class="title">Genres</div>
+                            <div class="slot" id="sort-genre-slot"></div>
+                        </div>
+
+                            <div id="genre-filter-container" class="relative hidden">
+                                <button id="genre-filter-button" class="p-2 rounded-lg bg-transparent text-sm text-left dark:bg-transparent dark:text-gray-200">Select Genres</button>
+                                <div id="genre-filter-dropdown" class="hidden absolute z-10 mt-1 w-48 bg-white rounded-xl shadow-lg max-h-60 overflow-y-auto dark:bg-gray-800 dark:border dark:border-gray-700"></div>
+                            </div>
+                        </div>
+                        <div id="master-view-buttons" class="flex gap-2">
+                            <input accept=".pdf" class="hidden" id="master-upload" multiple="" type="file" />
+                            <button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow btn-master" id="upload-master-btn">Add files</button>
+                            <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow btn-master" id="delete-all-btn">Delete All</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="master-list"></ul>
+                </div>
+                <div id="master-drop-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-8 pointer-events-none">
+                    <div class="text-center bg-white dark:bg-gray-800 p-12 rounded-2xl border-4 border-dashed border-blue-500">
+                        <h2 class="text-2xl font-bold">Drop Files Here</h2>
+                        <p>Add PDF song sheets to ALL SONGS</p>
+                    </div>
+                </div>
+            </section>
+
+
+            <section class="hidden" id="setlist-view">
+                 <div class="flex items-center gap-2 mb-2">
+                    <button id="back-to-venue-btn" class="hidden p-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition dark:bg-gray-700 dark:hover:bg-gray-600">← Back</button>
+                    <h2 class="text-xl font-bold" id="setlist-title">Setlist</h2>
+                    <p id="setlist-total-duration" class="text-sm text-gray-500 dark:text-white ml-2"></p>
+                    <p id="setlist-song-count" class="text-sm text-gray-500 dark:text-white ml-2"></p>
+                </div>
+
+                <div class="flex items-end justify-between flex-wrap gap-4 mb-2">
+                    <div class="flex items-center gap-2 whitespace-nowrap">
+                        <button id="record-show" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Record Show</button>
+                        <button id="stop-record" class="p-2 bg-red-600 text-white rounded-lg hidden shadow">Stop Recording</button>
+                        <button id="print-setlist" class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow">Print Setlist</button>
+                        <div class="relative inline-flex items-center whitespace-nowrap">
+                            <button id="share-setlist-btn" class="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow">Share Setlist</button>
+
+                        <div id="simple-view-container-setlist" class="inline-flex items-center ml-2">
+                            <label for="simple-view-toggle-setlist" class="flex items-center cursor-pointer">
+                                <span class="mr-2 text-sm text-gray-600 dark:text-gray-300">Simple view</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="simple-view-toggle-setlist" class="sr-only">
+                                    <div class="toggle-track block bg-gray-600 w-12 h-7 rounded-full"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full transition"></div>
+                                </div>
+                            </label>
+                        </div>
+
+                            <div id="share-options" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg z-20 dark:bg-gray-800 dark:border dark:border-gray-700">
+                                <a href="#" id="share-native" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share with Device (inc. PDFs)</a>
+                                <a href="#" id="share-email" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Email (text only)</a>
+                                <a href="#" id="share-gmail" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Share via Gmail (text only)</a>
+                                <a href="#" id="share-copy" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Copy to Clipboard (text only)</a>
+                            </div>
+                            <span id="copy-feedback" class="absolute right-0 -bottom-6 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 transition-opacity">Copied!</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="setlist-details-container" class="mb-2">
+                    <div id="setlist-details-toggle">
+                        <span>Setlist Details</span>
+                        <span class="toggle-arrow">▾</span>
+                    </div>
+                    <div id="setlist-details-content">
+                        <div id="setlist-date-container">
+                            <label for="setlist-date" class="font-medium text-xs">Date</label>
+                            <input type="date" id="setlist-date" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                            <span id="date-placeholder">mm/dd/yyyy</span>
+                        </div>
+                        <div>
+                            <label for="setlist-venue" class="font-medium text-xs">Venue</label>
+                            <input type="text" id="setlist-venue" placeholder="Enter venue" class="block p-1 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                        </div>
+                        <div>
+                            <label for="setlist-sort-filter-dropdown" class="font-medium text-xs">Order</label>
+                            <div class="relative">
+                                <select id="setlist-sort-filter-dropdown" class="block p-1 rounded-lg bg-white border-transparent text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                                    <option value="custom">Custom Order</option>
+                                    <option value="name">Sort by Name</option>
+                                    <option value="artist">Sort by Artist</option>
+                                    <option value="genre">Sort by Genre</option>
+                                    <option value="energy">Sort by Energy</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-400">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="setlist-recordings" class="mb-2"></div>
+                
+                 <div class="setlist-view-container">
+                    <div class="setlist-panel">
+                        <div class="panel-header">Setlist Songs</div>
+                        <ul id="setlist-list"></ul>
+                    </div>
+                    <div class="setlist-panel">
+                        <div class="panel-header">Add Songs to Setlist</div>
+                        <input id="setlist-search-add" class="w-full p-2 border-b dark:bg-gray-800 dark:border-gray-600 flex-shrink-0" placeholder="Search all songs...">
+                        <ul id="setlist-add-songs-list"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <section class="hidden" id="favorites-view">
+                <div class="flex items-center justify-between mb-2">
+                     <h2 class="text-xl font-bold">Favorite Songs</h2>
+                    <div class="relative">
+                        <select id="favorites-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600">
+                            <option value="name">Sort by Name</option>
+                            <option value="artist">Sort by Artist</option>
+                            <option value="lastPlayed">Sort by Last Played</option>
+                            <option value="energy">Sort by Energy</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="favorites-list"></ul>
+                </div>
+            </section>
+
+            <section class="hidden" id="genre-view">
+                 <div class="flex items-center justify-between mb-2">
+                     <h2 class="text-xl font-bold" id="genre-view-title">Genre</h2>
+                    <div class="relative">
+                        <select id="genre-sort-dropdown" class="p-2 rounded-lg bg-white border-transparent shadow-sm text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 pr-8 dark:bg-gray-700 dark:border-gray-600 hidden">
+                            <option value="name">Sort by Name</option>
+                            <option value="artist">Sort by Artist</option>
+                            <option value="lastPlayed">Sort by Last Played</option>
+                            <option value="energy">Sort by Energy</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="genre-song-list"></ul>
+                </div>
+            </section>
+
+            <section class="hidden" id="plays-view">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl font-bold">Plays</h2>
+                    <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow" id="reset-plays">Reset All Plays</button>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="plays-list"></ul>
+                </div>
+            </section>
+
+            <section class="hidden" id="recordings-view">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl font-bold">Recordings</h2>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="recordings-list"></ul>
+                </div>
+            </section>
+
+            <section class="hidden" id="energy-view">
+                <h2 class="text-xl font-bold mb-2">Energy Levels</h2>
+                <div id="energy-level-container" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+            </section>
+
+            <section class="hidden" id="venue-setlists-view">
+                <h2 class="text-xl font-bold mb-2" id="venue-setlists-title"></h2>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
+                    <ul id="venue-setlists-list"></ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <section class="hidden" id="doc-view">
+         <div id="doc-iframe-wrapper"></div>
+    </section>
+
+    <!-- VIEWER CONTROLS -->
+    <div id="viewer-controls" class="fixed top-0 left-0 right-0 h-20 z-[2147483647] p-4 flex justify-center items-center pointer-events-none transition-opacity duration-300 opacity-0">
+        <div class="flex justify-center items-center gap-4">
+            <button id="viewer-prev-btn" class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32">
+                <span>Previous</span>
+            </button>
+            <button id="viewer-next-btn" class="viewer-btn pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed w-32">
+                <span>Next</span>
+            </button>
+            <button id="viewer-close-btn" class="viewer-btn viewer-btn-close pointer-events-auto flex items-center justify-center px-4 py-2 rounded-lg text-white font-semibold shadow-lg transition-all duration-200 w-32">
+                <span>Close</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
         // ================== Disable Zoom on iPad ==================
         document.addEventListener('touchstart', (event) => {
           if (event.touches.length > 1) {
@@ -2354,6 +2494,57 @@ const s=$('.left-col');s.toggleClass('collapsed');
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
+<style>
+/* =============================
+   FORCE: Sidebar OPEN uses CLOSED look for top controls
+   Targets: #controls-row, #filters-group, #master-view-buttons, #sort-dropdown
+   ============================= */
+.left-col:not(.collapsed) ~ main #controls-row {
+  display: flex !important;
+  gap: 0.75rem !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+}
+
+.left-col:not(.collapsed) ~ main #filters-group {
+  display: flex !important;
+  flex-grow: 1 !important;
+  gap: 0.5rem !important;
+  padding: 0.25rem !important;
+  background-color: #ffffff !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+  min-width: 200px !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+}
+.dark .left-col:not(.collapsed) ~ main #filters-group {
+  background-color: transparent !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  box-shadow: none !important;
+}
+
+.left-col:not(.collapsed) ~ main #master-view-buttons {
+  display: flex !important;
+  gap: 0.5rem !important;
+  align-items: center !important;
+}
+
+.left-col:not(.collapsed) ~ main #master-view-buttons .btn-master {
+  width: 90px !important; /* Mirror closed-state size */
+  height: 34px !important;
+  line-height: 1 !important;
+}
+
+/* Ensure Sort dropdown matches closed layout (not stretched) */
+.left-col:not(.collapsed) ~ main #sort-dropdown {
+  width: auto !important;
+  height: 34px !important;
+  padding: 0.25rem 0.5rem !important;
+  border: none !important;
+  background: none !important;
+  appearance: auto !important;
+}
+</style>
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
@@ -2368,10 +2559,22 @@ const s=$('.left-col');s.toggleClass('collapsed');
             $('#setlist-date').on('input',function(){$('#date-placeholder').toggle(!$(this).val())})}
         async function shareSetlist(m){if(!currentSetlist)return;const s=setlists[currentSetlist],o=s.songs.map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean),t=`${escapeHtml(currentSetlist)} - ${escapeHtml(s.date)} @ ${escapeHtml(s.venue)}\n${o.map((s,i)=>`${i+1}. ${escapeHtml(s.name)}`).join('\n')}`,j=`Setlist: ${currentSetlist}`;if(m==='native'&&navigator.share){const f=[];for(let s of o){if(s.fileInfo?.data){try{const b=dataURItoBlob(s.fileInfo.data);f.push(new File([b],s.name+'.pdf',{type:'application/pdf'}))}catch(e){console.error("Could not process file for sharing:",s.name,e)}}}try{await navigator.share({title:currentSetlist,text:t,files:f})}catch(err){console.error('Share failed:',err)}}else if(m==='email'){window.location.href=`mailto:?subject=${encodeURIComponent(j)}&body=${encodeURIComponent(t)}`}else if(m==='gmail'){window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(j)}&body=${encodeURIComponent(t)}`,'_blank')}else{fallbackCopy(t)}$('#share-options').addClass('hidden')}
         function fallbackCopy(t){if(navigator.clipboard){navigator.clipboard.writeText(t).then(()=>{$('#copy-feedback').css('opacity',1);setTimeout(()=>$('#copy-feedback').css('opacity',0),2000)})}}
-        async function handleMasterUpload(e){const f=e.target.files;for(let file of f){const n=file.name.replace(/\.[^/.]+$/,'');if(masterSongs.some(s=>s.name.toLowerCase()===n.toLowerCase())&&!confirm(`A file named "${n}" already exists. Add anyway?`))continue;const i='s_'+Math.random().toString(36).slice(2,9);try{const fi=await storeFile(file);masterSongs.push({id:i,name:n,artist:'',genre:'',notes:'',duration:'',energy:0,favorite:!1,fileInfo:fi,lastPlayed:null});playCounts[i]=0}catch(err){console.error('Error processing file:',file.name,err);alert(`Failed to process file: ${file.name}`)}}renderAll()}
+        async function handleMasterUpload(e){const f=e.target.files;for(let file of f){const n=file.name.replace(/\.[^/.]+$/,'');if(masterSongs.some(s=>s.name.toLowerCase()===n.toLowerCase())&&!confirm(`A file named "${n}" already exists. Add anyway?`))continue;const i='s_'+Math.random().toString(36).slice(2,9);try{const fi=await storeFile(file);masterSongs.push({id:i,name:n,artist:'',genre:'',notes:'',duration:'',energy:0,favorite:!1,fileInfo:fi,lastPlayed:null,addedAt:Date.now()});playCounts[i]=0}catch(err){console.error('Error processing file:',file.name,err);alert(`Failed to process file: ${file.name}`)}}renderAll()}
         function createSongItem(s,i,c){const f=s.favorite?'favorited':'',t=`<div class="w-8 flex-shrink-0 flex justify-center items-center favorite-star-container ${f}" title="Toggle Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></div>`,d=`<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span></div>`,g=`<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${s.energy||0}">${energyIcons[s.energy||0]}</div>`,b=['master','favorites','genre'].includes(c)?'Delete':'Remove',n=`<div class="song-details-container"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(s.artist||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(s.notes||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(s.duration||'')}"><button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${b}</button></div>`,v=c==='setlist'&&viewedSongsInSetlist.has(s.id)?'viewed-index':'';return $(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable"><div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${v}">${i+1}</span></div>${t}${d}${g}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium" data-song-id="${s.id}"><span class="song-name-text" data-song-id="${s.id}">${escapeHtml(s.name)}</span></div>${n}</li>`)}
         const draggableOptions={appendTo:'body',revert:'invalid',cursorAt:{left:10,top:10},helper:'clone',start:function(e,ui){const i=$(this),c=i.parent().children('.item-selected').length,h=c>1?`Dragging ${c} items`:i.find('.song-name').text();ui.helper.empty().html(h).css({'background-color':'#3b82f6','color':'white','padding':'0.5rem 1rem','height':'auto','width':'auto','white-space':'nowrap','box-shadow':'0 5px 15px rgba(0,0,0,0.3)','z-index':9999,'border-radius':'0.5rem','font-weight':'600'})}};
-        function renderMaster(){const q=$('#search').val().toLowerCase();let l=masterSongs.filter(s=>(q?(s.name.toLowerCase().includes(q)||(s.artist||'').toLowerCase().includes(q)):!0)&&(masterSelectedGenres.length>0?masterSelectedGenres.includes(s.genre):!0));const m=$('#sort-dropdown').val();l.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentMasterViewSongs=l;const u=$('#master-list').empty();if(l.length===0)u.append(`<li class="p-8 text-center text-gray-500 italic">${(q||masterSelectedGenres.length>0)?'No songs match your current filters.':'No songs yet. <br> Drag & drop PDF files onto the page or use the "Add files" button!'}</li>`);else l.forEach((s,i)=>u.append(createSongItem(s,i,'master')));$('#master-list .draggable').draggable(draggableOptions)}
+        function renderMaster(){const q=$('#search').val().toLowerCase();let l=masterSongs.filter(s=>(q?(s.name.toLowerCase().includes(q)||(s.artist||'').toLowerCase().includes(q)):!0)&&(masterSelectedGenres.length>0?masterSelectedGenres.includes(s.genre):!0));const m=$('#sort-dropdown').val();
+l.sort((a,b)=>{
+  if (m === 'artist') return (a.artist||'').localeCompare(b.artist||'');
+  if (m === 'lastPlayed') return (b.lastPlayed?new Date(b.lastPlayed).getTime():0) - (a.lastPlayed?new Date(a.lastPlayed).getTime():0);
+  if (m === 'energy') return (b.energy||0) - (a.energy||0);
+  if (m === 'recent') {
+    var aa = (a.addedAt != null) ? a.addedAt : 0;
+    var bb = (b.addedAt != null) ? b.addedAt : 0;
+    return (bb - aa); // newest first
+  }
+  return a.name.localeCompare(b.name);
+});
+window.currentMasterViewSongs=l;const u=$('#master-list').empty();if(l.length===0)u.append(`<li class="p-8 text-center text-gray-500 italic">${(q||masterSelectedGenres.length>0)?'No songs match your current filters.':'No songs yet. <br> Drag & drop PDF files onto the page or use the "Add files" button!'}</li>`);else l.forEach((s,i)=>u.append(createSongItem(s,i,'master')));$('#master-list .draggable').draggable(draggableOptions)}
         function renderAddSongsPanel(){const q=$('#setlist-search-add').val().toLowerCase();let l=masterSongs.filter(s=>q?s.name.toLowerCase().includes(q):!0);l.sort((a,b)=>a.name.localeCompare(b.name));const u=$('#setlist-add-songs-list').empty(),c=setlists[currentSetlist]?.songs||[];l.forEach(s=>{const i=c.includes(s.id),li=$(`<li class="add-song-item" data-song-id="${s.id}"><label for="add-${s.id}" class="flex items-center w-full cursor-pointer"><input type="checkbox" id="add-${s.id}" class="sr-only custom-checkbox-input" ${i?'checked':''}><div class="custom-checkbox-box"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></div><span class="ml-3 flex-grow">${escapeHtml(s.name)}</span></label></li>`);li.find('input').on('change',function(){const i=$(this).closest('.add-song-item').data('song-id');if(this.checked){if(!setlists[currentSetlist].songs.includes(i))setlists[currentSetlist].songs.push(i)}else{setlists[currentSetlist].songs=setlists[currentSetlist].songs.filter(id=>id!==i)}renderSetlist();save()});u.append(li)})}
         function removeFromAllSetlists(i){Object.values(setlists).forEach(s=>{s.songs=s.songs.filter(id=>!i.includes(id))})}
         function renderLeftSetlists(){const c=$('#setlists-container').empty();Object.keys(setlists).forEach(n=>{const e=$(`<div class="p-2 mb-1 rounded-lg cursor-pointer setlist-item bg-gray-700" data-name="${escapeHtml(n)}"><div class="flex items-center"><button class="del-setlist" title="Delete setlist"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg></button><span class="setlist-name">${escapeHtml(n)}</span></div></div>`);e.find('.del-setlist').click(ev=>{ev.stopPropagation();if(confirm('Delete '+n+'?')){delete setlists[n];recordings=recordings.filter(r=>r.setlist!==n);if(currentSetlist===n){currentSetlist=null;$('#home-btn').trigger('click')}renderLeftSetlists();save()}});e.on('dblclick',function(){const i=$('<input class="edit-input w-full bg-gray-600 p-1 rounded-md" value="'+escapeHtml(n)+'">');$(this).find('.setlist-name').replaceWith(i);i.focus().on('blur keypress',function(ev){if(ev.type==='keypress'&&ev.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==n&&!setlists[newName]){setlists[newName]=setlists[n];recordings.forEach(r=>{if(r.setlist===n)r.setlist=newName});delete setlists[n];if(currentSetlist===n){currentSetlist=newName;$('#setlist-title').text(newName)}}renderLeftSetlists();save()})});c.append(e)});$('.setlist-item').droppable({accept:'.draggable',hoverClass:'drag-hover-setlist',drop:function(e,ui){const s=setlists[$(this).data('name')];let a=!1;const i=ui.draggable.hasClass('item-selected')?$(`#${ui.draggable.parent().attr('id')} .item-selected`):ui.draggable;i.each(function(){const d=$(this).attr('id');if(d&&!s.songs.includes(d)){s.songs.push(d);a=!0}});if(a){save();if(currentSetlist===$(this).data('name'))renderSetlist()}}});$('#setlists-container').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=$(this).sortable('toArray',{attribute:'data-name'}),n={};o.forEach(i=>{if(setlists[i])n[i]=setlists[i]});setlists=n;save()}})}
@@ -2544,10 +2747,12 @@ const s=$('.left-col');s.toggleClass('collapsed');
 
         function show(v){$('main > section').hide();$(`#${v}-view`).show();if(v==='master')renderMaster();else if(v==='plays')renderPlays();else if(v==='recordings')renderRecordings();else if(v==='energy')renderEnergyLevels();else if(v==='favorites')renderFavorites();else if(v==='setlist')renderSetlist();else if(v==='genre-view'&&currentGenre)renderGenreView(currentGenre)}
     </script>
-<!-- Left-edge custom scrollbar (visible only when sidebar is collapsed) -->
-<div aria-hidden="true" class="hidden" id="edge-scrollbar">
-<div id="edge-thumb"></div>
-</div>
+    <!-- Left-edge custom scrollbar (visible only when sidebar is collapsed) -->
+    <div id="edge-scrollbar" class="hidden" aria-hidden="true">
+        <div id="edge-thumb"></div>
+    </div>
+
+
 <script>
 (function(){
   // Find the stats container
@@ -2891,6 +3096,8 @@ function getPoint(e){
 })();
 
 </script>
+
+
 <script>
 function loadPDFJSLib() {
   return new Promise((resolve, reject) => {
@@ -2956,6 +3163,7 @@ async function renderPDFWithPDFJS(url, containerEl) {
   }
 }
 </script>
+
 <script>
 (function(){
   window.__docTapListenerInstalled = true;
@@ -2971,6 +3179,7 @@ async function renderPDFWithPDFJS(url, containerEl) {
   document.addEventListener('pointerdown', cap, {passive:true, capture:true});
 })();
 </script>
+
 <script>
 function loadPDFJSLib() {
   return new Promise((resolve, reject) => {
@@ -3020,6 +3229,7 @@ async function renderPDFInto(containerEl, url) {
   if (revoke) setTimeout(() => URL.revokeObjectURL(revoke), 30000);
 }
 </script>
+
 <script>
 function ensurePdfOverlay() {
   let ov = document.getElementById('pdf-overlay');
@@ -3051,6 +3261,7 @@ function destroyPdfOverlay() {
   if (sc) sc.innerHTML = '';
 }
 </script>
+
 <script>
 /* Universal viewer wiring so buttons work on Songs, Setlists, Favorites */
 (function wrapOpenSongInContext(){
@@ -3194,6 +3405,8 @@ function destroyPdfOverlay() {
   } catch(_){}
 })();
 </script>
+
+
 <!-- Venue/Genre left-edge alignment + Pull-to-close v4 -->
 <script>
 (function(){
@@ -3289,6 +3502,8 @@ function destroyPdfOverlay() {
   }
 })();
 </script>
+
+
 <script>
 // === Drag into Genres: blue hover + assign song to genre ===
 (function(){
@@ -3333,6 +3548,7 @@ function destroyPdfOverlay() {
   });
 })();
 </script>
+
 <script>
 // === Setlist Details: keep the date placeholder span visible only when empty ===
 (function(){
@@ -3350,6 +3566,8 @@ function destroyPdfOverlay() {
   $(function(){ updateDatePlaceholder(); });
 })();
 </script>
+
+
 <script>
 (function(){
   function positionDatePlaceholder(){
@@ -3400,6 +3618,7 @@ function destroyPdfOverlay() {
   });
 })();
 </script>
+
 <style id="viewer-nav-blue-style">
 /* Make prev/next BLUE whenever they are enabled (not :disabled) */
 #viewer-prev-btn:not(:disabled),
@@ -3457,6 +3676,7 @@ function destroyPdfOverlay() {
   });
 })();
 </script>
+
 <style id="viewer-nav-behavior-tweaks">
 /* 1) Do NOT move buttons on hover/active */
 #viewer-prev-btn:not(:disabled):hover,
@@ -3551,6 +3771,8 @@ function destroyPdfOverlay() {
   }, 100);
 })();
 </script>
+
+
 <style id="notes-popover-styles">
 /* Anchored Notes popover: expands in place, only as large as needed */
 #notes-popover-overlay {
@@ -3608,15 +3830,15 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   -webkit-tap-highlight-color: transparent;
 }
 </style>
-<div aria-hidden="true" id="notes-popover-overlay"></div>
-<div aria-labelledby="notes-popover-title" aria-modal="true" id="notes-popover" role="dialog">
-<div id="notes-popover-header">
-<div id="notes-popover-title">Notes</div>
-<button aria-label="Close notes" id="notes-popover-close">×</button>
-</div>
-<div id="notes-popover-body">
-<textarea id="notes-popover-text" spellcheck="false"></textarea>
-</div>
+<div id="notes-popover-overlay" aria-hidden="true"></div>
+<div id="notes-popover" role="dialog" aria-modal="true" aria-labelledby="notes-popover-title">
+  <div id="notes-popover-header">
+    <div id="notes-popover-title">Notes</div>
+    <button id="notes-popover-close" aria-label="Close notes">×</button>
+  </div>
+  <div id="notes-popover-body">
+    <textarea id="notes-popover-text" spellcheck="false"></textarea>
+  </div>
 </div>
 <script>
 /* Notes popover (fast): instant open on pointerdown, no blue flash, anchored & autosized */
@@ -3726,6 +3948,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   });
 })();
 </script>
+
+
 <style id="notes-fast-and-setlist-drag">
 /* Faster feel: nothing visual here; JS handles instant open */
 /* Name-only helper when dragging outside of setlist list */
@@ -3921,6 +4145,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
 })();
 </script>
+
+
 <style id="setlist-export-chip-styles">
 /* Blue name-only ghost chip (separate overlay that follows cursor) */
 #setlist-export-ghost{
@@ -3943,6 +4169,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   position:fixed !important; pointer-events:none !important; z-index:2147483645 !important;
 }
 </style>
+
 <script>
 /* Setlist export behavior (v12 — dual-visual + frozen helper, non-destructive)
    - Inside setlist: normal reorder + full-size helper (unchanged).
@@ -4139,6 +4366,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   var tries = 0, t = setInterval(function(){ tries++; init(); if (tries>20) clearInterval(t); }, 200);
 })();
 </script>
+
+
 <style id="setlist-export-chip-styles">
 #setlist-export-ghost{
   position:fixed; top:0; left:0;
@@ -4649,6 +4878,7 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 })();
 
 </script>
+
 <script>
 // === Minimal fix: contain drag inside #setlist-list + show name-only chip when pointer is outside ===
 (function(){
@@ -4728,6 +4958,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   }
 })();
 </script>
+
+
 <script>
 (function(){
   // Fallback: create single large proxy and hide any small ones
@@ -4739,6 +4971,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   for (var j=1;j<larges.length;j++){ larges[j].remove(); }
 })();
 </script>
+
+
 <script>
 // === Overlay: Position the LARGE name-only chip exactly where the original small chip would be ===
 (function(){
@@ -4791,6 +5025,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     });
 })();
 </script>
+
+
 <style>
   /* Promote the SMALL proxy to the larger style and always use it */
   #drag-proxy-nameonly {
@@ -4820,6 +5056,11 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   }).observe(document.body, {childList:true, subtree:true});
 })();
 </script>
+
+
+
+
+
 <script>
 // === Single name-only label deduper (aligned) ===
 // Keeps exactly ONE label, and if a second (correctly-positioned) label exists,
@@ -4932,6 +5173,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   requestAnimationFrame(rafLoop);
 })();
 </script>
+
+
 <script>
 // === Proxy Arbiter: keep exactly ONE name-only label nearest the finger, with the larger look ===
 (function(){
@@ -4980,6 +5223,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
     .on('mousemove.proxyArbiterDoc touchmove.proxyArbiterDoc', function(e){ arbiter(e); });
 })();
 </script>
+
+
 <script>
 // === Precise pointer-follow for name-only chip (homepage-like) ===
 (function(){
@@ -5074,6 +5319,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   window.addEventListener('load', wire, {once:true});
 })();
 </script>
+
+
 <script>
 // === Strict single-label mode: keep ONLY the bigger fixed-position label ===
 (function(){
@@ -5183,6 +5430,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   });
 })();
 </script>
+
+
 <script>
 // === Hard cleanup: keep only ONE floating name-only label (the bigger one) ===
 (function(){
@@ -5234,6 +5483,8 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
   }
 })();
 </script>
+
+
 <!-- === BEGIN: Add-Setlist focus-on-empty-name (minimal, non-invasive) === -->
 <script>
 (function(){
@@ -5448,6 +5699,8 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name {
 /* Ensure the overall controls block doesn’t have extra right padding fighting alignment */
 #master-view-controls { padding-right: 8px !important; }
 </style>
+
+
 <style id="review-board-patch-2025-10-28-REV2">
 /* === Fix 1: Simple View + Sidebar OPEN → show full filename (flattened, not crushed) === */
 body.simple-view-on .left-col:not(.collapsed) ~ main #master-list > li .song-name,
@@ -5510,6 +5763,8 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-details-container {
   width: 100% !important;
 }
 </style>
+
+
 <style id="review-board-patch-2025-10-28-REV3">
 /* === A) SIMPLE VIEW + SIDEBAR OPEN: flatten & fully show filenames (no 1-letter ellipsis) === */
 body.simple-view-on .left-col:not(.collapsed) ~ main li .song-name {
@@ -5570,6 +5825,8 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
   width: 100% !important;
 }
 </style>
+
+
 <style id="review-board-patch-2025-10-28-REV4">
 /* === Restore original Sort position; place buttons to the RIGHT only when sidebar is OPEN === */
 .left-col:not(.collapsed) ~ main #controls-row {
@@ -5610,6 +5867,8 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
   width: 100% !important;
 }
 </style>
+
+
 <style id="css-firstframe-align-v27">
 /* 0) No horizontal paging */
 html, body, #app, main { overflow-x: hidden !important; max-width: 100vw !important; }
@@ -5650,6 +5909,7 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
 #sidebar-toggle.arrow-in svg { transform: rotate(180deg); } /* inward when open */
 #sidebar-toggle.arrow-out svg { transform: rotate(0deg); }   /* outward when closed */
 </style>
+
 <script id="css-firstframe-align-v27-js">
 (function(){
   if (window.__css_firstframe_align_v27__) return;
@@ -5760,122 +6020,78 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
   }
 })();
 </script>
-<style id="force-closed-look-open">
-/* ==================================================================
-   FORCE CLOSED-STATE LOOK WHEN SIDEBAR IS OPEN (HOME / master-view)
-   This neutralizes earlier "grid" and "display: contents" experiments.
-   ================================================================== */
-.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #controls-row {
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.75rem !important;
-  flex-wrap: wrap !important;
-  grid-template-columns: none !important;
-  column-gap: 0 !important;
-  row-gap: 0 !important;
-}
 
-.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #filters-group {
-  display: flex !important;
-  flex: 1 1 auto !important;
-  min-width: 200px !important;
-  gap: 0.5rem !important;
-  padding: 0.25rem !important;
-  background-color: #ffffff !important;
-  border: 1px solid rgba(0,0,0,0.06) !important;
-  border-radius: 0.5rem !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-}
-.dark .left-col:not(.collapsed) ~ main #master-view:not(.hidden) #filters-group {
-  background-color: transparent !important;
-  border-color: rgba(255,255,255,0.12) !important;
-  box-shadow: none !important;
-}
+<script id="remove-preload-20251029">
+document.addEventListener('DOMContentLoaded', function(){
+  try {
+    // Give the browser one frame to apply classes/styles, then reveal.
+    requestAnimationFrame(function(){ document.documentElement.classList.remove('preload'); });
+  } catch(_) {}
+});
+</script>
 
-.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #sort-dropdown {
-  width: auto !important;
-  height: 34px !important;
-  padding: 0.25rem 0.5rem !important;
-  border: none !important;
-  background: none !important;
-  appearance: auto !important;
-}
 
-.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #master-view-buttons {
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.5rem !important;
-  width: auto !important;
-  justify-content: flex-start !important;
-}
-
-.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #master-view-buttons .btn-master {
-  width: 90px !important;  /* same as closed state */
-  height: 34px !important;
-  line-height: 1 !important;
-}
-
-/* Kill any older hacks that reserved right-side space or moved things when open */
-.left-col:not(.collapsed) ~ main #master-view-controls::before { display: none !important; }
-.left-col:not(.collapsed) ~ main #master-view-controls { padding-right: 0 !important; }
-.left-col:not(.collapsed) ~ main #search { padding-right: 120px !important; } /* keep room for toggles (unchanged) */
-</style>
-<script>
-(function(){
-  function applyClosedLook(){
-    var cr = document.querySelector('.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #controls-row');
-    var mvb = document.querySelector('.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #master-view-buttons');
-    if (cr) {
-      cr.style.display = 'flex';
-      cr.style.flexWrap = 'wrap';
-      cr.style.gap = '0.75rem';
-      cr.style.alignItems = 'center';
-    }
-    if (mvb) {
-      // Safari/iPad: avoid display: contents bugs from earlier rules
-      if (getComputedStyle(mvb).display === 'contents') {
-        mvb.style.display = 'flex';
+<script id="recent-sort-20251029">
+document.addEventListener('DOMContentLoaded', function(){
+  try {
+    var sd = document.getElementById('sort-dropdown');
+    if (sd && !sd.querySelector('option[value="recent"]')) {
+      var opt = document.createElement('option');
+      opt.value = 'recent';
+      opt.textContent = 'Sort by Recently Added';
+      // Insert after "Sort by Name" if present; otherwise append at top.
+      var inserted = false;
+      for (var i=0;i<sd.options.length;i++) {
+        var txt = (sd.options[i].textContent||'').toLowerCase();
+        if (txt.includes('sort by name')) {
+          if (sd.options[i].nextSibling) sd.insertBefore(opt, sd.options[i].nextSibling);
+          else sd.appendChild(opt);
+          inserted = true;
+          break;
+        }
       }
-      // Also ensure the two buttons are visible
-      var btns = mvb.querySelectorAll('button');
-      btns.forEach(function(b){
-        b.style.display = 'inline-flex';
-      });
+      if (!inserted) sd.insertBefore(opt, sd.firstChild);
     }
-  }
-  function onSidebarChange(){
-    applyClosedLook();
-  }
-  // Run on load
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', applyClosedLook);
-  } else {
-    applyClosedLook();
-  }
-  // Observe sidebar class changes
-  var sidebar = document.querySelector('.left-col');
-  if (sidebar && window.MutationObserver) {
-    var obs = new MutationObserver(onSidebarChange);
-    obs.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
-  }
-  // Also observe master-view becoming visible/hidden
-  var mv = document.getElementById('master-view');
-  if (mv && window.MutationObserver) {
-    var obs2 = new MutationObserver(applyClosedLook);
-    obs2.observe(mv, { attributes: true, attributeFilter: ['class'] });
-  }
-  // Safety: re-apply after a tick (handles late-running JS)
-  setTimeout(applyClosedLook, 150);
-  setTimeout(applyClosedLook, 400);
-  setTimeout(applyClosedLook, 1000);
+  } catch(e) {}
+});
+</script>
+
+
+<script id="addedAt-migration-20251029">
+(function(){
+  try{
+    // Assign a fallback addedAt if missing, preserving existing order by name as a baseline.
+    if (Array.isArray(window.masterSongs)) {
+      var now = Date.now();
+      // If any song lacks addedAt, give it a deterministic timestamp based on its name to avoid equal values.
+      var missing = window.masterSongs.filter(function(s){ return typeof s.addedAt === 'undefined' || s.addedAt === null; });
+      if (missing.length) {
+        // Sort by existing name to produce stable order, then assign older timestamps
+        missing.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+        for (var idx=0; idx<missing.length; idx++){
+          // Stagger by 1ms to avoid ties.
+          missing[idx].addedAt = now - (missing.length - idx);
+        }
+      }
+    }
+  }catch(e){}
 })();
 </script>
+
 </body>
 <style id="review-board-patch-2025-10-29-HOMECONTROLS-V9">
 /* Scope: HOME only, Sidebar OPEN, Simple View OFF */
 .left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #controls-row{
-  display:flex !important; align-items:center !important; gap:0.75rem !important; flex-wrap:wrap !important; grid-template-columns:none !important; column-gap:0 !important; row-gap:0 !important; width:auto !important; max-width:100% !important; margin:0 !important; padding:0 !important; }
-.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #master-view-buttons{ display:flex !important; }
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) 160px 180px !important; /* JS will override exact px */
+  column-gap: 0.5rem !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #master-view-buttons{ display: contents !important; }
 .left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #filters-group{ grid-column: 1 !important; min-width: 0 !important; }
 .left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #sort-dropdown{ width: 100% !important; max-width: 100% !important; display: block !important; }
 .left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #upload-master-btn{ grid-column: 2 !important; width: 100% !important; white-space: nowrap !important; }
@@ -5883,6 +6099,7 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
 
 /* Absolutely DO NOT affect CLOSED sidebar look — no selectors for the collapsed state here. */
 </style>
+
 <script id="review-board-script-2025-10-29-HOMECONTROLS-V9">
 (function(){
   function isSidebarOpen(){
@@ -5974,5 +6191,63 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
 })();
 </script>
 </html>\n
-<script id="home-2nd-row-rework-2025-10-29-v7__DISABLED">/* disabled by patch: sidebar-open should match closed */
-return;</script>
+<script id="home-2nd-row-rework-2025-10-29-v7">
+(function(){
+  function q(s){ return document.querySelector(s); }
+  function isHome(){ var v = q('#master-view'); return v && !v.classList.contains('hidden'); }
+  function sidebarOpen(){ var l=q('.left-col'); return l && !l.classList.contains('collapsed'); }
+  function setImp(el, prop, val){ if(!el) return; try{ el.style.setProperty(prop, val, 'important'); }catch(e){ el.style[prop]=val; } }
+  function applyOnce(){
+    if(!(isHome() && sidebarOpen())) return;
+    var row = q('#controls-row');
+    var fg  = q('#filters-group');
+    var sort= q('#sort-dropdown');
+    var btns= q('#master-view-buttons');
+    if(!row || !fg || !sort) return;
+    // Hide buttons
+    if(btns){ setImp(btns, 'display', 'none'); }
+    // Make single-column row and let Sort fill it
+    setImp(row, 'display', 'grid');
+    setImp(row, 'gridTemplateColumns', '1fr');
+    setImp(row, 'alignItems', 'stretch');
+    setImp(row, 'columnGap', '0px');
+    setImp(fg,  'gridColumn', '1');
+    setImp(fg,  'width', '100%');
+    setImp(sort,'width', '100%');
+    setImp(sort,'maxWidth', 'none');
+    setImp(sort,'flex', '1 1 auto');
+  }
+  function applyStrong(){
+    // Run twice around the frame boundary to beat any late inline writes
+    applyOnce();
+    requestAnimationFrame(applyOnce);
+    setTimeout(applyOnce, 50);
+  }
+  // Observe the controls row for *any* style changes (align() updates)
+  function watch(){
+    var row = q('#controls-row');
+    if(!row) return;
+    var obs = new MutationObserver(function(muts){
+      for(var m of muts){
+        if(m.type==='attributes' && m.attributeName==='style'){
+          applyStrong();
+        }
+      }
+    });
+    obs.observe(row, {attributes:true, attributeFilter:['style']});
+  }
+  // Global observers (sidebar open/close, home visibility flips, etc.)
+  var docObs = new MutationObserver(applyStrong);
+  docObs.observe(document.documentElement, {subtree:true, childList:true, attributes:true});
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ applyStrong(); watch(); });
+  } else {
+    applyStrong(); watch();
+  }
+  // Also on resize
+  window.addEventListener('resize', applyStrong, {passive:true});
+  // A few initial retries in case UI hydrates late
+  [100,300,800].forEach(function(ms){ setTimeout(applyStrong, ms); });
+})();
+</script>
