@@ -8,7 +8,6 @@
 .left-col ~ main #filters-group,
 .left-col ~ main #sort-dropdown { transition: none !important; }
 </style>
-
 <script data-ios-detect-early="">
     (function(){
       try{
@@ -1853,9 +1852,9 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
 <div id="genre-color-display"></div>
 <input id="genre-color" title="Select color" type="color"/>
 </div>
-<input class="item-name-input" id="genre-name" placeholder="New genre">
+<input class="item-name-input" id="genre-name" placeholder="New genre"/>
 <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-genre">Add</button>
-</input></div>
+</div>
 <div class="mt-2 space-y-1" id="genre-list"></div>
 </div>
 <div class="mt-4">
@@ -1928,10 +1927,10 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
 </div>
 </div>
 <div class="flex gap-2" id="master-view-buttons" style="display:flex !important; align-items:center !important; gap:0.5rem !important; width:auto !important; justify-content:flex-start !important; transition:none !important;">
-<input accept=".pdf" class="hidden" id="master-upload" multiple="" type="file">
+<input accept=".pdf" class="hidden" id="master-upload" multiple="" type="file"/>
 <button class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow btn-master" id="upload-master-btn" style="width:90px !important; height:34px !important; line-height:1 !important; transition:none !important;">Add files</button>
 <button class="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition shadow btn-master" id="delete-all-btn" style="width:90px !important; height:34px !important; line-height:1 !important; transition:none !important;">Delete All</button>
-</input></div>
+</div>
 </div>
 </div>
 <div class="bg-white rounded-xl shadow-lg overflow-hidden dark:bg-gray-800">
@@ -5975,63 +5974,5 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
 })();
 </script>
 </html>\n
-<script id="home-2nd-row-rework-2025-10-29-v7">
-(function(){
-  function q(s){ return document.querySelector(s); }
-  function isHome(){ var v = q('#master-view'); return v && !v.classList.contains('hidden'); }
-  function sidebarOpen(){ var l=q('.left-col'); return l && !l.classList.contains('collapsed'); }
-  function setImp(el, prop, val){ if(!el) return; try{ el.style.setProperty(prop, val, 'important'); }catch(e){ el.style[prop]=val; } }
-  function applyOnce(){
-    if(!(isHome() && sidebarOpen())) return;
-    var row = q('#controls-row');
-    var fg  = q('#filters-group');
-    var sort= q('#sort-dropdown');
-    var btns= q('#master-view-buttons');
-    if(!row || !fg || !sort) return;
-    // Hide buttons
-    if(btns){ setImp(btns, 'display', 'none'); }
-    // Make single-column row and let Sort fill it
-    setImp(row, 'display', 'grid');
-    setImp(row, 'gridTemplateColumns', '1fr');
-    setImp(row, 'alignItems', 'stretch');
-    setImp(row, 'columnGap', '0px');
-    setImp(fg,  'gridColumn', '1');
-    setImp(fg,  'width', '100%');
-    setImp(sort,'width', '100%');
-    setImp(sort,'maxWidth', 'none');
-    setImp(sort,'flex', '1 1 auto');
-  }
-  function applyStrong(){
-    // Run twice around the frame boundary to beat any late inline writes
-    applyOnce();
-    requestAnimationFrame(applyOnce);
-    setTimeout(applyOnce, 50);
-  }
-  // Observe the controls row for *any* style changes (align() updates)
-  function watch(){
-    var row = q('#controls-row');
-    if(!row) return;
-    var obs = new MutationObserver(function(muts){
-      for(var m of muts){
-        if(m.type==='attributes' && m.attributeName==='style'){
-          applyStrong();
-        }
-      }
-    });
-    obs.observe(row, {attributes:true, attributeFilter:['style']});
-  }
-  // Global observers (sidebar open/close, home visibility flips, etc.)
-  var docObs = new MutationObserver(applyStrong);
-  docObs.observe(document.documentElement, {subtree:true, childList:true, attributes:true});
-
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ applyStrong(); watch(); });
-  } else {
-    applyStrong(); watch();
-  }
-  // Also on resize
-  window.addEventListener('resize', applyStrong, {passive:true});
-  // A few initial retries in case UI hydrates late
-  [100,300,800].forEach(function(ms){ setTimeout(applyStrong, ms); });
-})();
-</script>
+<script id="home-2nd-row-rework-2025-10-29-v7__DISABLED">/* disabled by patch: sidebar-open should match closed */
+return;</script>
