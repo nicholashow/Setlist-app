@@ -6656,6 +6656,206 @@ html, body, #app { overflow-x: hidden !important; }
   });
 })();
 </script>
+
+<style id="patch-2025-10-29-sortby-proxy-handle-fix">
+/* No horizontal page scroll */
+html, body, #app { overflow-x: hidden !important; }
+
+/* Sort By proxy wrapper + arrow */
+#sort-proxy-wrap {
+  position: relative;
+  display: inline-block;
+}
+#sort-proxy-label {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+}
+/* Hide native text, keep control clickable and accessible */
+#sort-proxy-wrap select#sort-dropdown {
+  color: transparent !important;
+  text-shadow: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+#sort-proxy-wrap::after {
+  content: "▾";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 14px;
+}
+
+/* Sidebar external scrollbar visibility strictly controlled by JS 'active' */
+#sidebar-external-scroll { opacity: 0; transition: opacity .18s; pointer-events: none; }
+#sidebar-external-scroll.active { opacity: 1; pointer-events: auto; }
+
+/* Outside handle: fixed behavior; arrow rotates by collapsed class on button */
+#sidebar-toggle {
+  position: absolute !important;
+  width: 18px !important;
+  min-width: 18px !important;
+  border-radius: 9999px !important;
+  background: var(--handle-bg, #6B7280) !important;
+  color: #fff !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,.2) !important;
+  padding: 0 !important;
+  z-index: 60 !important;
+}
+#sidebar-toggle svg {
+  width: 16px !important;
+  height: 16px !important;
+  opacity: 1 !important;
+  transition: transform .18s ease-in-out;
+}
+/* Button class reflects sidebar state: not collapsed = inward arrow (→), collapsed = outward (←) */
+#sidebar-toggle.collapsed svg { transform: rotate(0deg); }     /* ← */
+#sidebar-toggle:not(.collapsed) svg { transform: rotate(180deg); } /* → */
+</style>
+
+<script id="patch-2025-10-29-sortby-proxy-handle-fix-js">
+(function(){
+  if (window.__sortby_proxy_handle_fix__) return;
+  window.__sortby_proxy_handle_fix__ = true;
+  var $ = window.jQuery;
+
+  // === Sort By proxy that always shows "Sort By" with arrow ===
+  function installSortProxy(){
+    var sel = document.getElementById('sort-dropdown');
+    if (!sel) return;
+    if (!document.getElementById('sort-proxy-wrap')) {
+      var wrap = document.createElement('div');
+      wrap.id = 'sort-proxy-wrap';
+      sel.parentNode.insertBefore(wrap, sel);
+      wrap.appendChild(sel);
+      var label = document.createElement('span');
+      label.id = 'sort-proxy-label';
+      label.textContent = 'Sort By';
+      wrap.appendChild(label);
+    }
+    // Default remains A-Z
+    if (!sel.value || sel.value === 'recent') sel.value = 'name';
+  }
+
+  // === Sidebar scroller show while scrolling; hide after 2s idle ===
+  var aside = document.querySelector('aside.left-col');
+  var scroller = aside && aside.querySelector('.left-col-main-content');
+  var rail = document.getElementById('sidebar-external-scroll');
+  var thumb = document.getElementById('sidebar-thumb');
+  var hideTimer = null;
+  function ensureRailVisibilityBasedOnOverflow(){
+    if (!rail || !scroller) return;
+    var content = scroller.scrollHeight;
+    var visible = scroller.clientHeight;
+    if (content <= visible + 1) {
+      rail.style.display = 'none';
+    } else {
+      rail.style.display = 'block';
+    }
+  }
+  function showRailNow(){
+    if (!rail) return;
+    rail.classList.add('active');
+  }
+  function scheduleHideRail(){
+    if (!rail) return;
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(function(){ rail.classList.remove('active'); }, 2000);
+  }
+  function bindScrollAutoHide(){
+    if (!scroller || !rail) return;
+    scroller.addEventListener('scroll', function(){
+      ensureRailVisibilityBasedOnOverflow();
+      showRailNow();
+      scheduleHideRail();
+    }, {passive:true});
+    if (thumb) {
+      ['mousedown','touchstart'].forEach(function(evt){
+        thumb.addEventListener(evt, function(){
+          showRailNow();
+          clearTimeout(hideTimer);
+        }, {passive:false});
+      });
+      ['mouseup','touchend','touchcancel','mouseleave'].forEach(function(evt){
+        window.addEventListener(evt, function(){ scheduleHideRail(); });
+      });
+    }
+    ensureRailVisibilityBasedOnOverflow();
+  }
+
+  // === Outside handle placement + orientation ===
+  function rect(el){ var r = el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
+  function placeHandleOutside(){
+    var app = document.getElementById('app');
+    var aside = document.querySelector('aside.left-col');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!app || !aside || !btn) return;
+    if (btn.parentElement !== app) {
+      if (aside.nextSibling) app.insertBefore(btn, aside.nextSibling);
+      else app.appendChild(btn);
+    }
+  }
+  function syncHandleColor(){
+    var btn = document.getElementById('sidebar-toggle');
+    var box = document.querySelector('div.bg-white.rounded-xl.shadow-lg.overflow-hidden') ||
+              document.querySelector('div.dark\:bg-gray-800.rounded-xl.shadow-lg.overflow-hidden') ||
+              (document.getElementById('master-list') && document.getElementById('master-list').parentElement);
+    if (btn && box) {
+      var bg = getComputedStyle(box).backgroundColor;
+      if (bg) btn.style.setProperty('--handle-bg', bg), btn.style.setProperty('background', bg);
+    }
+  }
+  function positionHandle(){
+    var app = document.getElementById('app');
+    var aside = document.querySelector('aside.left-col');
+    var btn = document.getElementById('sidebar-toggle');
+    var header = aside && aside.querySelector('#home-btn');
+    if (!app || !aside || !btn || !header) return;
+    var appR = rect(app), asideR = rect(aside), headerR = rect(header), btnW = btn.getBoundingClientRect().width || 18;
+    // attach to outside edge
+    btn.style.left = Math.round(asideR.right - appR.left) + 'px';
+    btn.style.top  = Math.round(headerR.top - appR.top) + 'px';
+    btn.style.height = Math.round(headerR.height) + 'px';
+    // reflect collapsed state for arrow orientation
+    if (aside.classList.contains('collapsed')) btn.classList.add('collapsed'); else btn.classList.remove('collapsed');
+  }
+  function bindCollapseSync(){
+    var btn = document.getElementById('sidebar-toggle');
+    var aside = document.querySelector('aside.left-col');
+    if (!btn || !aside) return;
+    // When app toggles the sidebar via this button, update class and reposition
+    if (window.jQuery) {
+      jQuery(document).on('click', '#sidebar-toggle', function(){
+        setTimeout(function(){ positionHandle(); }, 0);
+      });
+    }
+    // Also observe changes to the sidebar class (if toggled elsewhere)
+    var obs = new MutationObserver(function(){ positionHandle(); });
+    obs.observe(aside, {attributes:true, attributeFilter:['class']});
+  }
+
+  function init(){
+    installSortProxy();
+    bindScrollAutoHide();
+    placeHandleOutside();
+    syncHandleColor();
+    positionHandle();
+    bindCollapseSync();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  window.addEventListener('resize', function(){ positionHandle(); syncHandleColor(); });
+})();
+</script>
 </body>
 <style id="review-board-patch-2025-10-29-HOMECONTROLS-V9">
 /* Scope: HOME only, Sidebar OPEN, Simple View OFF */
