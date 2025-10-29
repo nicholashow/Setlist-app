@@ -5965,41 +5965,115 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
   });
 })();
 </script>
-<style id="home-2nd-row-rework-2025-10-29">
-/* === Home 2nd Row Rework (non-destructive overrides) === */
 
-/* 1) Make the "Sort By" box ~2.5x wider.
-      The file already uses --filecolw for the proxy wrapper (default 320px).
-      320px * 2.5 = 800px. */
-:root { --filecolw: calc(320px * 2.5); }
+<script id="home-2nd-row-rework-2025-10-29-v2">
+(function(){
+  // Helpers
+  function isHomeVisible(){ var v=document.querySelector('#master-view'); return v && !v.classList.contains('hidden'); }
+  function isSidebarOpen(){ var l=document.querySelector('.left-col'); return l && !l.classList.contains('collapsed'); }
+  function isSimpleViewOn(){ return document.body.classList.contains('simple-view-on'); }
+  function px(n){ return Math.max(0, Math.round(n)) + 'px'; }
+  function firstVisibleRow(){
+    var list = document.querySelector('#master-list');
+    if (!list) return null;
+    var li = list.querySelector('li'); // first row good enough
+    return li;
+  }
+  function selectArtistInput(li){
+    return li && (li.querySelector('[data-field="artist"], input.artist, .artist input, input[name="artist"]') || null);
+  }
+  function selectNotesInput(li){
+    return li && (li.querySelector('[data-field="notes"], textarea.notes, .notes-inline textarea, textarea[name="notes"]') || null);
+  }
+  function setImportant(el, prop, value){
+    try{ el.style.setProperty(prop, value, 'important'); }catch(e){ el.style[prop] = value; }
+  }
 
-/* Also cover non-proxy implementations of the dropdown. */
-#master-view #sort-dropdown {
-  width: 450px !important;
-  max-width: 450px !important;
-  flex: 0 0 450px !important;
-}
+  function finalizeLayout(){
+    // Only when: sidebar open + home visible + simple view OFF
+    if (!isSidebarOpen() || !isHomeVisible() || isSimpleViewOn()) return;
+    var row   = document.querySelector('#controls-row');
+    var fg    = document.querySelector('#filters-group');
+    var sort  = document.querySelector('#sort-dropdown');
+    var btns  = document.querySelector('#master-view-buttons');
+    var add   = document.querySelector('#upload-master-btn');
+    var del   = document.querySelector('#delete-all-btn');
+    var search= document.querySelector('#search');
+    var li    = firstVisibleRow();
+    var artistEl = li ? selectArtistInput(li) : null;
+    var notesEl  = li ? selectNotesInput(li)  : null;
 
-/* 2) Make the "Add Files" and "Delete All" buttons smaller.
-      Reduce the right-side grid footprint and keep buttons filling columns. */
-.left-col:not(.collapsed) ~ main #master-view-buttons {
-  grid-template-columns: 80px 80px !important;
-  width: 160px !important;
-}
+    if (!(row && fg && sort && btns && add && del && search && artistEl && notesEl)) return;
 
-/* Tighten the buttons themselves slightly without altering behavior. */
-#master-view-buttons .btn-master,
-#master-view-buttons #upload-master-btn,
-#master-view-buttons #delete-all-btn {
-  padding: 6px 8px !important;   /* was larger; keeps tap targets okay */
-  font-size: 0.875rem !important; /* 14px-ish */
-}
+    // Measure widths from the Artist and Notes inputs
+    var artistW = artistEl.getBoundingClientRect().width;
+    var notesW  = notesEl.getBoundingClientRect().width;
 
-/* Keep buttons filling their grid cells */
-#master-view-buttons .btn-master,
-#master-view-buttons #upload-master-btn,
-#master-view-buttons #delete-all-btn {
-  width: 100% !important;
-}
-</style>
+    // Make the row a 3-column GRID: [Sort] [Add Files] [Delete All]
+    setImportant(row, 'display', 'grid');
+    setImportant(row, 'gridTemplateColumns', 'minmax(0,1fr) ' + px(artistW) + ' ' + px(notesW));
+    setImportant(row, 'alignItems', 'stretch');
+    setImportant(row, 'columnGap', '12px');
+
+    // Make buttons become direct grid items that fill columns 2 and 3
+    setImportant(btns, 'display', 'contents');
+    setImportant(fg,  'gridColumn', '1');
+    setImportant(add, 'gridColumn', '2');
+    setImportant(del, 'gridColumn', '3');
+
+    // Ensure inner elements fill their tracks
+    setImportant(sort, 'width', '100%');
+    setImportant(sort, 'maxWidth', 'none');
+    setImportant(add,  'width', '100%');
+    setImportant(del,  'width', '100%');
+
+    // Height & radius match the Search bar
+    var sh = parseFloat(getComputedStyle(search).height);
+    var br = getComputedStyle(search).borderRadius;
+    [sort, add, del].forEach(function(el){
+      setImportant(el, 'height', px(sh));
+      setImportant(el, 'borderRadius', br);
+      // Ensure good vertical centering without breaking fonts
+      setImportant(el, 'paddingTop', '0px');
+      setImportant(el, 'paddingBottom', '0px');
+      setImportant(el, 'display', 'flex');
+      setImportant(el, 'alignItems', 'center');
+      setImportant(el, 'justifyContent', 'center');
+    });
+
+    // Remove legacy widths/rules that forced small Sort box and wide buttons
+    setImportant(document.querySelector('#master-view #sort-dropdown') || sort, 'width', '100%');
+    setImportant(document.querySelector('#master-view #sort-dropdown') || sort, 'maxWidth', 'none');
+    // Clear any pre-set layout on #master-view-buttons from older CSS
+    ['gridTemplateColumns','width','justifyContent','alignItems','gap'].forEach(function(prop){
+      setImportant(btns, prop, 'unset');
+    });
+  }
+
+  // Run multiple times to beat any late scripts / mutations
+  function runNowAndLater(){
+    finalizeLayout();
+    // schedule a few extra passes to win the race against other aligners
+    requestAnimationFrame(finalizeLayout);
+    setTimeout(finalizeLayout, 50);
+    setTimeout(finalizeLayout, 150);
+    setTimeout(finalizeLayout, 350);
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', runNowAndLater);
+  } else {
+    runNowAndLater();
+  }
+  window.addEventListener('resize', runNowAndLater, {passive:true});
+  // Watch list, sidebar state, and theme/simple-view toggles
+  var list = document.querySelector('#master-list');
+  if (list){ new MutationObserver(runNowAndLater).observe(list, {childList:true, subtree:true}); }
+  var side = document.querySelector('.left-col');
+  if (side){ new MutationObserver(runNowAndLater).observe(side, {attributes:true, attributeFilter:['class']}); }
+  var master = document.querySelector('#master-view');
+  if (master){ new MutationObserver(runNowAndLater).observe(master, {attributes:true, attributeFilter:['class']}); }
+})();
+</script>
+
 </html>
