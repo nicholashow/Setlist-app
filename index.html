@@ -5966,113 +5966,106 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
 })();
 </script>
 
-<script id="home-2nd-row-rework-2025-10-29-v2">
+<script id="home-2nd-row-rework-2025-10-29-v3">
 (function(){
-  // Helpers
-  function isHomeVisible(){ var v=document.querySelector('#master-view'); return v && !v.classList.contains('hidden'); }
-  function isSidebarOpen(){ var l=document.querySelector('.left-col'); return l && !l.classList.contains('collapsed'); }
-  function isSimpleViewOn(){ return document.body.classList.contains('simple-view-on'); }
+  function q(sel){ return document.querySelector(sel); }
   function px(n){ return Math.max(0, Math.round(n)) + 'px'; }
-  function firstVisibleRow(){
-    var list = document.querySelector('#master-list');
-    if (!list) return null;
-    var li = list.querySelector('li'); // first row good enough
-    return li;
+  function setImp(el, prop, val){
+    if (!el) return;
+    try{ el.style.setProperty(prop, val, 'important'); }catch(e){ el.style[prop] = val; }
   }
-  function selectArtistInput(li){
+  function firstRow(){
+    var list = q('#master-list');
+    if (!list) return null;
+    return list.querySelector('li');
+  }
+  function artistInput(li){
     return li && (li.querySelector('[data-field="artist"], input.artist, .artist input, input[name="artist"]') || null);
   }
-  function selectNotesInput(li){
+  function notesInput(li){
     return li && (li.querySelector('[data-field="notes"], textarea.notes, .notes-inline textarea, textarea[name="notes"]') || null);
   }
-  function setImportant(el, prop, value){
-    try{ el.style.setProperty(prop, value, 'important'); }catch(e){ el.style[prop] = value; }
+  function readyToApply(){
+    return q('#controls-row') && q('#filters-group') && q('#sort-dropdown') &&
+           q('#master-view-buttons') && q('#upload-master-btn') && q('#delete-all-btn') &&
+           q('#search') && firstRow() && artistInput(firstRow()) && notesInput(firstRow());
   }
 
-  function finalizeLayout(){
-    // Only when: sidebar open + home visible + simple view OFF
-    if (!isSidebarOpen() || !isHomeVisible() || isSimpleViewOn()) return;
-    var row   = document.querySelector('#controls-row');
-    var fg    = document.querySelector('#filters-group');
-    var sort  = document.querySelector('#sort-dropdown');
-    var btns  = document.querySelector('#master-view-buttons');
-    var add   = document.querySelector('#upload-master-btn');
-    var del   = document.querySelector('#delete-all-btn');
-    var search= document.querySelector('#search');
-    var li    = firstVisibleRow();
-    var artistEl = li ? selectArtistInput(li) : null;
-    var notesEl  = li ? selectNotesInput(li)  : null;
+  function applyLayout(){
+    var row = q('#controls-row');
+    var fg  = q('#filters-group');
+    var sort= q('#sort-dropdown');
+    var btns= q('#master-view-buttons');
+    var add = q('#upload-master-btn');
+    var del = q('#delete-all-btn');
+    var search = q('#search');
+    var li   = firstRow();
+    var artistEl = artistInput(li);
+    var notesEl  = notesInput(li);
+    if (!(row && fg && sort && btns && add && del && search && li && artistEl && notesEl)) return false;
 
-    if (!(row && fg && sort && btns && add && del && search && artistEl && notesEl)) return;
-
-    // Measure widths from the Artist and Notes inputs
+    // Measure
     var artistW = artistEl.getBoundingClientRect().width;
     var notesW  = notesEl.getBoundingClientRect().width;
-
-    // Make the row a 3-column GRID: [Sort] [Add Files] [Delete All]
-    setImportant(row, 'display', 'grid');
-    setImportant(row, 'gridTemplateColumns', 'minmax(0,1fr) ' + px(artistW) + ' ' + px(notesW));
-    setImportant(row, 'alignItems', 'stretch');
-    setImportant(row, 'columnGap', '12px');
-
-    // Make buttons become direct grid items that fill columns 2 and 3
-    setImportant(btns, 'display', 'contents');
-    setImportant(fg,  'gridColumn', '1');
-    setImportant(add, 'gridColumn', '2');
-    setImportant(del, 'gridColumn', '3');
-
-    // Ensure inner elements fill their tracks
-    setImportant(sort, 'width', '100%');
-    setImportant(sort, 'maxWidth', 'none');
-    setImportant(add,  'width', '100%');
-    setImportant(del,  'width', '100%');
-
-    // Height & radius match the Search bar
     var sh = parseFloat(getComputedStyle(search).height);
     var br = getComputedStyle(search).borderRadius;
+
+    // Grid with 3 columns: Sort | Add | Delete
+    setImp(row, 'display', 'grid');
+    setImp(row, 'gridTemplateColumns', 'minmax(0,1fr) ' + px(artistW) + ' ' + px(notesW));
+    setImp(row, 'alignItems', 'stretch');
+    setImp(row, 'columnGap', '12px');
+
+    // Place children into explicit columns
+    setImp(btns, 'display', 'contents');
+    setImp(fg,   'gridColumn', '1');
+    setImp(add,  'gridColumn', '2');
+    setImp(del,  'gridColumn', '3');
+
+    // Fill tracks
     [sort, add, del].forEach(function(el){
-      setImportant(el, 'height', px(sh));
-      setImportant(el, 'borderRadius', br);
-      // Ensure good vertical centering without breaking fonts
-      setImportant(el, 'paddingTop', '0px');
-      setImportant(el, 'paddingBottom', '0px');
-      setImportant(el, 'display', 'flex');
-      setImportant(el, 'alignItems', 'center');
-      setImportant(el, 'justifyContent', 'center');
+      setImp(el, 'width', '100%');
+      setImp(el, 'maxWidth', 'none');
+      setImp(el, 'height', px(sh));
+      setImp(el, 'borderRadius', br);
+      setImp(el, 'paddingTop', '0px');
+      setImp(el, 'paddingBottom', '0px');
+      setImp(el, 'display', 'flex');
+      setImp(el, 'alignItems', 'center');
+      setImp(el, 'justifyContent', 'center');
     });
 
-    // Remove legacy widths/rules that forced small Sort box and wide buttons
-    setImportant(document.querySelector('#master-view #sort-dropdown') || sort, 'width', '100%');
-    setImportant(document.querySelector('#master-view #sort-dropdown') || sort, 'maxWidth', 'none');
-    // Clear any pre-set layout on #master-view-buttons from older CSS
-    ['gridTemplateColumns','width','justifyContent','alignItems','gap'].forEach(function(prop){
-      setImportant(btns, prop, 'unset');
-    });
+    // Nuke legacy widths that fight us
+    var styleSort = document.querySelector('style') && document.querySelector('style').sheet;
+    // (We won't edit stylesheets; inline 'important' wins anyway.)
+
+    return true;
   }
 
-  // Run multiple times to beat any late scripts / mutations
-  function runNowAndLater(){
-    finalizeLayout();
-    // schedule a few extra passes to win the race against other aligners
-    requestAnimationFrame(finalizeLayout);
-    setTimeout(finalizeLayout, 50);
-    setTimeout(finalizeLayout, 150);
-    setTimeout(finalizeLayout, 350);
+  var attempts = 0, MAX_ATTEMPTS = 60; // try up to ~30s
+  function tick(){
+    attempts++;
+    if (readyToApply()){
+      if (applyLayout()){
+        // Keep one more delayed pass to beat late scripts
+        setTimeout(applyLayout, 200);
+        setTimeout(applyLayout, 600);
+        return; // stop polling
+      }
+    }
+    if (attempts < MAX_ATTEMPTS){
+      setTimeout(tick, 500);
+    }
   }
 
+  // Poll + observe the whole document so we catch late renders
   if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', runNowAndLater);
+    document.addEventListener('DOMContentLoaded', tick);
   } else {
-    runNowAndLater();
+    tick();
   }
-  window.addEventListener('resize', runNowAndLater, {passive:true});
-  // Watch list, sidebar state, and theme/simple-view toggles
-  var list = document.querySelector('#master-list');
-  if (list){ new MutationObserver(runNowAndLater).observe(list, {childList:true, subtree:true}); }
-  var side = document.querySelector('.left-col');
-  if (side){ new MutationObserver(runNowAndLater).observe(side, {attributes:true, attributeFilter:['class']}); }
-  var master = document.querySelector('#master-view');
-  if (master){ new MutationObserver(runNowAndLater).observe(master, {attributes:true, attributeFilter:['class']}); }
+  new MutationObserver(function(){ tick(); }).observe(document.documentElement, {childList:true, subtree:true});
+  window.addEventListener('resize', function(){ applyLayout(); }, {passive:true});
 })();
 </script>
 
