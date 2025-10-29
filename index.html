@@ -5812,4 +5812,145 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
   });
 })();
 </script>
+
+<style id="review-board-patch-2025-10-29-HOMECONTROLS-V10">
+/* Scope: HOME only, Sidebar OPEN, Simple View OFF */
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #controls-row{
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) auto auto !important; /* JS sets exact button widths */
+  column-gap: 0.5rem !important;
+  align-items: center !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #filters-group{
+  grid-column: 1 !important;
+  min-width: 0 !important;
+}
+/* Make Sort By fill the available first column (wider than before) */
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #sort-dropdown{
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+}
+/* Place buttons in columns 2 and 3; their exact pixel widths are set by JS */
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #upload-master-btn{
+  grid-column: 2 !important;
+  white-space: nowrap !important;
+}
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #delete-all-btn{
+  grid-column: 3 !important;
+  white-space: nowrap !important;
+}
+</style>
+
+
+<script id="review-board-script-2025-10-29-HOMECONTROLS-V10">
+(function(){
+  if (window.__HomeControlsV10Applied) return;
+  window.__HomeControlsV10Applied = true;
+
+  function inScope(){
+    var sidebar = document.querySelector('.left-col');
+    var home = document.querySelector('#master-view');
+    if (!sidebar || !home) return false;
+    if (sidebar.classList.contains('collapsed')) return false;
+    if (home.classList.contains('hidden')) return false;
+    if (document.body.classList.contains('simple-view-on') || home.classList.contains('simple-view-on')) return false;
+    return true;
+  }
+
+  function px(n){ return Math.max(1, Math.round(n||0)) + 'px'; }
+
+  function firstVisibleRow(){
+    var list = document.querySelector('#master-list');
+    if (!list) return null;
+    var items = list.querySelectorAll('li');
+    for (var i=0;i<items.length;i++){
+      var el = items[i];
+      var r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) return el;
+    }
+    return null;
+  }
+
+  function measureAndApply(){
+    if (!inScope()) return;
+
+    var row = firstVisibleRow();
+    if (!row) return;
+
+    var details = row.querySelector('.song-details-container');
+    if (!details) return;
+
+    // Prefer Artist/Notes input widths (they are equal when sidebar is open).
+    var sampleInput = details.querySelector('input');
+    if (!sampleInput) return;
+
+    var inputW = sampleInput.getBoundingClientRect().width || sampleInput.offsetWidth || 0;
+    var detailsW = details.getBoundingClientRect().width || details.offsetWidth || (inputW*2);
+    var gapPx = 8; // default gap
+    try {
+      var cs = getComputedStyle(details);
+      var g = parseFloat(cs.gap || cs.columnGap || '8');
+      if (!isNaN(g)) gapPx = g;
+    } catch(e){}
+
+    // Buttons wrapper (if present)
+    var buttonsWrap = document.querySelector('#master-view-buttons') ||
+                      document.querySelector('#master-view-controls #master-view-buttons') ||
+                      document.querySelector('#master-view-controls .master-view-buttons');
+
+    var uploadBtn = document.querySelector('#upload-master-btn');
+    var deleteBtn = document.querySelector('#delete-all-btn');
+
+    // Set each button EXACTLY to the input width
+    if (uploadBtn) uploadBtn.style.width = px(inputW);
+    if (deleteBtn) deleteBtn.style.width = px(inputW);
+
+    // Ensure the two buttons together are no greater than the second-column width
+    // (match the song details container width = two inputs + the inter-input gap)
+    var targetWrapW = Math.min(detailsW, (inputW * 2) + gapPx);
+
+    if (buttonsWrap){
+      buttonsWrap.style.display = 'grid';
+      buttonsWrap.style.gridAutoFlow = 'column';
+      buttonsWrap.style.gridTemplateColumns = px(inputW) + ' ' + px(inputW);
+      buttonsWrap.style.width = px(targetWrapW);
+      buttonsWrap.style.maxWidth = px(detailsW);
+      buttonsWrap.style.justifyContent = 'end';
+      buttonsWrap.style.alignItems = 'center';
+      buttonsWrap.style.gap = px(gapPx);
+      // Keep it on the same baseline as the row below
+      buttonsWrap.style.boxSizing = 'border-box';
+    }
+
+    // Make Sort By wider by letting it fill the remaining first column
+    var filters = document.querySelector('#filters-group');
+    if (filters){
+      filters.style.flex = '1 1 auto';
+      filters.style.minWidth = '0';
+    }
+    var sort = document.querySelector('#sort-dropdown');
+    if (sort){
+      sort.style.width = '100%';
+      sort.style.maxWidth = '100%';
+    }
+  }
+
+  // Observe changes that can affect widths
+  var mo = new MutationObserver(function(){
+    measureAndApply();
+  });
+  mo.observe(document.body, {subtree:true, childList:true, attributes:true});
+
+  window.addEventListener('resize', measureAndApply);
+  document.addEventListener('DOMContentLoaded', measureAndApply);
+  // Run after initial paint as well
+  setTimeout(measureAndApply, 0);
+  setTimeout(measureAndApply, 200);
+  setTimeout(measureAndApply, 600);
+})();
+</script>
+
 </html>
