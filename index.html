@@ -5966,32 +5966,14 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
 })();
 </script>
 
-<script id="home-2nd-row-rework-2025-10-29-v3">
+<script id="home-2nd-row-rework-2025-10-29-v4">
 (function(){
-  function q(sel){ return document.querySelector(sel); }
-  function px(n){ return Math.max(0, Math.round(n)) + 'px'; }
+  function q(s){ return document.querySelector(s); }
   function setImp(el, prop, val){
     if (!el) return;
     try{ el.style.setProperty(prop, val, 'important'); }catch(e){ el.style[prop] = val; }
   }
-  function firstRow(){
-    var list = q('#master-list');
-    if (!list) return null;
-    return list.querySelector('li');
-  }
-  function artistInput(li){
-    return li && (li.querySelector('[data-field="artist"], input.artist, .artist input, input[name="artist"]') || null);
-  }
-  function notesInput(li){
-    return li && (li.querySelector('[data-field="notes"], textarea.notes, .notes-inline textarea, textarea[name="notes"]') || null);
-  }
-  function readyToApply(){
-    return q('#controls-row') && q('#filters-group') && q('#sort-dropdown') &&
-           q('#master-view-buttons') && q('#upload-master-btn') && q('#delete-all-btn') &&
-           q('#search') && firstRow() && artistInput(firstRow()) && notesInput(firstRow());
-  }
-
-  function applyLayout(){
+  function applyUsingExistingGrid(){
     var row = q('#controls-row');
     var fg  = q('#filters-group');
     var sort= q('#sort-dropdown');
@@ -5999,34 +5981,32 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
     var add = q('#upload-master-btn');
     var del = q('#delete-all-btn');
     var search = q('#search');
-    var li   = firstRow();
-    var artistEl = artistInput(li);
-    var notesEl  = notesInput(li);
-    if (!(row && fg && sort && btns && add && del && search && li && artistEl && notesEl)) return false;
+    if (!(row && fg && sort && btns && add && del && search)) return false;
 
-    // Measure
-    var artistW = artistEl.getBoundingClientRect().width;
-    var notesW  = notesEl.getBoundingClientRect().width;
-    var sh = parseFloat(getComputedStyle(search).height);
-    var br = getComputedStyle(search).borderRadius;
+    var gtc = row.style.gridTemplateColumns || getComputedStyle(row).gridTemplateColumns;
+    // Expect something like: "minmax(0, 1fr) 320px 480px"
+    if (!gtc || !/\d+px\s+\d+px/.test(gtc)) return false;
 
-    // Grid with 3 columns: Sort | Add | Delete
+    // Force the row to be a grid with the same column sizes the app itself computed
     setImp(row, 'display', 'grid');
-    setImp(row, 'gridTemplateColumns', 'minmax(0,1fr) ' + px(artistW) + ' ' + px(notesW));
+    setImp(row, 'gridTemplateColumns', gtc);
     setImp(row, 'alignItems', 'stretch');
     setImp(row, 'columnGap', '12px');
 
-    // Place children into explicit columns
+    // Place children: Sort in col 1, Add in col 2, Delete in col 3
     setImp(btns, 'display', 'contents');
     setImp(fg,   'gridColumn', '1');
     setImp(add,  'gridColumn', '2');
     setImp(del,  'gridColumn', '3');
 
-    // Fill tracks
+    // Match heights/border radius to Search bar
+    var cs = getComputedStyle(search);
+    var h  = cs.height;
+    var br = cs.borderRadius;
     [sort, add, del].forEach(function(el){
       setImp(el, 'width', '100%');
       setImp(el, 'maxWidth', 'none');
-      setImp(el, 'height', px(sh));
+      setImp(el, 'height', h);
       setImp(el, 'borderRadius', br);
       setImp(el, 'paddingTop', '0px');
       setImp(el, 'paddingBottom', '0px');
@@ -6034,38 +6014,40 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
       setImp(el, 'alignItems', 'center');
       setImp(el, 'justifyContent', 'center');
     });
-
-    // Nuke legacy widths that fight us
-    var styleSort = document.querySelector('style') && document.querySelector('style').sheet;
-    // (We won't edit stylesheets; inline 'important' wins anyway.)
-
     return true;
   }
 
-  var attempts = 0, MAX_ATTEMPTS = 60; // try up to ~30s
-  function tick(){
-    attempts++;
-    if (readyToApply()){
-      if (applyLayout()){
-        // Keep one more delayed pass to beat late scripts
-        setTimeout(applyLayout, 200);
-        setTimeout(applyLayout, 600);
-        return; // stop polling
+  // Observe changes to the controls row style so we run AFTER the app's own align()
+  var row = q('#controls-row');
+  function setupObservers(){
+    row = q('#controls-row');
+    if (!row) return;
+    var rafPending = false;
+    var obs = new MutationObserver(function(muts){
+      for (var m of muts){
+        if (m.type === 'attributes' && m.attributeName === 'style'){
+          if (!rafPending){
+            rafPending = true;
+            requestAnimationFrame(function(){ rafPending = false; applyUsingExistingGrid(); });
+          }
+        }
       }
-    }
-    if (attempts < MAX_ATTEMPTS){
-      setTimeout(tick, 500);
+    });
+    obs.observe(row, {attributes:true, attributeFilter:['style']});
+  }
+
+  function bootstrap(){
+    // Try once immediately, then set observers and also run on resize
+    applyUsingExistingGrid();
+    setupObservers();
+    window.addEventListener('resize', applyUsingExistingGrid, {passive:true});
+    // Also run after DOM ready in case row appears late
+    if (document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', applyUsingExistingGrid);
     }
   }
 
-  // Poll + observe the whole document so we catch late renders
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', tick);
-  } else {
-    tick();
-  }
-  new MutationObserver(function(){ tick(); }).observe(document.documentElement, {childList:true, subtree:true});
-  window.addEventListener('resize', function(){ applyLayout(); }, {passive:true});
+  bootstrap();
 })();
 </script>
 
