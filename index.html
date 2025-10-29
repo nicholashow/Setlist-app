@@ -1932,6 +1932,7 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
                                 <option value="artist">Sort by Artist</option>
                                 <option value="lastPlayed">Sort by Last Played</option>
                                 <option value="energy">Sort by Energy</option>
+                                                            <option value="recent">Sort by Recently Added</option>
                             </select>
                         <div id="sort-genre-flyout">
                             <div class="title">Genres</div>
@@ -5935,6 +5936,86 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
 
   // Initial
   requestAnimationFrame(function(){ layout(); updateThumb(); });
+})();
+</script>
+
+<style id="patch-2025-10-29-handle-grey-align">
+/* Thin grey handle look, keep arrow visible */
+#sidebar-toggle {
+  width: 18px !important;
+  min-width: 18px !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(180deg, #9CA3AF, #6B7280) !important; /* gray-400 -> gray-500 */
+  color: #ffffff !important; /* arrow color */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.08) !important;
+  align-self: flex-start !important; /* allow vertical positioning with margin-top */
+  padding: 0 !important;
+  border: none !important;
+}
+/* Grip texture behind arrow */
+#sidebar-toggle::before {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 6px;
+  left: 6px;
+  top: 18%;
+  bottom: 18%;
+  border-radius: 3px;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(255,255,255,0.8),
+    rgba(255,255,255,0.8) 2px,
+    rgba(255,255,255,0.35) 2px,
+    rgba(255,255,255,0.35) 5px
+  );
+  pointer-events: none;
+}
+/* Restore SVG visibility for the arrow */
+#sidebar-toggle svg {
+  position: static !important;
+  width: 14px !important;
+  height: 14px !important;
+  opacity: 1 !important;
+}
+</style>
+
+<script id="patch-2025-10-29-handle-align-js">
+(function(){
+  if (window.__handle_align_patch__) return;
+  window.__handle_align_patch__ = true;
+
+  function rect(el){ var r=el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
+
+  function alignHandle(){
+    var app = document.getElementById('app');
+    var aside = document.querySelector('aside.left-col');
+    var header = aside && aside.querySelector('#home-btn');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!app || !aside || !header || !btn) return;
+
+    // Align top and height with the "All Songs" header box
+    var a = rect(aside);
+    var h = rect(header);
+    var topOffset = Math.max(0, Math.round(h.top - a.top));
+
+    // Set height equal to header height; place at same top
+    btn.style.marginTop = topOffset + 'px';
+    btn.style.height = Math.round(h.height) + 'px';
+  }
+
+  // Initial + on resize + on fonts load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', alignHandle);
+  } else {
+    alignHandle();
+  }
+  window.addEventListener('resize', alignHandle);
+
+  // Also align after sidebar open/close toggles (existing click likely present)
+  if (window.jQuery) {
+    jQuery(document).on('click', '#sidebar-toggle', function(){ setTimeout(alignHandle, 0); });
+  }
 })();
 </script>
 </body>
