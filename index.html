@@ -6439,6 +6439,223 @@ aside.left-col.collapsed #sidebar-toggle svg { transform: rotate(180deg); }
   }
 })();
 </script>
+
+<style id="patch-2025-10-29-handle-outside-nohscroll">
+/* Never allow horizontal page scroll */
+html, body, #app { overflow-x: hidden !important; }
+#app { position: relative !important; }
+
+/* Outside handle styling: grey pill; positioned by JS just to the RIGHT of the sidebar edge */
+#sidebar-toggle {
+  position: absolute !important;
+  width: 18px !important;
+  min-width: 18px !important;
+  border-radius: 9999px !important;
+  background: var(--handle-bg, #6B7280) !important; /* synced via JS to file box bg */
+  color: #ffffff !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.20) !important;
+  padding: 0 !important;
+  z-index: 50 !important;
+}
+
+/* Arrow is visible and rotates based on collapsed state */
+#sidebar-toggle svg {
+  width: 16px !important;
+  height: 16px !important;
+  opacity: 1 !important;
+  transition: transform 0.18s ease-in-out;
+}
+/* OPEN (sidebar not collapsed) => arrow faces inward (→) */
+#sidebar-toggle:not(.collapsed) svg { transform: rotate(180deg); }
+/* CLOSED (sidebar collapsed) => arrow faces outward (←) */
+#sidebar-toggle.collapsed svg { transform: rotate(0deg); }
+
+/* External sidebar scrollbar: only via 'active' class. No hover reveal. */
+#sidebar-external-scroll {
+  opacity: 0;
+  transition: opacity 0.18s ease-in-out;
+  pointer-events: none;
+}
+#sidebar-external-scroll.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+</style>
+
+<script id="patch-2025-10-29-handle-outside-nohscroll-js">
+(function(){
+  if (window.__outside_handle_scroll_inertia_patch__) return;
+  window.__outside_handle_scroll_inertia_patch__ = true;
+
+  var $ = window.jQuery;
+
+  function rect(el){ var r=el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
+
+  // Ensure handle is sibling of the sidebar (outside), not inside it
+  function placeHandleOutside(){
+    var app = document.getElementById('app');
+    var aside = document.querySelector('aside.left-col');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!app || !aside || !btn) return;
+    if (btn.parentElement !== app) {
+      // Insert right after the aside to keep DOM order
+      if (aside.nextSibling) {
+        app.insertBefore(btn, aside.nextSibling);
+      } else {
+        app.appendChild(btn);
+      }
+    }
+  }
+
+  // Position handle so it is attached just OUTSIDE the sidebar (to its right edge)
+  function positionHandle(){
+    var app = document.getElementById('app');
+    var aside = document.querySelector('aside.left-col');
+    var btn = document.getElementById('sidebar-toggle');
+    var header = aside && aside.querySelector('#home-btn');
+    if (!app || !aside || !btn || !header) return;
+
+    var appR = rect(app);
+    var asideR = rect(aside);
+    var headerR = rect(header);
+    var btnW = btn.getBoundingClientRect().width || 18;
+
+    // Left edge: exactly at the right edge of the sidebar (outside, touching)
+    var left = Math.round((asideR.right - appR.left));
+    btn.style.left = left + 'px';
+
+    // Top + height: align to All Songs header box
+    var topOffset = Math.max(0, Math.round(headerR.top - appR.top));
+    btn.style.top = topOffset + 'px';
+    btn.style.height = Math.round(headerR.height) + 'px';
+
+    // Sync collapsed class for arrow orientation
+    if (aside.classList.contains('collapsed')) {
+      btn.classList.add('collapsed');
+    } else {
+      btn.classList.remove('collapsed');
+    }
+  }
+
+  // Match handle background to the file box background (light/dark safe)
+  function getFileBoxBg(){
+    var container = document.querySelector('div.bg-white.rounded-xl.shadow-lg.overflow-hidden');
+    if (!container) {
+      container = document.querySelector('div.dark\:bg-gray-800.rounded-xl.shadow-lg.overflow-hidden');
+    }
+    if (!container) {
+      var list = document.getElementById('master-list');
+      container = list && list.parentElement;
+    }
+    if (!container) return null;
+    var s = window.getComputedStyle(container);
+    return s && s.backgroundColor || null;
+  }
+  function syncHandleColor(){
+    var btn = document.getElementById('sidebar-toggle');
+    var bg = getFileBoxBg();
+    if (btn && bg) {
+      btn.style.setProperty('--handle-bg', bg);
+      btn.style.setProperty('background', bg);
+    }
+  }
+
+  // Sidebar external scrollbar show during scroll/drag, hide 2s after idle
+  var aside = document.querySelector('aside.left-col');
+  var scroller = aside && aside.querySelector('.left-col-main-content');
+  var rail = document.getElementById('sidebar-external-scroll');
+  var thumb = document.getElementById('sidebar-thumb');
+  var hideTimer = null;
+
+  function ensureRailVisibilityBasedOnOverflow(){
+    if (!rail || !scroller) return;
+    var content = scroller.scrollHeight;
+    var visible = scroller.clientHeight;
+    if (content <= visible + 1) {
+      rail.style.display = 'none';
+    } else {
+      rail.style.display = 'block';
+    }
+  }
+  function showRailNow(){
+    if (!rail) return;
+    rail.classList.add('active');
+  }
+  function scheduleHideRail(){
+    if (!rail) return;
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(function(){
+      rail.classList.remove('active');
+    }, 2000);
+  }
+  function bindScrollAutoHide(){
+    if (!scroller || !rail) return;
+    scroller.addEventListener('scroll', function(){
+      ensureRailVisibilityBasedOnOverflow();
+      showRailNow();
+      scheduleHideRail();
+    }, {passive:true});
+    if (thumb) {
+      ['mousedown','touchstart'].forEach(function(evt){
+        thumb.addEventListener(evt, function(){
+          showRailNow();
+          clearTimeout(hideTimer);
+        }, {passive:false});
+      });
+      ['mouseup','touchend','touchcancel','mouseleave'].forEach(function(evt){
+        window.addEventListener(evt, function(){
+          scheduleHideRail();
+        });
+      });
+    }
+    ensureRailVisibilityBasedOnOverflow();
+  }
+
+  // Sort change hook already installed earlier; keep it intact
+
+  // Keep arrow orientation synced when the sidebar collapses/expands
+  function bindCollapseSync(){
+    var btn = document.getElementById('sidebar-toggle');
+    var aside = document.querySelector('aside.left-col');
+    if (!btn || !aside) return;
+    if (window.jQuery) {
+      jQuery(document).on('click', '#sidebar-toggle', function(){
+        setTimeout(function(){
+          if (aside.classList.contains('collapsed')) {
+            btn.classList.add('collapsed');
+          } else {
+            btn.classList.remove('collapsed');
+          }
+          // Reposition after width changes
+          positionHandle();
+        }, 0);
+      });
+    }
+  }
+
+  function init(){
+    placeHandleOutside();
+    syncHandleColor();
+    positionHandle();
+    bindScrollAutoHide();
+    bindCollapseSync();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+  window.addEventListener('resize', function(){
+    syncHandleColor();
+    positionHandle();
+  });
+})();
+</script>
 </body>
 <style id="review-board-patch-2025-10-29-HOMECONTROLS-V9">
 /* Scope: HOME only, Sidebar OPEN, Simple View OFF */
