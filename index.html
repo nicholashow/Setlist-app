@@ -1928,11 +1928,12 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
                     <div id="controls-row">
                         <div id="filters-group">
                             <select id="sort-dropdown" class="p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select">
-                                <option value="name">Sort by Name</option>
-                                <option value="artist">Sort by Artist</option>
-                                <option value="lastPlayed">Sort by Last Played</option>
-                                <option value="energy">Sort by Energy</option>
-                            </select>
+        <option value="name" selected>A-Z</option>
+        <option value="artist">Artist</option>
+        <option value="energy">Energy</option>
+        <option value="lastPlayed">Last played</option>
+        <option value="recent">Recently added</option>
+    </select>
                         <div id="sort-genre-flyout">
                             <div class="title">Genres</div>
                             <div class="slot" id="sort-genre-slot"></div>
@@ -5701,92 +5702,119 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
 </style>
 
 
-<style id="safe-home-open-css">
-/* Prevent accidental horizontal scrolling */
-body { overflow-x: hidden !important; }
+<style id="safe-ui-sync-2025-10-29">
+/* Lock horizontal scrolling */
+html, body { overflow-x: hidden !important; }
 
-/* Sidebar toggle arrow orientation */
-#sidebar-toggle svg {
-  transition: transform 0.18s ease-in-out;
-}
-#sidebar-toggle.arrow-in svg { transform: rotate(180deg); } /* inward (open) */
-#sidebar-toggle.arrow-out svg { transform: rotate(0deg); }   /* outward (closed) */
-
-/* External sidebar scrollbar */
+/* Sidebar external scroller should match Top/Least scroller */
 #sidebar-external-scroll {
   position: absolute;
   right: 0;
-  width: 12px;
-  display: none; /* enabled by JS if overflow */
+  width: 12px;             /* same as stats */
+  background: transparent;
+  display: none;
   z-index: 2;
 }
 #sidebar-external-scroll .track {
-  position: absolute; left:0; top:0; right:0; bottom:0;
+  position: absolute;
+  left: 0; top: 0; right: 0; bottom: 0;
   border-radius: 8px;
 }
 #sidebar-thumb {
-  position: absolute; left: 2px; width: 8px;
+  position: absolute;
+  left: 2px;
+  width: 8px;               /* same as stats */
   border-radius: 8px;
   background: rgba(255,255,255,0.5);
-  cursor: pointer; user-select:none; -webkit-user-select:none; touch-action:none;
-  display: none; /* only during scroll */
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  display: none;            /* only shown while actively scrolling */
 }
 #sidebar-external-scroll.active #sidebar-thumb { display: block; }
+
+/* Sidebar toggle arrow orientation (center icon flips based on collapsed) */
+#sidebar-toggle svg { transition: transform 0.18s ease-in-out; display:inline-block; }
+#sidebar-toggle.arrow-in svg { transform: rotate(180deg); } /* inward (open) */
+#sidebar-toggle.arrow-out svg { transform: rotate(0deg); }   /* outward (closed) */
 </style>
 
-<script id="safe-home-open-js">
+<script id="safe-ui-sync-2025-10-29-js">
 (function(){
-  if (window.__safe_home_open_patch__) return;
-  window.__safe_home_open_patch__ = true;
-
-  var $ = window.jQuery;
+  if (window.__safe_ui_sync__) return;
+  window.__safe_ui_sync__ = true;
 
   function rect(el){ var r=el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
 
-  // 1) Sort By same size as Add files; keep native arrow on right
-  function sizeSortBy(){
+  // Ensure Sort By uses default A-Z and has native arrow (no custom wrappers)
+  function ensureSortDefaults(){
     var sel = document.getElementById('sort-dropdown');
-    var addBtn = document.getElementById('upload-master-btn');
-    if (!sel || !addBtn) return;
-    var r = rect(addBtn);
-    sel.style.width  = Math.round(r.width) + 'px';
-    sel.style.height = Math.round(r.height) + 'px';
+    if (!sel) return;
+    if (!sel.value || sel.value === 'recent') sel.value = 'name';
   }
 
-  // 2) Add files & Delete All same width as file input boxes (Artist/Notes) when sidebar is open
-  function sizeActionButtons(){
-    var addBtn = document.getElementById('upload-master-btn');
-    var delBtn = document.getElementById('delete-all-btn');
-    var aside  = document.querySelector('aside.left-col');
-    var list   = document.getElementById('master-list');
-    if (!addBtn || !delBtn || !aside || !list) return;
+  // Make Sort By same width as Add files, and height <= Search box; arrow stays native on the right
+  function syncSortSize(){
+    var sel = document.getElementById('sort-dropdown');
+    var add = document.getElementById('upload-master-btn');
+    var search = document.getElementById('search');
+    if (!sel || !add) return;
+    var rAdd = rect(add);
+    sel.style.width = Math.round(rAdd.width) + 'px';
+    if (search) {
+      var rSearch = rect(search);
+      sel.style.height = Math.min(Math.round(rAdd.height), Math.round(rSearch.height)) + 'px';
+    } else {
+      sel.style.height = Math.round(rAdd.height) + 'px';
+    }
+  }
+
+  // Make Add files & Delete All the same width as the file input boxes (Artist/Notes) when sidebar is open
+  function syncButtonsWidthToInputs(){
+    var add = document.getElementById('upload-master-btn');
+    var del = document.getElementById('delete-all-btn');
+    var list = document.getElementById('master-list');
+    var aside = document.querySelector('aside.left-col');
+    if (!add || !del || !list || !aside) return;
     if (aside.classList.contains('collapsed')) return;
     var ref = list.querySelector('input[placeholder="Artist"], input[placeholder="Notes"]');
     if (!ref) return;
     var r = rect(ref);
-    addBtn.style.width = Math.round(r.width) + 'px';
-    delBtn.style.width = Math.round(r.width) + 'px';
+    add.style.width = Math.round(r.width) + 'px';
+    del.style.width = Math.round(r.width) + 'px';
+    // Set heights not taller than search box
+    var search = document.getElementById('search');
+    if (search) {
+      var rs = rect(search);
+      add.style.height = Math.min(add.offsetHeight, Math.round(rs.height)) + 'px';
+      del.style.height = Math.min(del.offsetHeight, Math.round(rs.height)) + 'px';
+    }
   }
 
-  // 3) Sidebar open/close button arrow centered & direction based on state
-  function syncToggleArrow(){
-    var aside = document.querySelector('aside.left-col');
+  // Sidebar toggle: ensure there is an SVG chevron and that it flips based on open/closed
+  function ensureToggleArrow(){
     var btn = document.getElementById('sidebar-toggle');
-    if (!aside || !btn) return;
-    btn.classList.remove('arrow-in','arrow-out');
-    if (aside.classList.contains('collapsed')) btn.classList.add('arrow-out');
-    else btn.classList.add('arrow-in');
-  }
-  function bindToggleSync(){
+    if (!btn) return;
+    if (!btn.querySelector('svg')) {
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>';
+    }
+    function sync(){
+      var aside = document.querySelector('aside.left-col');
+      if (!aside) return;
+      btn.classList.remove('arrow-in','arrow-out');
+      if (aside.classList.contains('collapsed')) btn.classList.add('arrow-out'); else btn.classList.add('arrow-in');
+    }
     var aside = document.querySelector('aside.left-col');
-    if (!aside) return;
-    var obs = new MutationObserver(syncToggleArrow);
-    obs.observe(aside, {attributes:true, attributeFilter:['class']});
-    syncToggleArrow();
+    if (aside) {
+      var obs = new MutationObserver(sync);
+      obs.observe(aside, {attributes:true, attributeFilter:['class']});
+      sync();
+    }
   }
 
-  // 4) Sidebar external scrollbar: appear only while scrolling; disappear immediately after stop
-  function ensureSidebarRail(){
+  // Sidebar external scroller: same look as stats; show during scroll; hide immediately after
+  function ensureSidebarExternalScroll(){
     var aside = document.querySelector('aside.left-col');
     var scroller = aside && aside.querySelector('.left-col-main-content');
     if (!aside || !scroller) return;
@@ -5801,27 +5829,27 @@ body { overflow-x: hidden !important; }
       var a = rect(aside), s = rect(scroller);
       rail.style.top = (s.top - a.top) + 'px';
       rail.style.height = s.height + 'px';
-      // show rail only if overflow
+      // show rail only if overflow exists
       var overflow = scroller.scrollHeight > scroller.clientHeight + 1;
       rail.style.display = overflow ? 'block' : 'none';
     }
-    function update(){
+    function onScroll(){
       layout();
-      // show thumb only during scroll; hide immediately after
       rail.classList.add('active');
       clearTimeout(scroller._hideT);
       scroller._hideT = setTimeout(function(){ rail.classList.remove('active'); }, 60);
     }
-    scroller.addEventListener('scroll', update, {passive:true});
+    scroller.addEventListener('scroll', onScroll, {passive:true});
     window.addEventListener('resize', layout);
     layout();
   }
 
   function applyAll(){
-    sizeSortBy();
-    sizeActionButtons();
-    bindToggleSync();
-    ensureSidebarRail();
+    ensureSortDefaults();
+    syncSortSize();
+    syncButtonsWidthToInputs();
+    ensureToggleArrow();
+    ensureSidebarExternalScroll();
   }
 
   if (document.readyState === 'loading') {
@@ -5829,11 +5857,15 @@ body { overflow-x: hidden !important; }
   } else {
     applyAll();
   }
-  window.addEventListener('resize', function(){ sizeSortBy(); sizeActionButtons(); });
-  // Re-apply when master list changes
+  window.addEventListener('resize', function(){
+    syncSortSize();
+    syncButtonsWidthToInputs();
+  });
+
+  // Re-apply widths when songs render changes
   var list = document.getElementById('master-list');
   if (list) {
-    var obs = new MutationObserver(function(){ sizeActionButtons(); });
+    var obs = new MutationObserver(function(){ syncButtonsWidthToInputs(); });
     obs.observe(list, {childList:true});
   }
 })();
