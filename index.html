@@ -5701,12 +5701,11 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
 </style>
 
 </body>
-<style id="review-board-patch-2025-10-29-HOMECONTROLS-V8">
-/* === Home controls alignment (ONLY when Sidebar is OPEN & Simple View is OFF) === */
+<style id="review-board-patch-2025-10-29-HOMECONTROLS-V9">
+/* Scope: HOME only, Sidebar OPEN, Simple View OFF */
 .left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #controls-row{
   display: grid !important;
-  /* JS will set exact pixel widths; use soft placeholders to avoid jump */
-  grid-template-columns: minmax(0,1fr) 140px 180px !important;
+  grid-template-columns: minmax(0,1fr) 160px 180px !important; /* JS will override exact px */
   column-gap: 0.5rem !important;
   align-items: center !important;
   width: 100% !important;
@@ -5714,20 +5713,16 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
   margin: 0 !important;
   padding: 0 !important;
 }
-/* Flatten wrapper so each button can sit in its grid cell */
-.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #master-view-buttons{
-  display: contents !important;
-}
-/* Grid placement: 1 = Sort, 2 = Add Files, 3 = Delete All */
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #master-view-buttons{ display: contents !important; }
 .left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #filters-group{ grid-column: 1 !important; min-width: 0 !important; }
 .left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #sort-dropdown{ width: 100% !important; max-width: 100% !important; display: block !important; }
 .left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #upload-master-btn{ grid-column: 2 !important; width: 100% !important; white-space: nowrap !important; }
 .left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #delete-all-btn{ grid-column: 3 !important; width: 100% !important; white-space: nowrap !important; }
 
-/* IMPORTANT: Do NOT touch the CLOSED state — no selectors apply there. */
+/* Absolutely DO NOT affect CLOSED sidebar look — no selectors for the collapsed state here. */
 </style>
 
-<script id="review-board-script-2025-10-29-HOMECONTROLS-V8">
+<script id="review-board-script-2025-10-29-HOMECONTROLS-V9">
 (function(){
   function isSidebarOpen(){
     var lc = document.querySelector('.left-col');
@@ -5738,7 +5733,6 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
     return home && !home.classList.contains('hidden');
   }
   function isSimpleViewOn(){
-    // Body class was used elsewhere; if you also attach the class to #master-view, we guard both
     return document.body.classList.contains('simple-view-on') ||
            (document.querySelector('#master-view') && document.querySelector('#master-view').classList.contains('simple-view-on'));
   }
@@ -5746,88 +5740,75 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
     var list = document.querySelector('#master-list');
     if (!list) return null;
     var items = list.querySelectorAll('li');
-    for (var i=0; i<items.length; i++){
+    for (var i=0;i<items.length;i++){
       var el = items[i];
       var r = el.getBoundingClientRect();
       if (r.width > 0 && r.height > 0) return el;
     }
     return null;
   }
-  function px(n){ return Math.max(40, Math.round(n||0)) + 'px'; }
-
-  function measureArtistInputWidth(li){
-    // Artist input is the first input inside the 2-col .song-details-container grid
-    var cont = li.querySelector('.song-details-container');
-    if (!cont) return 140;
-    var cs = getComputedStyle(cont);
-    var gap = parseFloat(cs.columnGap || cs.gap || 0) || 0;
-    var total = cont.getBoundingClientRect().width;
-    // Two equal columns (Artist, Runtime). Artist cell width ≈ (total - gap)/2
-    var w = (total - gap) / 2;
-    return Math.max(80, Math.min(320, w));
+  function px(n){ return Math.max(1, Math.round(n||0)) + 'px'; }
+  function widthOf(el){
+    if (!el) return 0;
+    var r = el.getBoundingClientRect();
+    return r.width || el.offsetWidth || 0;
   }
-
-  function measureNotesInputWidth(li){
-    // Notes input lives in .notes-inline (textarea width 100% of this)
-    var notes = li.querySelector('.notes-inline');
-    if (notes){
-      var w = notes.getBoundingClientRect().width;
-      return Math.max(100, Math.min(500, w));
+  function selectArtistInput(root){
+    // Prefer an explicit artist input if present
+    var cand = root.querySelector('.song-details-container .artist, .song-details-container .artist-input');
+    if (cand) return cand;
+    // Otherwise: first enabled input/select/textarea inside details grid
+    var list = root.querySelectorAll('.song-details-container input, .song-details-container select, .song-details-container textarea');
+    for (var i=0;i<list.length;i++){
+      var el = list[i];
+      if (!el.disabled && el.type !== 'hidden' && el.getBoundingClientRect().width > 0) return el;
     }
-    // Fallback: approximate by measuring the .song-name column width to the left of details
-    var name = li.querySelector('.song-name');
-    if (name){
-      var w = name.getBoundingClientRect().width;
-      return Math.max(120, Math.min(500, w - 8));
-    }
-    return 180;
+    return null;
   }
+  function selectNotesInput(root){
+    // Prefer explicit notes textarea within notes-inline
+    var cand = root.querySelector('.notes-inline .notes-textarea, .notes-inline textarea, .notes-inline input');
+    if (cand && cand.getBoundingClientRect().width > 0) return cand;
+    // Fallback to the notes-inline container
+    var wrap = root.querySelector('.notes-inline');
+    if (wrap && wrap.getBoundingClientRect().width > 0) return wrap;
+    return null;
+  }
+  function align(){
+    if (!isSidebarOpen() || !isHomeVisible() || isSimpleViewOn()) return; // only: open + home + simple OFF
+    var row = document.querySelector('#controls-row');
+    if (!row) return;
+    var li = firstVisibleRow();
+    if (!li) return;
+    var artistEl = selectArtistInput(li);
+    var notesEl  = selectNotesInput(li);
+    if (!artistEl || !notesEl) return;
+    var artistW = widthOf(artistEl);
+    var notesW  = widthOf(notesEl);
 
-  function applyGrid(artistW, notesW){
-    var ctr = document.querySelector('#controls-row');
-    if (!ctr) return;
-    // Set columns: Sort flex | Add Files = Artist width | Delete All = Notes width
-    ctr.style.gridTemplateColumns = 'minmax(0,1fr) ' + px(artistW) + ' ' + px(notesW);
+    // Apply EXACT widths from measured inputs
+    row.style.gridTemplateColumns = 'minmax(0,1fr) ' + px(artistW) + ' ' + px(notesW);
 
-    // Ensure grid placement persists
+    // Ensure correct mapping and fill
     var mvb = document.querySelector('#master-view-buttons');
     if (mvb) mvb.style.display = 'contents';
     var add = document.querySelector('#upload-master-btn');
     var del = document.querySelector('#delete-all-btn');
     var filt = document.querySelector('#filters-group');
-    if (add) { add.style.gridColumn = '2'; add.style.width = '100%'; }
-    if (del) { del.style.gridColumn = '3'; del.style.width = '100%'; }
+    if (add){ add.style.gridColumn = '2'; add.style.width = '100%'; }
+    if (del){ del.style.gridColumn = '3'; del.style.width = '100%'; }
     if (filt){ filt.style.gridColumn = '1'; }
   }
-
-  function align(){
-    if (!isSidebarOpen() || !isHomeVisible() || isSimpleViewOn()) return; // only open + home + simple OFF
-    var li = firstVisibleRow();
-    if (!li) return;
-    var a = measureArtistInputWidth(li);
-    var n = measureNotesInputWidth(li);
-    applyGrid(a, n);
-  }
-
   function ready(fn){ document.readyState !== 'loading' ? fn() : document.addEventListener('DOMContentLoaded', fn); }
-
   ready(function(){
     align();
     window.addEventListener('resize', align, {passive:true});
-
-    // Re-align when song list changes, sidebar toggles, or simple-view toggles
     var list = document.querySelector('#master-list');
-    if (list){
-      new MutationObserver(align).observe(list, {childList:true, subtree:true});
-    }
+    if (list){ new MutationObserver(align).observe(list, {childList:true, subtree:true}); }
     var side = document.querySelector('.left-col');
-    if (side){
-      new MutationObserver(align).observe(side, {attributes:true, attributeFilter:['class']});
-    }
+    if (side){ new MutationObserver(align).observe(side, {attributes:true, attributeFilter:['class']}); }
     var simple = document.querySelector('#simple-view-toggle');
-    if (simple){
-      simple.addEventListener('change', align);
-    }
+    if (simple){ simple.addEventListener('change', align); }
   });
 })();
 </script>
