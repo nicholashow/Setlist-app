@@ -7515,6 +7515,267 @@ html, body { touch-action: pan-y !important; overscroll-behavior-x: none !import
   window.addEventListener('resize', function(){ positionHandle(); syncHandleBgToSidebar(); });
 })();
 </script>
+
+<style id="patch-2025-10-29-home-open-sidebar-layout-sync">
+/* Prevent horizontal page scrolling completely */
+html, body { overflow-x: hidden !important; width: 100%; max-width: 100vw; }
+#app, main { overflow-x: hidden !important; max-width: 100vw; }
+
+/* Sort By wrapper uses native select (arrow on right), but same size as Add files */
+#sort-proxy-wrap {
+  position: relative;
+  display: inline-block;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+#sort-proxy-wrap select#sort-dropdown {
+  -webkit-appearance: menulist !important;
+  appearance: menulist !important;
+  opacity: 1 !important;
+  color: transparent !important;    /* label overlay says "Sort By" */
+  background: transparent !important;
+  width: 100% !important;
+  height: 100% !important;
+  cursor: pointer !important;
+}
+#sort-proxy-label {
+  position: absolute;
+  top: 50%;
+  left: 0.5rem;
+  transform: translateY(-50%);
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+  color: #111827;
+}
+.dark #sort-proxy-label { color: #E5E7EB; }
+
+/* Blue focus around full box but no dimension changes */
+#sort-dropdown:focus {
+  outline: 2px solid #3B82F6;
+  outline-offset: 0;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.35);
+  border-radius: 0.5rem;
+}
+
+/* Sidebar handle: position fixed so it never creates horizontal scroll */
+#sidebar-toggle {
+  position: fixed !important; /* fixed to viewport edge aligned to sidebar */
+  width: 18px !important;
+  min-width: 18px !important;
+  border-radius: 9999px !important;
+  background: var(--sidebar-bg, #000) !important;
+  color: #fff !important;
+  border: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  z-index: 99 !important;
+}
+#sidebar-toggle svg {
+  width: 18px !important;
+  height: 18px !important;
+  display: block !important;
+  opacity: 1 !important;
+  transition: transform 0.18s ease-in-out;
+}
+#sidebar-toggle.collapsed svg { transform: rotate(0deg); }        /* ← when closed */
+#sidebar-toggle:not(.collapsed) svg { transform: rotate(180deg); }/* → when open */
+
+/* Sidebar external scroller: only visible during active scroll/drag */
+#sidebar-external-scroll { opacity: 0; transition: opacity 0.1s ease-out; pointer-events: none; }
+#sidebar-external-scroll.active { opacity: 1; pointer-events: auto; }
+</style>
+
+<script id="patch-2025-10-29-home-open-sidebar-layout-sync-js">
+(function(){
+  if (window.__home_open_sidebar_layout_sync__) return;
+  window.__home_open_sidebar_layout_sync__ = true;
+
+  // Utility
+  function rect(el){ var r = el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
+
+  // 1) Make Sort By same size as Add files; keep native arrow on right
+  function installSortProxy(){
+    var sel = document.getElementById('sort-dropdown');
+    if (!sel) return;
+    if (!document.getElementById('sort-proxy-wrap')) {
+      var wrap = document.createElement('span');
+      wrap.id = 'sort-proxy-wrap';
+      sel.parentNode.insertBefore(wrap, sel);
+      wrap.appendChild(sel);
+      var label = document.createElement('span');
+      label.id = 'sort-proxy-label';
+      label.textContent = 'Sort By';
+      wrap.appendChild(label);
+    }
+    // default A-Z
+    if (!sel.value || sel.value === 'recent') sel.value = 'name';
+
+    // Sync size to Add files button
+    function syncSortSize(){
+      var wrap = document.getElementById('sort-proxy-wrap');
+      var addBtn = document.getElementById('upload-master-btn');
+      if (!wrap || !addBtn) return;
+      var r = rect(addBtn);
+      wrap.style.width  = Math.round(r.width) + 'px';
+      wrap.style.height = Math.round(r.height) + 'px';
+      sel.style.width = '100%';
+      sel.style.height = '100%';
+    }
+    syncSortSize();
+    window.addEventListener('resize', syncSortSize);
+  }
+
+  // 2) Make Add files & Delete All same width as file input boxes (when sidebar is open)
+  function syncButtonsToFileInput(){
+    var addBtn = document.getElementById('upload-master-btn');
+    var delBtn = document.getElementById('delete-all-btn');
+    var aside = document.querySelector('aside.left-col');
+    if (!addBtn || !delBtn || !aside) return;
+
+    function findReferenceInput(){
+      // Prefer an Artist input on the first rendered file
+      var list = document.getElementById('master-list');
+      if (!list) return null;
+      // search for visible input with placeholder Artist or Notes
+      var inp = list.querySelector('input[placeholder="Artist"], input[placeholder="Notes"]');
+      return inp;
+    }
+
+    function apply(){
+      if (!aside || !addBtn || !delBtn) return;
+      // Only do this when sidebar is open (not collapsed)
+      if (aside.classList.contains('collapsed')) return;
+      var ref = findReferenceInput();
+      if (!ref) return;
+      var r = rect(ref);
+      var targetWidth = Math.round(r.width);
+      addBtn.style.width = targetWidth + 'px';
+      delBtn.style.width = targetWidth + 'px';
+    }
+    apply();
+    // Re-apply on various events
+    window.addEventListener('resize', apply);
+    // Whenever the master list re-renders
+    var list = document.getElementById('master-list');
+    if (list) {
+      var obs = new MutationObserver(function(){ apply(); });
+      obs.observe(list, {childList:true, subtree:false});
+    }
+    // Also when sidebar state changes
+    var obs2 = new MutationObserver(function(){ apply(); });
+    obs2.observe(aside, {attributes:true, attributeFilter:['class']});
+  }
+
+  // 3) Handle outside, arrow center, track sidebar state; use position:fixed to avoid horiz scroll
+  function ensureChevron(){
+    var btn = document.getElementById('sidebar-toggle');
+    if (!btn) return;
+    if (!btn.querySelector('svg')) {
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>';
+    }
+  }
+  function placeHandleFixed(){
+    var app = document.getElementById('app');
+    var aside = document.querySelector('aside.left-col');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!app || !aside || !btn) return;
+    // Make sure button is in DOM (anywhere is fine since position is fixed)
+    if (!btn.parentElement) app.appendChild(btn);
+  }
+  function syncHandleBg(){
+    var aside = document.querySelector('aside.left-col');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!aside || !btn) return;
+    var bg = getComputedStyle(aside).backgroundColor;
+    btn.style.setProperty('--sidebar-bg', bg);
+    btn.style.background = bg;
+  }
+  function positionHandle(){
+    var aside = document.querySelector('aside.left-col');
+    var header = aside && aside.querySelector('#home-btn');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!aside || !header || !btn) return;
+    var a = rect(aside), h = rect(header);
+    // stick just outside the right edge of the sidebar
+    btn.style.left = Math.round(a.right) - 1 + 'px';
+    btn.style.top  = Math.round(h.top) + 'px';
+    btn.style.height = Math.round(h.height) + 'px';
+    // orient arrow
+    if (aside.classList.contains('collapsed')) btn.classList.add('collapsed'); else btn.classList.remove('collapsed');
+  }
+  function bindHandle(){
+    var btn = document.getElementById('sidebar-toggle');
+    var aside = document.querySelector('aside.left-col');
+    if (!btn || !aside) return;
+    btn.addEventListener('click', function(){
+      // Let original app toggle; if it didn't, toggle as fallback
+      var before = aside.classList.contains('collapsed');
+      setTimeout(function(){
+        var after = aside.classList.contains('collapsed');
+        if (before === after) aside.classList.toggle('collapsed');
+        positionHandle();
+      }, 0);
+    }, {passive:true});
+    var obs = new MutationObserver(function(){ positionHandle(); syncHandleBg(); });
+    obs.observe(aside, {attributes:true, attributeFilter:['class','style']});
+  }
+
+  // 4) Sidebar scroller show only while scrolling, hide immediately when not scrolling
+  function bindSidebarScrollAutoHide(){
+    var aside = document.querySelector('aside.left-col');
+    var scroller = aside && aside.querySelector('.left-col-main-content');
+    var rail = document.getElementById('sidebar-external-scroll');
+    var thumb = document.getElementById('sidebar-thumb');
+    if (!scroller || !rail) return;
+
+    function ensureOverflow(){
+      var content = scroller.scrollHeight;
+      var visible = scroller.clientHeight;
+      rail.style.display = (content > visible + 1) ? 'block' : 'none';
+    }
+    function activate(){ rail.classList.add('active'); }
+    function deactivate(){ rail.classList.remove('active'); }
+
+    scroller.addEventListener('scroll', function(){
+      ensureOverflow();
+      activate();
+      // hide quickly after scroll ends
+      clearTimeout(scroller._hideT);
+      scroller._hideT = setTimeout(deactivate, 80);
+    }, {passive:true});
+
+    if (thumb) {
+      ['mousedown','touchstart'].forEach(function(evt){
+        thumb.addEventListener(evt, function(){ activate(); clearTimeout(scroller._hideT); }, {passive:false});
+      });
+      ['mouseup','touchend','touchcancel','mouseleave'].forEach(function(evt){
+        window.addEventListener(evt, function(){ deactivate(); });
+      });
+    }
+    ensureOverflow();
+  }
+
+  function init(){
+    installSortProxy();
+    syncButtonsToFileInput();
+    ensureChevron();
+    placeHandleFixed();
+    syncHandleBg();
+    positionHandle();
+    bindHandle();
+    bindSidebarScrollAutoHide();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  window.addEventListener('resize', function(){ positionHandle(); syncHandleBg(); });
+})();
+</script>
 </body>
 <style id="review-board-patch-2025-10-29-HOMECONTROLS-V9">
 /* Scope: HOME only, Sidebar OPEN, Simple View OFF */
