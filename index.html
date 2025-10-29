@@ -5939,7 +5939,39 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
     var artistW = widthOf(artistEl);
     var notesW  = widthOf(notesEl);
 
-    // Apply EXACT widths from measured inputs
+    
+    // === PATCH 2025-10-29: Home 2nd row — Sort full-width, hide Add/Delete when sidebar is open ===
+    (function(){
+      var row  = document.querySelector('#controls-row');
+      var fg   = document.querySelector('#filters-group');
+      var sort = document.querySelector('#sort-dropdown');
+      var btns = document.querySelector('#master-view-buttons');
+      if (btns) btns.style.setProperty('display','none','important');
+      if (row) {
+        row.style.setProperty('display','grid','important');
+        row.style.setProperty('grid-template-columns','1fr','important');
+        row.style.setProperty('align-items','stretch','important');
+        row.style.setProperty('column-gap','0px','important');
+      }
+      if (fg)   fg.style.setProperty('grid-column','1 / 2','important');
+      if (sort){
+        sort.style.setProperty('width','100%','important');
+        sort.style.setProperty('max-width','none','important');
+        var search = document.querySelector('#search');
+        if (search){
+          var cs = getComputedStyle(search);
+          sort.style.setProperty('height', cs.height, 'important');
+          sort.style.setProperty('border-radius', cs.borderRadius, 'important');
+          sort.style.setProperty('padding-top','0px','important');
+          sort.style.setProperty('padding-bottom','0px','important');
+          sort.style.setProperty('display','flex','important');
+          sort.style.setProperty('align-items','center','important');
+          sort.style.setProperty('justify-content','space-between','important');
+        }
+      }
+    })();
+    return;
+// Apply EXACT widths from measured inputs
     row.style.gridTemplateColumns = 'minmax(0,1fr) ' + px(artistW) + ' ' + px(notesW);
 
     // Ensure correct mapping and fill
@@ -5965,95 +5997,4 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
   });
 })();
 </script>
-
-<script id="home-2nd-row-rework-2025-10-29-v8">
-(function(){
-  function q(s){ return document.querySelector(s); }
-  function isHome(){ var v=q('#master-view'); return v && !v.classList.contains('hidden'); }
-  function sidebarOpen(){ var l=q('.left-col'); return l && !l.classList.contains('collapsed'); }
-  function px(n){ return Math.max(0, Math.round(n)) + 'px'; }
-  function setImp(el, prop, val){ if(!el) return; try{ el.style.setProperty(prop, val, 'important'); }catch(e){ el.style[prop]=val; } }
-  function firstRow(){ var list=q('#master-list'); return list ? list.querySelector('li') : null; }
-  function artistInput(li){
-    return li && (li.querySelector('[data-field="artist"], input.artist, .artist input, input[name="artist"]') || null);
-  }
-  function notesInput(li){
-    return li && (li.querySelector('[data-field="notes"], textarea.notes, .notes-inline textarea, textarea[name="notes"]') || null);
-  }
-  function computeGTC(row){
-    // Prefer what the app already computed
-    var gtc = row && (row.style.gridTemplateColumns || getComputedStyle(row).gridTemplateColumns);
-    if (gtc && /\d+px\s+\d+px/.test(gtc)) return gtc;
-    // Fallback: measure artist/notes from first row
-    var li = firstRow();
-    var a = li ? artistInput(li) : null;
-    var n = li ? notesInput(li)  : null;
-    if (!a || !n) return '1fr 320px 480px'; // conservative fallback
-    var aw = a.getBoundingClientRect().width;
-    var nw = n.getBoundingClientRect().width;
-    return 'minmax(0,1fr) ' + px(aw) + ' ' + px(nw);
-  }
-  function apply(){
-    if(!(isHome() && sidebarOpen())) return;
-    var row  = q('#controls-row');
-    var fg   = q('#filters-group');
-    var sort = q('#sort-dropdown');
-    var btns = q('#master-view-buttons');
-    var srch = q('#search');
-    if (!row || !fg || !sort) return;
-    // Hide Add/Delete
-    if (btns) setImp(btns, 'display', 'none');
-    // Use the same 3-column grid as song rows so col1 ends where Artist starts
-    var gtc = computeGTC(row);
-    setImp(row, 'display', 'grid');
-    setImp(row, 'gridTemplateColumns', gtc);
-    setImp(row, 'alignItems', 'stretch');
-    setImp(row, 'columnGap', '12px');
-    // Place filters (Sort) in column 1 and let it fill
-    setImp(fg,   'gridColumn', '1 / 2');
-    setImp(fg,   'width', '100%');
-    setImp(sort, 'width', '100%');
-    setImp(sort, 'maxWidth', 'none');
-    // Match Search bar height & radius
-    if (srch){
-      var cs = getComputedStyle(srch);
-      var h  = cs.height;
-      var br = cs.borderRadius;
-      setImp(sort, 'height', h);
-      setImp(sort, 'borderRadius', br);
-      setImp(sort, 'paddingTop', '0px');
-      setImp(sort, 'paddingBottom', '0px');
-      setImp(sort, 'display', 'flex');
-      setImp(sort, 'alignItems', 'center');
-      setImp(sort, 'justifyContent', 'space-between');
-    }
-  }
-  function strongApply(){
-    apply();
-    requestAnimationFrame(apply);
-    setTimeout(apply, 50);
-    setTimeout(apply, 150);
-    setTimeout(apply, 350);
-  }
-  // Run now and watch for style changes on the row (align() updates), plus global mutations
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', strongApply);
-  } else {
-    strongApply();
-  }
-  var row = q('#controls-row');
-  if (row){
-    new MutationObserver(function(muts){
-      for (var m of muts){
-        if (m.type==='attributes' && m.attributeName==='style'){ strongApply(); }
-      }
-    }).observe(row, {attributes:true, attributeFilter:['style']});
-  }
-  new MutationObserver(strongApply).observe(document.documentElement, {subtree:true, childList:true, attributes:true});
-  window.addEventListener('resize', strongApply, {passive:true});
-  // a couple late retries
-  [700,1200].forEach(function(ms){ setTimeout(strongApply, ms); });
-})();
-</script>
-
 </html>
