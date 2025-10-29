@@ -2390,6 +2390,16 @@ const s=$('.left-col');s.toggleClass('collapsed');
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
+
+<!-- === NO-FLASH / PRE-INIT STYLES === -->
+<style id="preinit-noflash">
+  html.pre-init *, html.pre-init *::before, html.pre-init *::after { transition: none !important; }
+  #app { visibility: hidden; }
+</style>
+<script>
+  // Apply pre-init class ASAP to avoid flicker before Tailwind/other CSS settles
+  document.documentElement.classList.add('pre-init');
+</script>
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
@@ -7774,6 +7784,179 @@ html, body { overflow-x: hidden !important; width: 100%; max-width: 100vw; }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
   window.addEventListener('resize', function(){ positionHandle(); syncHandleBg(); });
+})();
+</script>
+
+<style id="consolidated-2025-10-29-home-sidebar-open">
+/* Prevent horizontal scrolling anywhere */
+html, body, #app, main { overflow-x: hidden !important; max-width: 100vw !important; }
+html, body { touch-action: pan-y !important; overscroll-behavior-x: none !important; }
+
+/* Sort By wrapper keeps native select; arrow on right; size matches Add files */
+#sort-proxy-wrap { position: relative; display: inline-block; padding: 0 !important; margin: 0 !important; border: 0 !important; background: transparent !important; }
+#sort-proxy-wrap select#sort-dropdown {
+  -webkit-appearance: menulist !important;
+  appearance: menulist !important;
+  opacity: 1 !important;
+  color: transparent !important;  /* overlay text says Sort By */
+  background: transparent !important;
+  width: 100% !important;
+  height: 100% !important;
+  cursor: pointer !important;
+}
+#sort-proxy-label {
+  position: absolute; top: 50%; left: 0.5rem; transform: translateY(-50%);
+  font-weight: 600; pointer-events: none; white-space: nowrap;
+  color: #111827;
+}
+.dark #sort-proxy-label { color: #E5E7EB; }
+#sort-dropdown:focus { outline: 2px solid #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.35); border-radius: 0.5rem; }
+
+/* Sidebar handle outside, fixed; arrow centered; matches sidebar bg */
+#sidebar-toggle {
+  position: fixed !important;
+  width: 18px !important; min-width: 18px !important; border-radius: 9999px !important;
+  background: var(--sidebar-bg, #000) !important; color: #fff !important; border: 0 !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  box-shadow: none !important; padding: 0 !important; z-index: 9999 !important;
+}
+#sidebar-toggle svg { width: 18px !important; height: 18px !important; display: block !important; opacity: 1 !important; transition: transform .18s ease-in-out; }
+#sidebar-toggle.collapsed svg { transform: rotate(0deg); }         /* ← when closed */
+#sidebar-toggle:not(.collapsed) svg { transform: rotate(180deg); } /* → when open */
+
+/* Sidebar external scroller visible only while scrolling */
+#sidebar-external-scroll { opacity: 0; transition: opacity .1s ease-out; pointer-events: none; }
+#sidebar-external-scroll.active { opacity: 1; pointer-events: auto; }
+</style>
+
+<script id="consolidated-2025-10-29-home-sidebar-open-js">
+(function(){
+  if (window.__consolidated_home_sidebar_patch__) return;
+  window.__consolidated_home_sidebar_patch__ = true;
+
+  function rect(el){ var r = el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
+
+  // 1) Sort By proxy: always shows "Sort By", same size as Add files, native arrow on right
+  function installSortProxy(){
+    var sel = document.getElementById('sort-dropdown');
+    if (!sel) return;
+    if (!document.getElementById('sort-proxy-wrap')) {
+      var wrap = document.createElement('span'); wrap.id = 'sort-proxy-wrap';
+      sel.parentNode.insertBefore(wrap, sel); wrap.appendChild(sel);
+      var label = document.createElement('span'); label.id = 'sort-proxy-label'; label.textContent = 'Sort By'; wrap.appendChild(label);
+    }
+    if (!sel.value || sel.value === 'recent') sel.value = 'name';
+    function syncSortSize(){
+      var wrap = document.getElementById('sort-proxy-wrap');
+      var addBtn = document.getElementById('upload-master-btn');
+      if (!wrap || !addBtn) return;
+      var r = rect(addBtn);
+      wrap.style.width = Math.round(r.width) + 'px';
+      wrap.style.height = Math.round(r.height) + 'px';
+      sel.style.width = '100%'; sel.style.height = '100%';
+    }
+    syncSortSize();
+    window.addEventListener('resize', syncSortSize);
+  }
+
+  // 2) Add files & Delete All width equals file input boxes width (Artist/Notes)
+  function syncButtonsToInputs(){
+    var addBtn = document.getElementById('upload-master-btn');
+    var delBtn = document.getElementById('delete-all-btn');
+    var aside  = document.querySelector('aside.left-col');
+    var list   = document.getElementById('master-list');
+    if (!addBtn || !delBtn || !aside || !list) return;
+
+    function findRef(){
+      return list.querySelector('input[placeholder="Artist"], input[placeholder="Notes"]');
+    }
+    function apply(){
+      if (aside.classList.contains('collapsed')) return; // only when sidebar open
+      var ref = findRef(); if (!ref) return;
+      var r = rect(ref);
+      addBtn.style.width = Math.round(r.width) + 'px';
+      delBtn.style.width = Math.round(r.width) + 'px';
+    }
+    var obs = new MutationObserver(apply); obs.observe(list, {childList:true});
+    var obs2 = new MutationObserver(apply); obs2.observe(aside, {attributes:true, attributeFilter:['class']});
+    window.addEventListener('resize', apply);
+    apply();
+  }
+
+  // 3) Sidebar handle outside, fixed; arrow centered; match bg; align with ALL SONGS
+  function ensureChevron(){
+    var btn = document.getElementById('sidebar-toggle'); if (!btn) return;
+    if (!btn.querySelector('svg')) {
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>';
+    }
+  }
+  function syncHandleBg(){
+    var aside = document.querySelector('aside.left-col'); var btn = document.getElementById('sidebar-toggle');
+    if (!aside || !btn) return;
+    var bg = getComputedStyle(aside).backgroundColor; btn.style.setProperty('--sidebar-bg', bg); btn.style.background = bg;
+  }
+  function positionHandle(){
+    var aside = document.querySelector('aside.left-col');
+    var header = aside && aside.querySelector('#home-btn');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!aside || !header || !btn) return;
+    var a = rect(aside), h = rect(header);
+    btn.style.left   = Math.round(a.right - 1) + 'px';
+    btn.style.top    = Math.round(h.top) + 'px';
+    btn.style.height = Math.round(h.height) + 'px';
+    if (aside.classList.contains('collapsed')) btn.classList.add('collapsed'); else btn.classList.remove('collapsed');
+  }
+  function robustHandle(){
+    var btn = document.getElementById('sidebar-toggle'); var aside = document.querySelector('aside.left-col');
+    if (!btn || !aside) return;
+    btn.addEventListener('click', function(){
+      var before = aside.classList.contains('collapsed');
+      setTimeout(function(){
+        var after = aside.classList.contains('collapsed');
+        if (before === after) aside.classList.toggle('collapsed');
+        positionHandle();
+      }, 0);
+    }, {passive:true});
+    var obs = new MutationObserver(function(){ positionHandle(); syncHandleBg(); });
+    obs.observe(aside, {attributes:true, attributeFilter:['class','style']});
+  }
+
+  // 4) Sidebar external scroller: only while scrolling (hide immediately after stop)
+  function bindScrollAutoHide(){
+    var aside = document.querySelector('aside.left-col'); var scroller = aside && aside.querySelector('.left-col-main-content');
+    var rail = document.getElementById('sidebar-external-scroll'); var thumb = document.getElementById('sidebar-thumb');
+    if (!scroller || !rail) return;
+    function ensureOverflow(){
+      var content = scroller.scrollHeight; var visible = scroller.clientHeight;
+      rail.style.display = (content > visible + 1) ? 'block' : 'none';
+    }
+    function onScroll(){
+      ensureOverflow(); rail.classList.add('active');
+      clearTimeout(scroller._hideT); scroller._hideT = setTimeout(function(){ rail.classList.remove('active'); }, 80);
+    }
+    scroller.addEventListener('scroll', onScroll, {passive:true});
+    if (thumb) {
+      ['mousedown','touchstart'].forEach(function(evt){ thumb.addEventListener(evt, function(){ rail.classList.add('active'); clearTimeout(scroller._hideT); }, {passive:false}); });
+      ['mouseup','touchend','touchcancel','mouseleave'].forEach(function(evt){ window.addEventListener(evt, function(){ rail.classList.remove('active'); }); });
+    }
+    ensureOverflow();
+  }
+
+  function init(){
+    installSortProxy();
+    syncButtonsToInputs();
+    ensureChevron(); syncHandleBg(); positionHandle(); robustHandle();
+    bindScrollAutoHide();
+
+    // Remove pre-init class and show app after layout sync to avoid flicker
+    requestAnimationFrame(function(){
+      document.getElementById('app').style.visibility = 'visible';
+      document.documentElement.classList.remove('pre-init');
+    });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  window.addEventListener('resize', positionHandle);
 })();
 </script>
 </body>
