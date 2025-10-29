@@ -5702,126 +5702,141 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
 </style>
 
 
-<style id="safe-ui-sync-2025-10-29">
-/* Lock horizontal scrolling */
-html, body { overflow-x: hidden !important; }
+<style id="focused-fixes-2025-10-29">
+/* Prevent horizontal pan */
+html, body, #app, main { overflow-x: hidden !important; max-width: 100vw !important; }
+html, body { touch-action: pan-y !important; overscroll-behavior-x: none !important; }
 
-/* Sidebar external scroller should match Top/Least scroller */
+/* Sidebar external scroller: match Top/Least Played visual */
 #sidebar-external-scroll {
   position: absolute;
-  right: 0;
-  width: 12px;             /* same as stats */
+  right: 0;                /* same lane as stats */
+  width: 12px;             /* visual width */
   background: transparent;
-  display: none;
+  display: none;           /* toggled by JS when overflow exists */
   z-index: 2;
 }
 #sidebar-external-scroll .track {
-  position: absolute;
-  left: 0; top: 0; right: 0; bottom: 0;
+  position: absolute; left:0; top:0; right:0; bottom:0;
   border-radius: 8px;
 }
 #sidebar-thumb {
-  position: absolute;
-  left: 2px;
-  width: 8px;               /* same as stats */
+  position: absolute; left:2px; width:8px;
   border-radius: 8px;
   background: rgba(255,255,255,0.5);
   cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
+  user-select: none; -webkit-user-select: none;
   touch-action: none;
-  display: none;            /* only shown while actively scrolling */
+  display: none;           /* shown only during scroll */
 }
 #sidebar-external-scroll.active #sidebar-thumb { display: block; }
+#sidebar-external-scroll:hover #sidebar-thumb { background: rgba(255,255,255,0.7); }
 
-/* Sidebar toggle arrow orientation (center icon flips based on collapsed) */
+/* Sidebar toggle arrow orientation (center icon flips based on state) */
 #sidebar-toggle svg { transition: transform 0.18s ease-in-out; display:inline-block; }
-#sidebar-toggle.arrow-in svg { transform: rotate(180deg); } /* inward (open) */
-#sidebar-toggle.arrow-out svg { transform: rotate(0deg); }   /* outward (closed) */
+#sidebar-toggle.arrow-in svg { transform: rotate(180deg); } /* inward when open */
+#sidebar-toggle.arrow-out svg { transform: rotate(0deg); }   /* outward when closed */
+
+/* Sort By: keep native control & arrow; always visually read 'Sort By' */
+#sort-proxy-wrap { position: relative; display: inline-block; }
+#sort-proxy-label {
+  position: absolute; left:0.5rem; top:50%; transform: translateY(-50%);
+  font-weight: 600; pointer-events: none; white-space: nowrap;
+  color: #111827;
+}
+.dark #sort-proxy-label { color: #E5E7EB; }
+/* Hide the select's text but keep the native arrow on iPad Safari */
+#sort-proxy-wrap select#sort-dropdown {
+  -webkit-appearance: menulist; appearance: menulist;
+  color: transparent; text-shadow: none; -webkit-text-fill-color: transparent;
+  background: transparent;
+  width: 100%; height: 100%;
+}
+/* Focus ring around the whole select, no size change */
+#sort-dropdown:focus { outline: 2px solid #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.35); border-radius: 0.5rem; }
 </style>
 
-<script id="safe-ui-sync-2025-10-29-js">
+<script id="focused-fixes-2025-10-29-js">
 (function(){
-  if (window.__safe_ui_sync__) return;
-  window.__safe_ui_sync__ = true;
+  if (window.__focused_fixes__) return;
+  window.__focused_fixes__ = true;
 
   function rect(el){ var r=el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
 
-  // Ensure Sort By uses default A-Z and has native arrow (no custom wrappers)
-  function ensureSortDefaults(){
+  // 1) Wrap Sort dropdown with proxy that overlays "Sort By" text, keeps native arrow
+  function initSortProxy(){
     var sel = document.getElementById('sort-dropdown');
     if (!sel) return;
+    if (!document.getElementById('sort-proxy-wrap')){
+      var wrap = document.createElement('span'); wrap.id='sort-proxy-wrap';
+      sel.parentNode.insertBefore(wrap, sel); wrap.appendChild(sel);
+      var label = document.createElement('span'); label.id='sort-proxy-label'; label.textContent='Sort By'; wrap.appendChild(label);
+    }
+    // Default A-Z
     if (!sel.value || sel.value === 'recent') sel.value = 'name';
   }
 
-  // Make Sort By same width as Add files, and height <= Search box; arrow stays native on the right
-  function syncSortSize(){
+  // 2) Make Sort By same width as Add files, height equals Search box (not taller)
+  function sizeSortBy(){
     var sel = document.getElementById('sort-dropdown');
     var add = document.getElementById('upload-master-btn');
     var search = document.getElementById('search');
-    if (!sel || !add) return;
-    var rAdd = rect(add);
-    sel.style.width = Math.round(rAdd.width) + 'px';
-    if (search) {
-      var rSearch = rect(search);
-      sel.style.height = Math.min(Math.round(rAdd.height), Math.round(rSearch.height)) + 'px';
-    } else {
-      sel.style.height = Math.round(rAdd.height) + 'px';
-    }
+    var wrap = document.getElementById('sort-proxy-wrap');
+    if (!sel || !add || !wrap) return;
+    var w = rect(add).width;
+    var h = search ? rect(search).height : rect(add).height;
+    wrap.style.width = Math.round(w) + 'px';
+    wrap.style.height = Math.round(h) + 'px';
+    sel.style.width = '100%'; sel.style.height = '100%';
   }
 
-  // Make Add files & Delete All the same width as the file input boxes (Artist/Notes) when sidebar is open
-  function syncButtonsWidthToInputs(){
+  // 3) Make Add files & Delete All same width as file input boxes when sidebar is open
+  function sizeActionButtons(){
     var add = document.getElementById('upload-master-btn');
     var del = document.getElementById('delete-all-btn');
     var list = document.getElementById('master-list');
     var aside = document.querySelector('aside.left-col');
     if (!add || !del || !list || !aside) return;
-    if (aside.classList.contains('collapsed')) return;
+    if (aside.classList.contains('collapsed')) return; // only when sidebar open
+    // find first visible Artist/Notes input
     var ref = list.querySelector('input[placeholder="Artist"], input[placeholder="Notes"]');
     if (!ref) return;
-    var r = rect(ref);
-    add.style.width = Math.round(r.width) + 'px';
-    del.style.width = Math.round(r.width) + 'px';
-    // Set heights not taller than search box
+    var w = rect(ref).width;
+    add.style.width = Math.round(w) + 'px';
+    del.style.width = Math.round(w) + 'px';
+    // do not exceed Search height
     var search = document.getElementById('search');
     if (search) {
-      var rs = rect(search);
-      add.style.height = Math.min(add.offsetHeight, Math.round(rs.height)) + 'px';
-      del.style.height = Math.min(del.offsetHeight, Math.round(rs.height)) + 'px';
+      var h = Math.round(rect(search).height);
+      add.style.maxHeight = h + 'px';
+      del.style.maxHeight = h + 'px';
     }
   }
 
-  // Sidebar toggle: ensure there is an SVG chevron and that it flips based on open/closed
+  // 4) Sidebar toggle arrow must flip based on collapsed state
   function ensureToggleArrow(){
     var btn = document.getElementById('sidebar-toggle');
-    if (!btn) return;
+    var aside = document.querySelector('aside.left-col');
+    if (!btn || !aside) return;
     if (!btn.querySelector('svg')) {
-      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>';
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>';
     }
     function sync(){
-      var aside = document.querySelector('aside.left-col');
-      if (!aside) return;
       btn.classList.remove('arrow-in','arrow-out');
       if (aside.classList.contains('collapsed')) btn.classList.add('arrow-out'); else btn.classList.add('arrow-in');
     }
-    var aside = document.querySelector('aside.left-col');
-    if (aside) {
-      var obs = new MutationObserver(sync);
-      obs.observe(aside, {attributes:true, attributeFilter:['class']});
-      sync();
-    }
+    var obs = new MutationObserver(sync); obs.observe(aside, {attributes:true, attributeFilter:['class']});
+    sync();
   }
 
-  // Sidebar external scroller: same look as stats; show during scroll; hide immediately after
-  function ensureSidebarExternalScroll(){
+  // 5) Sidebar external scroller with stats visual; show during scroll; hide immediately after stop
+  function initSidebarScroller(){
     var aside = document.querySelector('aside.left-col');
     var scroller = aside && aside.querySelector('.left-col-main-content');
     if (!aside || !scroller) return;
     var rail = document.getElementById('sidebar-external-scroll');
     if (!rail) {
-      rail = document.createElement('div');
-      rail.id = 'sidebar-external-scroll';
+      rail = document.createElement('div'); rail.id='sidebar-external-scroll';
       rail.innerHTML = '<div class="track"></div><div id="sidebar-thumb"></div>';
       aside.appendChild(rail);
     }
@@ -5829,9 +5844,16 @@ html, body { overflow-x: hidden !important; }
       var a = rect(aside), s = rect(scroller);
       rail.style.top = (s.top - a.top) + 'px';
       rail.style.height = s.height + 'px';
-      // show rail only if overflow exists
-      var overflow = scroller.scrollHeight > scroller.clientHeight + 1;
-      rail.style.display = overflow ? 'block' : 'none';
+      rail.style.display = (scroller.scrollHeight > scroller.clientHeight + 1) ? 'block' : 'none';
+      // compute thumb size/pos
+      var ratio = s.height / scroller.scrollHeight;
+      var thumb = document.getElementById('sidebar-thumb');
+      if (thumb) {
+        var th = Math.max(20, Math.floor(s.height * ratio));
+        var ty = Math.floor(scroller.scrollTop * (s.height - th) / (scroller.scrollHeight - s.height));
+        thumb.style.height = th + 'px';
+        thumb.style.top = ty + 'px';
+      }
     }
     function onScroll(){
       layout();
@@ -5844,28 +5866,42 @@ html, body { overflow-x: hidden !important; }
     layout();
   }
 
+  // 6) New Genre: open color picker BEFORE keyboard on tap
+  function interceptGenreColor(){
+    var color = document.getElementById('genre-color');
+    var name  = document.getElementById('genre-name');
+    if (!color || !name) return;
+    var firstTap = true;
+    function openPicker(ev){
+      if (firstTap) {
+        ev.preventDefault(); // prevent immediate keyboard
+        // Trigger the color picker
+        color.click();
+      }
+    }
+    name.addEventListener('touchstart', openPicker, {passive:false});
+    name.addEventListener('mousedown',   openPicker, {passive:false});
+    color.addEventListener('change', function(){
+      firstTap = false; // after choosing, allow keyboard next
+      name.focus({preventScroll:true});
+      setTimeout(function(){ firstTap = true; }, 1000); // reset after a moment for future taps
+    });
+  }
+
   function applyAll(){
-    ensureSortDefaults();
-    syncSortSize();
-    syncButtonsWidthToInputs();
+    initSortProxy();
+    sizeSortBy();
+    sizeActionButtons();
     ensureToggleArrow();
-    ensureSidebarExternalScroll();
+    initSidebarScroller();
+    interceptGenreColor();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', applyAll);
-  } else {
-    applyAll();
-  }
-  window.addEventListener('resize', function(){
-    syncSortSize();
-    syncButtonsWidthToInputs();
-  });
-
-  // Re-apply widths when songs render changes
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyAll); else applyAll();
+  window.addEventListener('resize', function(){ sizeSortBy(); sizeActionButtons(); });
   var list = document.getElementById('master-list');
   if (list) {
-    var obs = new MutationObserver(function(){ syncButtonsWidthToInputs(); });
+    var obs = new MutationObserver(function(){ sizeActionButtons(); });
     obs.observe(list, {childList:true});
   }
 })();
