@@ -7273,6 +7273,248 @@ main { max-width: 100vw; }
   window.addEventListener('resize', function(){ positionHandle(); syncHandleBgToSidebar(); });
 })();
 </script>
+
+<style id="patch-2025-10-29-final-sort-handle-scroll">
+/* Hard-disable horizontal page scroll everywhere */
+html, body, #app, main { overflow-x: hidden !important; max-width: 100vw !important; }
+html, body { touch-action: pan-y !important; overscroll-behavior-x: none !important; }
+* { overscroll-behavior-x: contain; }
+
+/* ===== Sort By proxy: preserve original size; arrow on right; same size as Add files ===== */
+#sort-proxy-wrap {
+  position: relative;
+  display: inline-block;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+#sort-proxy-label {
+  position: absolute;
+  top: 50%;
+  left: 0.5rem;           /* align with p-2 padding */
+  transform: translateY(-50%);
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+  color: #111827;         /* gray-900 */
+}
+.dark #sort-proxy-label { color: #E5E7EB; } /* gray-200 */
+
+/* Keep native select with native arrow on right */
+#sort-proxy-wrap select#sort-dropdown {
+  appearance: menulist !important;
+  -webkit-appearance: menulist !important;
+  opacity: 1 !important;
+  color: transparent !important;    /* show "Sort By" label instead of value */
+  text-shadow: none !important;
+  background: transparent !important;
+  width: 100% !important;
+  height: 100% !important;
+  cursor: pointer !important;
+}
+/* Blue focus ring around the whole box without changing size */
+#sort-dropdown:focus {
+  outline: 2px solid #3B82F6;
+  outline-offset: 0;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.35);
+  border-radius: 0.5rem;
+}
+
+/* ===== Sidebar external scroller: show only while scrolling/dragging; hide immediately after stop ===== */
+#sidebar-external-scroll { opacity: 0; transition: opacity 0.12s ease-in-out; pointer-events: none; }
+#sidebar-external-scroll.active { opacity: 1; pointer-events: auto; }
+
+/* ===== Handle: outside, black = exact sidebar bg, arrow visible ===== */
+#sidebar-toggle {
+  position: absolute !important;
+  width: 18px !important;
+  min-width: 18px !important;
+  border-radius: 9999px !important;
+  background: var(--sidebar-bg, #000) !important;
+  color: #fff !important;
+  border: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  z-index: 90 !important;
+  pointer-events: auto !important;
+}
+#sidebar-toggle svg {
+  width: 18px !important;
+  height: 18px !important;
+  display: block !important;
+  opacity: 1 !important;
+  transition: transform 0.18s ease-in-out;
+}
+#sidebar-toggle.collapsed svg { transform: rotate(0deg); }        /* ← when closed */
+#sidebar-toggle:not(.collapsed) svg { transform: rotate(180deg); }/* → when open */
+</style>
+
+<script id="patch-2025-10-29-final-sort-handle-scroll-js">
+(function(){
+  if (window.__final_sort_handle_scroll__) return;
+  window.__final_sort_handle_scroll__ = true;
+  var $ = window.jQuery;
+
+  // ===== Sort By proxy that keeps native size and arrow; matches Add files size =====
+  function installSortProxyAndSize(){
+    var sel = document.getElementById('sort-dropdown');
+    var addBtn = document.getElementById('upload-master-btn');
+    if (!sel) return;
+
+    // Wrap once
+    if (!document.getElementById('sort-proxy-wrap')) {
+      var wrap = document.createElement('span');
+      wrap.id = 'sort-proxy-wrap';
+      sel.parentNode.insertBefore(wrap, sel);
+      wrap.appendChild(sel);
+      var label = document.createElement('span');
+      label.id = 'sort-proxy-label';
+      label.textContent = 'Sort By';
+      wrap.appendChild(label);
+    }
+
+    // Keep default A-Z
+    if (!sel.value || sel.value === 'recent') sel.value = 'name';
+
+    // Size to match Add files button (width & height)
+    function syncSize(){
+      var wrap = document.getElementById('sort-proxy-wrap');
+      if (!wrap) return;
+      var target = addBtn || sel; // prefer Add files; fallback to current
+      var r = target.getBoundingClientRect();
+      wrap.style.width = Math.round(r.width) + 'px';
+      wrap.style.height = Math.round(r.height) + 'px';
+      sel.style.width = '100%';
+      sel.style.height = '100%';
+    }
+    syncSize();
+    window.addEventListener('resize', syncSize);
+  }
+
+  // ===== Sidebar scroller immediate auto-hide =====
+  var aside = document.querySelector('aside.left-col');
+  var scroller = aside && aside.querySelector('.left-col-main-content');
+  var rail = document.getElementById('sidebar-external-scroll');
+  var thumb = document.getElementById('sidebar-thumb');
+  var hideTimer = null;
+
+  function ensureRailVisibilityBasedOnOverflow(){
+    if (!rail || !scroller) return;
+    var content = scroller.scrollHeight;
+    var visible = scroller.clientHeight;
+    if (content <= visible + 1) rail.style.display = 'none'; else rail.style.display = 'block';
+  }
+  function showRailNow(){ if (rail) rail.classList.add('active'); }
+  function hideRailNow(){ if (rail) rail.classList.remove('active'); }
+  function bindScrollAutoHide(){
+    if (!scroller || !rail) return;
+    var lastScroll = 0;
+    scroller.addEventListener('scroll', function(){
+      ensureRailVisibilityBasedOnOverflow();
+      showRailNow();
+      lastScroll = Date.now();
+      // Hide "immediately": schedule a very short timeout; if more scroll events come in, it resets
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(function(){
+        // if no new scroll in the last 80ms, hide
+        if (Date.now() - lastScroll >= 80) hideRailNow();
+      }, 90);
+    }, {passive:true});
+    if (thumb) {
+      ['mousedown','touchstart'].forEach(function(evt){
+        thumb.addEventListener(evt, function(){ showRailNow(); clearTimeout(hideTimer); }, {passive:false});
+      });
+      ['mouseup','touchend','touchcancel','mouseleave'].forEach(function(evt){
+        window.addEventListener(evt, function(){ hideRailNow(); });
+      });
+    }
+    ensureRailVisibilityBasedOnOverflow();
+  }
+
+  // ===== Handle outside placement, black same as sidebar, arrow orientation, robust click =====
+  function rect(el){ var r=el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
+  function ensureChevron(){
+    var btn = document.getElementById('sidebar-toggle');
+    if (!btn) return;
+    if (!btn.querySelector('svg')) {
+      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>';
+    }
+  }
+  function placeHandleOutside(){
+    var app = document.getElementById('app');
+    var aside = document.querySelector('aside.left-col');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!app || !aside || !btn) return;
+    if (btn.parentElement !== app) {
+      if (aside.nextSibling) app.insertBefore(btn, aside.nextSibling);
+      else app.appendChild(btn);
+    }
+  }
+  function syncHandleBgToSidebar(){
+    var aside = document.querySelector('aside.left-col');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!aside || !btn) return;
+    var bg = getComputedStyle(aside).backgroundColor;
+    btn.style.setProperty('--sidebar-bg', bg);
+    btn.style.background = bg;
+  }
+  function positionHandle(){
+    var app = document.getElementById('app');
+    var aside = document.querySelector('aside.left-col');
+    var header = aside && aside.querySelector('#home-btn');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!app || !aside || !btn || !header) return;
+    var appR = rect(app), asideR = rect(aside), headerR = rect(header), btnW = btn.getBoundingClientRect().width || 18;
+    // Attach just outside to the right edge; overlap -1px for seamless join
+    btn.style.left = Math.round(asideR.right - appR.left - 1) + 'px';
+    btn.style.top  = Math.round(headerR.top - appR.top) + 'px';
+    btn.style.height = Math.round(headerR.height) + 'px';
+
+    // Arrow orientation reflects collapsed state
+    if (aside.classList.contains('collapsed')) btn.classList.add('collapsed'); else btn.classList.remove('collapsed');
+  }
+  function robustHandleClick(){
+    var btn = document.getElementById('sidebar-toggle');
+    var aside = document.querySelector('aside.left-col');
+    if (!btn || !aside) return;
+    btn.addEventListener('click', function(){
+      // Allow existing app click handlers to run first; then verify state toggled; if not, toggle class as fallback
+      var prev = aside.classList.contains('collapsed');
+      setTimeout(function(){
+        var now = aside.classList.contains('collapsed');
+        if (now === prev) {
+          aside.classList.toggle('collapsed');
+        }
+        // Update arrow + position
+        positionHandle();
+      }, 0);
+    }, {passive:true});
+  }
+  function observeSidebar(){
+    var aside = document.querySelector('aside.left-col');
+    if (!aside) return;
+    var obs = new MutationObserver(function(){ positionHandle(); syncHandleBgToSidebar(); });
+    obs.observe(aside, {attributes:true, attributeFilter:['class','style']});
+  }
+
+  function init(){
+    installSortProxyAndSize();
+    bindScrollAutoHide();
+    ensureChevron();
+    placeHandleOutside();
+    syncHandleBgToSidebar();
+    positionHandle();
+    robustHandleClick();
+    observeSidebar();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  window.addEventListener('resize', function(){ positionHandle(); syncHandleBgToSidebar(); });
+})();
+</script>
 </body>
 <style id="review-board-patch-2025-10-29-HOMECONTROLS-V9">
 /* Scope: HOME only, Sidebar OPEN, Simple View OFF */
