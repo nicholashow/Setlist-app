@@ -2389,51 +2389,6 @@ const s=$('.left-col');s.toggleClass('collapsed');
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
-<style id="review-board-patch-2025-10-29-HOMECONTROLS">
-/* === HOME CONTROLS: Make sidebar OPEN look exactly like sidebar CLOSED === */
-/* Reset the row to the same flexible layout used by default */
-.left-col:not(.collapsed) ~ main #controls-row{
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.75rem !important;
-  flex-wrap: wrap !important;        /* allow wrap like the closed state */
-  padding-right: 0 !important;       /* undo any reserved space */
-}
-
-/* Filters group behaves like default (grow to take space) */
-.left-col:not(.collapsed) ~ main #filters-group{
-  flex: 1 1 auto !important;
-  min-width: 180px !important;       /* avoid collapse */
-}
-
-/* Sort dropdown width/position back to auto, same as closed */
-.left-col:not(.collapsed) ~ main #sort-dropdown{
-  width: auto !important;
-  max-width: none !important;
-}
-
-/* Buttons block returns to normal flow on the right (no absolute/grid overrides) */
-.left-col:not(.collapsed) ~ main #master-view-buttons{
-  position: static !important;
-  right: auto !important;
-  top: auto !important;
-  transform: none !important;
-  margin-left: auto !important;      /* push to the right */
-  display: flex !important;
-  gap: 8px !important;
-  width: auto !important;
-  grid-auto-flow: initial !important;
-  grid-template-columns: none !important;
-}
-
-/* Match closed-state button sizing */
-.left-col:not(.collapsed) ~ main #master-view-buttons .btn-master,
-.left-col:not(.collapsed) ~ main #upload-master-btn,
-.left-col:not(.collapsed) ~ main #delete-all-btn{
-  width: 90px !important;            /* same as default .btn-master width */
-}
-</style>
-
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
@@ -5746,375 +5701,33 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
 </style>
 
 </body>
-<style id="review-board-patch-2025-10-29-HOMECONTROLS-V2">
-/* FINAL OVERRIDE: Make the Home controls (Sort, Add files, Delete All) look the SAME
-   with the sidebar OPEN as when it's CLOSED — aligned in one row within the main column.
-   These overrides win even if later body-level styles attempted alternative layouts. */
-
-/* Keep the controls row within the same column width as file boxes */
-.left-col:not(.collapsed) ~ main #controls-row{
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  gap: 0.75rem !important;
-  flex-wrap: wrap !important;      /* wrap on narrow widths instead of overflowing */
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* Filters group + Sort dropdown take the left side and can shrink/grow naturally */
-.left-col:not(.collapsed) ~ main #filters-group{
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.5rem !important;
-  flex: 1 1 auto !important;
-  min-width: 220px !important;
-}
-.left-col:not(.collapsed) ~ main #sort-dropdown{
-  width: 220px !important;
-  max-width: 100% !important;
-}
-
-/* Buttons live on the right, inline — NOT absolutely positioned, NOT a grid */
-.left-col:not(.collapsed) ~ main #master-view-buttons{
-  position: static !important;
-  left: auto !important;
-  right: auto !important;
-  top: auto !important;
-  bottom: auto !important;
-  transform: none !important;
-  margin-left: auto !important;    /* push to the right */
-  padding: 0 !important;
-  display: flex !important;
-  gap: 8px !important;
-  width: auto !important;
-  min-width: 0 !important;
-  grid-auto-flow: initial !important;
-  grid-template-columns: none !important;
-}
-
-/* Button sizing consistent with closed-state (no 100% expansion) */
-.left-col:not(.collapsed) ~ main #master-view-buttons .btn-master,
-.left-col:not(.collapsed) ~ main #upload-master-btn,
-.left-col:not(.collapsed) ~ main #delete-all-btn{
-  width: auto !important;
-  min-width: 110px !important;
-  white-space: nowrap !important;
-}
-
-/* Undo any extra padding/margins some prior patches added to wrapper elements */
-.left-col:not(.collapsed) ~ main #master-view-controls{
-  padding-right: 0 !important;
-  margin-right: 0 !important;
-}
-</style>
-<style id="review-board-patch-2025-10-29-HOMECONTROLS-V3">
-/* === FINAL GRID ALIGNMENT (Sidebar OPEN) ===
-   Goal: TWO rows above file boxes.
-   Row 1 (already in your file): Search / Simple View / Dark.
-   Row 2 (this controls row): Sort dropdown | Add files | Delete All
-   The three cells align to the columns of the song list below:
-   [ Name area (flex) | Artist+Runtime (220px) | Delete (72px) ]
-*/
-
-/* Controls row becomes a three-column grid that mirrors file row columns */
-.left-col:not(.collapsed) ~ main #controls-row{
+<style id="review-board-patch-2025-10-29-HOMECONTROLS-V8">
+/* === Home controls alignment (ONLY when Sidebar is OPEN & Simple View is OFF) === */
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #controls-row{
   display: grid !important;
-  grid-template-columns: 1fr 220px 72px !important;
-  align-items: center !important;
-  column-gap: 0.5rem !important;    /* matches song-details-container gap */
-  row-gap: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* Left cell: Sort dropdown fills the flexible first column */
-.left-col:not(.collapsed) ~ main #filters-group{
-  grid-column: 1 !important;
-  display: block !important;
-  min-width: 0 !important;
-}
-.left-col:not(.collapsed) ~ main #sort-dropdown{
-  width: 100% !important;
-  max-width: 100% !important;
-  display: block !important;
-}
-
-/* Right cells: Buttons occupy the last two columns, aligned to file columns */
-.left-col:not(.collapsed) ~ main #master-view-buttons{
-  grid-column: 2 / span 2 !important;
-  display: grid !important;
-  grid-template-columns: 220px 72px !important;
+  /* JS will set exact pixel widths; use soft placeholders to avoid jump */
+  grid-template-columns: minmax(0,1fr) 140px 180px !important;
   column-gap: 0.5rem !important;
-  row-gap: 0 !important;
-  justify-self: end !important;
-  align-self: center !important;
-  position: static !important;
-  transform: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  width: auto !important;
-}
-.left-col:not(.collapsed) ~ main #upload-master-btn{
-  grid-column: 1 !important;
-  width: 100% !important;
-}
-.left-col:not(.collapsed) ~ main #delete-all-btn{
-  grid-column: 2 !important;
-  width: 100% !important;
-}
-
-/* Nuke any earlier "full width buttons" overrides in sidebar-open mode */
-.left-col:not(.collapsed) ~ main #master-view-buttons .btn-master{
-  width: 100% !important;
-}
-
-/* Ensure only TWO rows total above file list */
-.left-col:not(.collapsed) ~ main #controls-row > *{
-  margin: 0 !important;
-}
-</style>
-<style id="review-board-patch-2025-10-29-HOMECONTROLS-V4">
-/* === THREE-COLUMN, NO-CUTOFF LAYOUT (Sidebar OPEN, Home) ===
-   Single controls row aligned to the content column width.
-   Columns: [flexible Sort] [Add Files (~Artist/Runtime width)] [Delete All (~Delete width)]
-*/
-.left-col:not(.collapsed) ~ main #controls-row{
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) minmax(200px, 240px) minmax(64px, 92px) !important;
   align-items: center !important;
-  column-gap: 0.5rem !important;
   width: 100% !important;
   max-width: 100% !important;
-  overflow: visible !important;
   margin: 0 !important;
   padding: 0 !important;
 }
-
-/* Sort group fills the first column */
-.left-col:not(.collapsed) ~ main #filters-group{
-  grid-column: 1 !important;
-  min-width: 0 !important;
-}
-.left-col:not(.collapsed) ~ main #sort-dropdown{
-  width: 100% !important;
-  max-width: 100% !important;
-  display: block !important;
-}
-
-/* Flatten the button wrapper so each button can occupy a grid column */
-.left-col:not(.collapsed) ~ main #master-view-buttons{
+/* Flatten wrapper so each button can sit in its grid cell */
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #master-view-buttons{
   display: contents !important;
 }
+/* Grid placement: 1 = Sort, 2 = Add Files, 3 = Delete All */
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #filters-group{ grid-column: 1 !important; min-width: 0 !important; }
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #sort-dropdown{ width: 100% !important; max-width: 100% !important; display: block !important; }
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #upload-master-btn{ grid-column: 2 !important; width: 100% !important; white-space: nowrap !important; }
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden):not(.simple-view-on) #delete-all-btn{ grid-column: 3 !important; width: 100% !important; white-space: nowrap !important; }
 
-/* Place Add Files and Delete All into columns 2 and 3 respectively */
-.left-col:not(.collapsed) ~ main #upload-master-btn{
-  grid-column: 2 !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  white-space: nowrap !important;
-}
-.left-col:not(.collapsed) ~ main #delete-all-btn{
-  grid-column: 3 !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  white-space: nowrap !important;
-}
-
-/* Defensive: neutralize any lingering absolute/grid overrides from older styles */
-.left-col:not(.collapsed) ~ main #upload-master-btn,
-.left-col:not(.collapsed) ~ main #delete-all-btn{
-  position: static !important;
-  transform: none !important;
-}
-
-/* Keep only two rows total above the file list */
-.left-col:not(.collapsed) ~ main #controls-row > *{
-  margin: 0 !important;
-}
-</style>
-<style id="review-board-patch-2025-10-29-HOMECONTROLS-V5">
-/* === COLUMN-LOCKED ALIGNMENT (Sidebar OPEN) ===
-   Columns mirror file rows: [Name flex] [Artist+Runtime 220px] [Notes+Delete 220px]
-*/
-.left-col:not(.collapsed) ~ main #controls-row{
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 220px 220px !important;
-  align-items: center !important;
-  column-gap: 0.5rem !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow: visible !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* Sort group fills the left flexible column and extends to just before Artist/Runtime */
-.left-col:not(.collapsed) ~ main #filters-group{ grid-column: 1 !important; min-width: 0 !important; }
-.left-col:not(.collapsed) ~ main #sort-dropdown{ width: 100% !important; max-width: 100% !important; display: block !important; }
-
-/* Place "Add files" and "Delete All" into fixed-width columns matching file UI */
-.left-col:not(.collapsed) ~ main #master-view-buttons{ display: contents !important; }
-.left-col:not(.collapsed) ~ main #upload-master-btn{
-  grid-column: 2 !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  white-space: nowrap !important;
-  justify-self: stretch !important;
-}
-.left-col:not(.collapsed) ~ main #delete-all-btn{
-  grid-column: 3 !important;
-  width: 100% !important;
-  min-width: 0 !important;
-  white-space: nowrap !important;
-  justify-self: stretch !important;
-}
-
-/* Neutralize earlier absolute/grid overrides and 100% button expansions */
-.left-col:not(.collapsed) ~ main #upload-master-btn,
-.left-col:not(.collapsed) ~ main #delete-all-btn{
-  position: static !important;
-  transform: none !important;
-}
-
-/* Keep this row as the only second row above file boxes */
-.left-col:not(.collapsed) ~ main #controls-row > *{ margin: 0 !important; }
-</style>
-<style id="review-board-patch-2025-10-29-HOMECONTROLS-V6">
-/* Keep the structural intent; runtime widths now driven by JS-measured columns */
-.left-col:not(.collapsed) ~ main #controls-row{
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 150px 150px !important; /* temporary baseline; JS updates exact px */
-  column-gap: 0.5rem !important;
-  align-items: center !important;
-  width: 100% !important;
-}
-.left-col:not(.collapsed) ~ main #master-view-buttons{ display: contents !important; }
-.left-col:not(.collapsed) ~ main #filters-group{ grid-column: 1 !important; min-width: 0 !important; }
-.left-col:not(.collapsed) ~ main #sort-dropdown{ width: 100% !important; max-width: 100% !important; }
-.left-col:not(.collapsed) ~ main #upload-master-btn{ grid-column: 2 !important; width: 100% !important; white-space: nowrap !important; }
-.left-col:not(.collapsed) ~ main #delete-all-btn{ grid-column: 3 !important; width: 100% !important; white-space: nowrap !important; }
+/* IMPORTANT: Do NOT touch the CLOSED state — no selectors apply there. */
 </style>
 
-<script id="review-board-script-2025-10-29-HOMECONTROLS-V6">
-(function(){
-  function px(n){ return Math.max(40, Math.round(n||0)) + 'px'; }
-  function isSidebarOpen(){
-    var lc = document.querySelector('.left-col');
-    return lc && !lc.classList.contains('collapsed');
-  }
-  function isHomeVisible(){
-    var home = document.querySelector('#master-view');
-    return home && !home.classList.contains('hidden');
-  }
-  function measureArtistWidth(li){
-    // Details container holds Artist + Runtime as a 2-col grid with known total width
-    var cont = li && li.querySelector('.song-details-container');
-    if (cont){
-      var w = cont.getBoundingClientRect().width;
-      // If it's a 2-col grid, artist is approx half (avoid subpixel drift)
-      return w/2;
-    }
-    return 150; // fallback
-  }
-  function measureNotesWidth(li){
-    // Notes inline container
-    var notes = li && li.querySelector('.notes-inline');
-    if (notes){
-      return notes.getBoundingClientRect().width;
-    }
-    // Fallback: try a delete button width plus some padding if notes missing
-    var del = li && li.querySelector('.delete-btn');
-    if (del){
-      var dw = del.getBoundingClientRect().width;
-      return Math.max(120, dw + 24);
-    }
-    return 180;
-  }
-  function alignHomeControls(){
-    try{
-      if (!isSidebarOpen() || !isHomeVisible()) return;
-      var controls = document.querySelector('#controls-row');
-      if (!controls) return;
-      var list = document.querySelector('#master-list');
-      var li = list && list.querySelector('li'); // first row exemplar
-      if (!li) return;
-
-      var artistW = measureArtistWidth(li);
-      var notesW  = measureNotesWidth(li);
-
-      // Boundaries to avoid overflow/cutoff
-      var main = document.querySelector('main') || document.body;
-      var maxW = (main.getBoundingClientRect().width || window.innerWidth) - 24;
-      var sortMin = 120;
-      artistW = Math.max(80, Math.min(260, artistW));
-      notesW  = Math.max(120, Math.min(360, notesW));
-
-      // Apply columns: Sort flex | Add files (artistW) | Delete All (notesW)
-      controls.style.gridTemplateColumns = 'minmax(0,1fr) ' + px(artistW) + ' ' + px(notesW);
-
-      // Ensure wrapper/buttons map to columns
-      var mvb = document.querySelector('#master-view-buttons');
-      if (mvb) mvb.style.display = 'contents';
-      var add = document.querySelector('#upload-master-btn');
-      var del = document.querySelector('#delete-all-btn');
-      var filt = document.querySelector('#filters-group');
-      if (add) { add.style.gridColumn = '2'; add.style.width = '100%'; }
-      if (del) { del.style.gridColumn = '3'; del.style.width = '100%'; }
-      if (filt){ filt.style.gridColumn = '1'; }
-    }catch(e){ /* silent */ }
-  }
-
-  // Run on DOM ready, window resize, and whenever the master list or sidebar changes
-  function ready(fn){ document.readyState!=='loading' ? fn() : document.addEventListener('DOMContentLoaded', fn); }
-
-  ready(function(){
-    alignHomeControls();
-    window.addEventListener('resize', alignHomeControls, {passive:true});
-
-    // Observe changes to the master list and sidebar collapsed state
-    var list = document.querySelector('#master-list');
-    if (list){
-      new MutationObserver(function(){ alignHomeControls(); })
-        .observe(list, {childList:true, subtree:true});
-    }
-    var sidebar = document.querySelector('.left-col');
-    if (sidebar){
-      new MutationObserver(function(){ alignHomeControls(); })
-        .observe(sidebar, {attributes:true, attributeFilter:['class']});
-    }
-  });
-})();
-</script>
-<style id="review-board-patch-2025-10-29-HOMECONTROLS-V7">
-/* Base grid; exact pixel widths are set at runtime after measuring the first visible row.
-   Scoped to sidebar OPEN to avoid changing the CLOSED look. */
-.left-col:not(.collapsed) ~ main #controls-row{
-  display: grid !important;
-  grid-template-columns: minmax(0,1fr) 120px 160px !important; /* placeholders; JS will override */
-  column-gap: 0.5rem !important;
-  align-items: center !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-.left-col:not(.collapsed) ~ main #master-view-buttons{ display: contents !important; }
-.left-col:not(.collapsed) ~ main #filters-group{ grid-column: 1 !important; min-width: 0 !important; }
-.left-col:not(.collapsed) ~ main #sort-dropdown{ width: 100% !important; max-width: 100% !important; }
-.left-col:not(.collapsed) ~ main #upload-master-btn{ grid-column: 2 !important; width: 100% !important; white-space: nowrap !important; }
-.left-col:not(.collapsed) ~ main #delete-all-btn{ grid-column: 3 !important; width: 100% !important; white-space: nowrap !important; }
-
-/* Safety: ensure we never impact the CLOSED state */
-.left-col.collapsed ~ main #controls-row,
-.left-col.collapsed ~ main #master-view-buttons,
-.left-col.collapsed ~ main #upload-master-btn,
-.left-col.collapsed ~ main #delete-all-btn,
-.left-col.collapsed ~ main #filters-group{ all: unset; } /* let original closed-state CSS win */
-</style>
-
-<script id="review-board-script-2025-10-29-HOMECONTROLS-V7">
+<script id="review-board-script-2025-10-29-HOMECONTROLS-V8">
 (function(){
   function isSidebarOpen(){
     var lc = document.querySelector('.left-col');
@@ -6124,90 +5737,92 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
     var home = document.querySelector('#master-view');
     return home && !home.classList.contains('hidden');
   }
-  function getPx(n){ return Math.max(40, Math.round(n||0)) + 'px'; }
-
-  function measureArtistWidthFrom(li){
-    var cont = li.querySelector('.song-details-container');
-    if (!cont) return 120;
-    var cs = window.getComputedStyle(cont);
-    var gap = parseFloat(cs.columnGap || cs.gap || 0) || 0;
-    var total = cont.getBoundingClientRect().width;
-    // Two equal columns inside; artist ≈ (total - gap)/2
-    var artist = (total - gap) / 2;
-    return Math.max(80, Math.min(220, artist));
+  function isSimpleViewOn(){
+    // Body class was used elsewhere; if you also attach the class to #master-view, we guard both
+    return document.body.classList.contains('simple-view-on') ||
+           (document.querySelector('#master-view') && document.querySelector('#master-view').classList.contains('simple-view-on'));
   }
-
-  function measureNotesWidthFrom(li){
-    // Prefer inline notes input width
-    var notes = li.querySelector('.notes-inline');
-    if (notes){
-      var w = notes.getBoundingClientRect().width;
-      return Math.max(100, Math.min(360, w));
-    }
-    // Fallback: if notes hidden, approximate using remaining space to the left of details container
-    var cont = li.querySelector('.song-details-container');
-    var name = li.querySelector('.song-name'); // wrapper for left column
-    if (name && cont){
-      var leftW = name.getBoundingClientRect().width;
-      // Subtract some padding to avoid overflow
-      return Math.max(120, Math.min(360, leftW - 12));
-    }
-    return 180;
-  }
-
   function firstVisibleRow(){
     var list = document.querySelector('#master-list');
     if (!list) return null;
     var items = list.querySelectorAll('li');
-    for (var i=0;i<items.length;i++){
+    for (var i=0; i<items.length; i++){
       var el = items[i];
       var r = el.getBoundingClientRect();
       if (r.width > 0 && r.height > 0) return el;
     }
     return null;
   }
+  function px(n){ return Math.max(40, Math.round(n||0)) + 'px'; }
 
-  function align(){
-    try{
-      if (!isSidebarOpen() || !isHomeVisible()) return;
-      var li = firstVisibleRow();
-      if (!li) return;
-      var artistW = measureArtistWidthFrom(li);
-      var notesW  = measureNotesWidthFrom(li);
-
-      // Apply exact columns: [Sort flex] [Add files = artistW] [Delete All = notesW]
-      var row = document.querySelector('#controls-row');
-      if (!row) return;
-      row.style.gridTemplateColumns = 'minmax(0,1fr) ' + getPx(artistW) + ' ' + getPx(notesW);
-
-      // Ensure correct grid positions
-      var mvb = document.querySelector('#master-view-buttons');
-      if (mvb) mvb.style.display = 'contents';
-
-      var add = document.querySelector('#upload-master-btn');
-      var del = document.querySelector('#delete-all-btn');
-      var filt = document.querySelector('#filters-group');
-      if (add) { add.style.gridColumn = '2'; add.style.width = '100%'; }
-      if (del) { del.style.gridColumn = '3'; del.style.width = '100%'; }
-      if (filt){ filt.style.gridColumn = '1'; }
-
-    }catch(e){ /* swallow */ }
+  function measureArtistInputWidth(li){
+    // Artist input is the first input inside the 2-col .song-details-container grid
+    var cont = li.querySelector('.song-details-container');
+    if (!cont) return 140;
+    var cs = getComputedStyle(cont);
+    var gap = parseFloat(cs.columnGap || cs.gap || 0) || 0;
+    var total = cont.getBoundingClientRect().width;
+    // Two equal columns (Artist, Runtime). Artist cell width ≈ (total - gap)/2
+    var w = (total - gap) / 2;
+    return Math.max(80, Math.min(320, w));
   }
 
-  function ready(fn){ document.readyState!=='loading' ? fn() : document.addEventListener('DOMContentLoaded', fn); }
+  function measureNotesInputWidth(li){
+    // Notes input lives in .notes-inline (textarea width 100% of this)
+    var notes = li.querySelector('.notes-inline');
+    if (notes){
+      var w = notes.getBoundingClientRect().width;
+      return Math.max(100, Math.min(500, w));
+    }
+    // Fallback: approximate by measuring the .song-name column width to the left of details
+    var name = li.querySelector('.song-name');
+    if (name){
+      var w = name.getBoundingClientRect().width;
+      return Math.max(120, Math.min(500, w - 8));
+    }
+    return 180;
+  }
+
+  function applyGrid(artistW, notesW){
+    var ctr = document.querySelector('#controls-row');
+    if (!ctr) return;
+    // Set columns: Sort flex | Add Files = Artist width | Delete All = Notes width
+    ctr.style.gridTemplateColumns = 'minmax(0,1fr) ' + px(artistW) + ' ' + px(notesW);
+
+    // Ensure grid placement persists
+    var mvb = document.querySelector('#master-view-buttons');
+    if (mvb) mvb.style.display = 'contents';
+    var add = document.querySelector('#upload-master-btn');
+    var del = document.querySelector('#delete-all-btn');
+    var filt = document.querySelector('#filters-group');
+    if (add) { add.style.gridColumn = '2'; add.style.width = '100%'; }
+    if (del) { del.style.gridColumn = '3'; del.style.width = '100%'; }
+    if (filt){ filt.style.gridColumn = '1'; }
+  }
+
+  function align(){
+    if (!isSidebarOpen() || !isHomeVisible() || isSimpleViewOn()) return; // only open + home + simple OFF
+    var li = firstVisibleRow();
+    if (!li) return;
+    var a = measureArtistInputWidth(li);
+    var n = measureNotesInputWidth(li);
+    applyGrid(a, n);
+  }
+
+  function ready(fn){ document.readyState !== 'loading' ? fn() : document.addEventListener('DOMContentLoaded', fn); }
 
   ready(function(){
     align();
-    // Re-align on resize and when content/sidebar toggles change
     window.addEventListener('resize', align, {passive:true});
 
-    var side = document.querySelector('.left-col');
-    if (side){
-      new MutationObserver(align).observe(side, {attributes:true, attributeFilter:['class']});
-    }
+    // Re-align when song list changes, sidebar toggles, or simple-view toggles
     var list = document.querySelector('#master-list');
     if (list){
       new MutationObserver(align).observe(list, {childList:true, subtree:true});
+    }
+    var side = document.querySelector('.left-col');
+    if (side){
+      new MutationObserver(align).observe(side, {attributes:true, attributeFilter:['class']});
     }
     var simple = document.querySelector('#simple-view-toggle');
     if (simple){
