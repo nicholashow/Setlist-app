@@ -5934,4 +5934,51 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
   margin: 0 !important;
 }
 </style>
+<style id="review-board-patch-2025-10-29-HOMECONTROLS-V5">
+/* === COLUMN-LOCKED ALIGNMENT (Sidebar OPEN) ===
+   Columns mirror file rows: [Name flex] [Artist+Runtime 220px] [Notes+Delete 220px]
+*/
+.left-col:not(.collapsed) ~ main #controls-row{
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 220px 220px !important;
+  align-items: center !important;
+  column-gap: 0.5rem !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: visible !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Sort group fills the left flexible column and extends to just before Artist/Runtime */
+.left-col:not(.collapsed) ~ main #filters-group{ grid-column: 1 !important; min-width: 0 !important; }
+.left-col:not(.collapsed) ~ main #sort-dropdown{ width: 100% !important; max-width: 100% !important; display: block !important; }
+
+/* Place "Add files" and "Delete All" into fixed-width columns matching file UI */
+.left-col:not(.collapsed) ~ main #master-view-buttons{ display: contents !important; }
+.left-col:not(.collapsed) ~ main #upload-master-btn{
+  grid-column: 2 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+  justify-self: stretch !important;
+}
+.left-col:not(.collapsed) ~ main #delete-all-btn{
+  grid-column: 3 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  white-space: nowrap !important;
+  justify-self: stretch !important;
+}
+
+/* Neutralize earlier absolute/grid overrides and 100% button expansions */
+.left-col:not(.collapsed) ~ main #upload-master-btn,
+.left-col:not(.collapsed) ~ main #delete-all-btn{
+  position: static !important;
+  transform: none !important;
+}
+
+/* Keep this row as the only second row above file boxes */
+.left-col:not(.collapsed) ~ main #controls-row > *{ margin: 0 !important; }
+</style>
 </html>
