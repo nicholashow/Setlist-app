@@ -5966,64 +5966,39 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
 })();
 </script>
 
-<style id="home-2nd-row-css-v5">
-/* Force the 2nd row to use GRID so the app's inline gridTemplateColumns takes effect */
-#controls-row {
-  display: grid !important;
-  align-items: stretch !important;
-  column-gap: 12px !important;
+<style id="home-2nd-row-hide-buttons-v6">
+/* Home page only (master-view visible) AND sidebar open (left-col:not(.collapsed)) */
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #master-view-buttons {
+  display: none !important; /* hide Add Files + Delete All on Home */
 }
 
-/* Put Sort in column 1; buttons become direct grid items in cols 2 and 3 */
-#master-view-buttons { display: contents !important; }
-#filters-group       { grid-column: 1 !important; min-width: 0 !important; }
-#upload-master-btn   { grid-column: 2 !important; width: 100% !important; }
-#delete-all-btn      { grid-column: 3 !important; width: 100% !important; }
+/* Make the second row a simple flex row and let the left block expand fully */
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #controls-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  flex-wrap: nowrap !important;
+}
 
-/* Let controls fill their tracks and override the old 180px cap */
-#master-view #sort-dropdown,
-#sort-dropdown,
-#upload-master-btn,
-#delete-all-btn {
+/* Ensure the filters group (contains Sort By) expands to full width */
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #controls-row #filters-group {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* Make the Sort By dropdown span the full width of the filters group */
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #sort-dropdown {
+  width: 100% !important;
+  max-width: none !important;
+  flex: 1 1 auto !important;
+}
+
+/* Remove older caps that forced a small Sort box */
+#master-view #sort-dropdown {
   width: 100% !important;
   max-width: none !important;
 }
-
-/* Prevent earlier rule from constraining the right block */
-.left-col:not(.collapsed) ~ main #master-view-buttons {
-  width: auto !important;
-  grid-template-columns: none !important;
-  justify-content: unset !important;
-  align-items: unset !important;
-  gap: 0 !important;
-}
 </style>
-<script id="home-2nd-row-css-v5-js">
-(function(){
-  function applyHeights(){
-    var s = document.getElementById('search');
-    if(!s) return;
-    var h  = getComputedStyle(s).height;
-    var br = getComputedStyle(s).borderRadius;
-    ['sort-dropdown','upload-master-btn','delete-all-btn'].forEach(function(id){
-      var el = document.getElementById(id);
-      if(!el) return;
-      el.style.setProperty('height', h, 'important');
-      el.style.setProperty('border-radius', br, 'important');
-      el.style.setProperty('padding-top', '0px', 'important');
-      el.style.setProperty('padding-bottom','0px', 'important');
-      el.style.setProperty('display','flex', 'important');
-      el.style.setProperty('align-items','center', 'important');
-      el.style.setProperty('justify-content','center', 'important');
-    });
-  }
-  if (document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', applyHeights);
-  } else {
-    applyHeights();
-  }
-  window.addEventListener('resize', applyHeights, {passive:true});
-})();
-</script>
 
 </html>
