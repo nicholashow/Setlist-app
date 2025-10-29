@@ -1825,6 +1825,174 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
+<style>
+
+/* =========================
+   HOMEPAGE TOP BAR REDESIGN (Sidebar Open)
+   Scope: Only when sidebar is OPEN and you're on the HOME (master-view) page.
+   ========================= */
+.left-col:not(.collapsed) ~ main #master-view-controls {
+  /* Modern card */
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.07);
+  backdrop-filter: saturate(1.1) blur(6px);
+  -webkit-backdrop-filter: saturate(1.1) blur(6px);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 10px;
+
+  /* Symmetric 2-row grid */
+  display: grid !important;
+  grid-template-columns: 1fr 320px;   /* search expands, right column fixed */
+  grid-template-areas:
+    "search toggles"
+    "sort   toggles";
+  gap: 12px;
+  position: sticky;
+  top: 6px; /* keeps the controls visible while scrolling */
+  z-index: 15;
+}
+
+/* Dark mode surface */
+.dark .left-col:not(.collapsed) ~ main #master-view-controls {
+  background: rgba(17,24,39,0.85);     /* slate-900 w/ alpha */
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+/* Place existing components into the grid areas */
+.left-col:not(.collapsed) ~ main #search-container { grid-area: search; }
+.left-col:not(.collapsed) ~ main #filters-group    { grid-area: sort; }
+.left-col:not(.collapsed) ~ main #topbar-toggles   { grid-area: toggles; display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+
+/* Make the two toggles sit nicely; remove absolute positioning used elsewhere */
+.left-col:not(.collapsed) ~ main #simple-view-container,
+.left-col:not(.collapsed) ~ main #dark-mode-container {
+  position: static !important;
+  transform: none !important;
+  margin: 0 !important;
+}
+
+/* Height + look unify across Search and Sort */
+:root {
+  --homebar-h: 52px;
+  --homebar-radius: 12px;
+}
+.left-col:not(.collapsed) ~ main #search {
+  height: var(--homebar-h) !important;
+  border-radius: var(--homebar-radius) !important;
+  font-size: 16px;
+  font-weight: 600;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  background: #fff !important;
+}
+.dark .left-col:not(.collapsed) ~ main #search {
+  background: #111827 !important;   /* slate-900 */
+  border-color: rgba(255,255,255,0.08) !important;
+}
+
+/* Kill any search-right overlay spacing from old absolute toggles */
+.left-col:not(.collapsed) ~ main #search { padding-right: 14px !important; }
+.left-col:not(.collapsed) ~ main #dark-mode-container span,
+.left-col:not(.collapsed) ~ main #simple-view-container span { font-size: 13px; opacity: 0.8; }
+
+/* Hide add/delete cluster on HOME when sidebar open (as requested) */
+.left-col:not(.collapsed) ~ main #master-view-buttons { display: none !important; }
+
+/* Stretch Sort across the whole row: show ONLY the Sort select, full width */
+.left-col:not(.collapsed) ~ main #filters-group {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  display: block !important;
+}
+.left-col:not(.collapsed) ~ main #filters-group > *:not(#sort-dropdown) { display: none !important; }
+
+/* Beautify the Sort <select> itself */
+.left-col:not(.collapsed) ~ main #sort-dropdown {
+  display: block;
+  width: 100% !important;
+  height: var(--homebar-h) !important;
+  border-radius: var(--homebar-radius) !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  background: #fff !important;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 0 44px 0 14px !important; /* space for custom chevron */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  position: relative;
+  line-height: var(--homebar-h);
+}
+.dark .left-col:not(.collapsed) ~ main #sort-dropdown {
+  background: #111827 !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  color: #f9fafb !important;
+}
+
+/* Custom chevron for the Sort select */
+.left-col:not(.collapsed) ~ main #filters-group { position: relative; }
+.left-col:not(.collapsed) ~ main #filters-group::after {
+  content: "";
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  width: 0; height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid currentColor;   /* down chevron */
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Tidy toggle capsules so both match the height visually */
+.left-col:not(.collapsed) ~ main #topbar-toggles .toggle-track {
+  height: 28px !important; width: 52px !important;
+}
+.left-col:not(.collapsed) ~ main #topbar-toggles .dot {
+  width: 22px !important; height: 22px !important; top: 3px !important;
+}
+
+/* Compact labels + spacing */
+.left-col:not(.collapsed) ~ main #topbar-toggles label { gap: 8px; }
+.left-col:not(.collapsed) ~ main #topbar-toggles { padding-right: 4px; }
+
+/* Subtle divider between the two rows to enhance symmetry */
+.left-col:not(.collapsed) ~ main #master-view-controls::before {
+  content: "";
+  grid-column: 1 / -1;
+  grid-row: 1 / 2;
+  position: absolute;
+  left: 12px; right: 12px; top: calc(14px + var(--homebar-h) + 7px);
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(0,0,0,0.08), transparent);
+}
+.dark .left-col:not(.collapsed) ~ main #master-view-controls::before {
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.12), transparent);
+}
+
+/* Responsive: if main area gets tight, collapse to single column */
+@media (max-width: 1100px) {
+  .left-col:not(.collapsed) ~ main #master-view-controls {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "search"
+      "toggles"
+      "sort";
+    row-gap: 10px;
+  }
+  .left-col:not(.collapsed) ~ main #master-view-controls::before { display: none; }
+  .left-col:not(.collapsed) ~ main #topbar-toggles { justify-content: flex-start; }
+}
+
+/* Ensure no horizontal scroll caused by controls */
+.left-col:not(.collapsed) ~ main #master-view-controls, 
+.left-col:not(.collapsed) ~ main #master-view-controls * { overflow-x: visible !important; }
+
+</style>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2390,6 +2558,174 @@ const s=$('.left-col');s.toggleClass('collapsed');
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
+<style>
+
+/* =========================
+   HOMEPAGE TOP BAR REDESIGN (Sidebar Open)
+   Scope: Only when sidebar is OPEN and you're on the HOME (master-view) page.
+   ========================= */
+.left-col:not(.collapsed) ~ main #master-view-controls {
+  /* Modern card */
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.07);
+  backdrop-filter: saturate(1.1) blur(6px);
+  -webkit-backdrop-filter: saturate(1.1) blur(6px);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 10px;
+
+  /* Symmetric 2-row grid */
+  display: grid !important;
+  grid-template-columns: 1fr 320px;   /* search expands, right column fixed */
+  grid-template-areas:
+    "search toggles"
+    "sort   toggles";
+  gap: 12px;
+  position: sticky;
+  top: 6px; /* keeps the controls visible while scrolling */
+  z-index: 15;
+}
+
+/* Dark mode surface */
+.dark .left-col:not(.collapsed) ~ main #master-view-controls {
+  background: rgba(17,24,39,0.85);     /* slate-900 w/ alpha */
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+
+/* Place existing components into the grid areas */
+.left-col:not(.collapsed) ~ main #search-container { grid-area: search; }
+.left-col:not(.collapsed) ~ main #filters-group    { grid-area: sort; }
+.left-col:not(.collapsed) ~ main #topbar-toggles   { grid-area: toggles; display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+
+/* Make the two toggles sit nicely; remove absolute positioning used elsewhere */
+.left-col:not(.collapsed) ~ main #simple-view-container,
+.left-col:not(.collapsed) ~ main #dark-mode-container {
+  position: static !important;
+  transform: none !important;
+  margin: 0 !important;
+}
+
+/* Height + look unify across Search and Sort */
+:root {
+  --homebar-h: 52px;
+  --homebar-radius: 12px;
+}
+.left-col:not(.collapsed) ~ main #search {
+  height: var(--homebar-h) !important;
+  border-radius: var(--homebar-radius) !important;
+  font-size: 16px;
+  font-weight: 600;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  background: #fff !important;
+}
+.dark .left-col:not(.collapsed) ~ main #search {
+  background: #111827 !important;   /* slate-900 */
+  border-color: rgba(255,255,255,0.08) !important;
+}
+
+/* Kill any search-right overlay spacing from old absolute toggles */
+.left-col:not(.collapsed) ~ main #search { padding-right: 14px !important; }
+.left-col:not(.collapsed) ~ main #dark-mode-container span,
+.left-col:not(.collapsed) ~ main #simple-view-container span { font-size: 13px; opacity: 0.8; }
+
+/* Hide add/delete cluster on HOME when sidebar open (as requested) */
+.left-col:not(.collapsed) ~ main #master-view-buttons { display: none !important; }
+
+/* Stretch Sort across the whole row: show ONLY the Sort select, full width */
+.left-col:not(.collapsed) ~ main #filters-group {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  display: block !important;
+}
+.left-col:not(.collapsed) ~ main #filters-group > *:not(#sort-dropdown) { display: none !important; }
+
+/* Beautify the Sort <select> itself */
+.left-col:not(.collapsed) ~ main #sort-dropdown {
+  display: block;
+  width: 100% !important;
+  height: var(--homebar-h) !important;
+  border-radius: var(--homebar-radius) !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  background: #fff !important;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 0 44px 0 14px !important; /* space for custom chevron */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  position: relative;
+  line-height: var(--homebar-h);
+}
+.dark .left-col:not(.collapsed) ~ main #sort-dropdown {
+  background: #111827 !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  color: #f9fafb !important;
+}
+
+/* Custom chevron for the Sort select */
+.left-col:not(.collapsed) ~ main #filters-group { position: relative; }
+.left-col:not(.collapsed) ~ main #filters-group::after {
+  content: "";
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  width: 0; height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 7px solid currentColor;   /* down chevron */
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Tidy toggle capsules so both match the height visually */
+.left-col:not(.collapsed) ~ main #topbar-toggles .toggle-track {
+  height: 28px !important; width: 52px !important;
+}
+.left-col:not(.collapsed) ~ main #topbar-toggles .dot {
+  width: 22px !important; height: 22px !important; top: 3px !important;
+}
+
+/* Compact labels + spacing */
+.left-col:not(.collapsed) ~ main #topbar-toggles label { gap: 8px; }
+.left-col:not(.collapsed) ~ main #topbar-toggles { padding-right: 4px; }
+
+/* Subtle divider between the two rows to enhance symmetry */
+.left-col:not(.collapsed) ~ main #master-view-controls::before {
+  content: "";
+  grid-column: 1 / -1;
+  grid-row: 1 / 2;
+  position: absolute;
+  left: 12px; right: 12px; top: calc(14px + var(--homebar-h) + 7px);
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(0,0,0,0.08), transparent);
+}
+.dark .left-col:not(.collapsed) ~ main #master-view-controls::before {
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.12), transparent);
+}
+
+/* Responsive: if main area gets tight, collapse to single column */
+@media (max-width: 1100px) {
+  .left-col:not(.collapsed) ~ main #master-view-controls {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "search"
+      "toggles"
+      "sort";
+    row-gap: 10px;
+  }
+  .left-col:not(.collapsed) ~ main #master-view-controls::before { display: none; }
+  .left-col:not(.collapsed) ~ main #topbar-toggles { justify-content: flex-start; }
+}
+
+/* Ensure no horizontal scroll caused by controls */
+.left-col:not(.collapsed) ~ main #master-view-controls, 
+.left-col:not(.collapsed) ~ main #master-view-controls * { overflow-x: visible !important; }
+
+</style>
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
@@ -5853,6 +6189,31 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
   }
 })();
 </script>
+
+<script>
+// Build a tiny wrapper around the two toggles so they can live in the right grid cell
+(function() {
+  function ready(fn){ if(document.readyState!='loading'){ fn(); } else { document.addEventListener('DOMContentLoaded', fn); } }
+  ready(function(){
+    var controls = document.getElementById('master-view-controls');
+    var sv = document.getElementById('simple-view-container');
+    var dm = document.getElementById('dark-mode-container');
+    if (controls && sv && dm && !document.getElementById('topbar-toggles')) {
+      var wrap = document.createElement('div');
+      wrap.id = 'topbar-toggles';
+      // remove any absolute layout that belonged to the old design
+      sv.style.position = 'static';
+      sv.style.transform = 'none';
+      dm.style.position = 'static';
+      dm.style.transform = 'none';
+      wrap.appendChild(sv);
+      wrap.appendChild(dm);
+      controls.appendChild(wrap);
+    }
+  });
+})();
+</script>
+
 </body>
 <style id="review-board-patch-2025-10-29-HOMECONTROLS-V9">
 /* Scope: HOME only, Sidebar OPEN, Simple View OFF */
@@ -5939,49 +6300,7 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
     var artistW = widthOf(artistEl);
     var notesW  = widthOf(notesEl);
 
-    
-    // === PATCH 2025-10-29 (V10): Home 2nd row — Sort matches left file column; hide Add/Delete ===
-    (function(){
-      function setImp(el, prop, val){ if(!el) return; try{ el.style.setProperty(prop,val,'important'); }catch(e){ el.style[prop]=val; } }
-      function applySecondRow(){
-        var row  = document.querySelector('#controls-row');
-        var fg   = document.querySelector('#filters-group');
-        var sort = document.querySelector('#sort-dropdown');
-        var btns = document.querySelector('#master-view-buttons');
-        // Use the same 3-column grid as computed above so col 1 ends where Artist starts
-        if (row){
-          setImp(row,'display','grid');
-          setImp(row,'grid-template-columns','minmax(0,1fr) ' + px(artistW) + ' ' + px(notesW));
-          setImp(row,'align-items','stretch');
-          setImp(row,'column-gap','12px');
-        }
-        // Hide Add/Delete on Home + sidebar open
-        if (btns){ setImp(btns,'display','none'); }
-        // Place filters (Sort) in column 1 and let it fill 100%
-        if (fg){ setImp(fg,'grid-column','1 / 2'); setImp(fg,'width','100%'); }
-        if (sort){
-          setImp(sort,'width','100%'); setImp(sort,'max-width','none');
-          var search = document.getElementById('search');
-          if (search){
-            var cs = getComputedStyle(search);
-            setImp(sort,'height', cs.height);
-            setImp(sort,'border-radius', cs.borderRadius);
-            setImp(sort,'padding-top','0px');
-            setImp(sort,'padding-bottom','0px');
-            setImp(sort,'display','flex');
-            setImp(sort,'align-items','center');
-            setImp(sort,'justify-content','space-between');
-          }
-        }
-      }
-      // Run after the rest of align() has finished writing styles
-      if (typeof requestAnimationFrame === 'function'){
-        requestAnimationFrame(applySecondRow);
-      } else {
-        setTimeout(applySecondRow, 0);
-      }
-    })();
-// Apply EXACT widths from measured inputs
+    // Apply EXACT widths from measured inputs
     row.style.gridTemplateColumns = 'minmax(0,1fr) ' + px(artistW) + ' ' + px(notesW);
 
     // Ensure correct mapping and fill
@@ -6007,4 +6326,64 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
   });
 })();
 </script>
-</html>
+</html>\n
+<script id="home-2nd-row-rework-2025-10-29-v7">
+(function(){
+  function q(s){ return document.querySelector(s); }
+  function isHome(){ var v = q('#master-view'); return v && !v.classList.contains('hidden'); }
+  function sidebarOpen(){ var l=q('.left-col'); return l && !l.classList.contains('collapsed'); }
+  function setImp(el, prop, val){ if(!el) return; try{ el.style.setProperty(prop, val, 'important'); }catch(e){ el.style[prop]=val; } }
+  function applyOnce(){
+    if(!(isHome() && sidebarOpen())) return;
+    var row = q('#controls-row');
+    var fg  = q('#filters-group');
+    var sort= q('#sort-dropdown');
+    var btns= q('#master-view-buttons');
+    if(!row || !fg || !sort) return;
+    // Hide buttons
+    if(btns){ setImp(btns, 'display', 'none'); }
+    // Make single-column row and let Sort fill it
+    setImp(row, 'display', 'grid');
+    setImp(row, 'gridTemplateColumns', '1fr');
+    setImp(row, 'alignItems', 'stretch');
+    setImp(row, 'columnGap', '0px');
+    setImp(fg,  'gridColumn', '1');
+    setImp(fg,  'width', '100%');
+    setImp(sort,'width', '100%');
+    setImp(sort,'maxWidth', 'none');
+    setImp(sort,'flex', '1 1 auto');
+  }
+  function applyStrong(){
+    // Run twice around the frame boundary to beat any late inline writes
+    applyOnce();
+    requestAnimationFrame(applyOnce);
+    setTimeout(applyOnce, 50);
+  }
+  // Observe the controls row for *any* style changes (align() updates)
+  function watch(){
+    var row = q('#controls-row');
+    if(!row) return;
+    var obs = new MutationObserver(function(muts){
+      for(var m of muts){
+        if(m.type==='attributes' && m.attributeName==='style'){
+          applyStrong();
+        }
+      }
+    });
+    obs.observe(row, {attributes:true, attributeFilter:['style']});
+  }
+  // Global observers (sidebar open/close, home visibility flips, etc.)
+  var docObs = new MutationObserver(applyStrong);
+  docObs.observe(document.documentElement, {subtree:true, childList:true, attributes:true});
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ applyStrong(); watch(); });
+  } else {
+    applyStrong(); watch();
+  }
+  // Also on resize
+  window.addEventListener('resize', applyStrong, {passive:true});
+  // A few initial retries in case UI hydrates late
+  [100,300,800].forEach(function(ms){ setTimeout(applyStrong, ms); });
+})();
+</script>
