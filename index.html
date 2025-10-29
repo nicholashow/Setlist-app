@@ -1931,6 +1931,7 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
                                 <option value="name">Sort by Name</option>
                                 <option value="artist">Sort by Artist</option>
                                 <option value="lastPlayed">Sort by Last Played</option>
+                                <option value="recent">Recently Added</option>
                                 <option value="energy">Sort by Energy</option>
                             </select>
                         <div id="sort-genre-flyout">
@@ -5699,6 +5700,139 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
   width: 100% !important;
 }
 </style>
+
+<script id="review-board-sort-recent-2025-10-29">
+(function(){
+  // Ensure each song has an addedAt timestamp (migration-safe)
+  function ensureAddedAt(){
+    try{
+      if (!window.masterSongs || !Array.isArray(window.masterSongs)) return;
+      var now = Date.now();
+      for (var i=0;i<window.masterSongs.length;i++){
+        var s = window.masterSongs[i];
+        if (s && !s.addedAt){
+          // Prefer an existing timestamp-like field if present
+          s.addedAt = s.createdAt || s.created || s.lastModified || (now - (window.masterSongs.length - i)*1000);
+        }
+      }
+    }catch(e){}
+  }
+  ensureAddedAt();
+
+  // Hook into existing renderMaster pipeline by wrapping sort selection
+  try{
+    var _renderMaster = window.renderMaster;
+    window.renderMaster = function(){
+      // If the dropdown says "recent", temporarily override the compare used inside renderMaster
+      var dd = document.querySelector('#sort-dropdown');
+      var useRecent = dd && dd.value === 'recent';
+      if (useRecent && window.masterSongs){
+        // Sort in-place by addedAt DESC before render
+        window.masterSongs.sort(function(a,b){
+          var av = a && a.addedAt ? +new Date(a.addedAt) : 0;
+          var bv = b && b.addedAt ? +new Date(b.addedAt) : 0;
+          return bv - av;
+        });
+      }
+      return _renderMaster.apply(this, arguments);
+    };
+  }catch(e){
+    // If renderMaster not found, attach a change listener to re-render using existing path
+    document.addEventListener('DOMContentLoaded', function(){
+      var dd = document.querySelector('#sort-dropdown');
+      if (!dd) return;
+      dd.addEventListener('change', function(){
+        if (dd.value === 'recent' && window.renderMaster) {
+          // Ensure addedAt then renderMaster (sorting will happen at top of renderMaster wrapper if present)
+          try{ ensureAddedAt(); }catch(e){}
+          window.renderMaster();
+        }
+      });
+    });
+  }
+})();
+</script>
+
+<style id="review-board-genre-color-close-2025-10-29">
+/* Small "X" button for the genre color selector popup */
+.genre-color-popup .close-x {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  border: 1px solid rgba(0,0,0,0.2);
+  background: rgba(255,255,255,0.9);
+  color: #111;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+.dark .genre-color-popup .close-x {
+  background: rgba(31,41,55,0.9);
+  color: #f9fafb;
+  border-color: rgba(255,255,255,0.2);
+}
+</style>
+
+
+<script id="review-board-genre-color-close-script-2025-10-29">
+(function(){
+  function addCloseTo(el){
+    if (!el) return;
+    if (el.querySelector('.close-x')) return;
+    var btn = document.createElement('button');
+    btn.className = 'close-x';
+    btn.type = 'button';
+    btn.textContent = '×';
+    btn.addEventListener('click', function(ev){
+      ev.stopPropagation();
+      el.classList.add('hidden');
+    }, {passive: true});
+    el.style.position = el.style.position || 'relative';
+    el.appendChild(btn);
+  }
+
+  function tryAttach(){
+    // Common IDs we saw in this app near the sort-genre flyout
+    var flyout = document.getElementById('genre-color-dropdown') ||
+                 document.getElementById('genre-color-flyout') ||
+                 document.getElementById('genre-color-picker') ||
+                 document.getElementById('color-selector') ||
+                 document.getElementById('color-picker') ||
+                 document.getElementById('sort-genre-flyout') ||
+                 document.querySelector('#genre-filter-dropdown'); // fallback
+    if (flyout){
+      flyout.classList.add('genre-color-popup');
+      addCloseTo(flyout);
+      return true;
+    }
+    // Fallback: search by text near the "New Genre" UI
+    var guess = Array.from(document.querySelectorAll('div,section,aside')).find(function(n){
+      return /genre/i.test(n.textContent||'') && (n.id||'').toLowerCase().includes('color');
+    });
+    if (guess){
+      guess.classList.add('genre-color-popup');
+      addCloseTo(guess);
+      return true;
+    }
+    return false;
+  }
+
+  function ready(fn){ document.readyState!=='loading' ? fn() : document.addEventListener('DOMContentLoaded', fn); }
+  ready(function(){
+    // Attach once
+    tryAttach();
+    // Re-attach when dropdowns open/toggle
+    document.addEventListener('click', function(){
+      setTimeout(tryAttach, 0);
+    }, {passive: true});
+  });
+})();
+</script>
 
 </body>
 <style id="review-board-patch-2025-10-29-HOMECONTROLS-V9">
