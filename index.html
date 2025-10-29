@@ -5746,137 +5746,67 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
 </style>
 
 </body>
+<style id="review-board-patch-2025-10-29-HOMECONTROLS-V2">
+/* FINAL OVERRIDE: Make the Home controls (Sort, Add files, Delete All) look the SAME
+   with the sidebar OPEN as when it's CLOSED — aligned in one row within the main column.
+   These overrides win even if later body-level styles attempted alternative layouts. */
+
+/* Keep the controls row within the same column width as file boxes */
+.left-col:not(.collapsed) ~ main #controls-row{
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 0.75rem !important;
+  flex-wrap: wrap !important;      /* wrap on narrow widths instead of overflowing */
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Filters group + Sort dropdown take the left side and can shrink/grow naturally */
+.left-col:not(.collapsed) ~ main #filters-group{
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  flex: 1 1 auto !important;
+  min-width: 220px !important;
+}
+.left-col:not(.collapsed) ~ main #sort-dropdown{
+  width: 220px !important;
+  max-width: 100% !important;
+}
+
+/* Buttons live on the right, inline — NOT absolutely positioned, NOT a grid */
+.left-col:not(.collapsed) ~ main #master-view-buttons{
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  margin-left: auto !important;    /* push to the right */
+  padding: 0 !important;
+  display: flex !important;
+  gap: 8px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  grid-auto-flow: initial !important;
+  grid-template-columns: none !important;
+}
+
+/* Button sizing consistent with closed-state (no 100% expansion) */
+.left-col:not(.collapsed) ~ main #master-view-buttons .btn-master,
+.left-col:not(.collapsed) ~ main #upload-master-btn,
+.left-col:not(.collapsed) ~ main #delete-all-btn{
+  width: auto !important;
+  min-width: 110px !important;
+  white-space: nowrap !important;
+}
+
+/* Undo any extra padding/margins some prior patches added to wrapper elements */
+.left-col:not(.collapsed) ~ main #master-view-controls{
+  padding-right: 0 !important;
+  margin-right: 0 !important;
+}
+</style>
 </html>
-
-
-/* === In-place Notes behavior (autosize downwards, fixed width, × collapse, ▼ reopen) === */
-(function(){
-  if (window.__NotesInline_v4) return;
-  window.__NotesInline_v4 = true;
-
-  function lockWidth(el){
-    // Lock width to rendered pixel width of the original field to prevent horizontal growth
-    var r = el.getBoundingClientRect();
-    var w = Math.round(r.width || el.clientWidth || el.offsetWidth);
-    if (w && w > 0) {
-      el.style.width = w + 'px';
-      el.style.maxWidth = w + 'px';
-      el.style.minWidth = w + 'px';
-    }
-    return w;
-  }
-
-  function autosize(t){
-    if (!t) return;
-    t.style.height = 'auto';
-    // Use scrollHeight to expand downwards
-    var h = t.scrollHeight;
-    if (!h || h < 36) h = 36;
-    // Cap to max-height via CSS; extra will scroll vertically
-    t.style.height = h + 'px';
-  }
-
-  function makeInlineNotes(input){
-    if (!input || input.__notesInlineBuilt) return;
-    input.__notesInlineBuilt = true;
-
-    // Create wrapper
-    var wrap = document.createElement('div');
-    wrap.className = 'notes-inline';
-    // Clone relevant class styling; we will use a <textarea>
-    var ta = document.createElement('textarea');
-    ta.className = (input.className || '').replace(/\bnotes-input\b/, 'notes-input') + ' notes-textarea';
-    ta.placeholder = input.placeholder || 'Notes';
-    ta.value = input.value || '';
-    ta.setAttribute('spellcheck', 'false');
-
-    // Insert wrapper in place and move input out
-    input.parentNode.insertBefore(wrap, input);
-    input.remove(); // remove the original input element
-    wrap.appendChild(ta);
-
-    // Buttons
-    var btnClose = document.createElement('button');
-    btnClose.type = 'button';
-    btnClose.className = 'notes-btn close';
-    btnClose.setAttribute('aria-label', 'Close notes');
-    btnClose.textContent = '×';
-
-    var btnDrop = document.createElement('button');
-    btnDrop.type = 'button';
-    btnDrop.className = 'notes-btn dropdown';
-    btnDrop.setAttribute('aria-label', 'Expand notes');
-    btnDrop.textContent = '▼';
-
-    wrap.appendChild(btnClose);
-    wrap.appendChild(btnDrop);
-
-    // Lock width to the initial width of the field
-    lockWidth(wrap);
-    // Also ensure the textarea obeys the locked width via wrapper's width
-    ta.style.width = '100%'; // wrapper handles pixel width
-
-    // Start collapsed; show ▼
-    wrap.classList.add('collapsed');
-    autosize(ta);
-
-    // Open: remove collapsed state to allow autosize to show full height
-    function openFull(){
-      wrap.classList.remove('collapsed');
-      autosize(ta);
-      ta.focus({preventScroll:true});
-      try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch(_){}
-    }
-
-    // Close: collapse back to single-line look, keep ▼ to reopen
-    function closeToCollapsed(){
-      // Keep current value, and notify change listeners
-      try { ta.dispatchEvent(new Event('change', {bubbles:true})); } catch(_){}
-      wrap.classList.add('collapsed');
-      autosize(ta);
-    }
-
-    // Typing: keep width fixed; grow downward
-    ta.addEventListener('input', function(){
-      autosize(ta);
-    });
-
-    // Open on focus/click so user always sees all text while typing
-    ta.addEventListener('focus', openFull);
-    ta.addEventListener('pointerdown', function(){ if (wrap.classList.contains('collapsed')) openFull(); }, true);
-
-    // Close with ×
-    btnClose.addEventListener('click', function(e){ e.preventDefault(); closeToCollapsed(); });
-
-    // Reopen with ▼
-    btnDrop.addEventListener('click', function(e){ e.preventDefault(); openFull(); });
-
-    // Relock width on window resize (in case layout changes)
-    window.addEventListener('resize', function(){
-      lockWidth(wrap);
-    });
-  }
-
-  function initAll(){
-    document.querySelectorAll('input.notes-input, textarea.notes-input').forEach(makeInlineNotes);
-  }
-  initAll();
-
-  // Handle dynamically added notes fields
-  var mo = new MutationObserver(function(muts){
-    for (var i=0;i<muts.length;i++){
-      var n = muts[i].addedNodes || [];
-      for (var j=0;j<n.length;j++){
-        var node = n[j];
-        if (node.nodeType !== 1) continue;
-        if (node.matches && (node.matches('input.notes-input') || node.matches('textarea.notes-input'))) {
-          makeInlineNotes(node);
-        } else if (node.querySelectorAll) {
-          node.querySelectorAll('input.notes-input, textarea.notes-input').forEach(makeInlineNotes);
-        }
-      }
-    }
-  });
-  try { mo.observe(document.documentElement, {childList:true, subtree:true}); } catch(_){}
-
-})();
