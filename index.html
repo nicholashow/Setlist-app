@@ -1860,7 +1860,29 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
                         <div class="color-picker-wrapper">
                             <div id="genre-color-display"></div>
                             <input type="color" id="genre-color" title="Select color">
-                        </div>
+                        
+
+    <!-- Custom closable color popup -->
+    <div id="genre-color-popup" class="genre-color-popup hidden">
+      <button type="button" class="close-x" aria-label="Close">×</button>
+      <div class="swatch-grid">
+        <button class="swatch" data-color="#000000" title="Black"></button>
+        <button class="swatch" data-color="#ffffff" title="White"></button>
+        <button class="swatch" data-color="#ef4444" title="Red"></button>
+        <button class="swatch" data-color="#f59e0b" title="Amber"></button>
+        <button class="swatch" data-color="#eab308" title="Yellow"></button>
+        <button class="swatch" data-color="#22c55e" title="Green"></button>
+        <button class="swatch" data-color="#06b6d4" title="Cyan"></button>
+        <button class="swatch" data-color="#3b82f6" title="Blue"></button>
+        <button class="swatch" data-color="#8b5cf6" title="Violet"></button>
+        <button class="swatch" data-color="#ec4899" title="Pink"></button>
+      </div>
+      <div class="popup-actions">
+        <button type="button" id="genre-color-custom" class="btn-custom">Custom…</button>
+      </div>
+    </div>
+
+</div>
                         <input class="item-name-input" id="genre-name" placeholder="New genre" />
                         <button class="p-1 px-2 text-sm rounded-md whitespace-nowrap btn-add" id="add-genre">Add</button>
                     </div>
@@ -2390,6 +2412,64 @@ const s=$('.left-col');s.toggleClass('collapsed');
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
+<style id="genre-color-popup-styles-2025-10-29">
+.color-picker-wrapper{ position: relative; }
+.genre-color-popup{
+  position: absolute;
+  top: 36px;
+  left: 0;
+  z-index: 50;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  border-radius: 12px;
+  padding: 10px 12px 12px 12px;
+  min-width: 220px;
+}
+.dark .genre-color-popup{
+  background: #111827;
+  border-color: #374151;
+}
+.genre-color-popup.hidden{ display: none; }
+.genre-color-popup .close-x{
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  border: 1px solid rgba(0,0,0,0.2);
+  background: rgba(255,255,255,0.9);
+  color: #111;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+}
+.dark .genre-color-popup .close-x{
+  background: rgba(31,41,55,0.95);
+  color: #f9fafb;
+  border-color: rgba(255,255,255,0.2);
+}
+.genre-color-popup .swatch-grid{
+  display: grid;
+  grid-template-columns: repeat(5, 24px);
+  gap: 8px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+.genre-color-popup .swatch{
+  width: 24px; height: 24px; border-radius: 9999px; border: 1px solid rgba(0,0,0,0.2);
+}
+.dark .genre-color-popup .swatch{ border-color: rgba(255,255,255,0.2); }
+.genre-color-popup .swatch[data-color="#ffffff"]{ border-color: #d1d5db; }
+.genre-color-popup .btn-custom{
+  padding: 4px 8px; font-size: 12px; border-radius: 8px;
+  border: 1px solid #d1d5db; background: #f9fafb;
+}
+.dark .genre-color-popup .btn-custom{
+  background: #1f2937; border-color: #374151; color: #e5e7eb;
+}
+</style>
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
@@ -5703,7 +5783,6 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
 
 <script id="review-board-sort-recent-2025-10-29">
 (function(){
-  // Ensure each song has an addedAt timestamp (migration-safe)
   function ensureAddedAt(){
     try{
       if (!window.masterSongs || !Array.isArray(window.masterSongs)) return;
@@ -5711,129 +5790,101 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
       for (var i=0;i<window.masterSongs.length;i++){
         var s = window.masterSongs[i];
         if (s && !s.addedAt){
-          // Prefer an existing timestamp-like field if present
           s.addedAt = s.createdAt || s.created || s.lastModified || (now - (window.masterSongs.length - i)*1000);
         }
       }
     }catch(e){}
   }
   ensureAddedAt();
-
-  // Hook into existing renderMaster pipeline by wrapping sort selection
   try{
     var _renderMaster = window.renderMaster;
-    window.renderMaster = function(){
-      // If the dropdown says "recent", temporarily override the compare used inside renderMaster
-      var dd = document.querySelector('#sort-dropdown');
-      var useRecent = dd && dd.value === 'recent';
-      if (useRecent && window.masterSongs){
-        // Sort in-place by addedAt DESC before render
-        window.masterSongs.sort(function(a,b){
-          var av = a && a.addedAt ? +new Date(a.addedAt) : 0;
-          var bv = b && b.addedAt ? +new Date(b.addedAt) : 0;
-          return bv - av;
-        });
-      }
-      return _renderMaster.apply(this, arguments);
-    };
-  }catch(e){
-    // If renderMaster not found, attach a change listener to re-render using existing path
-    document.addEventListener('DOMContentLoaded', function(){
-      var dd = document.querySelector('#sort-dropdown');
-      if (!dd) return;
-      dd.addEventListener('change', function(){
-        if (dd.value === 'recent' && window.renderMaster) {
-          // Ensure addedAt then renderMaster (sorting will happen at top of renderMaster wrapper if present)
-          try{ ensureAddedAt(); }catch(e){}
-          window.renderMaster();
+    if (_renderMaster){
+      window.renderMaster = function(){
+        var dd = document.querySelector('#sort-dropdown');
+        var useRecent = dd && dd.value === 'recent';
+        if (useRecent && window.masterSongs){
+          ensureAddedAt();
+          window.masterSongs.sort(function(a,b){
+            var av = a && a.addedAt ? +new Date(a.addedAt) : 0;
+            var bv = b && b.addedAt ? +new Date(b.addedAt) : 0;
+            return bv - av;
+          });
         }
-      });
-    });
-  }
+        return _renderMaster.apply(this, arguments);
+      };
+    }
+  }catch(e){}
 })();
 </script>
-
-<style id="review-board-genre-color-close-2025-10-29">
-/* Small "X" button for the genre color selector popup */
-.genre-color-popup .close-x {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 22px;
-  height: 22px;
-  border-radius: 9999px;
-  border: 1px solid rgba(0,0,0,0.2);
-  background: rgba(255,255,255,0.9);
-  color: #111;
-  font-weight: 700;
-  line-height: 20px;
-  text-align: center;
-  cursor: pointer;
-  user-select: none;
-}
-.dark .genre-color-popup .close-x {
-  background: rgba(31,41,55,0.9);
-  color: #f9fafb;
-  border-color: rgba(255,255,255,0.2);
-}
-</style>
-
-
-<script id="review-board-genre-color-close-script-2025-10-29">
+<script id="genre-color-popup-logic-2025-10-29">
 (function(){
-  function addCloseTo(el){
-    if (!el) return;
-    if (el.querySelector('.close-x')) return;
-    var btn = document.createElement('button');
-    btn.className = 'close-x';
-    btn.type = 'button';
-    btn.textContent = '×';
-    btn.addEventListener('click', function(ev){
-      ev.stopPropagation();
-      el.classList.add('hidden');
-    }, {passive: true});
-    el.style.position = el.style.position || 'relative';
-    el.appendChild(btn);
+  function byId(id){ return document.getElementById(id); }
+  function showPopup(){
+    var pop = byId('genre-color-popup');
+    if (!pop) return;
+    pop.classList.remove('hidden');
+  }
+  function hidePopup(){
+    var pop = byId('genre-color-popup');
+    if (!pop) return;
+    pop.classList.add('hidden');
+  }
+  function setColor(hex){
+    var input = byId('genre-color');
+    var display = byId('genre-color-display');
+    if (input){ input.value = hex; input.dispatchEvent(new Event('input', {bubbles:true})); }
+    if (display){ display.style.background = hex; }
   }
 
-  function tryAttach(){
-    // Common IDs we saw in this app near the sort-genre flyout
-    var flyout = document.getElementById('genre-color-dropdown') ||
-                 document.getElementById('genre-color-flyout') ||
-                 document.getElementById('genre-color-picker') ||
-                 document.getElementById('color-selector') ||
-                 document.getElementById('color-picker') ||
-                 document.getElementById('sort-genre-flyout') ||
-                 document.querySelector('#genre-filter-dropdown'); // fallback
-    if (flyout){
-      flyout.classList.add('genre-color-popup');
-      addCloseTo(flyout);
-      return true;
-    }
-    // Fallback: search by text near the "New Genre" UI
-    var guess = Array.from(document.querySelectorAll('div,section,aside')).find(function(n){
-      return /genre/i.test(n.textContent||'') && (n.id||'').toLowerCase().includes('color');
-    });
-    if (guess){
-      guess.classList.add('genre-color-popup');
-      addCloseTo(guess);
-      return true;
-    }
-    return false;
-  }
+  function ready(fn){ document.readyState !== 'loading' ? fn() : document.addEventListener('DOMContentLoaded', fn); }
 
-  function ready(fn){ document.readyState!=='loading' ? fn() : document.addEventListener('DOMContentLoaded', fn); }
   ready(function(){
-    // Attach once
-    tryAttach();
-    // Re-attach when dropdowns open/toggle
-    document.addEventListener('click', function(){
-      setTimeout(tryAttach, 0);
-    }, {passive: true});
+    var wrapper = document.querySelector('.color-picker-wrapper');
+    var input = byId('genre-color');
+    var display = byId('genre-color-display');
+    var pop = byId('genre-color-popup');
+    if (!wrapper || !input || !display || !pop) return;
+
+    // Open popup when clicking the rainbow wheel / color display
+    display.style.cursor = 'pointer';
+    display.addEventListener('click', function(e){ e.stopPropagation(); showPopup(); });
+
+    // Custom button -> open native picker; after pick, close
+    var customBtn = byId('genre-color-custom');
+    if (customBtn){
+      customBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        input.click();
+      });
+    }
+    // When native input changes, update display and close popup
+    input.addEventListener('change', function(){
+      setColor(input.value);
+      hidePopup();
+    });
+
+    // Swatch clicks set color then close
+    pop.querySelectorAll('.swatch').forEach(function(btn){
+      btn.style.background = btn.getAttribute('data-color');
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        setColor(btn.getAttribute('data-color'));
+        hidePopup();
+      });
+    });
+
+    // Close with X
+    var close = pop.querySelector('.close-x');
+    if (close){
+      close.addEventListener('click', function(e){ e.stopPropagation(); hidePopup(); });
+    }
+
+    // Click outside closes
+    document.addEventListener('click', function(){ hidePopup(); });
+    pop.addEventListener('click', function(e){ e.stopPropagation(); });
   });
 })();
 </script>
-
 </body>
 <style id="review-board-patch-2025-10-29-HOMECONTROLS-V9">
 /* Scope: HOME only, Sidebar OPEN, Simple View OFF */
