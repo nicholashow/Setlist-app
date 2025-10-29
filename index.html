@@ -5966,88 +5966,63 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
 })();
 </script>
 
-<script id="home-2nd-row-rework-2025-10-29-v4">
+<style id="home-2nd-row-css-v5">
+/* Force the 2nd row to use GRID so the app's inline gridTemplateColumns takes effect */
+#controls-row {
+  display: grid !important;
+  align-items: stretch !important;
+  column-gap: 12px !important;
+}
+
+/* Put Sort in column 1; buttons become direct grid items in cols 2 and 3 */
+#master-view-buttons { display: contents !important; }
+#filters-group       { grid-column: 1 !important; min-width: 0 !important; }
+#upload-master-btn   { grid-column: 2 !important; width: 100% !important; }
+#delete-all-btn      { grid-column: 3 !important; width: 100% !important; }
+
+/* Let controls fill their tracks and override the old 180px cap */
+#master-view #sort-dropdown,
+#sort-dropdown,
+#upload-master-btn,
+#delete-all-btn {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Prevent earlier rule from constraining the right block */
+.left-col:not(.collapsed) ~ main #master-view-buttons {
+  width: auto !important;
+  grid-template-columns: none !important;
+  justify-content: unset !important;
+  align-items: unset !important;
+  gap: 0 !important;
+}
+</style>
+<script id="home-2nd-row-css-v5-js">
 (function(){
-  function q(s){ return document.querySelector(s); }
-  function setImp(el, prop, val){
-    if (!el) return;
-    try{ el.style.setProperty(prop, val, 'important'); }catch(e){ el.style[prop] = val; }
-  }
-  function applyUsingExistingGrid(){
-    var row = q('#controls-row');
-    var fg  = q('#filters-group');
-    var sort= q('#sort-dropdown');
-    var btns= q('#master-view-buttons');
-    var add = q('#upload-master-btn');
-    var del = q('#delete-all-btn');
-    var search = q('#search');
-    if (!(row && fg && sort && btns && add && del && search)) return false;
-
-    var gtc = row.style.gridTemplateColumns || getComputedStyle(row).gridTemplateColumns;
-    // Expect something like: "minmax(0, 1fr) 320px 480px"
-    if (!gtc || !/\d+px\s+\d+px/.test(gtc)) return false;
-
-    // Force the row to be a grid with the same column sizes the app itself computed
-    setImp(row, 'display', 'grid');
-    setImp(row, 'gridTemplateColumns', gtc);
-    setImp(row, 'alignItems', 'stretch');
-    setImp(row, 'columnGap', '12px');
-
-    // Place children: Sort in col 1, Add in col 2, Delete in col 3
-    setImp(btns, 'display', 'contents');
-    setImp(fg,   'gridColumn', '1');
-    setImp(add,  'gridColumn', '2');
-    setImp(del,  'gridColumn', '3');
-
-    // Match heights/border radius to Search bar
-    var cs = getComputedStyle(search);
-    var h  = cs.height;
-    var br = cs.borderRadius;
-    [sort, add, del].forEach(function(el){
-      setImp(el, 'width', '100%');
-      setImp(el, 'maxWidth', 'none');
-      setImp(el, 'height', h);
-      setImp(el, 'borderRadius', br);
-      setImp(el, 'paddingTop', '0px');
-      setImp(el, 'paddingBottom', '0px');
-      setImp(el, 'display', 'flex');
-      setImp(el, 'alignItems', 'center');
-      setImp(el, 'justifyContent', 'center');
+  function applyHeights(){
+    var s = document.getElementById('search');
+    if(!s) return;
+    var h  = getComputedStyle(s).height;
+    var br = getComputedStyle(s).borderRadius;
+    ['sort-dropdown','upload-master-btn','delete-all-btn'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(!el) return;
+      el.style.setProperty('height', h, 'important');
+      el.style.setProperty('border-radius', br, 'important');
+      el.style.setProperty('padding-top', '0px', 'important');
+      el.style.setProperty('padding-bottom','0px', 'important');
+      el.style.setProperty('display','flex', 'important');
+      el.style.setProperty('align-items','center', 'important');
+      el.style.setProperty('justify-content','center', 'important');
     });
-    return true;
   }
-
-  // Observe changes to the controls row style so we run AFTER the app's own align()
-  var row = q('#controls-row');
-  function setupObservers(){
-    row = q('#controls-row');
-    if (!row) return;
-    var rafPending = false;
-    var obs = new MutationObserver(function(muts){
-      for (var m of muts){
-        if (m.type === 'attributes' && m.attributeName === 'style'){
-          if (!rafPending){
-            rafPending = true;
-            requestAnimationFrame(function(){ rafPending = false; applyUsingExistingGrid(); });
-          }
-        }
-      }
-    });
-    obs.observe(row, {attributes:true, attributeFilter:['style']});
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', applyHeights);
+  } else {
+    applyHeights();
   }
-
-  function bootstrap(){
-    // Try once immediately, then set observers and also run on resize
-    applyUsingExistingGrid();
-    setupObservers();
-    window.addEventListener('resize', applyUsingExistingGrid, {passive:true});
-    // Also run after DOM ready in case row appears late
-    if (document.readyState === 'loading'){
-      document.addEventListener('DOMContentLoaded', applyUsingExistingGrid);
-    }
-  }
-
-  bootstrap();
+  window.addEventListener('resize', applyHeights, {passive:true});
 })();
 </script>
 
