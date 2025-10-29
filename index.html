@@ -1928,11 +1928,11 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
                     <div id="controls-row">
                         <div id="filters-group">
                             <select id="sort-dropdown" class="p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select">
-                                <option value="name">Sort by Name</option>
-                                <option value="artist">Sort by Artist</option>
-                                <option value="lastPlayed">Sort by Last Played</option>
-                                <option value="energy">Sort by Energy</option>
-                                                            <option value="recent">Sort by Recently Added</option>
+                                <option value="name" selected>A-Z</option>
+                                <option value="artist">Artist</option>
+                                <option value="energy">Energy</option>
+                                <option value="lastPlayed">Last played</option>
+                                <option value="recent">Recently added</option>
                             </select>
                         <div id="sort-genre-flyout">
                             <div class="title">Genres</div>
@@ -6175,6 +6175,266 @@ aside.left-col:hover #sidebar-external-scroll,
   if (window.jQuery) {
     jQuery(document).on('click', '#sidebar-toggle', function(){
       setTimeout(function(){ syncHandleColor(); alignHandle(); ensureArrow(); }, 0);
+    });
+  }
+})();
+</script>
+
+<style id="patch-2025-10-29-handle-attach-rotate">
+/* Attach the handle to the sidebar edge */
+aside.left-col { position: relative; }
+#sidebar-toggle {
+  position: absolute !important;
+  right: -6px !important;  /* slightly sticking out for grip */
+  width: 18px !important;
+  min-width: 18px !important;
+  border-radius: 9999px !important;
+  background: var(--handle-bg, #6B7280) !important; /* JS sets to file box bg */
+  color: #ffffff !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.20) !important;
+  padding: 0 !important;
+  z-index: 5;
+}
+#sidebar-toggle svg {
+  position: static !important;
+  width: 16px !important;
+  height: 16px !important;
+  opacity: 1 !important;
+  transition: transform 0.2s ease-in-out;
+}
+/* Rotate arrow when collapsed (left chevron becomes right) */
+aside.left-col.collapsed #sidebar-toggle svg { transform: rotate(180deg); }
+
+/* Sidebar external scrollbar: hide when not active; show only while active */
+#sidebar-external-scroll {
+  opacity: 0;
+  transition: opacity 0.18s ease-in-out;
+  pointer-events: none;
+}
+#sidebar-external-scroll.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+</style>
+
+<script id="patch-2025-10-29-handle-attach-rotate-js">
+(function(){
+  if (window.__final_sidebar_sort_handle_patch__) return;
+  window.__final_sidebar_sort_handle_patch__ = true;
+
+  var $ = window.jQuery;
+
+  // === Move handle into aside and attach to edge ===
+  function moveHandleIntoAside(){
+    var aside = document.querySelector('aside.left-col');
+    var btn = document.getElementById('sidebar-toggle');
+    if (aside && btn && btn.parentElement !== aside) {
+      aside.appendChild(btn);
+    }
+  }
+
+  function rect(el){ var r=el.getBoundingClientRect(); return {top:r.top,left:r.left,bottom:r.bottom,height:r.height}; }
+
+  // Align top/height with All Songs header box
+  function alignHandle(){
+    var aside = document.querySelector('aside.left-col');
+    var header = aside && aside.querySelector('#home-btn');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!aside || !header || !btn) return;
+    var a = rect(aside);
+    var h = rect(header);
+    var topOffset = Math.max(0, Math.round(h.top - a.top));
+    btn.style.top = topOffset + 'px';
+    btn.style.height = Math.round(h.height) + 'px';
+  }
+
+  // Match handle background to file box container
+  function getFileBoxBg(){
+    var container = document.querySelector('div.bg-white.rounded-xl.shadow-lg.overflow-hidden');
+    if (!container) {
+      // dark mode fallback
+      container = document.querySelector('div.dark\:bg-gray-800.rounded-xl.shadow-lg.overflow-hidden');
+    }
+    if (!container) {
+      var list = document.getElementById('master-list');
+      container = list && list.parentElement;
+    }
+    if (!container) return null;
+    var s = window.getComputedStyle(container);
+    return s && s.backgroundColor || null;
+  }
+  function syncHandleColor(){
+    var btn = document.getElementById('sidebar-toggle');
+    var bg = getFileBoxBg();
+    if (btn && bg) {
+      btn.style.setProperty('background', bg);
+      btn.style.setProperty('--handle-bg', bg);
+    }
+  }
+
+  // === Sidebar external scrollbar show/hide only during use ===
+  var aside = document.querySelector('aside.left-col');
+  var scroller = aside && aside.querySelector('.left-col-main-content');
+  var rail = document.getElementById('sidebar-external-scroll');
+  var thumb = document.getElementById('sidebar-thumb');
+  var hideTimer = null;
+
+  function ensureRailVisibilityBasedOnOverflow(){
+    if (!rail || !scroller) return;
+    var content = scroller.scrollHeight;
+    var visible = scroller.clientHeight;
+    if (content <= visible + 1) {
+      rail.style.display = 'none';
+    } else {
+      rail.style.display = 'block';
+    }
+  }
+  function showRailNow(){
+    if (!rail) return;
+    rail.classList.add('active');
+  }
+  function scheduleHideRail(){
+    if (!rail) return;
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(function(){
+      rail.classList.remove('active');
+    }, 2000); // 2 seconds after no use
+  }
+
+  function bindScrollAutoHide(){
+    if (!scroller || !rail) return;
+    scroller.addEventListener('scroll', function(){
+      ensureRailVisibilityBasedOnOverflow();
+      showRailNow();
+      scheduleHideRail();
+    }, {passive:true});
+    if (thumb) {
+      ['mousedown','touchstart'].forEach(function(evt){
+        thumb.addEventListener(evt, function(){
+          showRailNow();
+          clearTimeout(hideTimer);
+        }, {passive:false});
+      });
+      ['mouseup','touchend','touchcancel','mouseleave'].forEach(function(evt){
+        window.addEventListener(evt, function(){
+          scheduleHideRail();
+        });
+      });
+    }
+    ensureRailVisibilityBasedOnOverflow();
+  }
+
+  // === Robust "Recently added" sort ===
+  // Track insertion index for each <li> in #master-list using a MutationObserver
+  var insertCounter = 0;
+  var insertIndexMap = new WeakMap();
+  function seedInsertIndexes(){
+    var list = document.getElementById('master-list');
+    if (!list) return;
+    Array.prototype.forEach.call(list.children, function(li){
+      if (!insertIndexMap.has(li)) {
+        insertIndexMap.set(li, insertCounter++);
+        li.setAttribute('data-insert-index', insertIndexMap.get(li));
+      }
+    });
+  }
+  var observer = null;
+  function observeInsertions(){
+    var list = document.getElementById('master-list');
+    if (!list) return;
+    if (observer) observer.disconnect();
+    observer = new MutationObserver(function(muts){
+      muts.forEach(function(m){
+        Array.prototype.forEach.call(m.addedNodes || [], function(node){
+          if (node && node.nodeType === 1 && node.tagName === 'LI') {
+            if (!insertIndexMap.has(node)) {
+              insertIndexMap.set(node, insertCounter++);
+              node.setAttribute('data-insert-index', insertIndexMap.get(node));
+            }
+          }
+        });
+      });
+    });
+    observer.observe(list, {childList:true});
+  }
+
+  function sortByRecentlyAdded(){
+    var list = document.getElementById('master-list');
+    if (!list) return;
+    seedInsertIndexes();
+    var items = Array.prototype.slice.call(list.children);
+    items.sort(function(a,b){
+      var ia = insertIndexMap.get(a) ?? -1;
+      var ib = insertIndexMap.get(b) ?? -1;
+      return ib - ia; // newest first
+    });
+    items.forEach(function(el){ list.appendChild(el); });
+  }
+
+  // Hook select change; keep your original renderMaster behavior for other modes
+  function onSortChange(){
+    var dd = document.getElementById('sort-dropdown');
+    if (!dd) return;
+    var val = dd.value;
+    if (val === 'recent') {
+      if (typeof window.renderMaster === 'function') window.renderMaster.__orig ? window.renderMaster.__orig() : window.renderMaster();
+      // After render finishes, re-order to recently added
+      setTimeout(sortByRecentlyAdded, 0);
+    } else {
+      // For name/artist/energy/lastPlayed, call original renderer
+      if (window.renderMaster && window.renderMaster.__orig) {
+        window.renderMaster.__orig();
+      } else if (typeof window.renderMaster === 'function') {
+        window.renderMaster();
+      }
+    }
+  }
+
+  function installSortHooks(){
+    // Wrap renderMaster once to allow calling original version
+    if (typeof window.renderMaster === 'function' && !window.renderMaster.__orig) {
+      var orig = window.renderMaster;
+      var wrapped = function(){ orig(); };
+      wrapped.__orig = orig;
+      window.renderMaster = wrapped;
+    }
+    var dd = document.getElementById('sort-dropdown');
+    if (dd) {
+      dd.removeEventListener && dd.removeEventListener('change', onSortChange);
+      dd.addEventListener('change', onSortChange);
+      // Force default A-Z (name) once on load
+      if (!dd.value || dd.value === 'recent') {
+        dd.value = 'name';
+      }
+    }
+    // Ensure initial indexes and render
+    seedInsertIndexes();
+    observeInsertions();
+    // Trigger initial render to honor default
+    onSortChange();
+  }
+
+  function init(){
+    moveHandleIntoAside();
+    alignHandle();
+    syncHandleColor();
+    bindScrollAutoHide();
+    installSortHooks();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+  window.addEventListener('resize', function(){ alignHandle(); syncHandleColor(); });
+  if ($) {
+    $(document).on('click', '#sidebar-toggle', function(){
+      setTimeout(function(){ alignHandle(); }, 0);
     });
   }
 })();
