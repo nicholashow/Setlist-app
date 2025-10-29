@@ -1825,57 +1825,6 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
-<style>
-/* =============================
-   FORCE: Sidebar OPEN uses CLOSED look for top controls
-   Targets: #controls-row, #filters-group, #master-view-buttons, #sort-dropdown
-   ============================= */
-.left-col:not(.collapsed) ~ main #controls-row {
-  display: flex !important;
-  gap: 0.75rem !important;
-  align-items: center !important;
-  flex-wrap: wrap !important;
-}
-
-.left-col:not(.collapsed) ~ main #filters-group {
-  display: flex !important;
-  flex-grow: 1 !important;
-  gap: 0.5rem !important;
-  padding: 0.25rem !important;
-  background-color: #ffffff !important;
-  border-radius: 0.5rem !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-  min-width: 200px !important;
-  border: 1px solid rgba(0,0,0,0.06) !important;
-}
-.dark .left-col:not(.collapsed) ~ main #filters-group {
-  background-color: transparent !important;
-  border-color: rgba(255,255,255,0.12) !important;
-  box-shadow: none !important;
-}
-
-.left-col:not(.collapsed) ~ main #master-view-buttons {
-  display: flex !important;
-  gap: 0.5rem !important;
-  align-items: center !important;
-}
-
-.left-col:not(.collapsed) ~ main #master-view-buttons .btn-master {
-  width: 90px !important; /* Mirror closed-state size */
-  height: 34px !important;
-  line-height: 1 !important;
-}
-
-/* Ensure Sort dropdown matches closed layout (not stretched) */
-.left-col:not(.collapsed) ~ main #sort-dropdown {
-  width: auto !important;
-  height: 34px !important;
-  padding: 0.25rem 0.5rem !important;
-  border: none !important;
-  background: none !important;
-  appearance: auto !important;
-}
-</style>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2441,57 +2390,6 @@ const s=$('.left-col');s.toggleClass('collapsed');
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
-<style>
-/* =============================
-   FORCE: Sidebar OPEN uses CLOSED look for top controls
-   Targets: #controls-row, #filters-group, #master-view-buttons, #sort-dropdown
-   ============================= */
-.left-col:not(.collapsed) ~ main #controls-row {
-  display: flex !important;
-  gap: 0.75rem !important;
-  align-items: center !important;
-  flex-wrap: wrap !important;
-}
-
-.left-col:not(.collapsed) ~ main #filters-group {
-  display: flex !important;
-  flex-grow: 1 !important;
-  gap: 0.5rem !important;
-  padding: 0.25rem !important;
-  background-color: #ffffff !important;
-  border-radius: 0.5rem !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-  min-width: 200px !important;
-  border: 1px solid rgba(0,0,0,0.06) !important;
-}
-.dark .left-col:not(.collapsed) ~ main #filters-group {
-  background-color: transparent !important;
-  border-color: rgba(255,255,255,0.12) !important;
-  box-shadow: none !important;
-}
-
-.left-col:not(.collapsed) ~ main #master-view-buttons {
-  display: flex !important;
-  gap: 0.5rem !important;
-  align-items: center !important;
-}
-
-.left-col:not(.collapsed) ~ main #master-view-buttons .btn-master {
-  width: 90px !important; /* Mirror closed-state size */
-  height: 34px !important;
-  line-height: 1 !important;
-}
-
-/* Ensure Sort dropdown matches closed layout (not stretched) */
-.left-col:not(.collapsed) ~ main #sort-dropdown {
-  width: auto !important;
-  height: 34px !important;
-  padding: 0.25rem 0.5rem !important;
-  border: none !important;
-  background: none !important;
-  appearance: auto !important;
-}
-</style>
 </head><body>`;h+=`<h1>${escapeHtml(currentSetlist)}</h1><div class="info"><strong>Date:</strong> ${escapeHtml(s.date)||"Not set"} | <strong>Venue:</strong> ${escapeHtml(s.venue)||"Not set"}</div><ol>${o.map(s=>`<li>${escapeHtml(s.name)}</li>`).join('')}</ol>`;p.document.write(h);const f=o.filter(s=>s.fileInfo&&s.fileInfo.data);if(f.length===0){p.document.close();p.focus();p.print();return}f.forEach(s=>{const u=getFileURL(s);if(u)p.document.body.insertAdjacentHTML('beforeend',`<div class="page-break"><h2>${escapeHtml(s.name)}</h2></div><iframe src="${u}"></iframe>`)});const i=p.document.querySelectorAll('iframe');Promise.all(Array.from(i).map(f=>new Promise(r=>{f.onload=r;f.onerror=r}))).then(()=>{p.document.close();p.focus();p.print()})});
             $('#share-setlist-btn').on('click',()=>$('#share-options').toggleClass('hidden'));
             $('#share-native').on('click',e=>{e.preventDefault();shareSetlist('native')});
@@ -5955,6 +5853,118 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
   }
 })();
 </script>
+<style id='force-closed-look-open'>
+/* ==================================================================
+   FORCE CLOSED-STATE LOOK WHEN SIDEBAR IS OPEN (HOME / master-view)
+   This neutralizes earlier "grid" and "display: contents" experiments.
+   ================================================================== */
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #controls-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  flex-wrap: wrap !important;
+  grid-template-columns: none !important;
+  column-gap: 0 !important;
+  row-gap: 0 !important;
+}
+
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #filters-group {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  min-width: 200px !important;
+  gap: 0.5rem !important;
+  padding: 0.25rem !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+}
+.dark .left-col:not(.collapsed) ~ main #master-view:not(.hidden) #filters-group {
+  background-color: transparent !important;
+  border-color: rgba(255,255,255,0.12) !important;
+  box-shadow: none !important;
+}
+
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #sort-dropdown {
+  width: auto !important;
+  height: 34px !important;
+  padding: 0.25rem 0.5rem !important;
+  border: none !important;
+  background: none !important;
+  appearance: auto !important;
+}
+
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #master-view-buttons {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  width: auto !important;
+  justify-content: flex-start !important;
+}
+
+.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #master-view-buttons .btn-master {
+  width: 90px !important;  /* same as closed state */
+  height: 34px !important;
+  line-height: 1 !important;
+}
+
+/* Kill any older hacks that reserved right-side space or moved things when open */
+.left-col:not(.collapsed) ~ main #master-view-controls::before { display: none !important; }
+.left-col:not(.collapsed) ~ main #master-view-controls { padding-right: 0 !important; }
+.left-col:not(.collapsed) ~ main #search { padding-right: 120px !important; } /* keep room for toggles (unchanged) */
+</style>
+
+<script>
+(function(){
+  function applyClosedLook(){
+    var cr = document.querySelector('.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #controls-row');
+    var mvb = document.querySelector('.left-col:not(.collapsed) ~ main #master-view:not(.hidden) #master-view-buttons');
+    if (cr) {
+      cr.style.display = 'flex';
+      cr.style.flexWrap = 'wrap';
+      cr.style.gap = '0.75rem';
+      cr.style.alignItems = 'center';
+    }
+    if (mvb) {
+      // Safari/iPad: avoid display: contents bugs from earlier rules
+      if (getComputedStyle(mvb).display === 'contents') {
+        mvb.style.display = 'flex';
+      }
+      // Also ensure the two buttons are visible
+      var btns = mvb.querySelectorAll('button');
+      btns.forEach(function(b){
+        b.style.display = 'inline-flex';
+      });
+    }
+  }
+  function onSidebarChange(){
+    applyClosedLook();
+  }
+  // Run on load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyClosedLook);
+  } else {
+    applyClosedLook();
+  }
+  // Observe sidebar class changes
+  var sidebar = document.querySelector('.left-col');
+  if (sidebar && window.MutationObserver) {
+    var obs = new MutationObserver(onSidebarChange);
+    obs.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+  }
+  // Also observe master-view becoming visible/hidden
+  var mv = document.getElementById('master-view');
+  if (mv && window.MutationObserver) {
+    var obs2 = new MutationObserver(applyClosedLook);
+    obs2.observe(mv, { attributes: true, attributeFilter: ['class'] });
+  }
+  // Safety: re-apply after a tick (handles late-running JS)
+  setTimeout(applyClosedLook, 150);
+  setTimeout(applyClosedLook, 400);
+  setTimeout(applyClosedLook, 1000);
+})();
+</script>
+
 </body>
 <style id="review-board-patch-2025-10-29-HOMECONTROLS-V9">
 /* Scope: HOME only, Sidebar OPEN, Simple View OFF */
