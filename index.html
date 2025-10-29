@@ -5981,4 +5981,110 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
 /* Keep this row as the only second row above file boxes */
 .left-col:not(.collapsed) ~ main #controls-row > *{ margin: 0 !important; }
 </style>
+<style id="review-board-patch-2025-10-29-HOMECONTROLS-V6">
+/* Keep the structural intent; runtime widths now driven by JS-measured columns */
+.left-col:not(.collapsed) ~ main #controls-row{
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 150px 150px !important; /* temporary baseline; JS updates exact px */
+  column-gap: 0.5rem !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+.left-col:not(.collapsed) ~ main #master-view-buttons{ display: contents !important; }
+.left-col:not(.collapsed) ~ main #filters-group{ grid-column: 1 !important; min-width: 0 !important; }
+.left-col:not(.collapsed) ~ main #sort-dropdown{ width: 100% !important; max-width: 100% !important; }
+.left-col:not(.collapsed) ~ main #upload-master-btn{ grid-column: 2 !important; width: 100% !important; white-space: nowrap !important; }
+.left-col:not(.collapsed) ~ main #delete-all-btn{ grid-column: 3 !important; width: 100% !important; white-space: nowrap !important; }
+</style>
+
+<script id="review-board-script-2025-10-29-HOMECONTROLS-V6">
+(function(){
+  function px(n){ return Math.max(40, Math.round(n||0)) + 'px'; }
+  function isSidebarOpen(){
+    var lc = document.querySelector('.left-col');
+    return lc && !lc.classList.contains('collapsed');
+  }
+  function isHomeVisible(){
+    var home = document.querySelector('#master-view');
+    return home && !home.classList.contains('hidden');
+  }
+  function measureArtistWidth(li){
+    // Details container holds Artist + Runtime as a 2-col grid with known total width
+    var cont = li && li.querySelector('.song-details-container');
+    if (cont){
+      var w = cont.getBoundingClientRect().width;
+      // If it's a 2-col grid, artist is approx half (avoid subpixel drift)
+      return w/2;
+    }
+    return 150; // fallback
+  }
+  function measureNotesWidth(li){
+    // Notes inline container
+    var notes = li && li.querySelector('.notes-inline');
+    if (notes){
+      return notes.getBoundingClientRect().width;
+    }
+    // Fallback: try a delete button width plus some padding if notes missing
+    var del = li && li.querySelector('.delete-btn');
+    if (del){
+      var dw = del.getBoundingClientRect().width;
+      return Math.max(120, dw + 24);
+    }
+    return 180;
+  }
+  function alignHomeControls(){
+    try{
+      if (!isSidebarOpen() || !isHomeVisible()) return;
+      var controls = document.querySelector('#controls-row');
+      if (!controls) return;
+      var list = document.querySelector('#master-list');
+      var li = list && list.querySelector('li'); // first row exemplar
+      if (!li) return;
+
+      var artistW = measureArtistWidth(li);
+      var notesW  = measureNotesWidth(li);
+
+      // Boundaries to avoid overflow/cutoff
+      var main = document.querySelector('main') || document.body;
+      var maxW = (main.getBoundingClientRect().width || window.innerWidth) - 24;
+      var sortMin = 120;
+      artistW = Math.max(80, Math.min(260, artistW));
+      notesW  = Math.max(120, Math.min(360, notesW));
+
+      // Apply columns: Sort flex | Add files (artistW) | Delete All (notesW)
+      controls.style.gridTemplateColumns = 'minmax(0,1fr) ' + px(artistW) + ' ' + px(notesW);
+
+      // Ensure wrapper/buttons map to columns
+      var mvb = document.querySelector('#master-view-buttons');
+      if (mvb) mvb.style.display = 'contents';
+      var add = document.querySelector('#upload-master-btn');
+      var del = document.querySelector('#delete-all-btn');
+      var filt = document.querySelector('#filters-group');
+      if (add) { add.style.gridColumn = '2'; add.style.width = '100%'; }
+      if (del) { del.style.gridColumn = '3'; del.style.width = '100%'; }
+      if (filt){ filt.style.gridColumn = '1'; }
+    }catch(e){ /* silent */ }
+  }
+
+  // Run on DOM ready, window resize, and whenever the master list or sidebar changes
+  function ready(fn){ document.readyState!=='loading' ? fn() : document.addEventListener('DOMContentLoaded', fn); }
+
+  ready(function(){
+    alignHomeControls();
+    window.addEventListener('resize', alignHomeControls, {passive:true});
+
+    // Observe changes to the master list and sidebar collapsed state
+    var list = document.querySelector('#master-list');
+    if (list){
+      new MutationObserver(function(){ alignHomeControls(); })
+        .observe(list, {childList:true, subtree:true});
+    }
+    var sidebar = document.querySelector('.left-col');
+    if (sidebar){
+      new MutationObserver(function(){ alignHomeControls(); })
+        .observe(sidebar, {attributes:true, attributeFilter:['class']});
+    }
+  });
+})();
+</script>
 </html>
