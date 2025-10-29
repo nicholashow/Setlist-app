@@ -6018,6 +6018,167 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
   }
 })();
 </script>
+
+<style id="patch-2025-10-29-scroll-autohide-handle-plain">
+/* === Sidebar external scroller: auto-hide === */
+#sidebar-external-scroll {
+  opacity: 0;
+  transition: opacity 0.18s ease-in-out;
+  pointer-events: none;
+}
+/* Show when active (hover/scroll/drag) and when overflow exists */
+aside.left-col:hover #sidebar-external-scroll,
+#sidebar-external-scroll.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* === Handle: plain grey pill, arrow visible === */
+#sidebar-toggle {
+  width: 18px !important;
+  min-width: 18px !important;
+  height: 60px; /* default; JS aligns to All Songs box height */
+  border-radius: 9999px !important;
+  background: #6B7280 !important; /* temp; JS will sync to file box bg */
+  color: #ffffff !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.20) !important;
+  position: relative;
+  padding: 0 !important;
+}
+/* Remove prior scroller-like grip */
+#sidebar-toggle::before { content: none !important; }
+
+/* Ensure arrow is visible, not clipped */
+#sidebar-toggle svg {
+  position: static !important;
+  width: 16px !important;
+  height: 16px !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  clip: auto !important;
+}
+</style>
+
+<script id="patch-2025-10-29-scroll-autohide-handle-plain-js">
+(function(){
+  if (window.__scroll_autohide_plain_handle_patch__) return;
+  window.__scroll_autohide_plain_handle_patch__ = true;
+
+  // ==== Auto-hide external sidebar scrollbar ====
+  var aside = document.querySelector('aside.left-col');
+  var scroller = aside && aside.querySelector('.left-col-main-content');
+  var rail = document.getElementById('sidebar-external-scroll');
+  var thumb = document.getElementById('sidebar-thumb');
+
+  function updateThumb(){
+    if (!scroller || !rail) return;
+    var content = scroller.scrollHeight;
+    var visible = scroller.clientHeight;
+    if (content <= visible + 1) {
+      rail.style.display = 'none';
+      return;
+    }
+    rail.style.display = 'block';
+  }
+
+  function showRailTemp(){
+    if (!rail) return;
+    rail.classList.add('active');
+    clearTimeout(showRailTemp._t);
+    showRailTemp._t = setTimeout(function(){ rail.classList.remove('active'); }, 1200);
+  }
+
+  if (scroller && rail) {
+    scroller.addEventListener('scroll', function(){
+      updateThumb();
+      showRailTemp();
+    }, {passive:true});
+    if (thumb) {
+      ['mousedown','touchstart'].forEach(function(evt){
+        thumb.addEventListener(evt, function(){
+          rail.classList.add('active');
+        }, {passive:false});
+      });
+      ['mouseup','touchend','touchcancel','mouseleave'].forEach(function(evt){
+        window.addEventListener(evt, function(){
+          rail.classList.remove('active');
+        });
+      });
+    }
+    updateThumb();
+  }
+
+  // ==== Make handle match the file box background (light/dark safe) ====
+  function getFileBoxBg(){
+    // Container that wraps the UL on Home
+    var container = document.querySelector('div.bg-white.rounded-xl.shadow-lg.overflow-hidden, .dark div.dark\:bg-gray-800.rounded-xl.shadow-lg.overflow-hidden');
+    if (!container) {
+      // fallback: parent of #master-list
+      var list = document.getElementById('master-list');
+      container = list && list.parentElement;
+    }
+    if (!container) return null;
+    var s = window.getComputedStyle(container);
+    return s && s.backgroundColor || null;
+  }
+
+  function syncHandleColor(){
+    var btn = document.getElementById('sidebar-toggle');
+    var bg = getFileBoxBg();
+    if (btn && bg) {
+      btn.style.background = bg;
+    }
+  }
+
+  // ==== Align handle with "ALL SONGS" header box top/height ====
+  function rect(el){ var r=el.getBoundingClientRect(); return {top:r.top,left:r.left,bottom:r.bottom,height:r.height}; }
+  function alignHandle(){
+    var btn = document.getElementById('sidebar-toggle');
+    var header = aside && aside.querySelector('#home-btn');
+    if (!btn || !header || !aside) return;
+    var a = rect(aside);
+    var h = rect(header);
+    var topOffset = Math.max(0, Math.round(h.top - a.top));
+    btn.style.marginTop = topOffset + 'px';
+    btn.style.height = Math.round(h.height) + 'px';
+  }
+
+  // Ensure the arrow SVG remains interactive + visible
+  function ensureArrow(){
+    var btn = document.getElementById('sidebar-toggle');
+    if (!btn) return;
+    var svg = btn.querySelector('svg');
+    if (svg) {
+      svg.style.display = 'block';
+      svg.style.opacity = '1';
+    }
+  }
+
+  function init(){
+    syncHandleColor();
+    alignHandle();
+    ensureArrow();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+  window.addEventListener('resize', function(){ syncHandleColor(); alignHandle(); });
+
+  // Re-sync after toggling/collapsing the sidebar
+  if (window.jQuery) {
+    jQuery(document).on('click', '#sidebar-toggle', function(){
+      setTimeout(function(){ syncHandleColor(); alignHandle(); ensureArrow(); }, 0);
+    });
+  }
+})();
+</script>
 </body>
 <style id="review-board-patch-2025-10-29-HOMECONTROLS-V9">
 /* Scope: HOME only, Sidebar OPEN, Simple View OFF */
