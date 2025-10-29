@@ -5702,18 +5702,29 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
 </style>
 
 
-<style id="focused-fixes-2025-10-29">
-/* Prevent horizontal pan */
+<style id="focused-fixes-v25">
+/* 0) Prevent lateral page scroll across devices */
 html, body, #app, main { overflow-x: hidden !important; max-width: 100vw !important; }
 html, body { touch-action: pan-y !important; overscroll-behavior-x: none !important; }
 
-/* Sidebar external scroller: match Top/Least Played visual */
+/* 1) Hide native sidebar scrollbar (we render a custom one to match Top/Least Played) */
+.left-col .left-col-main-content {
+  scrollbar-width: none;            /* Firefox */
+  -ms-overflow-style: none;         /* IE/Edge legacy */
+}
+.left-col .left-col-main-content::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;         /* WebKit (iPad Safari) */
+}
+
+/* Custom external sidebar scroller: match Top/Least Played */
 #sidebar-external-scroll {
   position: absolute;
-  right: 0;                /* same lane as stats */
-  width: 12px;             /* visual width */
+  right: 0;
+  width: 12px;                      /* same visual width */
   background: transparent;
-  display: none;           /* toggled by JS when overflow exists */
+  display: none;                    /* enabled only when overflow */
   z-index: 2;
 }
 #sidebar-external-scroll .track {
@@ -5721,91 +5732,93 @@ html, body { touch-action: pan-y !important; overscroll-behavior-x: none !import
   border-radius: 8px;
 }
 #sidebar-thumb {
-  position: absolute; left:2px; width:8px;
-  border-radius: 8px;
+  position: absolute; left:2px; width:8px; border-radius:8px;
   background: rgba(255,255,255,0.5);
-  cursor: pointer;
-  user-select: none; -webkit-user-select: none;
-  touch-action: none;
-  display: none;           /* shown only during scroll */
+  user-select: none; -webkit-user-select:none; touch-action:none;
+  display: none;                    /* visible only during active scroll */
 }
 #sidebar-external-scroll.active #sidebar-thumb { display: block; }
-#sidebar-external-scroll:hover #sidebar-thumb { background: rgba(255,255,255,0.7); }
 
-/* Sidebar toggle arrow orientation (center icon flips based on state) */
-#sidebar-toggle svg { transition: transform 0.18s ease-in-out; display:inline-block; }
-#sidebar-toggle.arrow-in svg { transform: rotate(180deg); } /* inward when open */
-#sidebar-toggle.arrow-out svg { transform: rotate(0deg); }   /* outward when closed */
-
-/* Sort By: keep native control & arrow; always visually read 'Sort By' */
-#sort-proxy-wrap { position: relative; display: inline-block; }
+/* 2) Sort By proxy: keep native arrow on right, always render label text "Sort By" */
+#sort-proxy-wrap { position: relative; display: inline-block; vertical-align: middle; }
 #sort-proxy-label {
-  position: absolute; left:0.5rem; top:50%; transform: translateY(-50%);
+  position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%);
   font-weight: 600; pointer-events: none; white-space: nowrap;
   color: #111827;
 }
 .dark #sort-proxy-label { color: #E5E7EB; }
-/* Hide the select's text but keep the native arrow on iPad Safari */
+/* Hide selected text but KEEP native arrow on iPad Safari */
 #sort-proxy-wrap select#sort-dropdown {
-  -webkit-appearance: menulist; appearance: menulist;
-  color: transparent; text-shadow: none; -webkit-text-fill-color: transparent;
-  background: transparent;
-  width: 100%; height: 100%;
+  -webkit-appearance: menulist !important;
+  appearance: menulist !important;
+  background: transparent !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  width: 100% !important; height: 100% !important;
+  cursor: pointer;
 }
-/* Focus ring around the whole select, no size change */
 #sort-dropdown:focus { outline: 2px solid #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.35); border-radius: 0.5rem; }
+
+/* 3) Sidebar toggle arrow flips based on state */
+#sidebar-toggle svg { display:inline-block; transition: transform 0.18s ease-in-out; }
+#sidebar-toggle.arrow-in svg { transform: rotate(180deg); } /* inward when open */
+#sidebar-toggle.arrow-out svg { transform: rotate(0deg); }   /* outward when closed */
 </style>
 
-<script id="focused-fixes-2025-10-29-js">
+<script id="focused-fixes-v25-js">
 (function(){
-  if (window.__focused_fixes__) return;
-  window.__focused_fixes__ = true;
+  if (window.__focused_fixes_v25__) return;
+  window.__focused_fixes_v25__ = true;
 
   function rect(el){ var r=el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
 
-  // 1) Wrap Sort dropdown with proxy that overlays "Sort By" text, keeps native arrow
+  // A) Sort By proxy wrapper that always shows "Sort By" label
   function initSortProxy(){
     var sel = document.getElementById('sort-dropdown');
     if (!sel) return;
-    if (!document.getElementById('sort-proxy-wrap')){
-      var wrap = document.createElement('span'); wrap.id='sort-proxy-wrap';
+    if (!document.getElementById('sort-proxy-wrap')) {
+      var wrap = document.createElement('span'); wrap.id = 'sort-proxy-wrap';
       sel.parentNode.insertBefore(wrap, sel); wrap.appendChild(sel);
       var label = document.createElement('span'); label.id='sort-proxy-label'; label.textContent='Sort By'; wrap.appendChild(label);
     }
-    // Default A-Z
+    // Default remains A-Z
     if (!sel.value || sel.value === 'recent') sel.value = 'name';
   }
 
-  // 2) Make Sort By same width as Add files, height equals Search box (not taller)
+  // B) Size Sort By to match width of file input boxes below (Artist/Notes) and be no taller than Search
   function sizeSortBy(){
-    var sel = document.getElementById('sort-dropdown');
-    var add = document.getElementById('upload-master-btn');
-    var search = document.getElementById('search');
     var wrap = document.getElementById('sort-proxy-wrap');
-    if (!sel || !add || !wrap) return;
-    var w = rect(add).width;
-    var h = search ? rect(search).height : rect(add).height;
+    var sel  = document.getElementById('sort-dropdown');
+    var list = document.getElementById('master-list');
+    var search = document.getElementById('search');
+    if (!wrap || !sel || !list) return;
+    var refInput = list.querySelector('input[placeholder="Artist"], input[placeholder="Notes"]');
+    var refBox = refInput ? (refInput.parentElement || refInput) : null;
+    if (!refBox) return;
+    var w = rect(refBox).width;
     wrap.style.width = Math.round(w) + 'px';
-    wrap.style.height = Math.round(h) + 'px';
+    // Height: not more than Search box
+    if (search) { wrap.style.height = Math.round(rect(search).height) + 'px'; }
     sel.style.width = '100%'; sel.style.height = '100%';
   }
 
-  // 3) Make Add files & Delete All same width as file input boxes when sidebar is open
+  // C) Make Add files & Delete All not wider than input boxes and not taller than Search
   function sizeActionButtons(){
     var add = document.getElementById('upload-master-btn');
     var del = document.getElementById('delete-all-btn');
     var list = document.getElementById('master-list');
+    var search = document.getElementById('search');
     var aside = document.querySelector('aside.left-col');
     if (!add || !del || !list || !aside) return;
-    if (aside.classList.contains('collapsed')) return; // only when sidebar open
-    // find first visible Artist/Notes input
-    var ref = list.querySelector('input[placeholder="Artist"], input[placeholder="Notes"]');
-    if (!ref) return;
-    var w = rect(ref).width;
-    add.style.width = Math.round(w) + 'px';
-    del.style.width = Math.round(w) + 'px';
-    // do not exceed Search height
-    var search = document.getElementById('search');
+    if (aside.classList.contains('collapsed')) return; // only when sidebar is open
+
+    var refInput = list.querySelector('input[placeholder="Artist"], input[placeholder="Notes"]');
+    var refBox = refInput ? (refInput.parentElement || refInput) : null;
+    if (!refBox) return;
+    var w = Math.round(rect(refBox).width);
+    add.style.maxWidth = w + 'px';
+    del.style.maxWidth = w + 'px';
+    // Cap height by Search box
     if (search) {
       var h = Math.round(rect(search).height);
       add.style.maxHeight = h + 'px';
@@ -5813,7 +5826,7 @@ html, body { touch-action: pan-y !important; overscroll-behavior-x: none !import
     }
   }
 
-  // 4) Sidebar toggle arrow must flip based on collapsed state
+  // D) Sidebar toggle arrow flipping per collapsed state
   function ensureToggleArrow(){
     var btn = document.getElementById('sidebar-toggle');
     var aside = document.querySelector('aside.left-col');
@@ -5825,32 +5838,41 @@ html, body { touch-action: pan-y !important; overscroll-behavior-x: none !import
       btn.classList.remove('arrow-in','arrow-out');
       if (aside.classList.contains('collapsed')) btn.classList.add('arrow-out'); else btn.classList.add('arrow-in');
     }
-    var obs = new MutationObserver(sync); obs.observe(aside, {attributes:true, attributeFilter:['class']});
-    sync();
+    var mo = new MutationObserver(sync); mo.observe(aside, {attributes:true, attributeFilter:['class']}); sync();
   }
 
-  // 5) Sidebar external scroller with stats visual; show during scroll; hide immediately after stop
+  // E) Single custom external sidebar scroller; hide native; show during scroll; hide immediately after
   function initSidebarScroller(){
     var aside = document.querySelector('aside.left-col');
     var scroller = aside && aside.querySelector('.left-col-main-content');
     if (!aside || !scroller) return;
-    var rail = document.getElementById('sidebar-external-scroll');
+
+    // Remove duplicates if any
+    var rails = aside.querySelectorAll('#sidebar-external-scroll');
+    if (rails.length > 1) {
+      rails.forEach(function(r, i){ if (i>0) r.remove(); });
+    }
+    var rail = rails[0];
     if (!rail) {
-      rail = document.createElement('div'); rail.id='sidebar-external-scroll';
+      rail = document.createElement('div');
+      rail.id = 'sidebar-external-scroll';
       rail.innerHTML = '<div class="track"></div><div id="sidebar-thumb"></div>';
       aside.appendChild(rail);
     }
+
+    function rect(el){ var r=el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
     function layout(){
       var a = rect(aside), s = rect(scroller);
       rail.style.top = (s.top - a.top) + 'px';
       rail.style.height = s.height + 'px';
       rail.style.display = (scroller.scrollHeight > scroller.clientHeight + 1) ? 'block' : 'none';
-      // compute thumb size/pos
-      var ratio = s.height / scroller.scrollHeight;
+
+      // Thumb sizing/position
       var thumb = document.getElementById('sidebar-thumb');
       if (thumb) {
+        var ratio = s.height / scroller.scrollHeight;
         var th = Math.max(20, Math.floor(s.height * ratio));
-        var ty = Math.floor(scroller.scrollTop * (s.height - th) / (scroller.scrollHeight - s.height));
+        var ty = Math.floor(scroller.scrollTop * (s.height - th) / Math.max(1, (scroller.scrollHeight - s.height)));
         thumb.style.height = th + 'px';
         thumb.style.top = ty + 'px';
       }
@@ -5866,25 +5888,19 @@ html, body { touch-action: pan-y !important; overscroll-behavior-x: none !import
     layout();
   }
 
-  // 6) New Genre: open color picker BEFORE keyboard on tap
+  // F) New Genre: open color picker before keyboard on first tap/click
   function interceptGenreColor(){
     var color = document.getElementById('genre-color');
     var name  = document.getElementById('genre-name');
     if (!color || !name) return;
-    var firstTap = true;
-    function openPicker(ev){
-      if (firstTap) {
-        ev.preventDefault(); // prevent immediate keyboard
-        // Trigger the color picker
-        color.click();
-      }
+    var first = true;
+    function openPicker(e){
+      if (first) { e.preventDefault(); color.click(); }
     }
     name.addEventListener('touchstart', openPicker, {passive:false});
     name.addEventListener('mousedown',   openPicker, {passive:false});
     color.addEventListener('change', function(){
-      firstTap = false; // after choosing, allow keyboard next
-      name.focus({preventScroll:true});
-      setTimeout(function(){ firstTap = true; }, 1000); // reset after a moment for future taps
+      first = false; name.focus({preventScroll:true}); setTimeout(function(){ first = true; }, 800);
     });
   }
 
@@ -5896,168 +5912,8 @@ html, body { touch-action: pan-y !important; overscroll-behavior-x: none !import
     initSidebarScroller();
     interceptGenreColor();
   }
-
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyAll); else applyAll();
   window.addEventListener('resize', function(){ sizeSortBy(); sizeActionButtons(); });
-  var list = document.getElementById('master-list');
-  if (list) {
-    var obs = new MutationObserver(function(){ sizeActionButtons(); });
-    obs.observe(list, {childList:true});
-  }
-})();
-</script>
-
-<style id="ipad-normalize-2025-10-29">
-/* Normalize across desktop vs iPad Safari */
-html, body { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-* { box-sizing: border-box; }
-html, body, #app, main { overflow-x: hidden !important; max-width: 100vw !important; }
-#app { position: relative; }
-/* Prevent accidental horizontal rubber-banding causing visual shift */
-body { overscroll-behavior-x: none; touch-action: pan-y; }
-
-/* Make button/select/input line-heights consistent across engines */
-button, select, input { font: inherit; line-height: 1.2; }
-
-/* Keep native iOS select arrow on the right while hiding value text (overlay says "Sort By") */
-#sort-proxy-wrap select#sort-dropdown {
-  -webkit-appearance: menulist !important;
-  appearance: menulist !important;
-  background: transparent !important;
-  color: transparent !important;
-  -webkit-text-fill-color: transparent !important;
-}
-
-/* Ensure Sort By wrapper can be sized exactly without affecting layout */
-#sort-proxy-wrap { display: inline-block; vertical-align: middle; }
-
-/* Sidebar external scrollbar: match Top/Least (12px rail, 8px thumb) */
-#sidebar-external-scroll { width: 12px; }
-#sidebar-thumb { width: 8px; left: 2px; border-radius: 8px; }
-
-/* Center the chevron in the sidebar toggle consistently */
-#sidebar-toggle svg { display: inline-block; vertical-align: middle; }
-</style>
-
-<script id="ipad-normalize-2025-10-29-js">
-(function(){
-  if (window.__ipad_normalize__) return;
-  window.__ipad_normalize__ = true;
-
-  function rect(el){ var r = el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
-  var raf = window.requestAnimationFrame || function(cb){return setTimeout(cb,16)};
-
-  // Recalculate layout after fonts load (iPad Safari often shifts metrics)
-  function afterFontsReady(cb){ 
-    if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(function(){ raf(cb); });
-    } else {
-      window.addEventListener('load', function(){ raf(cb); }, {once:true});
-    }
-  }
-
-  // Make Sort By same width as Add files and align heights to Search on iPad
-  function sizeSortBy(){
-    var sel = document.getElementById('sort-dropdown');
-    var wrap = document.getElementById('sort-proxy-wrap');
-    var add  = document.getElementById('upload-master-btn');
-    var search = document.getElementById('search');
-    if (!sel || !wrap || !add) return;
-    var w = rect(add).width;
-    wrap.style.width = Math.round(w) + 'px';
-    if (search) {
-      wrap.style.height = Math.round(rect(search).height) + 'px';
-    } else {
-      wrap.style.height = Math.round(rect(add).height) + 'px';
-    }
-    sel.style.width = '100%'; sel.style.height = '100%';
-  }
-
-  // Buttons width = width of input container (more stable than raw input width on iPad)
-  function sizeActionButtons(){
-    var add = document.getElementById('upload-master-btn');
-    var del = document.getElementById('delete-all-btn');
-    var list = document.getElementById('master-list');
-    var aside = document.querySelector('aside.left-col');
-    if (!add || !del || !list || !aside) return;
-    if (aside.classList.contains('collapsed')) return;
-
-    // Prefer the parent container of the Artist input for stable width
-    var refInput = list.querySelector('input[placeholder="Artist"], input[placeholder="Notes"]');
-    var refBox = refInput ? (refInput.parentElement || refInput) : null;
-    if (!refBox) return;
-    var w = Math.round(rect(refBox).width);
-    add.style.width = w + 'px';
-    del.style.width = w + 'px';
-  }
-
-  // Ensure chevron flips with actual sidebar state
-  function syncToggleArrow(){
-    var aside = document.querySelector('aside.left-col');
-    var btn = document.getElementById('sidebar-toggle');
-    if (!aside || !btn) return;
-    btn.classList.remove('arrow-in','arrow-out');
-    if (aside.classList.contains('collapsed')) btn.classList.add('arrow-out'); else btn.classList.add('arrow-in');
-  }
-
-  function observeSidebar(){
-    var aside = document.querySelector('aside.left-col');
-    if (!aside) return;
-    var mo = new MutationObserver(function(){ syncToggleArrow(); });
-    mo.observe(aside, {attributes:true, attributeFilter:['class']});
-    syncToggleArrow();
-  }
-
-  // Keep the sidebar scroller showing only while actively scrolling; hide immediately after
-  function bindSidebarScroller(){
-    var aside = document.querySelector('aside.left-col');
-    var scroller = aside && aside.querySelector('.left-col-main-content');
-    var rail = document.getElementById('sidebar-external-scroll');
-    if (!aside || !scroller || !rail) return;
-
-    function layout(){
-      var a = rect(aside), s = rect(scroller);
-      rail.style.top = (s.top - a.top) + 'px';
-      rail.style.height = s.height + 'px';
-      rail.style.display = (scroller.scrollHeight > scroller.clientHeight + 1) ? 'block' : 'none';
-      // thumb size/pos
-      var thumb = document.getElementById('sidebar-thumb');
-      if (thumb) {
-        var ratio = s.height / scroller.scrollHeight;
-        var th = Math.max(20, Math.floor(s.height * ratio));
-        var ty = Math.floor(scroller.scrollTop * (s.height - th) / (scroller.scrollHeight - s.height));
-        thumb.style.height = th + 'px';
-        thumb.style.top = ty + 'px';
-      }
-    }
-    function onScroll(){
-      layout();
-      rail.classList.add('active');
-      clearTimeout(scroller._hideT);
-      scroller._hideT = setTimeout(function(){ rail.classList.remove('active'); }, 60);
-    }
-    scroller.addEventListener('scroll', onScroll, {passive:true});
-    window.addEventListener('resize', layout);
-    layout();
-  }
-
-  function recalcAll(){
-    sizeSortBy();
-    sizeActionButtons();
-  }
-
-  function init(){
-    recalcAll();
-    observeSidebar();
-    bindSidebarScroller();
-    afterFontsReady(recalcAll);
-    // Also recalc after a tick to catch GitHub Pages paint
-    raf(recalcAll);
-  }
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
-  window.addEventListener('resize', recalcAll);
-  // Re-apply when master list changes
   var list = document.getElementById('master-list');
   if (list) {
     var obs = new MutationObserver(function(){ sizeActionButtons(); });
