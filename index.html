@@ -6856,6 +6856,212 @@ html, body, #app { overflow-x: hidden !important; }
   window.addEventListener('resize', function(){ positionHandle(); syncHandleColor(); });
 })();
 </script>
+
+<style id="patch-2025-10-29-handle-black-sortby-ui">
+/* Keep the page from shifting horizontally */
+html, body, #app { overflow-x: hidden !important; }
+
+/* ===== Sort By proxy with bigger arrow + full-box blue focus ===== */
+#sort-proxy-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 6px 36px 6px 12px; /* leave room for large arrow on right */
+  background: rgba(255,255,255,0.85);
+}
+.dark #sort-proxy-wrap { background: rgba(31,41,55,0.85); } /* dark: gray-800 */
+#sort-proxy-wrap:focus-within {
+  border-color: #3B82F6; /* blue-500 */
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.35);
+}
+#sort-proxy-label {
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+  color: #111827; /* gray-900 */
+}
+.dark #sort-proxy-label { color: #E5E7EB; } /* gray-200 */
+
+/* Make native select invisible but fully interactive */
+#sort-proxy-wrap select#sort-dropdown {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;                /* click anywhere to open */
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Big caret on right */
+#sort-proxy-wrap::after {
+  content: "▾";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 22px;          /* larger arrow */
+  line-height: 1;
+  color: #1F2937;           /* gray-800 */
+  pointer-events: none;
+}
+.dark #sort-proxy-wrap::after { color: #E5E7EB; } /* gray-200 */
+
+/* ===== Sidebar external scroller (strictly on scroll/drag) ===== */
+#sidebar-external-scroll {
+  opacity: 0;
+  transition: opacity 0.18s ease-in-out;
+  pointer-events: none;
+}
+#sidebar-external-scroll.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ===== Outside handle: black, seamless, arrow visible ===== */
+#sidebar-toggle {
+  position: absolute !important;
+  width: 18px !important;
+  min-width: 18px !important;
+  border-radius: 9999px !important;
+  background: #000000 !important; /* black */
+  color: #ffffff !important;
+  border: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: none !important;    /* seamless integration */
+  padding: 0 !important;
+  z-index: 70 !important;
+}
+/* ensure no previous rules hide the arrow */
+#sidebar-toggle svg {
+  display: block !important;
+  position: static !important;
+  width: 18px !important;
+  height: 18px !important;
+  opacity: 1 !important;
+  overflow: visible !important;
+  clip: auto !important;
+  transition: transform 0.18s ease-in-out;
+}
+/* Orientation: button's own 'collapsed' class drives the arrow */
+#sidebar-toggle.collapsed svg { transform: rotate(0deg); }       /* ← outward when closed */
+#sidebar-toggle:not(.collapsed) svg { transform: rotate(180deg);}/* → inward when open */
+</style>
+
+<script id="patch-2025-10-29-handle-black-sortby-ui-js">
+(function(){
+  if (window.__handle_black_sortby_ui_patch__) return;
+  window.__handle_black_sortby_ui_patch__ = true;
+
+  // ===== Sort By proxy: always shows "Sort By" label =====
+  function installSortProxy(){
+    var sel = document.getElementById('sort-dropdown');
+    if (!sel) return;
+    if (!document.getElementById('sort-proxy-wrap')) {
+      var wrap = document.createElement('div');
+      wrap.id = 'sort-proxy-wrap';
+      // Insert wrapper before select, then move select inside
+      sel.parentNode.insertBefore(wrap, sel);
+      wrap.appendChild(sel);
+      var label = document.createElement('span');
+      label.id = 'sort-proxy-label';
+      label.textContent = 'Sort By';
+      wrap.appendChild(label);
+    }
+    // Default = A-Z
+    if (!sel.value || sel.value === 'recent') sel.value = 'name';
+  }
+
+  // ===== Sidebar scroller: show while scrolling/dragging, hide after 2s idle =====
+  var aside = document.querySelector('aside.left-col');
+  var scroller = aside && aside.querySelector('.left-col-main-content');
+  var rail = document.getElementById('sidebar-external-scroll');
+  var thumb = document.getElementById('sidebar-thumb');
+  var hideTimer = null;
+  function ensureRailVisibilityBasedOnOverflow(){
+    if (!rail || !scroller) return;
+    var content = scroller.scrollHeight;
+    var visible = scroller.clientHeight;
+    if (content <= visible + 1) rail.style.display = 'none'; else rail.style.display = 'block';
+  }
+  function showRailNow(){ if (rail) rail.classList.add('active'); }
+  function scheduleHideRail(){ if (!rail) return; clearTimeout(hideTimer); hideTimer = setTimeout(function(){ rail.classList.remove('active'); }, 2000); }
+  function bindScrollAutoHide(){
+    if (!scroller || !rail) return;
+    scroller.addEventListener('scroll', function(){
+      ensureRailVisibilityBasedOnOverflow();
+      showRailNow();
+      scheduleHideRail();
+    }, {passive:true});
+    if (thumb) {
+      ['mousedown','touchstart'].forEach(function(evt){
+        thumb.addEventListener(evt, function(){ showRailNow(); clearTimeout(hideTimer); }, {passive:false});
+      });
+      ['mouseup','touchend','touchcancel','mouseleave'].forEach(function(evt){
+        window.addEventListener(evt, function(){ scheduleHideRail(); });
+      });
+    }
+    ensureRailVisibilityBasedOnOverflow();
+  }
+
+  // ===== Outside handle placement & alignment =====
+  function rect(el){ var r=el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
+  function placeHandleOutside(){
+    var app = document.getElementById('app');
+    var aside = document.querySelector('aside.left-col');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!app || !aside || !btn) return;
+    if (btn.parentElement !== app) {
+      if (aside.nextSibling) app.insertBefore(btn, aside.nextSibling);
+      else app.appendChild(btn);
+    }
+  }
+  function syncButtonOrientation(){
+    var aside = document.querySelector('aside.left-col');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!aside || !btn) return;
+    if (aside.classList.contains('collapsed')) btn.classList.add('collapsed'); else btn.classList.remove('collapsed');
+  }
+  function positionHandle(){
+    var app = document.getElementById('app');
+    var aside = document.querySelector('aside.left-col');
+    var header = aside && aside.querySelector('#home-btn');
+    var btn = document.getElementById('sidebar-toggle');
+    if (!app || !aside || !btn || !header) return;
+    var appR = rect(app), asideR = rect(aside), headerR = rect(header);
+    // Attach exactly outside the right edge of the sidebar
+    // Overlap by 1px to avoid any visible seam
+    btn.style.left = Math.round(asideR.right - appR.left - 1) + 'px';
+    // Align with ALL SONGS box
+    btn.style.top = Math.round(headerR.top - appR.top) + 'px';
+    btn.style.height = Math.round(headerR.height) + 'px';
+    syncButtonOrientation();
+  }
+
+  // Observe sidebar class changes to keep arrow correct and position stable
+  function observeSidebar(){
+    var aside = document.querySelector('aside.left-col');
+    if (!aside) return;
+    var obs = new MutationObserver(function(){ positionHandle(); });
+    obs.observe(aside, {attributes:true, attributeFilter:['class']});
+  }
+
+  function init(){
+    installSortProxy();
+    bindScrollAutoHide();
+    placeHandleOutside();
+    positionHandle();
+    observeSidebar();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  window.addEventListener('resize', positionHandle);
+})();
+</script>
 </body>
 <style id="review-board-patch-2025-10-29-HOMECONTROLS-V9">
 /* Scope: HOME only, Sidebar OPEN, Simple View OFF */
