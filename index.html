@@ -5965,4 +5965,41 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
   });
 })();
 </script>
+<style id="home-2nd-row-rework-2025-10-29">
+/* === Home 2nd Row Rework (non-destructive overrides) === */
+
+/* 1) Make the "Sort By" box ~2.5x wider.
+      The file already uses --filecolw for the proxy wrapper (default 320px).
+      320px * 2.5 = 800px. */
+:root { --filecolw: calc(320px * 2.5); }
+
+/* Also cover non-proxy implementations of the dropdown. */
+#master-view #sort-dropdown {
+  width: 450px !important;
+  max-width: 450px !important;
+  flex: 0 0 450px !important;
+}
+
+/* 2) Make the "Add Files" and "Delete All" buttons smaller.
+      Reduce the right-side grid footprint and keep buttons filling columns. */
+.left-col:not(.collapsed) ~ main #master-view-buttons {
+  grid-template-columns: 80px 80px !important;
+  width: 160px !important;
+}
+
+/* Tighten the buttons themselves slightly without altering behavior. */
+#master-view-buttons .btn-master,
+#master-view-buttons #upload-master-btn,
+#master-view-buttons #delete-all-btn {
+  padding: 6px 8px !important;   /* was larger; keeps tap targets okay */
+  font-size: 0.875rem !important; /* 14px-ish */
+}
+
+/* Keep buttons filling their grid cells */
+#master-view-buttons .btn-master,
+#master-view-buttons #upload-master-btn,
+#master-view-buttons #delete-all-btn {
+  width: 100% !important;
+}
+</style>
 </html>
