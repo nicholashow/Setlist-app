@@ -5809,4 +5809,70 @@ body.simple-view-on .left-col:not(.collapsed) ~ main .song-name-text {
   margin-right: 0 !important;
 }
 </style>
+<style id="review-board-patch-2025-10-29-HOMECONTROLS-V3">
+/* === FINAL GRID ALIGNMENT (Sidebar OPEN) ===
+   Goal: TWO rows above file boxes.
+   Row 1 (already in your file): Search / Simple View / Dark.
+   Row 2 (this controls row): Sort dropdown | Add files | Delete All
+   The three cells align to the columns of the song list below:
+   [ Name area (flex) | Artist+Runtime (220px) | Delete (72px) ]
+*/
+
+/* Controls row becomes a three-column grid that mirrors file row columns */
+.left-col:not(.collapsed) ~ main #controls-row{
+  display: grid !important;
+  grid-template-columns: 1fr 220px 72px !important;
+  align-items: center !important;
+  column-gap: 0.5rem !important;    /* matches song-details-container gap */
+  row-gap: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Left cell: Sort dropdown fills the flexible first column */
+.left-col:not(.collapsed) ~ main #filters-group{
+  grid-column: 1 !important;
+  display: block !important;
+  min-width: 0 !important;
+}
+.left-col:not(.collapsed) ~ main #sort-dropdown{
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+}
+
+/* Right cells: Buttons occupy the last two columns, aligned to file columns */
+.left-col:not(.collapsed) ~ main #master-view-buttons{
+  grid-column: 2 / span 2 !important;
+  display: grid !important;
+  grid-template-columns: 220px 72px !important;
+  column-gap: 0.5rem !important;
+  row-gap: 0 !important;
+  justify-self: end !important;
+  align-self: center !important;
+  position: static !important;
+  transform: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+}
+.left-col:not(.collapsed) ~ main #upload-master-btn{
+  grid-column: 1 !important;
+  width: 100% !important;
+}
+.left-col:not(.collapsed) ~ main #delete-all-btn{
+  grid-column: 2 !important;
+  width: 100% !important;
+}
+
+/* Nuke any earlier "full width buttons" overrides in sidebar-open mode */
+.left-col:not(.collapsed) ~ main #master-view-buttons .btn-master{
+  width: 100% !important;
+}
+
+/* Ensure only TWO rows total above file list */
+.left-col:not(.collapsed) ~ main #controls-row > *{
+  margin: 0 !important;
+}
+</style>
 </html>
