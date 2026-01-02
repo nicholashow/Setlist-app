@@ -19,186 +19,6 @@
         tailwind.config = {
             darkMode: 'class',
         }
-        // === Long-press (1s) before dragging files ===
-        let dragTimer = null;
-        $(document).on('mousedown touchstart', 'li.draggable', function(e) {
-            const item = $(this);
-            dragTimer = setTimeout(() => {
-                item.draggable('enable');
-            }, 1000); // 1 second hold
-            // disable dragging immediately until timer completes
-            item.draggable('disable');
-        }).on('mouseup mouseleave touchend touchcancel', 'li.draggable', function(e) {
-            clearTimeout(dragTimer);
-            // re-disable dragging so it requires hold again next time
-            $(this).draggable('disable');
-        });
-        // Initially disable all draggables until long-press
-        $(function() {
-            $('li.draggable').draggable('disable');
-        });
-        // === Refined long-press-to-drag with movement threshold ===
-        (function(){
-            let dragTimer = null;
-            let startX = 0, startY = 0;
-            const THRESHOLD = 8; // px
-            const HOLD_MS = 1100;
-            function getPoint(e){
-                if (e.touches && e.touches.length) return {x: e.touches[0].clientX, y: e.touches[0].clientY};
-                if (e.changedTouches && e.changedTouches.length) return {x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY};
-                return {x: e.clientX || 0, y: e.clientY || 0};
-            }
-            function cancelTimer(){
-                if (dragTimer){ clearTimeout(dragTimer); dragTimer = null; }
-            }
-            $(document).on('mousedown touchstart', 'li.draggable', function(e) {
-                const item = $(this);
-                const p = getPoint(e);
-                startX = p.x; startY = p.y;
-                item.draggable('disable'); // always start disabled
-                cancelTimer();
-                dragTimer = setTimeout(() => {
-                    // Only enable if we haven't moved too much during the hold
-                    item.draggable('enable');
-                }, HOLD_MS);
-            });
-            $(document).on('mousemove touchmove', 'li.draggable', function(e) {
-                if (!dragTimer) return; // already enabled or canceled
-                const p = getPoint(e);
-                const dx = Math.abs(p.x - startX);
-                const dy = Math.abs(p.y - startY);
-                if (dx > THRESHOLD || dy > THRESHOLD) {
-                    // User is scrolling or moving: cancel drag enabling
-                    cancelTimer();
-                    $(this).draggable('disable');
-                }
-            });
-            $(document).on('mouseup mouseleave touchend touchcancel', 'li.draggable', function(e) {
-                cancelTimer();
-                // Require long-press again next time
-                $(this).draggable('disable');
-            });
-            // On load, add a small distance requirement for extra safety
-            $(function(){
-                try {
-                    $('li.draggable').draggable('option', 'distance', 12);
-                } catch(e) {}
-            });
-        })();
-        // === Left-edge custom scrollbar logic (shown when sidebar is collapsed) ===
-        (function(){
-            const $main = $('main');
-            const $sidebar = $('.left-col');
-            const $edge = $('#edge-scrollbar');
-            const $thumb = $('#edge-thumb');
-
-            const MIN_THUMB = 48; // px minimum size
-            let dragging = false;
-            let trackTop = 0;
-            let trackHeight = 0;
-            let startY = 0;
-            let startScroll = 0;
-
-            function updateThumb(){
-                // Only operate if element present
-                if ($edge.length === 0) return;
-                const scrollEl = $main.get(0);
-                const scrollH = scrollEl.scrollHeight;
-                const clientH  = scrollEl.clientHeight;
-                const maxScroll = Math.max(1, scrollH - clientH);
-                const trackRect = $edge.get(0).getBoundingClientRect();
-                trackTop = trackRect.top + (window.innerHeight * 0.04); // 4vh top offset to match ::before
-                trackHeight = window.innerHeight * 0.92; // 92vh like CSS
-
-                // Thumb size proportional to viewport/total
-                let thumbH = Math.max(MIN_THUMB, (clientH / scrollH) * trackHeight);
-                $thumb.css('height', thumbH + 'px');
-
-                const ratio = $main.scrollTop() / maxScroll;
-                const maxY = trackHeight - thumbH;
-                const y = trackTop + (ratio * maxY);
-                $thumb.css('top', y + 'px');
-            }
-
-            function setScrollFromThumb(pageY){
-                const scrollEl = $main.get(0);
-                const scrollH = scrollEl.scrollHeight;
-                const clientH  = scrollEl.clientHeight;
-                const maxScroll = Math.max(1, scrollH - clientH);
-
-                const thumbH = $thumb.outerHeight();
-                const maxY = trackHeight - thumbH;
-                let localY = pageY - trackTop - (thumbH/2);
-                localY = Math.max(0, Math.min(maxY, localY));
-                const ratio = localY / maxY;
-                $main.scrollTop(ratio * maxScroll);
-            }
-
-            function showEdgeIfCollapsed(){
-                if ($sidebar.hasClass('collapsed')) {
-                    $edge.addClass('visible').removeClass('hidden');
-                    updateThumb();
-                } else {
-                    $edge.removeClass('visible').addClass('hidden');
-                }
-            }
-
-            // Sync on load and on changes
-            $(function(){
-                showEdgeIfCollapsed();
-                updateThumb();
-                // Update on main scroll & resize
-                $main.on('scroll', updateThumb);
-                $(window).on('resize', updateThumb);
-            });
-
-            // Tie into existing sidebar toggle
-            $('#sidebar-toggle').on('click', function(){
-                // Delay to allow class toggle to settle
-                setTimeout(showEdgeIfCollapsed, 0);
-                setTimeout(updateThumb, 0);
-            });
-
-            // Drag handling (mouse + touch) on the thumb
-            function onMove(e){
-                if (!dragging) return;
-                const pageY = (e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY);
-                setScrollFromThumb(pageY);
-                e.preventDefault();
-            }
-            function onUp(){
-                dragging = false;
-                $(document).off('mousemove touchmove', onMove);
-                $(document).off('mouseup touchend touchcancel', onUp);
-            }
-            $thumb.on('mousedown touchstart', function(e){
-                dragging = true;
-                $(document).on('mousemove touchmove', onMove);
-                $(document).on('mouseup touchend touchcancel', onUp);
-                e.preventDefault();
-            });
-
-            // Clicking the track jumps the thumb to that position
-            $edge.on('mousedown touchstart', function(e){
-                if (e.target === $thumb.get(0)) return; // handled by thumb
-                const pageY = (e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY);
-                setScrollFromThumb(pageY);
-            });
-
-            // Also update when content visibility changes (navigation)
-            const originalShow = window.show;
-            if (typeof originalShow === 'function') {
-                window.show = function(view){
-                    originalShow(view);
-                    // after view switch, update thumb position
-                    setTimeout(function(){
-                        showEdgeIfCollapsed();
-                        updateThumb();
-                    }, 0);
-                }
-            }
-        })();
-
     </script>
     <script>
         (function() {
@@ -454,7 +274,200 @@
 
         .viewer-btn-close:hover {
             background-color: rgba(220, 38, 38, 0.8); /* red-600 with opacity */
-            transform: translateY(-2px);
+     
+    <script id="jquery-dependent-init">
+        // NOTE: This block was moved to run AFTER jQuery/jQuery UI load (critical for iPad Safari).
+        window.addEventListener('load', function () {
+            if (!window.jQuery) {
+                console.error('Setlist Manager: jQuery failed to load; interactive behaviors may not work.');
+                return;
+            }
+            (function ($) {
+                // === Long-press (1s) before dragging files ===
+                        let dragTimer = null;
+                        $(document).on('mousedown touchstart', 'li.draggable', function(e) {
+                            const item = $(this);
+                            dragTimer = setTimeout(() => {
+                                item.draggable('enable');
+                            }, 1000); // 1 second hold
+                            // disable dragging immediately until timer completes
+                            item.draggable('disable');
+                        }).on('mouseup mouseleave touchend touchcancel', 'li.draggable', function(e) {
+                            clearTimeout(dragTimer);
+                            // re-disable dragging so it requires hold again next time
+                            $(this).draggable('disable');
+                        });
+                        // Initially disable all draggables until long-press
+                        $(function() {
+                            $('li.draggable').draggable('disable');
+                        });
+                        // === Refined long-press-to-drag with movement threshold ===
+                        (function(){
+                            let dragTimer = null;
+                            let startX = 0, startY = 0;
+                            const THRESHOLD = 8; // px
+                            const HOLD_MS = 1100;
+                            function getPoint(e){
+                                if (e.touches && e.touches.length) return {x: e.touches[0].clientX, y: e.touches[0].clientY};
+                                if (e.changedTouches && e.changedTouches.length) return {x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY};
+                                return {x: e.clientX || 0, y: e.clientY || 0};
+                            }
+                            function cancelTimer(){
+                                if (dragTimer){ clearTimeout(dragTimer); dragTimer = null; }
+                            }
+                            $(document).on('mousedown touchstart', 'li.draggable', function(e) {
+                                const item = $(this);
+                                const p = getPoint(e);
+                                startX = p.x; startY = p.y;
+                                item.draggable('disable'); // always start disabled
+                                cancelTimer();
+                                dragTimer = setTimeout(() => {
+                                    // Only enable if we haven't moved too much during the hold
+                                    item.draggable('enable');
+                                }, HOLD_MS);
+                            });
+                            $(document).on('mousemove touchmove', 'li.draggable', function(e) {
+                                if (!dragTimer) return; // already enabled or canceled
+                                const p = getPoint(e);
+                                const dx = Math.abs(p.x - startX);
+                                const dy = Math.abs(p.y - startY);
+                                if (dx > THRESHOLD || dy > THRESHOLD) {
+                                    // User is scrolling or moving: cancel drag enabling
+                                    cancelTimer();
+                                    $(this).draggable('disable');
+                                }
+                            });
+                            $(document).on('mouseup mouseleave touchend touchcancel', 'li.draggable', function(e) {
+                                cancelTimer();
+                                // Require long-press again next time
+                                $(this).draggable('disable');
+                            });
+                            // On load, add a small distance requirement for extra safety
+                            $(function(){
+                                try {
+                                    $('li.draggable').draggable('option', 'distance', 12);
+                                } catch(e) {}
+                            });
+                        })();
+                        // === Left-edge custom scrollbar logic (shown when sidebar is collapsed) ===
+                        (function(){
+                            const $main = $('main');
+                            const $sidebar = $('.left-col');
+                            const $edge = $('#edge-scrollbar');
+                            const $thumb = $('#edge-thumb');
+                
+                            const MIN_THUMB = 48; // px minimum size
+                            let dragging = false;
+                            let trackTop = 0;
+                            let trackHeight = 0;
+                            let startY = 0;
+                            let startScroll = 0;
+                
+                            function updateThumb(){
+                                // Only operate if element present
+                                if ($edge.length === 0) return;
+                                const scrollEl = $main.get(0);
+                                const scrollH = scrollEl.scrollHeight;
+                                const clientH  = scrollEl.clientHeight;
+                                const maxScroll = Math.max(1, scrollH - clientH);
+                                const trackRect = $edge.get(0).getBoundingClientRect();
+                                trackTop = trackRect.top + (window.innerHeight * 0.04); // 4vh top offset to match ::before
+                                trackHeight = window.innerHeight * 0.92; // 92vh like CSS
+                
+                                // Thumb size proportional to viewport/total
+                                let thumbH = Math.max(MIN_THUMB, (clientH / scrollH) * trackHeight);
+                                $thumb.css('height', thumbH + 'px');
+                
+                                const ratio = $main.scrollTop() / maxScroll;
+                                const maxY = trackHeight - thumbH;
+                                const y = trackTop + (ratio * maxY);
+                                $thumb.css('top', y + 'px');
+                            }
+                
+                            function setScrollFromThumb(pageY){
+                                const scrollEl = $main.get(0);
+                                const scrollH = scrollEl.scrollHeight;
+                                const clientH  = scrollEl.clientHeight;
+                                const maxScroll = Math.max(1, scrollH - clientH);
+                
+                                const thumbH = $thumb.outerHeight();
+                                const maxY = trackHeight - thumbH;
+                                let localY = pageY - trackTop - (thumbH/2);
+                                localY = Math.max(0, Math.min(maxY, localY));
+                                const ratio = localY / maxY;
+                                $main.scrollTop(ratio * maxScroll);
+                            }
+                
+                            function showEdgeIfCollapsed(){
+                                if ($sidebar.hasClass('collapsed')) {
+                                    $edge.addClass('visible').removeClass('hidden');
+                                    updateThumb();
+                                } else {
+                                    $edge.removeClass('visible').addClass('hidden');
+                                }
+                            }
+                
+                            // Sync on load and on changes
+                            $(function(){
+                                showEdgeIfCollapsed();
+                                updateThumb();
+                                // Update on main scroll & resize
+                                $main.on('scroll', updateThumb);
+                                $(window).on('resize', updateThumb);
+                            });
+                
+                            // Tie into existing sidebar toggle
+                            $('#sidebar-toggle').on('click', function(){
+                                // Delay to allow class toggle to settle
+                                setTimeout(showEdgeIfCollapsed, 0);
+                                setTimeout(updateThumb, 0);
+                            });
+                
+                            // Drag handling (mouse + touch) on the thumb
+                            function onMove(e){
+                                if (!dragging) return;
+                                const pageY = (e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY);
+                                setScrollFromThumb(pageY);
+                                e.preventDefault();
+                            }
+                            function onUp(){
+                                dragging = false;
+                                $(document).off('mousemove touchmove', onMove);
+                                $(document).off('mouseup touchend touchcancel', onUp);
+                            }
+                            $thumb.on('mousedown touchstart', function(e){
+                                dragging = true;
+                                $(document).on('mousemove touchmove', onMove);
+                                $(document).on('mouseup touchend touchcancel', onUp);
+                                e.preventDefault();
+                            });
+                
+                            // Clicking the track jumps the thumb to that position
+                            $edge.on('mousedown touchstart', function(e){
+                                if (e.target === $thumb.get(0)) return; // handled by thumb
+                                const pageY = (e.touches && e.touches[0] ? e.touches[0].clientY : e.clientY);
+                                setScrollFromThumb(pageY);
+                            });
+                
+                            // Also update when content visibility changes (navigation)
+                            const originalShow = window.show;
+                            if (typeof originalShow === 'function') {
+                                window.show = function(view){
+                                    originalShow(view);
+                                    // after view switch, update thumb position
+                                    setTimeout(function(){
+                                        showEdgeIfCollapsed();
+                                        updateThumb();
+                                    }, 0);
+                                }
+                            }
+                        })();
+                
+                
+            })(jQuery);
+        });
+    </script>
+       transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
         }
 
@@ -492,6 +505,17 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+/* === Sidebar selection modernization === */
+.setlist-item.selected{
+  background: linear-gradient(135deg, rgba(59,130,246,0.18), rgba(30,64,175,0.28));
+  border: 1px solid rgba(59,130,246,0.35);
+  border-radius: 10px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+}
+.setlist-item.selected .setlist-name{
+  font-weight: 700;
+}
+
         
         #setlist-details-toggle {
             padding: 0.5rem 0.75rem;
@@ -703,8 +727,9 @@
             align-items: center;
             justify-content: center;
             width: 48px; /* Increased width */
-            height: 60px;
+            height: 72px;
             border-radius: 0 8px 8px 0;
+            box-shadow: 0 8px 22px rgba(0,0,0,0.35);
             flex-shrink: 0;
             transition: all 0.3s ease-in-out;
         }
@@ -914,6 +939,13 @@
             width: auto;
             min-width: 100px; /* Reduced min-width */
         }
+/* === Controls row sizing: keep Sort / Add files / Delete All same height (iPad) === */
+#controls-row { align-items: center; }
+#sort-box, #sort-dropdown, #upload-master-btn, #delete-all-btn { height: 44px; }
+#sort-box { padding-right: 6px; }
+#sort-dropdown { padding-top: 0; padding-bottom: 0; }
+#master-view-buttons .btn-master{ display:flex; align-items:center; justify-content:center; }
+
         
         /* === Redesigned Grid Layout for Song Item Details === */
         .song-details-container {
@@ -997,6 +1029,16 @@
             cursor: pointer;
             padding: 0.75rem 0.5rem;
         }
+/* === Add Songs checkbox spacing (less cramped) === */
+.add-song-item input[type="checkbox"]{
+  margin-left: 12px;
+  margin-right: 12px;
+  transform: scale(1.05);
+}
+.add-song-item > label{
+  padding-left: 0 !important;
+}
+
         .add-song-item > label:hover .custom-checkbox-box {
             background-color: #2563eb; /* Darker blue on hover */
         }
@@ -1298,7 +1340,8 @@
   box-sizing: border-box !important;
   background: #ffffff !important;
   color: #2563eb !important;
-  border: 2px solid #2563eb !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.45) !important;
 }
 
 /* magic-square contenteditable */
@@ -1312,6 +1355,16 @@
 }
 /* Keep siblings from shifting during edit */
 .song-name.renaming { position: relative; }
+/* === Rename UX: show full text + clear white outline on iPad === */
+.song-name.renaming .edit-magic-square{
+  white-space: pre-wrap !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  z-index: 5 !important;
+}
+
 
         /* === iPad multipage viewer (Option B) === */
         html.doc-viewer-active, body.doc-viewer-active {
@@ -1454,9 +1507,8 @@
           /* left/top set dynamically to the INPUT center */
         }
 
-        #-webkit-date-text { color: #ffffff; } /* noop fallback */
         .dark #setlist-venue::placeholder { color: #ffffff !important; }
-        # setlist-venue::placeholder { color: #ffffff !important; } /* ensure white in light mode too */
+        #setlist-venue::placeholder { color: #ffffff !important; } /* ensure white in light mode too */
 
         #setlist-sort-filter-dropdown {
           text-align: center;
@@ -1622,9 +1674,9 @@ html.dark .notes-inline .notes-textarea {
 #plays-list > li .song-name-text,
 #genre-page-list > li .song-name-text {
   display:block;
-  white-space: normal; /* allow wrapping */
-  overflow: visible;
-  text-overflow: clip;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding-right: 260px; /* reserve space so long names don't go under inputs */
   line-height: 1.25;
 }
@@ -1762,6 +1814,14 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   -webkit-touch-callout: default !important;
   touch-action: manipulation !important;
 }
+
+
+/* Center selected value in Order dropdown */
+#setlist-sort-filter-dropdown{
+  text-align: center;
+  text-align-last: center;
+}
+
 </style>
 <style>:root{ --emblems-left: -1.15rem; }</style>
 
@@ -1825,6 +1885,13 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   #drag-proxy-nameonly-large { display: none !important; }
 </style>
 
+
+<style>
+/* === Reduce iOS tap flash on PDF controls === */
+.doc-viewer-controls button, .doc-viewer-controls a, #doc-viewer button {
+  -webkit-tap-highlight-color: transparent;
+}
+</style>
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -1927,13 +1994,21 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
                     </div>
                     <div id="controls-row">
                         <div id="filters-group">
-                            <select id="sort-dropdown" class="p-2 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select">
-        <option value="name" selected>A-Z</option>
+                            <div id="sort-box" class="sort-box relative flex items-center rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent">
+  <span id="sort-prefix" class="pl-2 pr-1 text-sm font-medium whitespace-nowrap text-gray-700 dark:text-gray-200">Sort By</span>
+  <select id="sort-dropdown" class="flex-1 py-2 pr-8 pl-1 rounded-lg bg-transparent text-sm dark:bg-transparent dark:text-gray-200 filter-select">
+<option value="name" selected>A-Z</option>
         <option value="artist">Artist</option>
         <option value="energy">Energy</option>
         <option value="lastPlayed">Last played</option>
         <option value="recent">Recently added</option>
-    </select>
+  </select>
+  <div class="pointer-events-none absolute right-2 flex items-center text-gray-500 dark:text-gray-400">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" clip-rule="evenodd"/>
+    </svg>
+  </div>
+</div>
                         <div id="sort-genre-flyout">
                             <div class="title">Genres</div>
                             <div class="slot" id="sort-genre-slot"></div>
@@ -3661,6 +3736,45 @@ html.dark #notes-popover-text { background: #111827; color: #e5e7eb; border-colo
 /* Make source notes box NOT flash blue when tapped to open */
 .notes-input {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* === Notes popover UX fixes (iPad) === */
+#notes-popover-header{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  gap:8px;
+}
+#notes-popover-title{
+  text-align:center;
+  width:100%;
+  font-weight:700;
+  color:#f9fafb;
+}
+#notes-popover-close{
+  position:absolute;
+  right:8px;
+  top:50%;
+  transform:translateY(-50%);
+}
+#notes-popover{
+  background:#111827;
+  border:1px solid #6b7280;
+}
+#notes-popover-text{
+  display:block;
+  margin: 8px auto 10px;
+  width: calc(100% - 20px);
+  background:#0b0f19;
+  color:#f9fafb;
+  border:1px solid #6b7280;
+  box-sizing:border-box;
+}
+html.dark #notes-popover-text{
+  background:#0b0f19;
+  color:#f9fafb;
+  border-color:#6b7280;
 }
 </style>
 <div id="notes-popover-overlay" aria-hidden="true"></div>
@@ -5738,9 +5852,9 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
 #upload-master-btn, #delete-all-btn { line-height: 1.2; padding-top: .4rem; padding-bottom: .4rem; }
 
 /* 3) Sidebar handle arrow (no guessing): class reflects state */
-#sidebar-toggle svg { display:inline-block; transition: transform .18s ease-in-out; }
-#sidebar-toggle.arrow-in svg { transform: rotate(180deg); } /* inward when open */
-#sidebar-toggle.arrow-out svg { transform: rotate(0deg); }   /* outward when closed */
+#sidebar-toggle svg { display:inline-block; transition: none; }
+#sidebar-toggle.arrow-in svg { transform: rotate(0deg); } /* left when open */
+#sidebar-toggle.arrow-out svg { transform: rotate(180deg); }   /* right when closed */
 </style>
 
 <script id="css-firstframe-align-v27-js">
