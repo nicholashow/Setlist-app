@@ -1892,6 +1892,261 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
   -webkit-tap-highlight-color: transparent;
 }
 </style>
+
+<style id="nick-fixes-v3">
+/* === Nick Fixes v3 (Jan 2, 2026) === */
+
+/* Sidebar: slide main over sidebar (drawer style), smoother on iPad */
+:root{ --sidebarW: 256px; }
+
+#app{ position: relative; overflow: hidden; }
+
+/* Make sidebar a fixed drawer so main can slide over it */
+aside.left-col{
+  position: fixed !important;
+  top: 0 !important; left: 0 !important;
+  height: 100vh !important;
+  width: var(--sidebarW, 256px) !important;
+  z-index: 40 !important;
+  transform: translateX(0);
+  transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  will-change: transform;
+}
+
+/* Keep width while collapsed; just move off-screen */
+aside.left-col.collapsed{
+  width: var(--sidebarW, 256px) !important;
+  padding: 1rem !important;
+  transform: translateX(calc(-1 * var(--sidebarW, 256px))) !important;
+}
+
+/* Main slides right when sidebar is open */
+main{
+  position: relative !important;
+  width: 100% !important;
+  z-index: 50 !important;
+  transition: transform 340ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  will-change: transform;
+}
+aside.left-col:not(.collapsed) ~ main{ transform: translateX(var(--sidebarW, 256px)) !important; }
+aside.left-col.collapsed ~ main{ transform: translateX(0) !important; }
+
+/* Toggle button moves with the drawer edge */
+#sidebar-toggle{
+  position: fixed !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  left: calc(var(--sidebarW, 256px) - 14px) !important;
+  transition: left 340ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+  z-index: 60 !important;
+  height: 88px !important;
+}
+aside.left-col.collapsed + #sidebar-toggle{ left: 0 !important; }
+aside.left-col:not(.collapsed) + #sidebar-toggle{ left: calc(var(--sidebarW, 256px) - 14px) !important; }
+
+/* Song title: clamp to 2 lines ONLY when sidebar is open + Simple View is OFF */
+aside.left-col:not(.collapsed) ~ main .song-name:not(.renaming){
+  overflow: hidden !important;
+  max-height: 2.6em !important;
+}
+aside.left-col:not(.collapsed) ~ main .song-name:not(.renaming) .song-name-text{
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: normal !important;
+  line-height: 1.3 !important;
+  max-height: 2.6em !important; /* 2 lines */
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+/* 1 line when sidebar closed OR Simple View is ON */
+body.simple-view-on .song-name:not(.renaming) .song-name-text,
+aside.left-col.collapsed ~ main .song-name:not(.renaming) .song-name-text{
+  display: block !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.3 !important;
+  max-height: 1.3em !important;
+}
+
+/* Add-to-setlist checkbox: a bit more breathing room to the right */
+.add-song-label-text{ padding-right: 8px; }
+
+/* Sort By arrow should be tappable */
+#sort-dropdown-arrow{ pointer-events: auto !important; cursor: pointer !important; }
+
+/* Notes popover: center modal + fully bordered textarea */
+#notes-popover{
+  left: 50% !important;
+  top: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  width: min(720px, 88vw) !important;
+  max-height: 78vh !important;
+}
+#notes-title{ width: 100% !important; text-align: center !important; }
+#notes-popover-content{ align-items: center !important; }
+#notes-textarea{
+  width: min(680px, 84vw) !important;
+  max-width: 100% !important;
+  margin: 12px auto 0 !important;
+  box-sizing: border-box !important;
+  border: 2px solid #6b7280 !important;
+  border-radius: 14px !important;
+  background: #000 !important;
+  color: #93c5fd !important;
+}
+
+/* PDF page-turn overlay animation (between songs) */
+#pdf-turn-overlay{
+  position: absolute; inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,0.08), rgba(0,0,0,0.55), rgba(0,0,0,0));
+  transform: translateX(0);
+}
+#pdf-turn-overlay.turn-next{ animation: pdfTurnNext 420ms ease; }
+#pdf-turn-overlay.turn-prev{ animation: pdfTurnPrev 420ms ease; }
+
+@keyframes pdfTurnNext{
+  0%{ opacity:0; transform: translateX(60%) skewX(-12deg); }
+  15%{ opacity:1; }
+  100%{ opacity:0; transform: translateX(-60%) skewX(12deg); }
+}
+@keyframes pdfTurnPrev{
+  0%{ opacity:0; transform: translateX(-60%) skewX(12deg); }
+  15%{ opacity:1; }
+  100%{ opacity:0; transform: translateX(60%) skewX(-12deg); }
+}
+</style>
+
+
+<script id="nick-fixes-v3-js">
+(function(){
+  // Keep --sidebarW accurate (Tailwind w-64 = 256px, but set dynamically for safety)
+  function syncSidebarW(){
+    try{
+      var aside = document.querySelector('aside.left-col');
+      if (!aside) return;
+      var w = Math.round(aside.getBoundingClientRect().width) || 256;
+      document.documentElement.style.setProperty('--sidebarW', w + 'px');
+    }catch(_){}
+  }
+  window.__syncSidebarW = syncSidebarW;
+  window.addEventListener('resize', function(){ setTimeout(syncSidebarW, 0); });
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(syncSidebarW, 0); setTimeout(syncSidebarW, 300); });
+
+  // Make the Sort By arrow tappable (opens the native <select>)
+  document.addEventListener('DOMContentLoaded', function(){
+    var a = document.getElementById('sort-dropdown-arrow');
+    var s = document.getElementById('sort-dropdown');
+    if (a && s){
+      a.addEventListener('click', function(ev){
+        ev.preventDefault(); ev.stopPropagation();
+        try{ s.focus(); }catch(_){}
+        try{ s.click(); }catch(_){}
+      }, {passive:false});
+      a.addEventListener('touchstart', function(ev){
+        ev.preventDefault(); ev.stopPropagation();
+        try{ s.focus(); }catch(_){}
+        try{ s.click(); }catch(_){}
+      }, {passive:false});
+    }
+  });
+
+
+  // Notes: force focus into the centered textarea on iPad and prevent the old inline input from stealing focus.
+  function forceNotesFocus(){
+    var ta = document.getElementById('notes-textarea');
+    if (!ta) return;
+    var len = ta.value ? ta.value.length : 0;
+    try { ta.focus({ preventScroll: true }); } catch(_) { try{ ta.focus(); }catch(__){} }
+    try { ta.setSelectionRange(len, len); } catch(_) {}
+  }
+  function openNotesFromInput(inputEl){
+    try{
+      if (typeof window.__openNotesPopoverFrom === 'function') window.__openNotesPopoverFrom(inputEl);
+      // iOS needs a couple of kicks
+      setTimeout(forceNotesFocus, 20);
+      setTimeout(forceNotesFocus, 120);
+    }catch(_){}
+  }
+
+  function interceptNotes(ev){
+    try{
+      var t = ev.target;
+      if (!t || !t.closest) return;
+      var inp = t.closest('input.notes-input');
+      if (!inp) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+      openNotesFromInput(inp);
+    }catch(_){}
+  }
+  document.addEventListener('touchstart', interceptNotes, {capture:true, passive:false});
+  document.addEventListener('mousedown', interceptNotes, {capture:true});
+
+  // Ensure PDF overlay has a "page turn" overlay layer, and trigger it on next/prev navigation.
+  function ensureTurnOverlay(){
+    try{
+      var ov = document.getElementById('pdf-overlay');
+      if (!ov) return null;
+      var el = document.getElementById('pdf-turn-overlay');
+      if (!el){
+        el = document.createElement('div');
+        el.id = 'pdf-turn-overlay';
+        ov.appendChild(el);
+      }
+      return el;
+    }catch(_){ return null; }
+  }
+  window.__triggerPdfTurn = function(dir){
+    var el = ensureTurnOverlay();
+    if (!el) return;
+    el.classList.remove('turn-next','turn-prev');
+    // reflow
+    void el.offsetWidth;
+    el.classList.add(dir === 'prev' ? 'turn-prev' : 'turn-next');
+    setTimeout(function(){ el.classList.remove('turn-next','turn-prev'); }, 460);
+  };
+
+  function wrapTurn(fnName){
+    function install(){
+      var orig = window[fnName];
+      if (!orig || orig.__turnWrapped) return;
+      function wrapped(){
+        try{
+          var dir = arguments.length ? arguments[arguments.length - 1] : null;
+          if (dir === 'next' || dir === 'prev'){
+            if (typeof window.__triggerPdfTurn === 'function') window.__triggerPdfTurn(dir);
+          }
+        }catch(_){}
+        return orig.apply(this, arguments);
+      }
+      wrapped.__turnWrapped = true;
+      window[fnName] = wrapped;
+    }
+    install();
+    document.addEventListener('DOMContentLoaded', install);
+    setTimeout(install, 500);
+    setTimeout(install, 1500);
+  }
+  wrapTurn('openSongInContext');
+  wrapTurn('openDocViewer');
+
+  // Also, if the overlay is created later, add the overlay layer then.
+  new MutationObserver(function(){
+    try{ ensureTurnOverlay(); }catch(_){}
+  }).observe(document.body, {childList:true, subtree:true});
+})();
+</script>
+
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 dark:text-gray-200">
@@ -2324,7 +2579,7 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
         function getFileURL(s){if(!s||!s.fileInfo||!s.fileInfo.data){console.error(`Invalid song or fileInfo for song: ${s?.name||'unknown'}`);return null}if(!s.file||!objectURLs.has(s.file)){try{const b=dataURItoBlob(s.fileInfo.data),url=URL.createObjectURL(b);if(s.file){URL.revokeObjectURL(s.file);objectURLs.delete(s.file)}s.file=url;objectURLs.add(url)}catch(e){console.error(`Error creating object URL for ${s.name}:`,e);return null}}return s.file}
         function dataURItoBlob(d){try{const s=d.split(',');if(s.length<2)throw new Error('Invalid data URI');const b=atob(s[1]),m=s[0].split(':')[1].split(';')[0],a=new ArrayBuffer(b.length),i=new Uint8Array(a);for(let j=0;j<b.length;j++){i[j]=b.charCodeAt(j)}return new Blob([a],{type:m})}catch(e){console.error('Error converting data URI to Blob:',e);throw e}}
         // ================== UI Helpers ==================
-        function autoCollapseSidebar(){const s=$('.left-col');if(!s.hasClass('collapsed')){s.addClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />')}}
+        function autoCollapseSidebar(){const s=$('.left-col');if(!s.hasClass('collapsed')){s.addClass('collapsed')}}
         // ================== Initialization ==================
         $(function(){function ds(){$('#home-btn').removeClass('app-header-selected').addClass('app-header-unselected');$('#nav-favorites, #nav-plays, #nav-recordings, #nav-energy, #setlists-container .setlist-item, #venue-list .venue-item, #genre-list .genre-item').removeClass('selected')}load();ds();$('#home-btn').removeClass('app-header-unselected').addClass('app-header-selected');renderLeftSetlists();renderGenres(ds);renderVenues(ds);bindNav(ds);updateTopLeast();show('master');
         $(document).on('click','.genre-dot',function(e){e.stopPropagation();const s=masterSongs.find(s=>s.id===$(this).closest('li').attr('id'));if(!s)return;const g=[''].concat(genres.map(g=>g.name));s.genre=g[(g.indexOf(s.genre||'')+1)%g.length];const n=`<span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span>`;$(`li[id="${s.id}"]`).find('.genre-dot').parent().html(n);if($('#genre-view').is(':visible')){renderGenreView(currentGenre)}save()});
@@ -2333,15 +2588,19 @@ body.setlist-drag-outside #setlist-list .ui-sortable-placeholder { display: none
         $('#add-genre').click(function(){const n=$('#genre-name').val().trim(),c=$('#genre-color').val();if(!n)return alert('Enter a genre name');if(genres.some(g=>g.name.toLowerCase()===n.toLowerCase()))return alert('Genre already exists');genres.unshift({name:n,color:c});$('#genre-name').val('');renderGenres(ds);$('#genre-color-display').css({'background-image':'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)','background-color':''});save()});
         $('#add-venue').click(function(){const n=$('#venue-name').val().trim();if(!n)return alert('Enter a venue name');if(venues.some(v=>v.name.toLowerCase()===n.toLowerCase()))return alert('Venue already exists');venues.push({name:n});$('#venue-name').val('');renderVenues(ds);save()});
         $('#sidebar-toggle').click(function(){
-const s=$('.left-col');s.toggleClass('collapsed');
-    if (!s.hasClass('collapsed')) {
-        s.find('.left-col-main-content').scrollTop(0);
-    }$(this).find('svg').html(s.hasClass('collapsed')?'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />':'<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')});
-        $('#sidebar-toggle').droppable({accept:'.draggable',tolerance:'pointer',over:function(){const s=$('.left-col');if(s.hasClass('collapsed')){s.removeClass('collapsed');$('#sidebar-toggle').find('svg').html('<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />')}}});
+  const s = $('.left-col');
+  s.toggleClass('collapsed');
+  if (!s.hasClass('collapsed')) {
+    s.find('.left-col-main-content').scrollTop(0);
+  }
+  try { if (typeof window.__syncSidebarW === 'function') window.__syncSidebarW(); } catch(_) {}
+});
+
+$('#sidebar-toggle').droppable({accept:'.draggable',tolerance:'pointer',over:function(){const s=$('.left-col');if(s.hasClass('collapsed')){s.removeClass('collapsed');}}});
         
         // --- IPAD INPUT FIX: Manually focus inputs on touchstart and stop the event ---
         // This intercepts the tap before jQuery UI Touch Punch can hijack it for dragging.
-        $('main').on('touchstart', 'input.artist-input, input.notes-input, input.duration-input', function(e) {
+        $('main').on('touchstart', 'input.artist-input, input.duration-input', function(e) {
             this.focus();
             e.stopPropagation();
         });
@@ -2483,7 +2742,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
         function createSongItem(s,i,c){const f=s.favorite?'favorited':'',t=`<div class="w-8 flex-shrink-0 flex justify-center items-center favorite-star-container ${f}" title="Toggle Favorite"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"></path></svg></div>`,d=`<div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="genre-dot" style="background:${s.genre?getGenreColor(s.genre):'#cbd5e1'}" title="${s.genre||'no genre'}"></span></div>`,g=`<div class="w-8 flex-shrink-0 flex justify-center items-center energy-icon" title="Energy: ${s.energy||0}">${energyIcons[s.energy||0]}</div>`,b=['master','favorites','genre'].includes(c)?'Delete':'Remove',n=`<div class="song-details-container"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 artist-input" placeholder="Artist" value="${escapeHtml(s.artist||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 notes-input" placeholder="Notes" value="${escapeHtml(s.notes||'')}"><input class="p-1 text-sm rounded-md border dark:bg-gray-600 dark:border-gray-500 duration-input" placeholder="Runtime" value="${escapeHtml(s.duration||'')}"><button class="p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition delete-btn">${b}</button></div>`,v=c==='setlist'&&viewedSongsInSetlist.has(s.id)?'viewed-index':'';return $(`<li id="${s.id}" class="flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 draggable"><div class="w-8 flex-shrink-0 flex justify-center items-center"><span class="font-medium text-gray-500 dark:text-gray-400 index-number ${v}">${i+1}</span></div>${t}${d}${g}<div class="flex-1 min-w-0 song-name ml-2 cursor-pointer font-medium" data-song-id="${s.id}"><span class="song-name-text" data-song-id="${s.id}">${escapeHtml(s.name)}</span></div>${n}</li>`)}
         const draggableOptions={appendTo:'body',revert:'invalid',cursorAt:{left:10,top:10},helper:'clone',start:function(e,ui){const i=$(this),c=i.parent().children('.item-selected').length,h=c>1?`Dragging ${c} items`:i.find('.song-name').text();ui.helper.empty().html(h).css({'background-color':'#3b82f6','color':'white','padding':'0.5rem 1rem','height':'auto','width':'auto','white-space':'nowrap','box-shadow':'0 5px 15px rgba(0,0,0,0.3)','z-index':9999,'border-radius':'0.5rem','font-weight':'600'})}};
         function renderMaster(){const q=$('#search').val().toLowerCase();let l=masterSongs.filter(s=>(q?(s.name.toLowerCase().includes(q)||(s.artist||'').toLowerCase().includes(q)):!0)&&(masterSelectedGenres.length>0?masterSelectedGenres.includes(s.genre):!0));const m=$('#sort-dropdown').val();l.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='lastPlayed'?(b.lastPlayed?new Date(b.lastPlayed).getTime():0)-(a.lastPlayed?new Date(a.lastPlayed).getTime():0):m==='energy'?(b.energy||0)-(a.energy||0):a.name.localeCompare(b.name));window.currentMasterViewSongs=l;const u=$('#master-list').empty();if(l.length===0)u.append(`<li class="p-8 text-center text-gray-500 italic">${(q||masterSelectedGenres.length>0)?'No songs match your current filters.':'No songs yet. <br> Drag & drop PDF files onto the page or use the "Add files" button!'}</li>`);else l.forEach((s,i)=>u.append(createSongItem(s,i,'master')));$('#master-list .draggable').draggable(draggableOptions)}
-        function renderAddSongsPanel(){const q=$('#setlist-search-add').val().toLowerCase();let l=masterSongs.filter(s=>q?s.name.toLowerCase().includes(q):!0);l.sort((a,b)=>a.name.localeCompare(b.name));const u=$('#setlist-add-songs-list').empty(),c=setlists[currentSetlist]?.songs||[];l.forEach(s=>{const i=c.includes(s.id),li=$(`<li class="add-song-item" data-song-id="${s.id}"><label for="add-${s.id}" class="flex items-center w-full cursor-pointer"><input type="checkbox" id="add-${s.id}" class="sr-only custom-checkbox-input" ${i?'checked':''}><div class="custom-checkbox-box"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></div><span class="ml-3 flex-grow">${escapeHtml(s.name)}</span></label></li>`);li.find('input').on('change',function(){const i=$(this).closest('.add-song-item').data('song-id');if(this.checked){if(!setlists[currentSetlist].songs.includes(i))setlists[currentSetlist].songs.push(i)}else{setlists[currentSetlist].songs=setlists[currentSetlist].songs.filter(id=>id!==i)}renderSetlist();save()});u.append(li)})}
+        function renderAddSongsPanel(){const q=$('#setlist-search-add').val().toLowerCase();let l=masterSongs.filter(s=>q?s.name.toLowerCase().includes(q):!0);l.sort((a,b)=>a.name.localeCompare(b.name));const u=$('#setlist-add-songs-list').empty(),c=setlists[currentSetlist]?.songs||[];l.forEach(s=>{const i=c.includes(s.id),li=$(`<li class="add-song-item" data-song-id="${s.id}"><label for="add-${s.id}" class="flex items-center w-full cursor-pointer"><input type="checkbox" id="add-${s.id}" class="sr-only custom-checkbox-input" ${i?'checked':''}><div class="custom-checkbox-box"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg></div><span class="ml-6 flex-grow add-song-label-text">${escapeHtml(s.name)}</span></label></li>`);li.find('input').on('change',function(){const i=$(this).closest('.add-song-item').data('song-id');if(this.checked){if(!setlists[currentSetlist].songs.includes(i))setlists[currentSetlist].songs.push(i)}else{setlists[currentSetlist].songs=setlists[currentSetlist].songs.filter(id=>id!==i)}renderSetlist();save()});u.append(li)})}
         function removeFromAllSetlists(i){Object.values(setlists).forEach(s=>{s.songs=s.songs.filter(id=>!i.includes(id))})}
         function renderLeftSetlists(){const c=$('#setlists-container').empty();Object.keys(setlists).forEach(n=>{const e=$(`<div class="p-2 mb-1 rounded-lg cursor-pointer setlist-item bg-gray-700" data-name="${escapeHtml(n)}"><div class="flex items-center"><button class="del-setlist" title="Delete setlist"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.58.22-2.365.468a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" /></svg></button><span class="setlist-name">${escapeHtml(n)}</span></div></div>`);e.find('.del-setlist').click(ev=>{ev.stopPropagation();if(confirm('Delete '+n+'?')){delete setlists[n];recordings=recordings.filter(r=>r.setlist!==n);if(currentSetlist===n){currentSetlist=null;$('#home-btn').trigger('click')}renderLeftSetlists();save()}});e.on('dblclick',function(){const i=$('<input class="edit-input w-full bg-gray-600 p-1 rounded-md" value="'+escapeHtml(n)+'">');$(this).find('.setlist-name').replaceWith(i);i.focus().on('blur keypress',function(ev){if(ev.type==='keypress'&&ev.key!=='Enter')return;const newName=i.val().trim();if(newName&&newName!==n&&!setlists[newName]){setlists[newName]=setlists[n];recordings.forEach(r=>{if(r.setlist===n)r.setlist=newName});delete setlists[n];if(currentSetlist===n){currentSetlist=newName;$('#setlist-title').text(newName)}}renderLeftSetlists();save()})});c.append(e)});$('.setlist-item').droppable({accept:'.draggable',hoverClass:'drag-hover-setlist',drop:function(e,ui){const s=setlists[$(this).data('name')];let a=!1;const i=ui.draggable.hasClass('item-selected')?$(`#${ui.draggable.parent().attr('id')} .item-selected`):ui.draggable;i.each(function(){const d=$(this).attr('id');if(d&&!s.songs.includes(d)){s.songs.push(d);a=!0}});if(a){save();if(currentSetlist===$(this).data('name'))renderSetlist()}}});$('#setlists-container').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){const o=$(this).sortable('toArray',{attribute:'data-name'}),n={};o.forEach(i=>{if(setlists[i])n[i]=setlists[i]});setlists=n;save()}})}
         function renderSetlist(){if(!currentSetlist){$('#setlist-view').hide();return}$('#setlist-details-toggle').removeClass('open');$('#setlist-details-content').hide();$('#back-to-venue-btn').toggle(!!cameFromVenue);const s=setlists[currentSetlist];$('#setlist-title').text(currentSetlist);$('#setlist-date').val(s.date||'');$('#date-placeholder').toggle(!s.date);$('#setlist-venue').val(s.venue||'');renderAddSongsPanel();$('#setlist-recordings').empty();const r=recordings.filter(r=>r.setlist===currentSetlist);if(r.length>0){const c=$('<div class="p-2 bg-gray-100 rounded-lg dark:bg-gray-700"></div>').append('<h4 class="font-semibold text-sm mb-2">Recordings for this Setlist:</h4>');r.forEach(r=>{c.append($(`<div class="flex items-center justify-between p-2 mb-1 bg-white rounded-lg shadow-sm dark:bg-gray-600"><span>${escapeHtml(r.date)} @ ${escapeHtml(r.venue)}</span><audio controls src="${r.audioData}" style="height:30px;"></audio><button class="ml-2 p-1 px-2 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition" data-id="${r.id}">Delete</button></div>`).on('click','button',function(){if(confirm('Delete this recording?')){recordings=recordings.filter(rec=>rec.id!==$(this).data('id'));save();renderSetlist()}}))});$('#setlist-recordings').append(c)}let o=(s.songs||[]).map(i=>masterSongs.find(s=>s.id===i)).filter(Boolean);const m=$('#setlist-sort-filter-dropdown').val();if(m!=='custom')o.sort((a,b)=>m==='artist'?(a.artist||'').localeCompare(b.artist||''):m==='name'?a.name.localeCompare(b.name):m==='energy'?(b.energy||0)-(a.energy||0):m==='genre'?(a.genre||'').localeCompare(b.genre||''):0);$('#setlist-total-duration').text(`Runtime: ${o.reduce((a,s)=>a+(parseInt(s.duration,10)||0),0)} min`);$('#setlist-song-count').text(`${o.length} songs`);window.currentSetlistViewSongs=o;const u=$('#setlist-list').empty();o.forEach((s,i)=>{u.append(createSongItem(s,i,'setlist'))});if($('#setlist-list').hasClass('ui-sortable'))$('#setlist-list').sortable('destroy');$('#setlist-list').sortable({axis:'y',cursor:'move',placeholder:"sortable-placeholder",helper:'original',start:(e,ui)=>{ui.placeholder.height(ui.item.height());ui.item.addClass('is-sorting')},stop:(e,ui)=>ui.item.removeClass('is-sorting'),update:function(){$('#setlist-sort-filter-dropdown').val('custom');setlists[currentSetlist].songs=$(this).sortable('toArray');$('#setlist-list .index-number').each((i,el)=>$(el).text(i+1));save()}}).disableSelection()}
@@ -2504,7 +2763,7 @@ const s=$('.left-col');s.toggleClass('collapsed');
         
         function openSongInContext(songId, context, index = -1, direction = 'none') {
             const song = masterSongs.find(s => s.id === songId); if (!song) return;
-            if (direction === 'none') { playCounts[song.id] = (playCounts[song.id] || 0) + 1; song.lastPlayed = new Date().toISOString().split('T')[0]; updateTopLeast(); save(); }
+            if (direction === 'none' || direction === 'next' || direction === 'prev') { playCounts[song.id] = (playCounts[song.id] || 0) + 1; song.lastPlayed = new Date().toISOString().split('T')[0]; updateTopLeast(); save(); }
             currentViewerList = (context==='master')?window.currentMasterViewSongs||[]:(context==='setlist')?window.currentSetlistViewSongs||[]:(context==='plays')?window.currentPlaysViewSongs||[]:(context==='favorites')?window.currentFavoritesViewSongs||[]:(context==='genre')?window.currentGenreViewSongs||[]:masterSongs;
             currentViewerContext = context;
             currentViewerIndex = (index === -1) ? currentViewerList.findIndex(s => s.id === songId) : index;
@@ -5833,18 +6092,6 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
 /* 2) Controls row alignment (CSS-first): use CSS vars set once after paint */
 :root { --filecolw: 320px; --searchh: 36px; }
 
-/* Keep native arrow; overlay label so it always reads "Sort By" */
-#sort-proxy-wrap { position: relative; display: inline-block; width: var(--filecolw); height: var(--searchh); vertical-align: middle; }
-#sort-proxy-wrap select#sort-dropdown {
-  -webkit-appearance: menulist !important; appearance: menulist !important;
-  background: transparent !important;
-  color: transparent !important; -webkit-text-fill-color: transparent !important;
-  width: 100% !important; height: 100% !important; cursor: pointer;
-}
-#sort-proxy-label { position: absolute; left: .5rem; top: 50%; transform: translateY(-50%); font-weight: 600; pointer-events: none; white-space: nowrap; color: #111827; }
-.dark #sort-proxy-label { color: #E5E7EB; }
-#sort-dropdown:focus { outline: 2px solid #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.35); border-radius: .5rem; }
-
 /* Buttons should not exceed file input column width or search height */
 #upload-master-btn, #delete-all-btn { max-width: var(--filecolw); max-height: var(--searchh); }
 
@@ -5865,14 +6112,6 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
   function rect(el){ var r=el.getBoundingClientRect(); return {top:r.top,left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}; }
 
   // A) Wrap Sort dropdown once so it always reads "Sort By" with native arrow
-  function initSortProxy(){
-    var sel = document.getElementById('sort-dropdown');
-    if (!sel) return;
-    if (!document.getElementById('sort-proxy-wrap')) {
-      var wrap = document.createElement('span'); wrap.id = 'sort-proxy-wrap';
-      sel.parentNode.insertBefore(wrap, sel); wrap.appendChild(sel);
-      var label = document.createElement('span'); label.id='sort-proxy-label'; label.textContent='Sort By'; wrap.appendChild(label);
-    }
   }
 
   // B) Set CSS variables once based on the first file input column and the search height
@@ -5947,8 +6186,7 @@ html, body { overscroll-behavior-x: none !important; touch-action: pan-y !import
   }
 
   function init(){
-    initSortProxy();
-    // Defer CSS var calculation to after paint so it matches first-frame visually
+// Defer CSS var calculation to after paint so it matches first-frame visually
     requestAnimationFrame(function(){ setCSSVarsOnce(); });
     initSidebarScroller();
     bindArrow();
